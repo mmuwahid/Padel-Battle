@@ -73,25 +73,23 @@ const ARGUED=[
   {q:"Who serves first in tiebreak?",a:"Player whose turn it is serves 1 point, then each player serves 2 consecutive. Change ends every 6 points."},
 ];
 
-// SVG Icons
-const PadelLogo = () => (
-  <svg viewBox="0 0 100 100" width="80" height="80" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="50" cy="50" r="45" stroke={A} strokeWidth="2"/>
-    <ellipse cx="50" cy="45" rx="20" ry="25" stroke={A} strokeWidth="2"/>
-    <path d="M 35 70 Q 35 85 50 85 Q 65 85 65 70" stroke={A} strokeWidth="2" fill="none"/>
-    <circle cx="40" cy="35" r="3" fill={A}/>
-    <circle cx="60" cy="35" r="3" fill={A}/>
+// SVG Icons (exact match from original)
+const CourtIcon = () => (<svg width="16" height="20" viewBox="0 0 24 30" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="24" rx="1"/><line x1="12" y1="3" x2="12" y2="27"/><line x1="2" y1="15" x2="22" y2="15"/><rect x="8" y="3" width="8" height="5" rx="0" fill="none"/><rect x="8" y="22" width="8" height="5" rx="0" fill="none"/></svg>);
+const PadelLogo = () => (<div style={{width:42,height:42,borderRadius:12,background:`${A}12`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+  <svg width="28" height="28" viewBox="0 0 50 50" fill="none">
+    <rect x="14" y="2" width="18" height="28" rx="9" stroke={A} strokeWidth="2.5"/>
+    <circle cx="20" cy="12" r="1.5" fill={A} opacity="0.5"/><circle cx="26" cy="12" r="1.5" fill={A} opacity="0.5"/>
+    <circle cx="20" cy="18" r="1.5" fill={A} opacity="0.5"/><circle cx="26" cy="18" r="1.5" fill={A} opacity="0.5"/>
+    <circle cx="23" cy="15" r="1.5" fill={A} opacity="0.5"/>
+    <rect x="20" y="30" width="6" height="14" rx="3" stroke={A} strokeWidth="2.5" fill="none"/>
+    <circle cx="39" cy="10" r="7" stroke={A} strokeWidth="2" fill={`${A}15`}/>
+    <path d="M34.5 5.5 Q39 10 43.5 5.5" stroke={A} strokeWidth="1.2" fill="none"/>
   </svg>
-);
+</div>);
 
-const CourtIcon = () => (
-  <svg viewBox="0 0 100 100" width="24" height="24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect x="10" y="15" width="80" height="70" stroke={A} strokeWidth="2" fill="none"/>
-    <line x1="10" y1="50" x2="90" y2="50" stroke={MT} strokeWidth="1" strokeDasharray="3,3"/>
-    <rect x="35" y="20" width="30" height="15" stroke={MT} strokeWidth="1" fill="none"/>
-    <rect x="35" y="65" width="30" height="15" stroke={MT} strokeWidth="1" fill="none"/>
-  </svg>
-);
+// Tab definitions (original layout: 3 left + center button + 3 right)
+const TL=[{key:"board",label:"Leaderboard",icon:"🏆"},{key:"history",label:"Matches",icon:"court"},{key:"combos",label:"Combos",icon:"🤝"}];
+const TR=[{key:"stats",label:"Players",icon:"📊"},{key:"gamemode",label:"Game Mode",icon:"⚡"},{key:"rules",label:"Rules",icon:"📖"}];
 
 // ============================================================================
 // AUTH GATE - Shows login screen if not authenticated
@@ -492,7 +490,7 @@ function AppContent({leagueId,user}){
   const [matches,setMatches]=useState([]);
   const [seasons,setSeasons]=useState([]);
   const [tournaments,setTournaments]=useState([]);
-  const [tab,setTab]=useState("leaderboard");
+  const [tab,setTab]=useState("board");
   const [loading,setLoading]=useState(true);
   const [isAdmin,setIsAdmin]=useState(false);
   const [selectedLeagueId,setSelectedLeagueId]=useState(leagueId);
@@ -731,7 +729,7 @@ function AppContent({leagueId,user}){
       </div>
 
       {/* LEADERBOARD TAB */}
-      {tab==="leaderboard"&&(
+      {tab==="board"&&(
         <div style={{padding:"20px 16px"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
             <h2 style={{fontSize:"18px",fontWeight:"bold",margin:0}}>Leaderboard</h2>
@@ -809,7 +807,7 @@ function AppContent({leagueId,user}){
       )}
 
       {/* LOG MATCH TAB */}
-      {tab==="logmatch"&&selectedSeason&&(
+      {tab==="log"&&selectedSeason&&(
         <LogMatch
           players={players}
           matches={matches}
@@ -818,7 +816,7 @@ function AppContent({leagueId,user}){
           pm={Object.fromEntries(players.map(p=>[p.id,p]))}
           em={editingMatch}
           setEm={setEditingMatch}
-          goBack={()=>setTab("matches")}
+          goBack={()=>setTab("history")}
           sel={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:13,fontFamily:"Outfit"}}
           lbl={{fontSize:12,color:MT,fontWeight:600,marginBottom:8}}
           getName={getName}
@@ -830,12 +828,12 @@ function AppContent({leagueId,user}){
       )}
 
       {/* MATCHES TAB */}
-      {tab==="matches"&&(
+      {tab==="history"&&(
         <MatchHistory
           matches={matches}
           pm={Object.fromEntries(players.map(p=>[p.id,p]))}
           players={players}
-          onEdit={(m)=>{setEditingMatch(m);setTab("logmatch");}}
+          onEdit={(m)=>{setEditingMatch(m);setTab("log");}}
           supabase={supabase}
           isAdmin={isAdmin}
           getName={getName}
@@ -857,7 +855,7 @@ function AppContent({leagueId,user}){
       )}
 
       {/* PLAYERS TAB */}
-      {tab==="players"&&(
+      {tab==="stats"&&(
         <PlayerStats
           players={players}
           ps={Object.fromEntries(ps.map(p=>[p.id,p]))}
@@ -891,98 +889,60 @@ function AppContent({leagueId,user}){
       )}
 
       {/* RULES TAB */}
-      {tab==="rules"&&(
-        <div style={{padding:"20px 16px",maxWidth:"600px",margin:"0 auto"}}>
-          <h2 style={{fontSize:18,fontWeight:bold,marginBottom:20,color:A}}>📋 Padel Rules</h2>
-          <div style={{display:"flex",flexDirection:"column",gap:16}}>
-            {RULES.map((r,i)=>(
-              <div key={i} style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:16}}>
-                <h3 style={{fontSize:14,fontWeight:700,marginBottom:8,color:A}}>{r.title}</h3>
-                <p style={{fontSize:13,color:TX,lineHeight:1.6}}>{r.content}</p>
-              </div>
-            ))}
+      {tab==="rules"&&<div className="fu">
+        <h2 style={{fontSize:18,fontWeight:800,marginBottom:4}}>Padel Rules</h2>
+        <p style={{fontSize:11,color:MT,marginBottom:16}}>Official FIP rules summary</p>
+        {RULES.map((r,i) => (
+          <div key={i} style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:8}}>
+            <h3 style={{fontSize:14,fontWeight:700,color:A,marginBottom:6}}>{r.title}</h3>
+            <p style={{fontSize:13,color:TX,lineHeight:1.5}}>{r.content}</p>
           </div>
-        </div>
-      )}
-
-      {/* DISPUTES TAB */}
-      {tab==="disputes"&&(
-        <div style={{padding:"20px 16px",maxWidth:"600px",margin:"0 auto"}}>
-          <h2 style={{fontSize:18,fontWeight:bold,marginBottom:20,color:DG}}>⚖️ Disputed Calls</h2>
-          <div style={{display:"flex",flexDirection:"column",gap:16}}>
-            {ARGUED.map((r,i)=>(
-              <div key={i} style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:16}}>
-                <h3 style={{fontSize:14,fontWeight:700,marginBottom:8,color:GD}}>{r.q}</h3>
-                <p style={{fontSize:13,color:TX,lineHeight:1.6}}>{r.a}</p>
-              </div>
-            ))}
+        ))}
+        <h2 style={{fontSize:18,fontWeight:800,marginTop:20,marginBottom:4,color:"#f97316"}}>⚡ Most Argued Calls</h2>
+        <p style={{fontSize:11,color:MT,marginBottom:16}}>Settle it once and for all</p>
+        {ARGUED.map((r,i) => (
+          <div key={i} style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:8}}>
+            <h3 style={{fontSize:13,fontWeight:700,color:A,marginBottom:8}}>❓ {r.q}</h3>
+            <p style={{fontSize:13,color:TX,lineHeight:1.5,fontWeight:500}}>{r.a}</p>
           </div>
-        </div>
-      )}
-
-      {/* BOTTOM TAB NAVIGATION */}
-      <div style={{position:"fixed",bottom:0,left:0,right:0,background:CD,borderTop:`1px solid ${BD}`,display:"flex",justifyContent:"space-around",alignItems:"center",height:"calc(60px + env(safe-area-inset-bottom, 0px))",paddingBottom:"env(safe-area-inset-bottom, 0px)",zIndex:100}}>
+        ))}
+        <h2 style={{fontSize:18,fontWeight:800,marginTop:20,marginBottom:4,color:BL}}>📐 What is ELO Rating?</h2>
+        <p style={{fontSize:11,color:MT,marginBottom:16}}>How the ranking system works</p>
+        {[["The Basics","ELO is a skill-based rating from chess, now used across sports. Start at 1500. After each match, points transfer from losers to winners."],["Why ELO > Win %","Win % treats all wins equally. ELO weights opponent strength. Beating a stronger pair earns more; losing to a weaker pair costs more."],["How It's Calculated","App calculates average team ELO, predicts outcome. Upset a stronger team = big gain. Beat a weaker team = small gain. K-factor is 40."],["Reading Your Rating","1500 = average. 1600+ = strong. 1700+ = dominant. Below 1400 = room to grow. The gap predicts win probability."]].map(([t,c],i) => (
+          <div key={i} style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:8}}>
+            <h3 style={{fontSize:14,fontWeight:700,color:BL,marginBottom:6}}>{t}</h3>
+            <p style={{fontSize:13,color:TX,lineHeight:1.5}}>{c}</p>
+          </div>
+        ))}
+        <h2 style={{fontSize:18,fontWeight:800,marginTop:20,marginBottom:4,color:PU}}>⚡ Game Modes</h2>
+        <p style={{fontSize:11,color:MT,marginBottom:16}}>Tournament formats for your group sessions</p>
         {[
-          {id:"leaderboard",icon:"📊",label:"Leaderboard"},
-          {id:"matches",icon:"🎾",label:"Matches"},
-          {id:"combos",icon:"👥",label:"Combos"},
-          {id:"players",icon:"👤",label:"Players"},
-          {id:"gamemode",icon:"🎮",label:"Game Mode"},
-          {id:"rules",icon:"📋",label:"Rules"},
-        ].map(t=>(
-          <button
-            key={t.id}
-            onClick={()=>setTab(t.id)}
-            style={{
-              flex:1,
-              height:"100%",
-              background:"transparent",
-              border:"none",
-              color:tab===t.id?A:MT,
-              fontSize:"12px",
-              cursor:"pointer",
-              display:"flex",
-              flexDirection:"column",
-              alignItems:"center",
-              justifyContent:"center",
-              gap:"2px",
-              transition:"color 0.2s",
-            }}
-          >
-            <span style={{fontSize:"18px"}}>{t.icon}</span>
-            <span>{t.label}</span>
+          ["Americano","The most popular social padel format. Players rotate partners every round so everyone plays with everyone. Points are scored individually — each point your team wins gives you a personal point. After all rounds, the player with the most accumulated points wins. Typical setup: 24 or 32 points per round. Perfect for groups of 4-16 players.","How it works: Set a points-per-round target (e.g., 24). Two pairs play until all points are used — score might be 14-10. Each player gets their team's points. Partners rotate. Repeat until all combinations are played. Individual leaderboard crowns the winner."],
+          ["Mexicano","A dynamic variant of Americano where pairings are determined by current standings after each round. The top-ranked player pairs with the lowest-ranked, 2nd pairs with 2nd-lowest, etc. This means as you win more, you face tougher opponents — it self-balances throughout the tournament. Scoring works the same as Americano (individual point accumulation).","Key difference from Americano: In Americano, pairings are pre-set. In Mexicano, they adapt based on live results. This creates tighter competitions because dominant players get paired against each other. The format can run indefinitely — you decide when to stop."],
+        ].map(([title,desc,detail],i) => (
+          <div key={i} style={{background:CD,borderRadius:12,border:`1px solid ${PU}25`,padding:14,marginBottom:8}}>
+            <h3 style={{fontSize:14,fontWeight:700,color:PU,marginBottom:6}}>⚡ {title}</h3>
+            <p style={{fontSize:13,color:TX,lineHeight:1.5,marginBottom:8}}>{desc}</p>
+            <p style={{fontSize:12,color:MT,lineHeight:1.5,fontStyle:"italic"}}>{detail}</p>
+          </div>
+        ))}
+      </div>}
+
+      {/* BOTTOM NAV — Original layout: 3 left tabs + center "+" button + 3 right tabs */}
+      <div style={{position:"fixed",bottom:0,left:0,right:0,background:`${CD}f0`,backdropFilter:"blur(20px)",borderTop:`1px solid ${BD}`,display:"flex",justifyContent:"space-around",alignItems:"flex-end",padding:`4px 0 env(safe-area-inset-bottom, 6px)`,zIndex:100}}>
+        {TL.map(t => (
+          <button key={t.key} onClick={()=>setTab(t.key)} style={{background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:1,color:tab===t.key?A:MT,cursor:"pointer",padding:"5px 6px",flex:1}}>
+            <span style={{fontSize:16}}>{t.icon==="court"?<CourtIcon/>:t.icon}</span><span style={{fontSize:8,fontWeight:600}}>{t.label}</span>
+          </button>
+        ))}
+        <button onClick={()=>{setEditingMatch(null);setTab("log");}} style={{width:56,height:56,borderRadius:"50%",border:"none",background:`linear-gradient(135deg,${A},${A}cc)`,color:BG,fontSize:30,fontWeight:900,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",marginTop:-20,boxShadow:`0 4px 20px ${A}40`,flexShrink:0,lineHeight:1}}>+</button>
+        {TR.map(t => (
+          <button key={t.key} onClick={()=>setTab(t.key)} style={{background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:1,color:tab===t.key?A:MT,cursor:"pointer",padding:"5px 6px",flex:1}}>
+            <span style={{fontSize:16}}>{t.icon}</span><span style={{fontSize:8,fontWeight:600}}>{t.label}</span>
           </button>
         ))}
       </div>
 
-      {/* FLOATING ADD BUTTON */}
-      <button
-        onClick={()=>{
-          setEditingMatch(null);
-          setTab("logmatch");
-        }}
-        style={{
-          position:"fixed",
-          bottom:"calc(70px + env(safe-area-inset-bottom, 0px))",
-          right:"16px",
-          width:"56px",
-          height:"56px",
-          background:A,
-          border:"none",
-          borderRadius:"50%",
-          color:"#000",
-          fontSize:"24px",
-          cursor:"pointer",
-          display:"flex",
-          alignItems:"center",
-          justifyContent:"center",
-          fontWeight:"bold",
-          boxShadow:"0 4px 12px rgba(0,0,0,0.3)",
-          zIndex:99,
-        }}
-      >
-        +
-      </button>
     </div>
   );
 }
