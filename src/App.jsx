@@ -140,17 +140,20 @@ function AuthGate({children}){
 
   if (!user) {
     return (
-      <div style={{background:BG,minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:"20px",fontFamily:"Outfit"}}>
-        <div style={{maxWidth:"400px",width:"100%"}}>
-          <div style={{textAlign:"center",marginBottom:"40px"}}>
+      <div style={{background:BG,minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:"20px",fontFamily:"'Outfit',sans-serif"}}>
+        <div style={{maxWidth:"380px",width:"100%"}}>
+          <div style={{textAlign:"center",marginBottom:"32px"}}>
             <PadelLogo/>
-            <h1 style={{color:A,fontSize:"32px",fontWeight:"bold",margin:"20px 0 10px 0"}}>PADEL BATTLE</h1>
-            <p style={{color:MT,fontSize:"14px"}}>Track your game. Master the court.</p>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:"8px",marginTop:"16px"}}>
+              <CourtIcon/>
+              <h1 style={{fontSize:22,fontWeight:900,letterSpacing:2,color:TX,fontFamily:"'Outfit',sans-serif"}}><span style={{color:A}}>PADEL</span> <span style={{fontStyle:"italic"}}>BATTLE</span></h1>
+            </div>
+            <p style={{color:MT,fontSize:12,fontWeight:500,letterSpacing:1,marginTop:6,textTransform:"uppercase"}}>Track your game. Master the court.</p>
           </div>
 
-          <form onSubmit={handleSendLink} style={{display:"flex",flexDirection:"column",gap:"16px"}}>
+          <form onSubmit={handleSendLink} style={{display:"flex",flexDirection:"column",gap:"12px"}}>
             <div>
-              <label style={{display:"block",color:TX,fontSize:"12px",fontWeight:"600",marginBottom:"8px"}}>Email</label>
+              <label style={{display:"block",color:MT,fontSize:11,fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>Email</label>
               <input
                 type="email"
                 value={email}
@@ -158,41 +161,44 @@ function AuthGate({children}){
                 placeholder="your@email.com"
                 style={{
                   width:"100%",
-                  padding:"12px",
+                  padding:"12px 14px",
                   background:CD,
                   border:`1px solid ${BD}`,
-                  borderRadius:"6px",
+                  borderRadius:10,
                   color:TX,
-                  fontSize:"14px",
-                  fontFamily:"Outfit",
+                  fontSize:14,
+                  fontFamily:"'Outfit',sans-serif",
                   boxSizing:"border-box",
+                  outline:"none",
                 }}
               />
             </div>
 
-            {error && <div style={{color:DG,fontSize:"12px",padding:"8px",background:`${DG}20`,borderRadius:"4px"}}>{error}</div>}
-            {sent && <div style={{color:A,fontSize:"12px",padding:"8px",background:`${A}20`,borderRadius:"4px"}}>Check your email for the magic link!</div>}
+            {error && <div style={{color:DG,fontSize:12,padding:"10px 14px",background:`${DG}15`,borderRadius:10,border:`1px solid ${DG}30`}}>{error}</div>}
+            {sent && <div style={{color:A,fontSize:12,padding:"10px 14px",background:`${A}15`,borderRadius:10,border:`1px solid ${A}30`}}>✓ Check your email for the magic link!</div>}
 
             <button
               type="submit"
               style={{
-                padding:"12px",
-                background:A,
+                padding:"14px",
+                background:`linear-gradient(135deg,${A},${A}cc)`,
                 border:"none",
-                borderRadius:"6px",
+                borderRadius:12,
                 color:"#000",
-                fontWeight:"bold",
-                fontSize:"14px",
+                fontWeight:800,
+                fontSize:15,
                 cursor:"pointer",
-                fontFamily:"Outfit",
+                fontFamily:"'Outfit',sans-serif",
+                textTransform:"uppercase",
+                letterSpacing:1,
               }}
             >
               Send Magic Link
             </button>
           </form>
 
-          <p style={{color:MT,fontSize:"12px",textAlign:"center",marginTop:"20px"}}>
-            We'll send you a secure link to sign in. No password needed.
+          <p style={{color:MT,fontSize:11,textAlign:"center",marginTop:20,lineHeight:1.5}}>
+            We'll send you a secure link to sign in — no password needed.
           </p>
         </div>
       </div>
@@ -248,10 +254,10 @@ function LeagueGate({user,children}){
       return;
     }
     try {
-      // Create league
+      // Create league (created_by required for RLS, trigger auto-adds user as admin)
       const {data:leagueData,error:leagueErr} = await supabase
         .from("leagues")
-        .insert({name:leagueName.trim()})
+        .insert({name:leagueName.trim(),created_by:user.id})
         .select()
         .single();
 
@@ -259,12 +265,7 @@ function LeagueGate({user,children}){
 
       const leagueId = leagueData.id;
 
-      // Add user as admin
-      const {error:memberErr} = await supabase
-        .from("league_members")
-        .insert({league_id:leagueId,user_id:user.id,role:"admin"});
-
-      if (memberErr) throw memberErr;
+      // Note: handle_new_league trigger auto-inserts user as admin member
 
       // Create default Season 1
       const {data:seasonData,error:seasonErr} = await supabase
@@ -356,35 +357,40 @@ function LeagueGate({user,children}){
   }
 
   return (
-    <div style={{background:BG,minHeight:"100vh",padding:"20px",fontFamily:"Outfit",color:TX}}>
-      <div style={{maxWidth:"600px",margin:"0 auto"}}>
-        <h1 style={{color:A,fontSize:"28px",fontWeight:"bold",marginBottom:"30px",textAlign:"center"}}>Select a League</h1>
+    <div style={{background:BG,minHeight:"100vh",padding:"20px",fontFamily:"'Outfit',sans-serif",color:TX}}>
+      <div style={{maxWidth:"420px",margin:"0 auto",paddingTop:"20px"}}>
+        <div style={{textAlign:"center",marginBottom:28}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+            <CourtIcon/>
+            <h1 style={{fontSize:20,fontWeight:900,letterSpacing:2}}><span style={{color:A}}>PADEL</span> <span style={{fontStyle:"italic"}}>BATTLE</span></h1>
+          </div>
+          <p style={{color:MT,fontSize:11,fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginTop:6}}>Select a League</p>
+        </div>
 
         {/* Existing leagues */}
         {leagues.length > 0 && (
-          <div style={{marginBottom:"30px"}}>
-            <h2 style={{fontSize:"16px",fontWeight:"bold",marginBottom:"12px",color:MT}}>Your Leagues</h2>
-            <div style={{display:"flex",flexDirection:"column",gap:"12px"}}>
+          <div style={{marginBottom:20}}>
+            <div style={{fontSize:11,color:MT,fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>Your Leagues</div>
+            <div style={{display:"flex",flexDirection:"column",gap:8}}>
               {leagues.map(l=>(
                 <button
                   key={l.id}
                   onClick={()=>setSelectedLeagueId(l.id)}
                   style={{
-                    padding:"16px",
+                    padding:"14px 16px",
                     background:CD,
                     border:`1px solid ${BD}`,
-                    borderRadius:"8px",
+                    borderRadius:12,
                     color:TX,
-                    fontSize:"14px",
-                    fontWeight:"500",
+                    fontSize:14,
+                    fontWeight:600,
                     cursor:"pointer",
                     textAlign:"left",
-                    transition:"all 0.2s",
+                    fontFamily:"'Outfit',sans-serif",
+                    display:"flex",alignItems:"center",gap:10,
                   }}
-                  onMouseEnter={(e)=>{e.target.style.borderColor=A;e.target.style.background=CD2;}}
-                  onMouseLeave={(e)=>{e.target.style.borderColor=BD;e.target.style.background=CD;}}
                 >
-                  {l.name}
+                  <span style={{fontSize:18}}>🏟️</span> {l.name}
                 </button>
               ))}
             </div>
@@ -392,9 +398,9 @@ function LeagueGate({user,children}){
         )}
 
         {/* Create league */}
-        <div style={{marginBottom:"20px",padding:"20px",background:CD,border:`1px solid ${BD}`,borderRadius:"8px"}}>
-          <h2 style={{fontSize:"16px",fontWeight:"bold",marginBottom:"12px"}}>Create a League</h2>
-          <form onSubmit={handleCreateLeague} style={{display:"flex",gap:"8px"}}>
+        <div style={{marginBottom:12,padding:"16px",background:CD,border:`1px solid ${BD}`,borderRadius:14}}>
+          <div style={{fontSize:11,color:MT,fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>Create a League</div>
+          <form onSubmit={handleCreateLeague} style={{display:"flex",gap:8}}>
             <input
               type="text"
               value={leagueName}
@@ -402,26 +408,28 @@ function LeagueGate({user,children}){
               placeholder="League name"
               style={{
                 flex:1,
-                padding:"10px",
+                padding:"10px 14px",
                 background:CD2,
                 border:`1px solid ${BD}`,
-                borderRadius:"6px",
+                borderRadius:10,
                 color:TX,
-                fontSize:"13px",
-                fontFamily:"Outfit",
+                fontSize:13,
+                fontFamily:"'Outfit',sans-serif",
+                outline:"none",
               }}
             />
             <button
               type="submit"
               style={{
-                padding:"10px 16px",
+                padding:"10px 18px",
                 background:A,
                 border:"none",
-                borderRadius:"6px",
+                borderRadius:10,
                 color:"#000",
-                fontWeight:"bold",
-                fontSize:"13px",
+                fontWeight:700,
+                fontSize:13,
                 cursor:"pointer",
+                fontFamily:"'Outfit',sans-serif",
               }}
             >
               Create
@@ -430,9 +438,9 @@ function LeagueGate({user,children}){
         </div>
 
         {/* Join league */}
-        <div style={{padding:"20px",background:CD,border:`1px solid ${BD}`,borderRadius:"8px"}}>
-          <h2 style={{fontSize:"16px",fontWeight:"bold",marginBottom:"12px"}}>Join a League</h2>
-          <form onSubmit={handleJoinLeague} style={{display:"flex",gap:"8px"}}>
+        <div style={{padding:"16px",background:CD,border:`1px solid ${BD}`,borderRadius:14}}>
+          <div style={{fontSize:11,color:MT,fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>Join a League</div>
+          <form onSubmit={handleJoinLeague} style={{display:"flex",gap:8}}>
             <input
               type="text"
               value={inviteCode}
@@ -440,26 +448,28 @@ function LeagueGate({user,children}){
               placeholder="Invite code"
               style={{
                 flex:1,
-                padding:"10px",
+                padding:"10px 14px",
                 background:CD2,
                 border:`1px solid ${BD}`,
-                borderRadius:"6px",
+                borderRadius:10,
                 color:TX,
-                fontSize:"13px",
-                fontFamily:"Outfit",
+                fontSize:13,
+                fontFamily:"'Outfit',sans-serif",
+                outline:"none",
               }}
             />
             <button
               type="submit"
               style={{
-                padding:"10px 16px",
+                padding:"10px 18px",
                 background:A,
                 border:"none",
-                borderRadius:"6px",
+                borderRadius:10,
                 color:"#000",
-                fontWeight:"bold",
-                fontSize:"13px",
+                fontWeight:700,
+                fontSize:13,
                 cursor:"pointer",
+                fontFamily:"'Outfit',sans-serif",
               }}
             >
               Join
@@ -467,7 +477,7 @@ function LeagueGate({user,children}){
           </form>
         </div>
 
-        {error && <div style={{marginTop:"16px",color:DG,fontSize:"13px",padding:"12px",background:`${DG}20`,borderRadius:"6px"}}>{error}</div>}
+        {error && <div style={{marginTop:14,color:DG,fontSize:12,padding:"10px 14px",background:`${DG}15`,borderRadius:10,border:`1px solid ${DG}30`}}>{error}</div>}
       </div>
     </div>
   );
