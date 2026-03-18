@@ -75,15 +75,11 @@ const ARGUED=[
 
 // SVG Icons (exact match from original)
 const CourtIcon = () => (<svg width="16" height="20" viewBox="0 0 24 30" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="24" rx="1"/><line x1="12" y1="3" x2="12" y2="27"/><line x1="2" y1="15" x2="22" y2="15"/><rect x="8" y="3" width="8" height="5" rx="0" fill="none"/><rect x="8" y="22" width="8" height="5" rx="0" fill="none"/></svg>);
-const PadelLogo = () => (<div style={{width:42,height:42,borderRadius:12,background:`${A}12`,display:"flex",alignItems:"center",justifyContent:"center"}}>
-  <svg width="28" height="28" viewBox="0 0 50 50" fill="none">
-    <rect x="14" y="2" width="18" height="28" rx="9" stroke={A} strokeWidth="2.5"/>
-    <circle cx="20" cy="12" r="1.5" fill={A} opacity="0.5"/><circle cx="26" cy="12" r="1.5" fill={A} opacity="0.5"/>
-    <circle cx="20" cy="18" r="1.5" fill={A} opacity="0.5"/><circle cx="26" cy="18" r="1.5" fill={A} opacity="0.5"/>
-    <circle cx="23" cy="15" r="1.5" fill={A} opacity="0.5"/>
-    <rect x="20" y="30" width="6" height="14" rx="3" stroke={A} strokeWidth="2.5" fill="none"/>
-    <circle cx="39" cy="10" r="7" stroke={A} strokeWidth="2" fill={`${A}15`}/>
-    <path d="M34.5 5.5 Q39 10 43.5 5.5" stroke={A} strokeWidth="1.2" fill="none"/>
+const PadelLogo = () => (<div style={{width:48,height:48,borderRadius:14,background:`${A}12`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+  <svg width="32" height="32" viewBox="0 0 50 50" fill="none">
+    <circle cx="25" cy="25" r="22" stroke={A} strokeWidth="2.5" fill={`${A}10`}/>
+    <path d="M8 20 Q25 8 42 20" stroke={A} strokeWidth="2" fill="none"/>
+    <path d="M8 30 Q25 42 42 30" stroke={A} strokeWidth="2" fill="none"/>
   </svg>
 </div>);
 
@@ -144,7 +140,7 @@ function AuthGate({children}){
             <PadelLogo/>
             <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:"8px",marginTop:"16px"}}>
               <CourtIcon/>
-              <h1 style={{fontSize:22,fontWeight:900,letterSpacing:2,color:TX,fontFamily:"'Outfit',sans-serif"}}><span style={{color:A}}>PADEL</span> <span style={{fontStyle:"italic"}}>BATTLE</span></h1>
+              <h1 style={{fontSize:22,fontWeight:900,letterSpacing:2,color:TX,fontFamily:"'Outfit',sans-serif"}}><span style={{color:A}}>Padel</span>Hub</h1>
             </div>
             <p style={{color:MT,fontSize:12,fontWeight:500,letterSpacing:1,marginTop:6,textTransform:"uppercase"}}>Track your game. Master the court.</p>
           </div>
@@ -218,6 +214,8 @@ function LeagueGate({user,children}){
   const [leagueName,setLeagueName]=useState("");
   const [inviteCode,setInviteCode]=useState("");
   const [error,setError]=useState("");
+  const [editingLeagueId,setEditingLeagueId]=useState(null);
+  const [editLeagueName,setEditLeagueName]=useState("");
 
   useEffect(()=>{
     loadUserLeagues();
@@ -348,6 +346,26 @@ function LeagueGate({user,children}){
     }
   };
 
+  const handleRenameLeague = async (leagueId) => {
+    if(!editLeagueName.trim()) return;
+    try {
+      const {error:err} = await supabase.from("leagues").update({name:editLeagueName.trim()}).eq("id",leagueId);
+      if(err) throw err;
+      setEditingLeagueId(null);
+      setEditLeagueName("");
+      await loadUserLeagues();
+    } catch(err) { setError(err.message || "Failed to rename league"); }
+  };
+
+  const handleDeleteLeague = async (leagueId) => {
+    if(!confirm("Delete this league and ALL its data (players, matches, seasons)? This cannot be undone.")) return;
+    try {
+      const {error:err} = await supabase.from("leagues").delete().eq("id",leagueId);
+      if(err) throw err;
+      await loadUserLeagues();
+    } catch(err) { setError(err.message || "Failed to delete league"); }
+  };
+
   if (loading) return <div style={{background:BG,width:"100vw",height:"100vh",display:"flex",alignItems:"center",justifyContent:"center",color:TX}}>Loading leagues...</div>;
 
   if (selectedLeagueId && leagues.some(l=>l.id===selectedLeagueId)) {
@@ -360,7 +378,7 @@ function LeagueGate({user,children}){
         <div style={{textAlign:"center",marginBottom:28}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
             <CourtIcon/>
-            <h1 style={{fontSize:20,fontWeight:900,letterSpacing:2}}><span style={{color:A}}>PADEL</span> <span style={{fontStyle:"italic"}}>BATTLE</span></h1>
+            <h1 style={{fontSize:20,fontWeight:900,letterSpacing:2}}><span style={{color:A}}>Padel</span>Hub</h1>
           </div>
           <p style={{color:MT,fontSize:11,fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginTop:6}}>Select a League</p>
         </div>
@@ -371,25 +389,23 @@ function LeagueGate({user,children}){
             <div style={{fontSize:11,color:MT,fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>Your Leagues</div>
             <div style={{display:"flex",flexDirection:"column",gap:8}}>
               {leagues.map(l=>(
-                <button
-                  key={l.id}
-                  onClick={()=>setSelectedLeagueId(l.id)}
-                  style={{
-                    padding:"14px 16px",
-                    background:CD,
-                    border:`1px solid ${BD}`,
-                    borderRadius:12,
-                    color:TX,
-                    fontSize:14,
-                    fontWeight:600,
-                    cursor:"pointer",
-                    textAlign:"left",
-                    fontFamily:"'Outfit',sans-serif",
-                    display:"flex",alignItems:"center",gap:10,
-                  }}
-                >
-                  <span style={{fontSize:18}}>🏟️</span> {l.name}
-                </button>
+                <div key={l.id} style={{background:CD,border:`1px solid ${BD}`,borderRadius:12,padding:"12px 16px",display:"flex",alignItems:"center",gap:10}}>
+                  {editingLeagueId===l.id ? (
+                    <div style={{flex:1,display:"flex",gap:6,alignItems:"center"}}>
+                      <input value={editLeagueName} onChange={e=>setEditLeagueName(e.target.value)} style={{flex:1,padding:"6px 10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:13,fontFamily:"'Outfit',sans-serif",outline:"none"}}/>
+                      <button onClick={()=>handleRenameLeague(l.id)} style={{padding:"6px 10px",background:A,border:"none",borderRadius:8,color:"#000",fontSize:11,fontWeight:700,cursor:"pointer"}}>Save</button>
+                      <button onClick={()=>setEditingLeagueId(null)} style={{padding:"6px 10px",background:"transparent",border:`1px solid ${BD}`,borderRadius:8,color:MT,fontSize:11,fontWeight:600,cursor:"pointer"}}>✕</button>
+                    </div>
+                  ) : (
+                    <>
+                      <button onClick={()=>setSelectedLeagueId(l.id)} style={{flex:1,background:"none",border:"none",color:TX,fontSize:14,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",gap:10}}>
+                        <span style={{fontSize:18}}>🏟️</span> {l.name}
+                      </button>
+                      <button onClick={()=>{setEditingLeagueId(l.id);setEditLeagueName(l.name);}} style={{background:"none",border:"none",fontSize:13,cursor:"pointer",padding:"2px 6px"}} title="Rename">✏️</button>
+                      <button onClick={()=>handleDeleteLeague(l.id)} style={{background:"none",border:"none",fontSize:13,cursor:"pointer",padding:"2px 6px"}} title="Delete">🗑️</button>
+                    </>
+                  )}
+                </div>
               ))}
             </div>
           </div>
