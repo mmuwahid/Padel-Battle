@@ -4,20 +4,7 @@ import { supabase } from './supabase';
 // Color palette
 const A="#4ADE80",BG="#0a0a0f",CD="#12121a",CD2="#1a1a26",BD="#2a2a3a",TX="#e4e4ef",MT="#7a7a8e",DG="#f87171",GD="#FFD700",SV="#C0C0C0",BZ="#CD7F32",BL="#4da6ff",PU="#a855f7";
 
-// Default roster (used when creating a new league)
-const DEFAULT_ROSTER=[
-  {name:"Mohammed",nickname:"Moody"},
-  {name:"Basel",nickname:null},
-  {name:"Jawad",nickname:null},
-  {name:"Saleh",nickname:null},
-  {name:"Hamza",nickname:null},
-  {name:"Hani",nickname:null},
-  {name:"Barhoum",nickname:null},
-  {name:"MAK",nickname:null},
-  {name:"Luke",nickname:null},
-  {name:"Aboody",nickname:null},
-  {name:"Husain",nickname:null}
-];
+// No default roster — players created when users join and claim/create identity
 
 // Helper functions
 function win(sets){let a=0,b=0;sets.forEach(([x,y])=>{if(x>y)a++;else b++;});return a>b?"A":"B";}
@@ -280,18 +267,7 @@ function LeagueGate({user,children}){
 
       if (seasonErr) throw seasonErr;
 
-      // Create default roster (11 players)
-      const playerInserts = DEFAULT_ROSTER.map(p=>({
-        league_id:leagueId,
-        name:p.name,
-        nickname:p.nickname,
-      }));
-
-      const {error:playerErr} = await supabase
-        .from("players")
-        .insert(playerInserts);
-
-      if (playerErr) throw playerErr;
+      // No default roster — players are created when users join and claim/create their identity
 
       // Refresh and select
       await loadUserLeagues();
@@ -523,6 +499,10 @@ function AppContent({leagueId,user}){
   const [selectedPlayer,setSelectedPlayer]=useState(null);
   const [selectedSeason,setSelectedSeason]=useState(null);
   const [tournament,setTournament]=useState(null);
+  const [claimedPlayer,setClaimedPlayer]=useState(undefined); // undefined=loading, null=unclaimed, object=claimed
+  const [newPlayerName,setNewPlayerName]=useState("");
+  const [newPlayerNick,setNewPlayerNick]=useState("");
+  const [claimError,setClaimError]=useState("");
 
   // Load league data from Supabase
   useEffect(()=>{
@@ -592,6 +572,10 @@ function AppContent({leagueId,user}){
 
       if (tournamentsErr) throw tournamentsErr;
       setTournaments(tournamentsData || []);
+
+      // Check if current user has claimed a player in this league
+      const claimed = (playersData||[]).find(p => p.user_id === user.id);
+      setClaimedPlayer(claimed || null);
 
       setLoading(false);
     } catch (err) {
@@ -722,10 +706,78 @@ function AppContent({leagueId,user}){
     return Object.values(combo).map(c=>({...c,games:c.wins+c.losses})).sort((a,b)=>b.games-a.games);
   },[matches]);
 
-  if (loading) return <div style={{background:BG,width:"100vw",height:"100vh",display:"flex",alignItems:"center",justifyContent:"center",color:TX}}>Loading league...</div>;
+  if (loading) return <div style={{background:BG,width:"100vw",height:"100vh",display:"flex",alignItems:"center",justifyContent:"center",color:TX,fontFamily:"'Outfit',sans-serif"}}>Loading league...</div>;
+
+  // CLAIM PLAYER SCREEN — shown if user hasn't claimed a player in this league
+  const claimPlayer = async (playerId) => {
+    try {
+      setClaimError("");
+      const {error:err} = await supabase.from("players").update({user_id:user.id}).eq("id",playerId).is("user_id",null);
+      if(err) throw err;
+      await loadLeagueData();
+    } catch(err) { setClaimError(err.message||"Failed to claim player"); }
+  };
+
+  const createAndClaimPlayer = async () => {
+    if(!newPlayerName.trim()) { setClaimError("Name required"); return; }
+    try {
+      setClaimError("");
+      const {data,error:err} = await supabase.from("players").insert({league_id:leagueId,name:newPlayerName.trim(),nickname:newPlayerNick.trim()||null,user_id:user.id}).select().single();
+      if(err) throw err;
+      setNewPlayerName("");setNewPlayerNick("");
+      await loadLeagueData();
+    } catch(err) { setClaimError(err.message||"Failed to create player"); }
+  };
+
+  if (claimedPlayer === null) {
+    const unclaimed = players.filter(p => !p.user_id);
+    return (
+      <div style={{background:BG,minHeight:"100vh",padding:20,fontFamily:"'Outfit',sans-serif",color:TX}}>
+        <div style={{maxWidth:420,margin:"0 auto",paddingTop:20}}>
+          <div style={{textAlign:"center",marginBottom:24}}>
+            <PadelLogoSmall/>
+            <h1 style={{fontSize:20,fontWeight:900,letterSpacing:2,marginTop:8}}><span style={{color:A}}>Padel</span>Hub</h1>
+            <p style={{color:MT,fontSize:11,fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginTop:6}}>Welcome to {league?.name}</p>
+          </div>
+
+          <h2 style={{fontSize:16,fontWeight:700,marginBottom:4}}>Who are you?</h2>
+          <p style={{fontSize:12,color:MT,marginBottom:16,lineHeight:1.5}}>Select your player name to link your account, or create a new one if you're not listed.</p>
+
+          {/* Unclaimed players */}
+          {unclaimed.length > 0 && (
+            <div style={{marginBottom:20}}>
+              <div style={{fontSize:11,color:MT,fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Existing Players</div>
+              <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                {unclaimed.map(p=>(
+                  <button key={p.id} onClick={()=>claimPlayer(p.id)} style={{padding:"12px 16px",background:CD,border:`1px solid ${BD}`,borderRadius:12,color:TX,fontSize:14,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                    <span>{p.nickname||p.name}{p.nickname?` (${p.name})`:""}</span>
+                    <span style={{fontSize:11,color:A,fontWeight:700}}>That's me →</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Create new player */}
+          <div style={{padding:16,background:CD,border:`1px solid ${BD}`,borderRadius:14}}>
+            <div style={{fontSize:11,color:MT,fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>I'm not listed — create my profile</div>
+            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+              <input value={newPlayerName} onChange={e=>setNewPlayerName(e.target.value)} placeholder="Full name" style={{padding:"10px 14px",background:CD2,border:`1px solid ${BD}`,borderRadius:10,color:TX,fontSize:13,fontFamily:"'Outfit',sans-serif",outline:"none"}}/>
+              <input value={newPlayerNick} onChange={e=>setNewPlayerNick(e.target.value)} placeholder="Nickname (optional)" style={{padding:"10px 14px",background:CD2,border:`1px solid ${BD}`,borderRadius:10,color:TX,fontSize:13,fontFamily:"'Outfit',sans-serif",outline:"none"}}/>
+              <button onClick={createAndClaimPlayer} style={{padding:"12px",background:`linear-gradient(135deg,${A},${A}cc)`,border:"none",borderRadius:12,color:"#000",fontWeight:800,fontSize:14,cursor:"pointer",fontFamily:"'Outfit',sans-serif",textTransform:"uppercase",letterSpacing:1}}>Join as New Player</button>
+            </div>
+          </div>
+
+          {claimError && <div style={{marginTop:14,color:DG,fontSize:12,padding:"10px 14px",background:`${DG}15`,borderRadius:10,border:`1px solid ${DG}30`}}>{claimError}</div>}
+
+          <button onClick={()=>setSelectedLeagueId(null)} style={{marginTop:16,width:"100%",padding:"10px",background:"transparent",border:`1px solid ${BD}`,borderRadius:10,color:MT,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>← Back to Leagues</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div style={{background:BG,minHeight:"100vh",paddingBottom:"calc(80px + env(safe-area-inset-bottom, 0px))",fontFamily:"Outfit",color:TX}}>
+    <div style={{background:BG,minHeight:"100vh",paddingBottom:"calc(80px + env(safe-area-inset-bottom, 0px))",fontFamily:"'Outfit',sans-serif",color:TX}}>
       {/* HEADER */}
       <div style={{background:CD,borderBottom:`1px solid ${BD}`,padding:"12px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:10}}>
         <div style={{display:"flex",alignItems:"center",gap:"12px"}}>
