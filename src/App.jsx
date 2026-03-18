@@ -74,7 +74,9 @@ const ARGUED=[
 ];
 
 // SVG Icons (exact match from original)
+// Court icon for nav bar "Matches" tab
 const CourtIcon = () => (<svg width="16" height="20" viewBox="0 0 24 30" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="24" rx="1"/><line x1="12" y1="3" x2="12" y2="27"/><line x1="2" y1="15" x2="22" y2="15"/><rect x="8" y="3" width="8" height="5" rx="0" fill="none"/><rect x="8" y="22" width="8" height="5" rx="0" fill="none"/></svg>);
+// Tennis ball logo — large (login screen)
 const PadelLogo = () => (<div style={{width:48,height:48,borderRadius:14,background:`${A}12`,display:"flex",alignItems:"center",justifyContent:"center"}}>
   <svg width="32" height="32" viewBox="0 0 50 50" fill="none">
     <circle cx="25" cy="25" r="22" stroke={A} strokeWidth="2.5" fill={`${A}10`}/>
@@ -82,6 +84,12 @@ const PadelLogo = () => (<div style={{width:48,height:48,borderRadius:14,backgro
     <path d="M8 30 Q25 42 42 30" stroke={A} strokeWidth="2" fill="none"/>
   </svg>
 </div>);
+// Tennis ball logo — small (header, league screen)
+const PadelLogoSmall = () => (<svg width="22" height="22" viewBox="0 0 50 50" fill="none">
+  <circle cx="25" cy="25" r="22" stroke={A} strokeWidth="2.5" fill={`${A}10`}/>
+  <path d="M8 20 Q25 8 42 20" stroke={A} strokeWidth="2" fill="none"/>
+  <path d="M8 30 Q25 42 42 30" stroke={A} strokeWidth="2" fill="none"/>
+</svg>);
 
 // Tab definitions (original layout: 3 left + center button + 3 right)
 const TL=[{key:"board",label:"Leaderboard",icon:"🏆"},{key:"history",label:"Matches",icon:"court"},{key:"combos",label:"Combos",icon:"🤝"}];
@@ -139,7 +147,7 @@ function AuthGate({children}){
           <div style={{textAlign:"center",marginBottom:"32px"}}>
             <PadelLogo/>
             <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:"8px",marginTop:"16px"}}>
-              <CourtIcon/>
+              <PadelLogoSmall/>
               <h1 style={{fontSize:22,fontWeight:900,letterSpacing:2,color:TX,fontFamily:"'Outfit',sans-serif"}}><span style={{color:A}}>Padel</span>Hub</h1>
             </div>
             <p style={{color:MT,fontSize:12,fontWeight:500,letterSpacing:1,marginTop:6,textTransform:"uppercase"}}>Track your game. Master the court.</p>
@@ -229,7 +237,7 @@ function LeagueGate({user,children}){
     try {
       const {data,error:err} = await supabase
         .from("league_members")
-        .select("league_id,leagues(id,name)")
+        .select("league_id,leagues(id,name,invite_code)")
         .eq("user_id",user.id);
 
       if (err) throw err;
@@ -377,7 +385,7 @@ function LeagueGate({user,children}){
       <div style={{maxWidth:"420px",margin:"0 auto",paddingTop:"20px"}}>
         <div style={{textAlign:"center",marginBottom:28}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-            <CourtIcon/>
+            <PadelLogoSmall/>
             <h1 style={{fontSize:20,fontWeight:900,letterSpacing:2}}><span style={{color:A}}>Padel</span>Hub</h1>
           </div>
           <p style={{color:MT,fontSize:11,fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginTop:6}}>Select a League</p>
@@ -401,8 +409,9 @@ function LeagueGate({user,children}){
                       <button onClick={()=>setSelectedLeagueId(l.id)} style={{flex:1,background:"none",border:"none",color:TX,fontSize:14,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",gap:10}}>
                         <span style={{fontSize:18}}>🏟️</span> {l.name}
                       </button>
-                      <button onClick={()=>{setEditingLeagueId(l.id);setEditLeagueName(l.name);}} style={{background:"none",border:"none",fontSize:13,cursor:"pointer",padding:"2px 6px"}} title="Rename">✏️</button>
-                      <button onClick={()=>handleDeleteLeague(l.id)} style={{background:"none",border:"none",fontSize:13,cursor:"pointer",padding:"2px 6px"}} title="Delete">🗑️</button>
+                      <button onClick={()=>{const url=`${window.location.origin}?invite=${l.invite_code}`;if(navigator.share)navigator.share({title:"Join my PadelHub league",text:`Join "${l.name}" on PadelHub!`,url});else{navigator.clipboard.writeText(url);alert("Invite link copied!");}}} style={{background:"none",border:`1px solid ${A}40`,borderRadius:6,color:A,fontSize:10,fontWeight:600,cursor:"pointer",padding:"4px 8px",fontFamily:"'Outfit',sans-serif"}} title="Share invite link">Invite</button>
+                      <button onClick={()=>{setEditingLeagueId(l.id);setEditLeagueName(l.name);}} style={{background:"none",border:`1px solid ${BD}`,borderRadius:6,color:MT,fontSize:10,fontWeight:600,cursor:"pointer",padding:"4px 8px",fontFamily:"'Outfit',sans-serif"}} title="Edit">Edit</button>
+                      <button onClick={()=>handleDeleteLeague(l.id)} style={{background:"none",border:`1px solid ${DG}40`,borderRadius:6,color:DG,fontSize:10,fontWeight:600,cursor:"pointer",padding:"4px 8px",fontFamily:"'Outfit',sans-serif"}} title="Delete">Delete</button>
                     </>
                   )}
                 </div>
@@ -720,7 +729,7 @@ function AppContent({leagueId,user}){
       {/* HEADER */}
       <div style={{background:CD,borderBottom:`1px solid ${BD}`,padding:"12px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:10}}>
         <div style={{display:"flex",alignItems:"center",gap:"12px"}}>
-          <CourtIcon/>
+          <PadelLogoSmall/>
           <div>
             <h1 style={{fontSize:"18px",fontWeight:"bold",margin:0,color:A}}>{league?.name||"League"}</h1>
             <p style={{fontSize:"11px",color:MT,margin:"2px 0 0 0"}}>ELO Season 1</p>
