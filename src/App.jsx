@@ -508,7 +508,8 @@ function LeagueGate({user,children}){
   if (loading) return <div style={{background:BG,width:"100vw",height:"100vh",display:"flex",alignItems:"center",justifyContent:"center",color:TX}}>Loading leagues...</div>;
 
   if (selectedLeagueId && leagues.some(l=>l.id===selectedLeagueId)) {
-    return children(selectedLeagueId);
+    const switchLeague = () => setSelectedLeagueId(null);
+    return children(selectedLeagueId, switchLeague);
   }
 
   return (
@@ -640,7 +641,7 @@ function LeagueGate({user,children}){
 // ============================================================================
 // MAIN APP COMPONENT
 // ============================================================================
-function AppContent({leagueId,user}){
+function AppContent({leagueId,user,onSwitchLeague}){
   const [league,setLeague]=useState(null);
   const [players,setPlayers]=useState([]);
   const [matches,setMatches]=useState([]);
@@ -658,11 +659,16 @@ function AppContent({leagueId,user}){
   const [newPlayerName,setNewPlayerName]=useState("");
   const [newPlayerNick,setNewPlayerNick]=useState("");
   const [claimError,setClaimError]=useState("");
-  // Profile/Settings panel
-  const [showProfile,setShowProfile]=useState(false);
+  // Sidebar and view management
+  const [sidebarOpen,setSidebarOpen]=useState(false);
+  const [sidebarView,setSidebarView]=useState(null); // null | "profile" | "h2h" | "settings"
+  // Settings/Profile panel (reused for both)
   const [editDisplayName,setEditDisplayName]=useState("");
   const [profileSaving,setProfileSaving]=useState(false);
   const [profileMsg,setProfileMsg]=useState("");
+  // H2H view state
+  const [h2hPlayer1,setH2hPlayer1]=useState(null);
+  const [h2hPlayer2,setH2hPlayer2]=useState(null);
 
   // Load league data from Supabase
   useEffect(()=>{
@@ -962,14 +968,14 @@ function AppContent({leagueId,user}){
             </p>
           </div>
         </div>
-        {/* User avatar — opens profile panel */}
+        {/* User avatar — opens sidebar */}
         <button
-          onClick={()=>{setShowProfile(!showProfile);setEditDisplayName(user.user_metadata?.display_name||user.email?.split("@")[0]||"");setProfileMsg("");}}
+          onClick={()=>{setSidebarOpen(!sidebarOpen);setSidebarView(null);setEditDisplayName(user.user_metadata?.display_name||user.email?.split("@")[0]||"");setProfileMsg("");}}
           style={{
             width:36,height:36,borderRadius:"50%",
-            background:showProfile?A:`${A}20`,
-            border:showProfile?`2px solid ${A}`:`2px solid ${A}40`,
-            color:showProfile?"#000":A,
+            background:sidebarOpen?A:`${A}20`,
+            border:sidebarOpen?`2px solid ${A}`:`2px solid ${A}40`,
+            color:sidebarOpen?"#000":A,
             fontSize:14,fontWeight:800,cursor:"pointer",
             display:"flex",alignItems:"center",justifyContent:"center",
             fontFamily:"'Outfit',sans-serif",transition:"all 0.2s",
@@ -980,88 +986,425 @@ function AppContent({leagueId,user}){
         </button>
       </div>
 
-      {/* PROFILE & SETTINGS PANEL */}
-      {showProfile && (
-        <div style={{background:CD,borderBottom:`1px solid ${BD}`,padding:"16px",position:"sticky",top:61,zIndex:9}}>
-          <div style={{maxWidth:400,margin:"0 auto"}}>
-            {/* User info */}
-            <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
-              <div style={{width:48,height:48,borderRadius:"50%",background:`${A}20`,border:`2px solid ${A}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,fontWeight:800,color:A}}>
-                {(user.user_metadata?.display_name||user.email||"U")[0].toUpperCase()}
-              </div>
-              <div style={{flex:1}}>
-                <div style={{fontSize:15,fontWeight:700,color:TX}}>{user.user_metadata?.display_name||user.email?.split("@")[0]||"User"}</div>
-                <div style={{fontSize:11,color:MT,marginTop:2}}>{user.email}</div>
-              </div>
-            </div>
+      {/* SIDEBAR OVERLAY */}
+      {sidebarOpen && (
+        <div
+          onClick={()=>setSidebarOpen(false)}
+          style={{
+            position:"fixed",top:0,left:0,right:0,bottom:0,
+            background:"rgba(0,0,0,0.5)",zIndex:98,
+          }}
+        />
+      )}
 
-            {/* Edit display name */}
-            <div style={{marginBottom:14}}>
-              <label style={{display:"block",color:MT,fontSize:10,fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>Display Name</label>
-              <div style={{display:"flex",gap:8}}>
-                <input
-                  type="text"
-                  value={editDisplayName}
-                  onChange={(e)=>setEditDisplayName(e.target.value)}
-                  placeholder="Your name"
-                  style={{flex:1,padding:"8px 12px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:13,fontFamily:"'Outfit',sans-serif",outline:"none"}}
-                />
-                <button
-                  onClick={async ()=>{
-                    if(!editDisplayName.trim())return;
-                    setProfileSaving(true);setProfileMsg("");
-                    try{
-                      const {error:err}=await supabase.auth.updateUser({data:{display_name:editDisplayName.trim()}});
-                      if(err)throw err;
-                      // Also update profiles table
-                      await supabase.from("profiles").update({display_name:editDisplayName.trim()}).eq("id",user.id);
-                      // Update claimed player name if exists
-                      if(claimedPlayer){
-                        await supabase.from("players").update({name:editDisplayName.trim()}).eq("id",claimedPlayer.id);
-                        await loadLeagueData();
-                      }
-                      setProfileMsg("Saved!");
-                      setTimeout(()=>setProfileMsg(""),2000);
-                    }catch(err){setProfileMsg(err.message||"Failed to update");}
-                    setProfileSaving(false);
-                  }}
-                  disabled={profileSaving}
-                  style={{padding:"8px 14px",background:A,border:"none",borderRadius:8,color:"#000",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif",opacity:profileSaving?0.6:1}}
-                >
-                  {profileSaving?"...":"Save"}
-                </button>
-              </div>
-              {profileMsg && <div style={{fontSize:11,color:profileMsg==="Saved!"?A:DG,marginTop:4}}>{profileMsg}</div>}
+      {/* SIDEBAR */}
+      <div style={{
+        position:"fixed",top:0,right:0,width:320,height:"100vh",
+        background:CD,borderLeft:`1px solid ${BD}`,
+        zIndex:99,
+        transform:sidebarOpen?"translateX(0)":"translateX(100%)",
+        transition:"transform 0.3s ease-in-out",
+        display:"flex",flexDirection:"column",
+        boxShadow:sidebarOpen?"0 0 20px rgba(0,0,0,0.5)":"none",
+        overflow:"auto",
+      }}>
+        {/* Header with user info */}
+        <div style={{padding:"20px 16px",borderBottom:`1px solid ${BD}`}}>
+          <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
+            <div style={{width:56,height:56,borderRadius:"50%",background:`${A}20`,border:`2px solid ${A}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,fontWeight:800,color:A}}>
+              {(user.user_metadata?.display_name||user.email||"U")[0].toUpperCase()}
             </div>
-
-            {/* League info */}
-            <div style={{padding:"10px 12px",background:CD2,borderRadius:8,marginBottom:14}}>
-              <div style={{fontSize:10,color:MT,fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>Current League</div>
-              <div style={{fontSize:13,fontWeight:600,color:TX}}>{league?.name||"—"}</div>
-              {isAdmin && <div style={{fontSize:10,color:A,marginTop:2}}>Admin</div>}
-            </div>
-
-            {/* Action buttons */}
-            <div style={{display:"flex",gap:8}}>
-              <button
-                onClick={()=>{setSelectedLeagueId(null);setShowProfile(false);}}
-                style={{flex:1,padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}
-              >
-                Switch League
-              </button>
-              <button
-                onClick={async()=>{await supabase.auth.signOut();}}
-                style={{flex:1,padding:"10px",background:`${DG}15`,border:`1px solid ${DG}40`,borderRadius:8,color:DG,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}
-              >
-                Sign Out
-              </button>
+            <div style={{flex:1}}>
+              <div style={{fontSize:14,fontWeight:700,color:TX}}>{user.user_metadata?.display_name||user.email?.split("@")[0]||"User"}</div>
+              <div style={{fontSize:10,color:MT,marginTop:2}}>{user.email}</div>
             </div>
           </div>
         </div>
+
+        {/* Sidebar content */}
+        <div style={{flex:1,padding:"16px",overflow:"auto"}}>
+          {/* User section */}
+          <div>
+            <button onClick={()=>{setSidebarView("profile");}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>
+              My Profile
+            </button>
+            <button onClick={()=>{setSidebarView("h2h");}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>
+              Head-to-Head
+            </button>
+            <button onClick={()=>{setSidebarView(null);setTab("stats");setSidebarOpen(false);}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>
+              My Stats
+            </button>
+          </div>
+
+          {/* Divider */}
+          <div style={{height:"1px",background:BD,margin:"12px 0"}} />
+
+          {/* League section */}
+          <div style={{marginBottom:12}}>
+            <div style={{fontSize:10,color:MT,fontWeight:600,letterSpacing:1,textTransform:"uppercase",paddingLeft:16,marginBottom:8}}>League</div>
+            <div style={{padding:"12px 16px",background:CD2,borderRadius:8,marginBottom:8}}>
+              <div style={{fontSize:13,fontWeight:600,color:TX,display:"flex",alignItems:"center",gap:6}}>
+                {league?.name||"—"}
+                {isAdmin && <span style={{fontSize:9,color:A,fontWeight:700,background:`${A}20`,padding:"2px 6px",borderRadius:4}}>Admin</span>}
+              </div>
+            </div>
+            <button onClick={()=>{onSwitchLeague();}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>
+              Switch League
+            </button>
+            <button onClick={()=>{const code=league?.invite_code;if(code){const url=`${window.location.origin}${window.location.pathname}?invite=${code}`;if(navigator.share)navigator.share({title:"Join my PadelHub league",text:`Join "${league?.name}" on PadelHub!`,url});else{navigator.clipboard.writeText(url);alert("Invite link copied!");}}}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>
+              Invite Players
+            </button>
+          </div>
+
+          {/* Divider */}
+          <div style={{height:"1px",background:BD,margin:"12px 0"}} />
+
+          {/* App section */}
+          <div>
+            <div style={{fontSize:10,color:MT,fontWeight:600,letterSpacing:1,textTransform:"uppercase",paddingLeft:16,marginBottom:8}}>App</div>
+            <button onClick={()=>{setSidebarView("settings");}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>
+              Settings
+            </button>
+          </div>
+        </div>
+
+        {/* Sign Out button at bottom */}
+        <div style={{padding:"16px",borderTop:`1px solid ${BD}`}}>
+          <button onClick={async()=>{await supabase.auth.signOut();}} style={{width:"100%",padding:"12px",background:`${DG}15`,border:`1px solid ${DG}40`,borderRadius:8,color:DG,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
+            Sign Out
+          </button>
+        </div>
+      </div>
+
+      {/* SIDEBAR VIEWS - only show if sidebarView is active */}
+      {sidebarView && (
+        <div style={{padding:"0"}}>
+          {/* PROFILE VIEW */}
+          {sidebarView==="profile" && (
+            <div style={{padding:"20px 16px",paddingBottom:"calc(80px + env(safe-area-inset-bottom, 0px))"}}>
+              <button onClick={()=>setSidebarView(null)} style={{marginBottom:20,background:"none",border:"none",color:A,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>← Back</button>
+
+              {/* Profile Card */}
+              <div style={{textAlign:"center",marginBottom:24}}>
+                <div style={{width:80,height:80,borderRadius:"50%",background:`${A}20`,border:`3px solid ${A}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:40,fontWeight:800,color:A,margin:"0 auto 12px"}}>
+                  {(user.user_metadata?.display_name||user.email||"U")[0].toUpperCase()}
+                </div>
+                <h2 style={{fontSize:18,fontWeight:700,margin:0,color:TX}}>{user.user_metadata?.display_name||user.email?.split("@")[0]||"User"}</h2>
+                <p style={{fontSize:12,color:MT,margin:"4px 0 0 0"}}>{user.email}</p>
+                {claimedPlayer && <div style={{fontSize:11,color:A,marginTop:4,display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
+                  <span>{isAdmin?"👤 Admin":"👤 Member"}</span>
+                </div>}
+              </div>
+
+              {/* Career Stats Grid */}
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:24}}>
+                {claimedPlayer && ps.filter(p=>p.id===claimedPlayer.id).map(p=>(
+                  <React.Fragment key={p.id}>
+                    <div style={{background:CD2,padding:12,borderRadius:8,textAlign:"center"}}>
+                      <div style={{fontSize:11,color:MT,fontWeight:600,marginBottom:4}}>Wins</div>
+                      <div style={{fontSize:20,fontWeight:800,color:A}}>{p.wins}</div>
+                    </div>
+                    <div style={{background:CD2,padding:12,borderRadius:8,textAlign:"center"}}>
+                      <div style={{fontSize:11,color:MT,fontWeight:600,marginBottom:4}}>Losses</div>
+                      <div style={{fontSize:20,fontWeight:800,color:A}}>{p.losses}</div>
+                    </div>
+                    <div style={{background:CD2,padding:12,borderRadius:8,textAlign:"center"}}>
+                      <div style={{fontSize:11,color:MT,fontWeight:600,marginBottom:4}}>ELO</div>
+                      <div style={{fontSize:20,fontWeight:800,color:A}}>{Math.round(elo[p.id]||1500)}</div>
+                    </div>
+                  </React.Fragment>
+                ))}
+              </div>
+
+              {/* Win Rate Progress */}
+              {claimedPlayer && ps.filter(p=>p.id===claimedPlayer.id).map(p=>(
+                <React.Fragment key={p.id}>
+                  <div style={{marginBottom:24}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                      <label style={{fontSize:12,fontWeight:600,color:TX}}>Win Rate</label>
+                      <span style={{fontSize:12,fontWeight:700,color:A}}>{Math.round(p.winRate*100)}%</span>
+                    </div>
+                    <div style={{width:"100%",height:8,background:CD2,borderRadius:4,overflow:"hidden"}}>
+                      <div style={{width:`${Math.max(p.winRate*100,5)}%`,height:"100%",background:A,transition:"width 0.3s"}}/>
+                    </div>
+                  </div>
+
+                  {/* Additional Stats */}
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:24}}>
+                    <div style={{background:CD2,padding:12,borderRadius:8}}>
+                      <div style={{fontSize:11,color:MT,fontWeight:600,marginBottom:4}}>Best Streak</div>
+                      <div style={{fontSize:16,fontWeight:800,color:A}}>{getStreak(p.id)} wins</div>
+                    </div>
+                    <div style={{background:CD2,padding:12,borderRadius:8}}>
+                      <div style={{fontSize:11,color:MT,fontWeight:600,marginBottom:4}}>MOTM Awards</div>
+                      <div style={{fontSize:16,fontWeight:800,color:A}}>{p.motm}</div>
+                    </div>
+                  </div>
+
+                  {/* ELO History */}
+                  <div style={{marginBottom:24}}>
+                    <h3 style={{fontSize:13,fontWeight:700,color:TX,marginBottom:12}}>ELO History</h3>
+                    <div style={{display:"flex",alignItems:"flex-end",gap:2,height:100,background:CD2,padding:8,borderRadius:8}}>
+                      {(() => {
+                        const pMatches = matches.filter(m=>m.team_a.includes(p.id)||m.team_b.includes(p.id)).sort((a,b)=>new Date(a.date)-new Date(b.date));
+                        const eloHistory = [];
+                        let currentElo = 1500;
+                        pMatches.forEach(m => {
+                          const allElo = calcElo(players, matches.filter(mm => new Date(mm.date) <= new Date(m.date)));
+                          eloHistory.push(allElo[p.id] || 1500);
+                        });
+                        const minElo = Math.min(...eloHistory, 1500);
+                        const maxElo = Math.max(...eloHistory, 1500);
+                        const range = maxElo - minElo || 1;
+                        return eloHistory.slice(-10).map((e, i) => (
+                          <div key={i} style={{flex:1,background:A,borderRadius:2,height:`${((e-minElo)/range)*100}%`,minHeight:4,opacity:0.8}}/>
+                        ));
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* Achievements */}
+                  <div style={{marginBottom:24}}>
+                    <h3 style={{fontSize:13,fontWeight:700,color:TX,marginBottom:12}}>Achievements</h3>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                      {ACHS.map(a => {
+                        const earned = a.ck(p);
+                        return (
+                          <div key={a.id} style={{padding:10,background:earned?CD2:`${CD2}80`,borderRadius:8,opacity:earned?1:0.5}}>
+                            <div style={{fontSize:20,marginBottom:4}}>{a.icon}</div>
+                            <div style={{fontSize:11,fontWeight:600,color:TX}}>{a.name}</div>
+                            {!earned && <div style={{fontSize:9,color:MT}}>🔒</div>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Recent Matches */}
+                  <div style={{marginBottom:24}}>
+                    <h3 style={{fontSize:13,fontWeight:700,color:TX,marginBottom:12}}>Recent Matches</h3>
+                    <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                      {matches.filter(m=>m.team_a.includes(p.id)||m.team_b.includes(p.id)).sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5).map(m => {
+                        const w = win(m.sets);
+                        const pTeam = m.team_a.includes(p.id)?"A":"B";
+                        const won = w === pTeam;
+                        return (
+                          <div key={m.id} style={{padding:10,background:CD2,borderRadius:8,display:"flex",alignItems:"center",gap:8}}>
+                            <div style={{fontSize:11,fontWeight:700,color:won?A:DG,background:won?`${A}15`:`${DG}15`,padding:"4px 8px",borderRadius:4,minWidth:36,textAlign:"center"}}>
+                              {won?"W":"L"}
+                            </div>
+                            <div style={{flex:1,fontSize:11}}>
+                              <div style={{fontWeight:600,color:TX}}>{getName(m.team_a[0])} & {getName(m.team_a[1])} vs {getName(m.team_b[0])} & {getName(m.team_b[1])}</div>
+                              <div style={{color:MT,fontSize:10,marginTop:2}}>{m.sets.map((s,i)=>`${s[0]}-${s[1]}`).join(", ")}</div>
+                            </div>
+                            <div style={{fontSize:9,color:MT}}>{new Date(m.date).toLocaleDateString()}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <button onClick={()=>{setSidebarView(null);setTab("history");}} style={{width:"100%",marginTop:12,padding:"10px",background:"transparent",border:`1px solid ${BD}`,borderRadius:8,color:A,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
+                      View All Matches
+                    </button>
+                  </div>
+                </React.Fragment>
+              ))}
+            </div>
+          )}
+
+          {/* H2H VIEW */}
+          {sidebarView==="h2h" && (
+            <div style={{padding:"20px 16px",paddingBottom:"calc(80px + env(safe-area-inset-bottom, 0px))"}}>
+              <button onClick={()=>setSidebarView(null)} style={{marginBottom:20,background:"none",border:"none",color:A,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>← Back</button>
+
+              <h2 style={{fontSize:18,fontWeight:700,marginBottom:16,color:TX}}>Head-to-Head</h2>
+
+              {/* Player Selectors */}
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20}}>
+                <div>
+                  <label style={{display:"block",fontSize:11,color:MT,fontWeight:600,marginBottom:6}}>Player 1</label>
+                  <select value={h2hPlayer1||""} onChange={(e)=>setH2hPlayer1(e.target.value||null)} style={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:12,fontFamily:"'Outfit',sans-serif",outline:"none",cursor:"pointer"}}>
+                    <option value="">Select player</option>
+                    {ps.map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={{display:"block",fontSize:11,color:MT,fontWeight:600,marginBottom:6}}>Player 2</label>
+                  <select value={h2hPlayer2||""} onChange={(e)=>setH2hPlayer2(e.target.value||null)} style={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:12,fontFamily:"'Outfit',sans-serif",outline:"none",cursor:"pointer"}}>
+                    <option value="">Select player</option>
+                    {ps.map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              {h2hPlayer1 && h2hPlayer2 && (
+                <>
+                  {(() => {
+                    const p1 = ps.find(p=>p.id===h2hPlayer1);
+                    const p2 = ps.find(p=>p.id===h2hPlayer2);
+                    const h2hMatches = matches.filter(m=>(m.team_a.includes(h2hPlayer1)&&m.team_b.includes(h2hPlayer2))||(m.team_a.includes(h2hPlayer2)&&m.team_b.includes(h2hPlayer1)));
+                    const p1Wins = h2hMatches.filter(m=>{const w=win(m.sets);return (m.team_a.includes(h2hPlayer1)&&w==="A")||(m.team_b.includes(h2hPlayer1)&&w==="B");}).length;
+                    const p2Wins = h2hMatches.length - p1Wins;
+
+                    const partnerMatches = matches.filter(m=>(m.team_a.includes(h2hPlayer1)&&m.team_a.includes(h2hPlayer2))||(m.team_b.includes(h2hPlayer1)&&m.team_b.includes(h2hPlayer2)));
+                    const opponentMatches = matches.filter(m=>(m.team_a.includes(h2hPlayer1)&&m.team_b.includes(h2hPlayer2))||(m.team_a.includes(h2hPlayer2)&&m.team_b.includes(h2hPlayer1)));
+
+                    return (
+                      <>
+                        {/* H2H Card */}
+                        <div style={{background:CD2,padding:16,borderRadius:12,marginBottom:20,textAlign:"center"}}>
+                          <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:12,marginBottom:12}}>
+                            <div style={{width:48,height:48,borderRadius:"50%",background:`${A}20`,border:`2px solid ${A}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:800,color:A}}>
+                              {(p1?.name||"?")[0]}
+                            </div>
+                            <div style={{fontSize:16,fontWeight:700,color:TX}}>{p1Wins} - {p2Wins}</div>
+                            <div style={{width:48,height:48,borderRadius:"50%",background:`${A}20`,border:`2px solid ${A}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:800,color:A}}>
+                              {(p2?.name||"?")[0]}
+                            </div>
+                          </div>
+                          <div style={{width:"100%",height:4,background:CD,borderRadius:2,overflow:"hidden",marginBottom:8}}>
+                            <div style={{width:`${h2hMatches.length>0?(p1Wins/h2hMatches.length)*100:50}%`,height:"100%",background:A}}/>
+                          </div>
+                          <div style={{fontSize:11,color:MT}}>All-time record ({h2hMatches.length} matches)</div>
+                        </div>
+
+                        {/* As Partners vs As Opponents */}
+                        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20}}>
+                          <div style={{background:CD2,padding:12,borderRadius:8}}>
+                            <div style={{fontSize:11,color:MT,fontWeight:600,marginBottom:8}}>As Partners</div>
+                            {partnerMatches.length > 0 ? (
+                              <div>
+                                {(() => {
+                                  const pWins = partnerMatches.filter(m=>{const w=win(m.sets);return (m.team_a.includes(h2hPlayer1)&&w==="A")||(m.team_b.includes(h2hPlayer1)&&w==="B");}).length;
+                                  const pLoss = partnerMatches.length - pWins;
+                                  return <div style={{fontSize:13,fontWeight:700,color:A}}>{pWins}W - {pLoss}L</div>;
+                                })()}
+                              </div>
+                            ) : <div style={{fontSize:12,color:MT}}>No matches</div>}
+                          </div>
+                          <div style={{background:CD2,padding:12,borderRadius:8}}>
+                            <div style={{fontSize:11,color:MT,fontWeight:600,marginBottom:8}}>As Opponents</div>
+                            {opponentMatches.length > 0 ? (
+                              <div>
+                                {(() => {
+                                  const oWins = opponentMatches.filter(m=>{const w=win(m.sets);return (m.team_a.includes(h2hPlayer1)&&w==="A")||(m.team_b.includes(h2hPlayer1)&&w==="B");}).length;
+                                  const oLoss = opponentMatches.length - oWins;
+                                  return <div style={{fontSize:13,fontWeight:700,color:A}}>{oWins}W - {oLoss}L</div>;
+                                })()}
+                              </div>
+                            ) : <div style={{fontSize:12,color:MT}}>No matches</div>}
+                          </div>
+                        </div>
+
+                        {/* Last 5 Encounters */}
+                        {h2hMatches.length > 0 && (
+                          <div>
+                            <h3 style={{fontSize:13,fontWeight:700,color:TX,marginBottom:12}}>Last 5 Encounters</h3>
+                            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                              {h2hMatches.sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5).map(m=>{
+                                const w=win(m.sets);
+                                const p1Won=(m.team_a.includes(h2hPlayer1)&&w==="A")||(m.team_b.includes(h2hPlayer1)&&w==="B");
+                                return (
+                                  <div key={m.id} style={{padding:10,background:CD,borderRadius:8}}>
+                                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+                                      <span style={{fontSize:11,fontWeight:600,color:p1Won?A:DG}}>{p1Won?"✓ Won":"✗ Lost"}</span>
+                                      <span style={{fontSize:10,color:MT}}>{new Date(m.date).toLocaleDateString()}</span>
+                                    </div>
+                                    <div style={{fontSize:10,color:TX}}>
+                                      {m.sets.map((s,i)=>`${s[0]}-${s[1]}`).join(" ")}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                </>
+              )}
+            </div>
+          )}
+
+          {/* SETTINGS VIEW */}
+          {sidebarView==="settings" && (
+            <div style={{padding:"20px 16px",paddingBottom:"calc(80px + env(safe-area-inset-bottom, 0px))"}}>
+              <button onClick={()=>setSidebarView(null)} style={{marginBottom:20,background:"none",border:"none",color:A,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>← Back</button>
+
+              <h2 style={{fontSize:18,fontWeight:700,marginBottom:20,color:TX}}>Settings</h2>
+
+              {/* Account Section */}
+              <div style={{marginBottom:24}}>
+                <h3 style={{fontSize:12,fontWeight:700,color:MT,letterSpacing:1,textTransform:"uppercase",marginBottom:12}}>Account</h3>
+
+                <div style={{marginBottom:12}}>
+                  <label style={{display:"block",color:MT,fontSize:10,fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>Display Name</label>
+                  <div style={{display:"flex",gap:8}}>
+                    <input type="text" value={editDisplayName} onChange={(e)=>setEditDisplayName(e.target.value)} placeholder="Your name" style={{flex:1,padding:"10px 12px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:13,fontFamily:"'Outfit',sans-serif",outline:"none"}}/>
+                    <button onClick={async()=>{if(!editDisplayName.trim())return;setProfileSaving(true);setProfileMsg("");try{const {error:err}=await supabase.auth.updateUser({data:{display_name:editDisplayName.trim()}});if(err)throw err;await supabase.from("profiles").update({display_name:editDisplayName.trim()}).eq("id",user.id);if(claimedPlayer){await supabase.from("players").update({name:editDisplayName.trim()}).eq("id",claimedPlayer.id);await loadLeagueData();}setProfileMsg("Saved!");setTimeout(()=>setProfileMsg(""),2000);}catch(err){setProfileMsg(err.message||"Failed to update");}setProfileSaving(false);}} disabled={profileSaving} style={{padding:"10px 14px",background:A,border:"none",borderRadius:8,color:"#000",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif",opacity:profileSaving?0.6:1}}>
+                      {profileSaving?"...":"Save"}
+                    </button>
+                  </div>
+                  {profileMsg && <div style={{fontSize:11,color:profileMsg==="Saved!"?A:DG,marginTop:4}}>{profileMsg}</div>}
+                </div>
+
+                <div style={{padding:"10px 12px",background:CD2,borderRadius:8,marginBottom:12}}>
+                  <label style={{display:"block",color:MT,fontSize:10,fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>Email</label>
+                  <div style={{fontSize:13,color:TX}}>{user.email}</div>
+                </div>
+
+                <div style={{padding:"10px 12px",background:CD2,borderRadius:8}}>
+                  <label style={{display:"block",color:MT,fontSize:10,fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>Linked Accounts</label>
+                  <div style={{fontSize:12,color:MT}}>Google: Not connected</div>
+                </div>
+              </div>
+
+              {/* Notifications Section */}
+              <div style={{marginBottom:24}}>
+                <h3 style={{fontSize:12,fontWeight:700,color:MT,letterSpacing:1,textTransform:"uppercase",marginBottom:12}}>Notifications</h3>
+
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 12px",background:CD2,borderRadius:8,marginBottom:8}}>
+                  <label style={{fontSize:12,fontWeight:600,color:TX,cursor:"pointer"}}>Push Notifications</label>
+                  <input type="checkbox" defaultChecked style={{cursor:"pointer"}}/>
+                </div>
+
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 12px",background:CD2,borderRadius:8,marginBottom:8}}>
+                  <label style={{fontSize:12,fontWeight:600,color:TX,cursor:"pointer"}}>Ranking Changes</label>
+                  <input type="checkbox" defaultChecked style={{cursor:"pointer"}}/>
+                </div>
+
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 12px",background:CD2,borderRadius:8}}>
+                  <label style={{fontSize:12,fontWeight:600,color:TX,cursor:"pointer"}}>New Members</label>
+                  <input type="checkbox" defaultChecked style={{cursor:"pointer"}}/>
+                </div>
+              </div>
+
+              {/* League Section */}
+              <div style={{marginBottom:24}}>
+                <h3 style={{fontSize:12,fontWeight:700,color:MT,letterSpacing:1,textTransform:"uppercase",marginBottom:12}}>League</h3>
+
+                <button onClick={()=>{onSwitchLeague();}} style={{width:"100%",padding:"12px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif",marginBottom:8}}>
+                  Switch League
+                </button>
+
+                {isAdmin && (
+                  <button style={{width:"100%",padding:"12px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
+                    League Settings
+                  </button>
+                )}
+              </div>
+
+              {/* Version */}
+              <div style={{textAlign:"center",paddingTop:20,borderTop:`1px solid ${BD}`,marginTop:20}}>
+                <div style={{fontSize:10,color:MT,fontWeight:600}}>PadelHub v2.0</div>
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
-      {/* LEADERBOARD TAB */}
-      {tab==="board"&&(
+      {/* LEADERBOARD TAB - only show if no sidebar view is active */}
+      {!sidebarView && tab==="board"&&(
         <div style={{padding:"20px 16px"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
             <h2 style={{fontSize:"18px",fontWeight:"bold",margin:0}}>Leaderboard</h2>
@@ -1144,7 +1487,7 @@ function AppContent({leagueId,user}){
       )}
 
       {/* LOG MATCH TAB */}
-      {tab==="log"&&selectedSeason&&(
+      {!sidebarView && tab==="log"&&selectedSeason&&(
         <LogMatch
           players={players}
           matches={matches}
@@ -1165,7 +1508,7 @@ function AppContent({leagueId,user}){
       )}
 
       {/* MATCHES TAB */}
-      {tab==="history"&&(
+      {!sidebarView && tab==="history"&&(
         <MatchHistory
           matches={matches}
           pm={Object.fromEntries(players.map(p=>[p.id,p]))}
@@ -1181,7 +1524,7 @@ function AppContent({leagueId,user}){
       )}
 
       {/* COMBOS TAB */}
-      {tab==="combos"&&(
+      {!sidebarView && tab==="combos"&&(
         <CombosView
           combos={combos}
           players={players}
@@ -1192,7 +1535,7 @@ function AppContent({leagueId,user}){
       )}
 
       {/* PLAYERS TAB */}
-      {tab==="stats"&&(
+      {!sidebarView && tab==="stats"&&(
         <PlayerStats
           players={players}
           ps={Object.fromEntries(ps.map(p=>[p.id,p]))}
@@ -1213,7 +1556,7 @@ function AppContent({leagueId,user}){
       )}
 
       {/* GAMEMODE TAB */}
-      {tab==="gamemode"&&(
+      {!sidebarView && tab==="gamemode"&&(
         <GameMode
           players={players}
           getName={getName}
@@ -1226,7 +1569,7 @@ function AppContent({leagueId,user}){
       )}
 
       {/* RULES TAB */}
-      {tab==="rules"&&<div className="fu">
+      {!sidebarView && tab==="rules"&&<div className="fu">
         <h2 style={{fontSize:18,fontWeight:800,marginBottom:4}}>Padel Rules</h2>
         <p style={{fontSize:11,color:MT,marginBottom:16}}>Official FIP rules summary</p>
         {RULES.map((r,i) => (
@@ -2111,7 +2454,7 @@ export default function App(){
     <AuthGate>
       {(user)=>(
         <LeagueGate user={user}>
-          {(leagueId)=><AppContent leagueId={leagueId} user={user}/>}
+          {(leagueId,switchLeague)=><AppContent leagueId={leagueId} user={user} onSwitchLeague={switchLeague}/>}
         </LeagueGate>
       )}
     </AuthGate>
