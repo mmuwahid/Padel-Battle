@@ -661,7 +661,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
   const [claimError,setClaimError]=useState("");
   // Sidebar and view management
   const [sidebarOpen,setSidebarOpen]=useState(false);
-  const [sidebarView,setSidebarView]=useState(null); // null | "profile" | "h2h" | "settings"
+  const [sidebarView,setSidebarView]=useState(null); // null | "profile" | "h2h" | "settings" | "admin"
   // Settings/Profile panel (reused for both)
   const [editDisplayName,setEditDisplayName]=useState("");
   const [profileSaving,setProfileSaving]=useState(false);
@@ -669,6 +669,13 @@ function AppContent({leagueId,user,onSwitchLeague}){
   // H2H view state
   const [h2hPlayer1,setH2hPlayer1]=useState(null);
   const [h2hPlayer2,setH2hPlayer2]=useState(null);
+  // Notifications toggle state
+  const [notifNewMatch,setNotifNewMatch]=useState(()=>JSON.parse(localStorage.getItem("notif_new_match")??'true'));
+  const [notifRankingChange,setNotifRankingChange]=useState(()=>JSON.parse(localStorage.getItem("notif_ranking")??'true'));
+  const [notifNewMembers,setNotifNewMembers]=useState(()=>JSON.parse(localStorage.getItem("notif_members")??'true'));
+  // Admin Management state
+  const [leagueMembers,setLeagueMembers]=useState([]);
+  const [memberProfiles,setMemberProfiles]=useState({});
 
   // Load league data from Supabase
   useEffect(()=>{
@@ -708,7 +715,22 @@ function AppContent({leagueId,user,onSwitchLeague}){
         .eq("user_id",user.id)
         .single();
 
-      setIsAdmin(memberData?.role==="admin");
+      setIsAdmin(memberData?.role==="admin" || leagueData?.created_by === user.id);
+
+      // Load all league members with profiles (for admin management)
+      const {data:membersData} = await supabase
+        .from("league_members")
+        .select("user_id,role,profiles(id,email,user_metadata)")
+        .eq("league_id",leagueId);
+
+      if(membersData){
+        setLeagueMembers(membersData);
+        const profiles = {};
+        membersData.forEach(m => {
+          if(m.profiles) profiles[m.user_id] = m.profiles;
+        });
+        setMemberProfiles(profiles);
+      }
 
       // Fetch players
       const {data:playersData,error:playersErr} = await supabase
@@ -767,6 +789,86 @@ function AppContent({leagueId,user,onSwitchLeague}){
     return p ? (p.nickname || p.name) : "?";
   };
 
+  // Calculate season awards
+  const calculateSeasonAwards = (seasonId) => {
+    const seasonMatches = matches.filter(m => m.season_id === seasonId);
+    const awards = {};
+
+    if (seasonMatches.length === 0) return awards;
+
+    // MVP (highest ELO)
+    const eloAtSeason = calcElo(players, seasonMatches);
+    const mvpPlayer = Object.entries(eloAtSeason).reduce((a, b) => b[1] > a[1] ? b : a, ['', 0]);
+    if (mvpPlayer[0]) awards.mvp = { playerId: mvpPlayer[0], value: Math.round(mvpPlayer[1]) };
+
+    // Most Active (most matches played)
+    const matchCounts = {};
+    seasonMatches.forEach(m => {
+      m.team_a.forEach(p => matchCounts[p] = (matchCounts[p] || 0) + 1);
+      m.team_b.forEach(p => matchCounts[p] = (matchCounts[p] || 0) + 1);
+    });
+    const activePlayer = Object.entries(matchCounts).reduce((a, b) => b[1] > a[1] ? b : a, ['', 0]);
+    if (activePlayer[0]) awards.mostActive = { playerId: activePlayer[0], value: activePlayer[1] };
+
+    // Best Partnership (pair with highest win rate, min 3 matches)
+    const partnerships = {};
+    seasonMatches.forEach(m => {
+      const teamA = [m.team_a[0], m.team_a[1]].sort().join('-');
+      const teamB = [m.team_b[0], m.team_b[1]].sort().join('-');
+      partnerships[teamA] = (partnerships[teamA] || { wins: 0, total: 0 });
+      partnerships[teamB] = (partnerships[teamB] || { wins: 0, total: 0 });
+      partnerships[teamA].total++;
+      partnerships[teamB].total++;
+      const w = win(m.sets);
+      if (w === 'A') partnerships[teamA].wins++;
+      else partnerships[teamB].wins++;
+    });
+    const validPartnerships = Object.entries(partnerships).filter(([_, p]) => p.total >= 3);
+    if (validPartnerships.length > 0) {
+      const bestPair = validPartnerships.reduce((a, b) => (b[1].wins / b[1].total) > (a[1].wins / a[1].total) ? b : a);
+      const [p1, p2] = bestPair[0].split('-');
+      awards.bestPartnership = {
+        playerIds: [p1, p2],
+        winRate: ((bestPair[1].wins / bestPair[1].total) * 100).toFixed(0)
+      };
+    }
+
+    // Most Improved (biggest ELO gain)
+    if (seasonMatches.length > 0) {
+      const firstMatch = seasonMatches[0];
+      const eloFirstMatch = calcElo(players, [firstMatch]);
+      const eloLastMatch = eloAtSeason;
+      const improvements = {};
+      Object.keys(eloLastMatch).forEach(pid => {
+        const start = eloFirstMatch[pid] || 1500;
+        const end = eloLastMatch[pid] || 1500;
+        improvements[pid] = end - start;
+      });
+      const improvedPlayer = Object.entries(improvements).reduce((a, b) => b[1] > a[1] ? b : a, ['', 0]);
+      if (improvedPlayer[0] && improvedPlayer[1] > 0) awards.mostImproved = { playerId: improvedPlayer[0], value: Math.round(improvedPlayer[1]) };
+    }
+
+    // Longest Win Streak
+    const streaks = {};
+    players.forEach(p => {
+      const pMatches = seasonMatches.filter(m => m.team_a.includes(p.id) || m.team_b.includes(p.id)).sort((a, b) => new Date(a.date) - new Date(b.date));
+      let currentStreak = 0;
+      let maxStreak = 0;
+      pMatches.forEach(m => {
+        const w = win(m.sets);
+        const pTeam = m.team_a.includes(p.id) ? 'A' : 'B';
+        if (w === pTeam) currentStreak++;
+        else currentStreak = 0;
+        maxStreak = Math.max(maxStreak, currentStreak);
+      });
+      streaks[p.id] = maxStreak;
+    });
+    const streakPlayer = Object.entries(streaks).reduce((a, b) => b[1] > a[1] ? b : a, ['', 0]);
+    if (streakPlayer[0] && streakPlayer[1] > 0) awards.longestStreak = { playerId: streakPlayer[0], value: streakPlayer[1] };
+
+    return awards;
+  };
+
   const getForm = (pid) => {
     const pMatches = matches.filter(m => m.team_a.includes(pid) || m.team_b.includes(pid));
     const sorted = [...pMatches].sort((a,b) => new Date(b.date) - new Date(a.date));
@@ -775,6 +877,130 @@ function AppContent({leagueId,user,onSwitchLeague}){
       const pTeam = m.team_a.includes(pid) ? "A" : "B";
       return w === pTeam ? "W" : "L";
     });
+  };
+
+  // Update member role (admin/member toggle)
+  const updateMemberRole = async (userId, newRole) => {
+    try {
+      const {error:err} = await supabase
+        .from("league_members")
+        .update({role: newRole})
+        .eq("league_id", leagueId)
+        .eq("user_id", userId);
+      if (err) throw err;
+      await loadLeagueData();
+    } catch (err) {
+      console.error("Failed to update role:", err);
+      alert("Failed to update member role");
+    }
+  };
+
+  // Update player name
+  const updatePlayerName = async (playerId, newName) => {
+    try {
+      const {error:err} = await supabase
+        .from("players")
+        .update({name: newName})
+        .eq("id", playerId);
+      if (err) throw err;
+      await loadLeagueData();
+    } catch (err) {
+      console.error("Failed to update player:", err);
+      alert("Failed to update player name");
+    }
+  };
+
+  // Deactivate player
+  const deactivatePlayer = async (playerId) => {
+    try {
+      const {error:err} = await supabase
+        .from("players")
+        .update({active: false})
+        .eq("id", playerId);
+      if (err) throw err;
+      await loadLeagueData();
+    } catch (err) {
+      console.error("Failed to deactivate player:", err);
+      alert("Failed to deactivate player");
+    }
+  };
+
+  // Export matches as CSV
+  const exportMatchesCSV = () => {
+    if (matches.length === 0) {
+      alert("No matches to export");
+      return;
+    }
+    const csv = [
+      ["Date", "Team A", "Team B", "Sets", "Winner"].join(","),
+      ...matches.map(m => {
+        const w = win(m.sets);
+        const winnerTeam = w === "A" ? `${getName(m.team_a[0])} & ${getName(m.team_a[1])}` : `${getName(m.team_b[0])} & ${getName(m.team_b[1])}`;
+        return [
+          new Date(m.date).toLocaleDateString(),
+          `${getName(m.team_a[0])} & ${getName(m.team_a[1])}`,
+          `${getName(m.team_b[0])} & ${getName(m.team_b[1])}`,
+          m.sets.map(s => `${s[0]}-${s[1]}`).join(" "),
+          winnerTeam
+        ].map(v => `"${v}"`).join(",");
+      })
+    ].join("\n");
+
+    const blob = new Blob([csv], {type: "text/csv;charset=utf-8;"});
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `${league?.name || "matches"}-export.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Regenerate invite code
+  const regenerateInviteCode = async () => {
+    try {
+      const newCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      const {error:err} = await supabase
+        .from("leagues")
+        .update({invite_code: newCode})
+        .eq("id", leagueId);
+      if (err) throw err;
+      await loadLeagueData();
+    } catch (err) {
+      console.error("Failed to regenerate code:", err);
+      alert("Failed to regenerate invite code");
+    }
+  };
+
+  // Handle notification toggle
+  const toggleNotification = (type, value) => {
+    if (type === "match") {
+      setNotifNewMatch(value);
+      localStorage.setItem("notif_new_match", JSON.stringify(value));
+    } else if (type === "ranking") {
+      setNotifRankingChange(value);
+      localStorage.setItem("notif_ranking", JSON.stringify(value));
+    } else if (type === "members") {
+      setNotifNewMembers(value);
+      localStorage.setItem("notif_members", JSON.stringify(value));
+    }
+  };
+
+  // Request notification permission
+  const requestNotificationPermission = async () => {
+    if (!("Notification" in window)) {
+      alert("Browser doesn't support notifications");
+      return;
+    }
+    if (Notification.permission === "granted") {
+      alert("Notifications already enabled");
+      return;
+    }
+    const permission = await Notification.requestPermission();
+    if (permission === "granted") {
+      alert("Notifications enabled!");
+    }
   };
 
   const getStreak = (pid) => {
@@ -1211,6 +1437,62 @@ function AppContent({leagueId,user,onSwitchLeague}){
             </div>
           )}
 
+          {/* ADMIN DASHBOARD VIEW */}
+          {sidebarView==="admin" && (
+            <div style={{padding:"20px 16px",paddingBottom:"calc(80px + env(safe-area-inset-bottom, 0px))"}}>
+              <button onClick={()=>setSidebarView(null)} style={{marginBottom:20,background:"none",border:"none",color:A,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>← Back</button>
+
+              <h2 style={{fontSize:18,fontWeight:700,marginBottom:20,color:TX}}>Admin Dashboard</h2>
+
+              {/* Player Management Section */}
+              <div style={{marginBottom:28}}>
+                <h3 style={{fontSize:13,fontWeight:700,color:A,marginBottom:12}}>Player Management</h3>
+                <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  {players.map(p => (
+                    <div key={p.id} style={{padding:"12px",background:CD2,borderRadius:8,display:"flex",alignItems:"center",gap:8}}>
+                      <input type="text" defaultValue={p.name} onChange={(e)=>{}} style={{flex:1,padding:"8px 10px",background:CD,border:`1px solid ${BD}`,borderRadius:6,color:TX,fontSize:12,fontFamily:"'Outfit',sans-serif",outline:"none"}}/>
+                      <button onClick={()=>{const newName=prompt("New name:",p.name);if(newName)updatePlayerName(p.id,newName);}} style={{padding:"6px 10px",background:A,border:"none",borderRadius:6,color:"#000",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
+                        Rename
+                      </button>
+                      <button onClick={()=>{if(confirm("Deactivate "+p.name+"?"))deactivatePlayer(p.id);}} style={{padding:"6px 10px",background:DG,border:"none",borderRadius:6,color:"#fff",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
+                        Deactivate
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* League Settings Section */}
+              <div style={{marginBottom:28}}>
+                <h3 style={{fontSize:13,fontWeight:700,color:A,marginBottom:12}}>League Settings</h3>
+                <div style={{padding:"12px",background:CD2,borderRadius:8,marginBottom:8}}>
+                  <div style={{fontSize:11,color:MT,fontWeight:600,marginBottom:4}}>League Name</div>
+                  <div style={{fontSize:13,color:TX,fontWeight:600}}>{league?.name}</div>
+                </div>
+                <div style={{padding:"12px",background:CD2,borderRadius:8,marginBottom:8}}>
+                  <div style={{fontSize:11,color:MT,fontWeight:600,marginBottom:4}}>Invite Code</div>
+                  <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                    <code style={{flex:1,padding:"8px 10px",background:CD,borderRadius:6,color:A,fontSize:12,fontWeight:700,wordBreak:"break-all"}}>{league?.invite_code}</code>
+                    <button onClick={()=>{navigator.clipboard.writeText(`${window.location.origin}?invite=${league?.invite_code}`);alert("Invite link copied!");}} style={{padding:"6px 10px",background:A,border:"none",borderRadius:6,color:"#000",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif",whiteSpace:"nowrap"}}>
+                      Copy Link
+                    </button>
+                  </div>
+                </div>
+                <button onClick={()=>{if(confirm("Regenerate invite code? Old links won't work."))regenerateInviteCode();}} style={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
+                  Regenerate Code
+                </button>
+              </div>
+
+              {/* Data Export Section */}
+              <div>
+                <h3 style={{fontSize:13,fontWeight:700,color:A,marginBottom:12}}>Data Export</h3>
+                <button onClick={exportMatchesCSV} style={{width:"100%",padding:"12px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
+                  Export Match History (CSV)
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* H2H VIEW */}
           {sidebarView==="h2h" && (
             <div style={{padding:"20px 16px",paddingBottom:"calc(80px + env(safe-area-inset-bottom, 0px))"}}>
@@ -1363,21 +1645,65 @@ function AppContent({leagueId,user,onSwitchLeague}){
               <div style={{marginBottom:24}}>
                 <h3 style={{fontSize:12,fontWeight:700,color:MT,letterSpacing:1,textTransform:"uppercase",marginBottom:12}}>Notifications</h3>
 
+                {Notification?.permission === 'default' && (
+                  <button onClick={requestNotificationPermission} style={{width:"100%",marginBottom:12,padding:"10px 12px",background:`${A}15`,border:`1px solid ${A}40`,borderRadius:8,color:A,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
+                    Enable Notifications
+                  </button>
+                )}
+
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 12px",background:CD2,borderRadius:8,marginBottom:8}}>
-                  <label style={{fontSize:12,fontWeight:600,color:TX,cursor:"pointer"}}>Push Notifications</label>
-                  <input type="checkbox" defaultChecked style={{cursor:"pointer"}}/>
+                  <label style={{fontSize:12,fontWeight:600,color:TX}}>New Match Logged</label>
+                  <button onClick={()=>toggleNotification("match",!notifNewMatch)} style={{width:48,height:28,borderRadius:14,background:notifNewMatch?A:BD,border:"none",cursor:"pointer",position:"relative",transition:"background 0.2s",padding:0}}>
+                    <div style={{width:24,height:24,background:CD,borderRadius:"50%",position:"absolute",top:2,left:notifNewMatch?22:2,transition:"left 0.2s"}}/>
+                  </button>
                 </div>
 
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 12px",background:CD2,borderRadius:8,marginBottom:8}}>
-                  <label style={{fontSize:12,fontWeight:600,color:TX,cursor:"pointer"}}>Ranking Changes</label>
-                  <input type="checkbox" defaultChecked style={{cursor:"pointer"}}/>
+                  <label style={{fontSize:12,fontWeight:600,color:TX}}>Ranking Changes</label>
+                  <button onClick={()=>toggleNotification("ranking",!notifRankingChange)} style={{width:48,height:28,borderRadius:14,background:notifRankingChange?A:BD,border:"none",cursor:"pointer",position:"relative",transition:"background 0.2s",padding:0}}>
+                    <div style={{width:24,height:24,background:CD,borderRadius:"50%",position:"absolute",top:2,left:notifRankingChange?22:2,transition:"left 0.2s"}}/>
+                  </button>
                 </div>
 
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 12px",background:CD2,borderRadius:8}}>
-                  <label style={{fontSize:12,fontWeight:600,color:TX,cursor:"pointer"}}>New Members</label>
-                  <input type="checkbox" defaultChecked style={{cursor:"pointer"}}/>
+                  <label style={{fontSize:12,fontWeight:600,color:TX}}>New Members</label>
+                  <button onClick={()=>toggleNotification("members",!notifNewMembers)} style={{width:48,height:28,borderRadius:14,background:notifNewMembers?A:BD,border:"none",cursor:"pointer",position:"relative",transition:"background 0.2s",padding:0}}>
+                    <div style={{width:24,height:24,background:CD,borderRadius:"50%",position:"absolute",top:2,left:notifNewMembers?22:2,transition:"left 0.2s"}}/>
+                  </button>
                 </div>
               </div>
+
+              {/* Admin Management Section */}
+              {isAdmin && (
+                <div style={{marginBottom:24}}>
+                  <h3 style={{fontSize:12,fontWeight:700,color:MT,letterSpacing:1,textTransform:"uppercase",marginBottom:12}}>Admin Management</h3>
+
+                  <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                    {leagueMembers.map(member => {
+                      const profile = memberProfiles[member.user_id];
+                      const isOwner = league?.created_by === member.user_id;
+                      return (
+                        <div key={member.user_id} style={{padding:"10px 12px",background:CD2,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                          <div style={{flex:1,minWidth:0}}>
+                            <div style={{fontSize:12,fontWeight:600,color:TX,overflow:"hidden",textOverflow:"ellipsis"}}>{profile?.user_metadata?.display_name || profile?.email?.split("@")[0] || "User"}</div>
+                            <div style={{fontSize:10,color:MT}}>{profile?.email || ""}</div>
+                          </div>
+                          <div style={{marginLeft:12}}>
+                            {isOwner ? (
+                              <span style={{fontSize:10,color:A,fontWeight:700,background:`${A}20`,padding:"4px 8px",borderRadius:4}}>Owner</span>
+                            ) : (
+                              <select value={member.role || "member"} onChange={(e)=>updateMemberRole(member.user_id,e.target.value)} style={{fontSize:11,padding:"4px 8px",background:BD,border:`1px solid ${BD}`,borderRadius:4,color:TX,fontFamily:"'Outfit',sans-serif",cursor:"pointer"}}>
+                                <option value="member">Member</option>
+                                <option value="admin">Admin</option>
+                              </select>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* League Section */}
               <div style={{marginBottom:24}}>
@@ -1388,8 +1714,8 @@ function AppContent({leagueId,user,onSwitchLeague}){
                 </button>
 
                 {isAdmin && (
-                  <button style={{width:"100%",padding:"12px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
-                    League Settings
+                  <button onClick={()=>setSidebarView("admin")} style={{width:"100%",padding:"12px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
+                    Admin Dashboard
                   </button>
                 )}
               </div>
@@ -1412,6 +1738,56 @@ function AppContent({leagueId,user,onSwitchLeague}){
               {lb.length} player{lb.length!==1?"s":""}
             </div>
           </div>
+
+          {/* Season Awards Section */}
+          {selectedSeason && (() => {
+            const awards = calculateSeasonAwards(selectedSeason);
+            const hasAwards = Object.keys(awards).length > 0;
+            return hasAwards && (
+              <div style={{marginBottom:20}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,cursor:"pointer"}}>
+                  <h3 style={{fontSize:13,fontWeight:700,color:A,margin:0}}>🏆 Season Awards</h3>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:20}}>
+                  {awards.mvp && (
+                    <div style={{padding:12,background:CD2,borderRadius:8,border:`1px solid ${A}40`}}>
+                      <div style={{fontSize:10,color:MT,fontWeight:600,marginBottom:4}}>MVP</div>
+                      <div style={{fontSize:13,fontWeight:700,color:TX,marginBottom:2}}>{getName(awards.mvp.playerId)}</div>
+                      <div style={{fontSize:11,color:A,fontWeight:600}}>{awards.mvp.value} ELO</div>
+                    </div>
+                  )}
+                  {awards.mostActive && (
+                    <div style={{padding:12,background:CD2,borderRadius:8,border:`1px solid ${A}40`}}>
+                      <div style={{fontSize:10,color:MT,fontWeight:600,marginBottom:4}}>Most Active</div>
+                      <div style={{fontSize:13,fontWeight:700,color:TX,marginBottom:2}}>{getName(awards.mostActive.playerId)}</div>
+                      <div style={{fontSize:11,color:A,fontWeight:600}}>{awards.mostActive.value} matches</div>
+                    </div>
+                  )}
+                  {awards.bestPartnership && (
+                    <div style={{padding:12,background:CD2,borderRadius:8,border:`1px solid ${A}40`}}>
+                      <div style={{fontSize:10,color:MT,fontWeight:600,marginBottom:4}}>Best Partnership</div>
+                      <div style={{fontSize:13,fontWeight:700,color:TX,marginBottom:2}}>{getName(awards.bestPartnership.playerIds[0])} & {getName(awards.bestPartnership.playerIds[1])}</div>
+                      <div style={{fontSize:11,color:A,fontWeight:600}}>{awards.bestPartnership.winRate}% WR</div>
+                    </div>
+                  )}
+                  {awards.mostImproved && (
+                    <div style={{padding:12,background:CD2,borderRadius:8,border:`1px solid ${A}40`}}>
+                      <div style={{fontSize:10,color:MT,fontWeight:600,marginBottom:4}}>Most Improved</div>
+                      <div style={{fontSize:13,fontWeight:700,color:TX,marginBottom:2}}>{getName(awards.mostImproved.playerId)}</div>
+                      <div style={{fontSize:11,color:A,fontWeight:600}}>{awards.mostImproved.value > 0 ? "+" : ""}{awards.mostImproved.value} ELO</div>
+                    </div>
+                  )}
+                  {awards.longestStreak && (
+                    <div style={{padding:12,background:CD2,borderRadius:8,border:`1px solid ${A}40`}}>
+                      <div style={{fontSize:10,color:MT,fontWeight:600,marginBottom:4}}>Longest Streak</div>
+                      <div style={{fontSize:13,fontWeight:700,color:TX,marginBottom:2}}>{getName(awards.longestStreak.playerId)}</div>
+                      <div style={{fontSize:11,color:A,fontWeight:600}}>{awards.longestStreak.value} wins 🔥</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* S1-01: Empty state when no players have games */}
           {lb.length===0&&(
