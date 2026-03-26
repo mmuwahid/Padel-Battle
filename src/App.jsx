@@ -84,15 +84,38 @@ const TR=[{key:"stats",label:"Players",icon:"📊"},{key:"gamemode",label:"Game 
 
 // ============================================================================
 // AUTH GATE - Shows login screen if not authenticated
+// Supports: Magic Link, Email/Password Sign Up, Email/Password Sign In, Google OAuth
 // ============================================================================
 function AuthGate({children}){
   const [user,setUser]=useState(null);
   const [loading,setLoading]=useState(true);
+  // authMode: "magic" | "signup" | "signin" | (future: "google")
+  const [authMode,setAuthMode]=useState("signin");
   const [email,setEmail]=useState("");
+  const [password,setPassword]=useState("");
+  const [displayName,setDisplayName]=useState("");
   const [sent,setSent]=useState(false);
   const [error,setError]=useState("");
+  const [successMsg,setSuccessMsg]=useState("");
 
   useEffect(()=>{
+    // Handle auth callback (magic link / OAuth redirect)
+    const handleAuthCallback = async () => {
+      const hash = window.location.hash;
+      const params = new URLSearchParams(window.location.search);
+      if (hash && hash.includes("access_token")) {
+        // Supabase will auto-handle this via onAuthStateChange
+        // Clean the URL
+        window.history.replaceState(null, "", window.location.pathname + window.location.search);
+      }
+      if (params.get("code")) {
+        // OAuth code exchange — Supabase handles this automatically
+        const cleanUrl = window.location.pathname + (params.get("invite") ? `?invite=${params.get("invite")}` : "");
+        window.history.replaceState(null, "", cleanUrl);
+      }
+    };
+    handleAuthCallback();
+
     // Check current auth state
     const checkAuth = async () => {
       const {data:{session}} = await supabase.auth.getSession();
@@ -108,31 +131,98 @@ function AuthGate({children}){
     return ()=>subscription?.unsubscribe();
   },[]);
 
+  const clearForm = () => { setError(""); setSuccessMsg(""); };
+
+  // Magic Link
   const handleSendLink = async (e) => {
     e.preventDefault();
-    setError("");
-    if (!email.trim()) {
-      setError("Please enter your email");
-      return;
-    }
+    clearForm();
+    if (!email.trim()) { setError("Please enter your email"); return; }
     try {
-      const {error:err} = await supabase.auth.signInWithOtp({email:email.trim()});
+      const redirectUrl = window.location.origin + window.location.pathname + window.location.search;
+      const {error:err} = await supabase.auth.signInWithOtp({email:email.trim(), options:{emailRedirectTo:redirectUrl}});
       if (err) throw err;
       setSent(true);
-      setTimeout(()=>setSent(false),5000);
-    } catch (err) {
-      setError(err.message || "Failed to send magic link");
-    }
+      setTimeout(()=>setSent(false),8000);
+    } catch (err) { setError(err.message || "Failed to send magic link"); }
+  };
+
+  // Email/Password Sign Up
+  const handleSignUp = async (e) => {
+    e.preventDefault();
+    clearForm();
+    if (!email.trim()) { setError("Please enter your email"); return; }
+    if (!password || password.length < 6) { setError("Password must be at least 6 characters"); return; }
+    try {
+      const {data,error:err} = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: { data: { display_name: displayName.trim() || email.trim().split("@")[0] } }
+      });
+      if (err) throw err;
+      if (data?.user?.identities?.length === 0) {
+        setError("An account with this email already exists. Try signing in.");
+      } else {
+        setSuccessMsg("Account created! Check your email to confirm, or sign in directly.");
+        setPassword("");
+      }
+    } catch (err) { setError(err.message || "Failed to create account"); }
+  };
+
+  // Email/Password Sign In
+  const handleSignIn = async (e) => {
+    e.preventDefault();
+    clearForm();
+    if (!email.trim()) { setError("Please enter your email"); return; }
+    if (!password) { setError("Please enter your password"); return; }
+    try {
+      const {error:err} = await supabase.auth.signInWithPassword({email:email.trim(),password});
+      if (err) throw err;
+    } catch (err) { setError(err.message || "Failed to sign in"); }
+  };
+
+  // Google OAuth (ready for when configured)
+  const handleGoogleSignIn = async () => {
+    clearForm();
+    try {
+      const {error:err} = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: window.location.origin + window.location.pathname + window.location.search }
+      });
+      if (err) throw err;
+    } catch (err) { setError(err.message || "Google sign-in failed"); }
   };
 
   if (loading) return <div style={{background:BG,width:"100vw",height:"100vh",display:"flex",alignItems:"center",justifyContent:"center",color:TX}}>Loading...</div>;
 
   if (!user) {
+    const inputStyle = {
+      width:"100%",padding:"12px 14px",background:CD,border:`1px solid ${BD}`,borderRadius:10,
+      color:TX,fontSize:14,fontFamily:"'Outfit',sans-serif",boxSizing:"border-box",outline:"none",
+    };
+    const labelStyle = {display:"block",color:MT,fontSize:11,fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:6};
+    const btnPrimary = {
+      padding:"14px",background:`linear-gradient(135deg,${A},${A}cc)`,border:"none",borderRadius:12,
+      color:"#000",fontWeight:800,fontSize:15,cursor:"pointer",fontFamily:"'Outfit',sans-serif",
+      textTransform:"uppercase",letterSpacing:1,width:"100%",
+    };
+    const btnOutline = (color) => ({
+      padding:"12px",background:"transparent",border:`1px solid ${color}40`,borderRadius:10,
+      color,fontWeight:600,fontSize:13,cursor:"pointer",fontFamily:"'Outfit',sans-serif",width:"100%",
+    });
+    const tabStyle = (active) => ({
+      flex:1,padding:"10px 0",background:active?`${A}15`:"transparent",border:"none",
+      borderBottom:active?`2px solid ${A}`:`2px solid transparent`,color:active?A:MT,
+      fontWeight:600,fontSize:13,cursor:"pointer",fontFamily:"'Outfit',sans-serif",
+      textTransform:"uppercase",letterSpacing:0.5,transition:"all 0.2s",
+    });
+
     return (
       <div style={{background:BG,minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:"20px",fontFamily:"'Outfit',sans-serif"}}>
         <div style={{maxWidth:"380px",width:"100%"}}>
-          <div style={{textAlign:"center",marginBottom:"32px"}}>
-            <PadelLogo/>
+          {/* Logo */}
+          <div style={{textAlign:"center",marginBottom:"28px"}}>
+            <div style={{display:"flex",justifyContent:"center"}}><PadelLogo/></div>
             <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:"8px",marginTop:"16px"}}>
               <PadelLogoSmall/>
               <h1 style={{fontSize:22,fontWeight:900,letterSpacing:2,color:TX,fontFamily:"'Outfit',sans-serif"}}><span style={{color:A}}>Padel</span>Hub</h1>
@@ -140,55 +230,85 @@ function AuthGate({children}){
             <p style={{color:MT,fontSize:12,fontWeight:500,letterSpacing:1,marginTop:6,textTransform:"uppercase"}}>Track your game. Master the court.</p>
           </div>
 
-          <form onSubmit={handleSendLink} style={{display:"flex",flexDirection:"column",gap:"12px"}}>
-            <div>
-              <label style={{display:"block",color:MT,fontSize:11,fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e)=>setEmail(e.target.value)}
-                placeholder="your@email.com"
-                style={{
-                  width:"100%",
-                  padding:"12px 14px",
-                  background:CD,
-                  border:`1px solid ${BD}`,
-                  borderRadius:10,
-                  color:TX,
-                  fontSize:14,
-                  fontFamily:"'Outfit',sans-serif",
-                  boxSizing:"border-box",
-                  outline:"none",
-                }}
-              />
+          {/* Auth Mode Tabs */}
+          <div style={{display:"flex",marginBottom:"20px",borderRadius:8,overflow:"hidden",border:`1px solid ${BD}`}}>
+            <button onClick={()=>{setAuthMode("signin");clearForm();}} style={tabStyle(authMode==="signin")}>Sign In</button>
+            <button onClick={()=>{setAuthMode("signup");clearForm();}} style={tabStyle(authMode==="signup")}>Sign Up</button>
+            <button onClick={()=>{setAuthMode("magic");clearForm();}} style={tabStyle(authMode==="magic")}>Magic Link</button>
+          </div>
+
+          {/* Error / Success Messages */}
+          {error && <div style={{color:DG,fontSize:12,padding:"10px 14px",background:`${DG}15`,borderRadius:10,border:`1px solid ${DG}30`,marginBottom:12}}>{error}</div>}
+          {successMsg && <div style={{color:A,fontSize:12,padding:"10px 14px",background:`${A}15`,borderRadius:10,border:`1px solid ${A}30`,marginBottom:12}}>{successMsg}</div>}
+          {sent && <div style={{color:A,fontSize:12,padding:"10px 14px",background:`${A}15`,borderRadius:10,border:`1px solid ${A}30`,marginBottom:12}}>✓ Check your email for the magic link!</div>}
+
+          {/* SIGN IN FORM */}
+          {authMode==="signin" && (
+            <form onSubmit={handleSignIn} style={{display:"flex",flexDirection:"column",gap:"12px"}}>
+              <div>
+                <label style={labelStyle}>Email</label>
+                <input type="email" value={email} onChange={(e)=>setEmail(e.target.value)} placeholder="your@email.com" style={inputStyle}/>
+              </div>
+              <div>
+                <label style={labelStyle}>Password</label>
+                <input type="password" value={password} onChange={(e)=>setPassword(e.target.value)} placeholder="Your password" style={inputStyle}/>
+              </div>
+              <button type="submit" style={btnPrimary}>Sign In</button>
+              <div style={{textAlign:"center",marginTop:4}}>
+                <button type="button" onClick={()=>{setAuthMode("magic");clearForm();}} style={{background:"none",border:"none",color:A,fontSize:12,cursor:"pointer",fontFamily:"'Outfit',sans-serif",textDecoration:"underline"}}>
+                  Forgot password? Use magic link
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* SIGN UP FORM */}
+          {authMode==="signup" && (
+            <form onSubmit={handleSignUp} style={{display:"flex",flexDirection:"column",gap:"12px"}}>
+              <div>
+                <label style={labelStyle}>Display Name</label>
+                <input type="text" value={displayName} onChange={(e)=>setDisplayName(e.target.value)} placeholder="Your name (e.g. Moody)" style={inputStyle}/>
+              </div>
+              <div>
+                <label style={labelStyle}>Email</label>
+                <input type="email" value={email} onChange={(e)=>setEmail(e.target.value)} placeholder="your@email.com" style={inputStyle}/>
+              </div>
+              <div>
+                <label style={labelStyle}>Password</label>
+                <input type="password" value={password} onChange={(e)=>setPassword(e.target.value)} placeholder="Min 6 characters" style={inputStyle}/>
+              </div>
+              <button type="submit" style={btnPrimary}>Create Account</button>
+            </form>
+          )}
+
+          {/* MAGIC LINK FORM */}
+          {authMode==="magic" && (
+            <form onSubmit={handleSendLink} style={{display:"flex",flexDirection:"column",gap:"12px"}}>
+              <div>
+                <label style={labelStyle}>Email</label>
+                <input type="email" value={email} onChange={(e)=>setEmail(e.target.value)} placeholder="your@email.com" style={inputStyle}/>
+              </div>
+              <button type="submit" style={btnPrimary}>Send Magic Link</button>
+              <p style={{color:MT,fontSize:11,textAlign:"center",marginTop:4,lineHeight:1.5}}>
+                We'll send you a secure link to sign in — no password needed.
+              </p>
+            </form>
+          )}
+
+          {/* Google Sign-In (shows when OAuth is configured in Supabase) */}
+          <div style={{marginTop:16}}>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
+              <div style={{flex:1,height:1,background:BD}}/>
+              <span style={{color:MT,fontSize:11,fontWeight:500}}>OR</span>
+              <div style={{flex:1,height:1,background:BD}}/>
             </div>
-
-            {error && <div style={{color:DG,fontSize:12,padding:"10px 14px",background:`${DG}15`,borderRadius:10,border:`1px solid ${DG}30`}}>{error}</div>}
-            {sent && <div style={{color:A,fontSize:12,padding:"10px 14px",background:`${A}15`,borderRadius:10,border:`1px solid ${A}30`}}>✓ Check your email for the magic link!</div>}
-
-            <button
-              type="submit"
-              style={{
-                padding:"14px",
-                background:`linear-gradient(135deg,${A},${A}cc)`,
-                border:"none",
-                borderRadius:12,
-                color:"#000",
-                fontWeight:800,
-                fontSize:15,
-                cursor:"pointer",
-                fontFamily:"'Outfit',sans-serif",
-                textTransform:"uppercase",
-                letterSpacing:1,
-              }}
-            >
-              Send Magic Link
+            <button onClick={handleGoogleSignIn} style={btnOutline(TX)}>
+              <span style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                Continue with Google
+              </span>
             </button>
-          </form>
-
-          <p style={{color:MT,fontSize:11,textAlign:"center",marginTop:20,lineHeight:1.5}}>
-            We'll send you a secure link to sign in — no password needed.
-          </p>
+          </div>
         </div>
       </div>
     );
@@ -213,12 +333,47 @@ function LeagueGate({user,children}){
   const [editLeagueName,setEditLeagueName]=useState("");
 
   useEffect(()=>{
-    loadUserLeagues();
-    // Check URL for invite code
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get("invite");
-    if (code) setInviteCode(code);
+    const init = async () => {
+      await loadUserLeagues();
+      // Check URL for invite code and auto-join
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get("invite");
+      if (code) {
+        setInviteCode(code);
+        // Auto-join the league from invite link
+        await autoJoinByInvite(code);
+        // Clean the URL
+        window.history.replaceState(null, "", window.location.pathname);
+      }
+    };
+    init();
   },[user.id]);
+
+  const autoJoinByInvite = async (code) => {
+    try {
+      const {data:leagueData,error:findErr} = await supabase
+        .from("leagues").select("id,name").eq("invite_code",code.trim()).single();
+      if (findErr || !leagueData) return; // silently fail — invalid code
+      // Check if already member
+      const {data:existing} = await supabase
+        .from("league_members").select("id").eq("league_id",leagueData.id).eq("user_id",user.id).single();
+      if (existing) {
+        // Already a member — just select the league
+        setSelectedLeagueId(leagueData.id);
+        return;
+      }
+      // Add as member
+      const {error:addErr} = await supabase
+        .from("league_members").insert({league_id:leagueData.id,user_id:user.id,role:"member"});
+      if (addErr) throw addErr;
+      await loadUserLeagues();
+      setSelectedLeagueId(leagueData.id);
+      setInviteCode("");
+    } catch (err) {
+      console.error("Auto-join error:", err);
+      // Don't block — user can still manually join
+    }
+  };
 
   const loadUserLeagues = async () => {
     try {
@@ -385,7 +540,7 @@ function LeagueGate({user,children}){
                       <button onClick={()=>setSelectedLeagueId(l.id)} style={{flex:1,background:"none",border:"none",color:TX,fontSize:14,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",gap:10}}>
                         <span style={{fontSize:18}}>🏟️</span> {l.name}
                       </button>
-                      <button onClick={()=>{const url=`${window.location.origin}?invite=${l.invite_code}`;if(navigator.share)navigator.share({title:"Join my PadelHub league",text:`Join "${l.name}" on PadelHub!`,url});else{navigator.clipboard.writeText(url);alert("Invite link copied!");}}} style={{background:"none",border:`1px solid ${A}40`,borderRadius:6,color:A,fontSize:10,fontWeight:600,cursor:"pointer",padding:"4px 8px",fontFamily:"'Outfit',sans-serif"}} title="Share invite link">Invite</button>
+                      <button onClick={()=>{const url=`${window.location.origin}${window.location.pathname}?invite=${l.invite_code}`;if(navigator.share)navigator.share({title:"Join my PadelHub league",text:`Join "${l.name}" on PadelHub!`,url});else{navigator.clipboard.writeText(url);alert("Invite link copied!");}}} style={{background:"none",border:`1px solid ${A}40`,borderRadius:6,color:A,fontSize:10,fontWeight:600,cursor:"pointer",padding:"4px 8px",fontFamily:"'Outfit',sans-serif"}} title="Share invite link">Invite</button>
                       <button onClick={()=>{setEditingLeagueId(l.id);setEditLeagueName(l.name);}} style={{background:"none",border:`1px solid ${BD}`,borderRadius:6,color:MT,fontSize:10,fontWeight:600,cursor:"pointer",padding:"4px 8px",fontFamily:"'Outfit',sans-serif"}} title="Edit">Edit</button>
                       <button onClick={()=>handleDeleteLeague(l.id)} style={{background:"none",border:`1px solid ${DG}40`,borderRadius:6,color:DG,fontSize:10,fontWeight:600,cursor:"pointer",padding:"4px 8px",fontFamily:"'Outfit',sans-serif"}} title="Delete">Delete</button>
                     </>
@@ -503,10 +658,26 @@ function AppContent({leagueId,user}){
   const [newPlayerName,setNewPlayerName]=useState("");
   const [newPlayerNick,setNewPlayerNick]=useState("");
   const [claimError,setClaimError]=useState("");
+  // Profile/Settings panel
+  const [showProfile,setShowProfile]=useState(false);
+  const [editDisplayName,setEditDisplayName]=useState("");
+  const [profileSaving,setProfileSaving]=useState(false);
+  const [profileMsg,setProfileMsg]=useState("");
 
   // Load league data from Supabase
   useEffect(()=>{
     loadLeagueData();
+
+    // S1-05: Supabase Realtime — subscribe to changes for live cross-device sync
+    const channel = supabase.channel(`league-${leagueId}`)
+      .on("postgres_changes",{event:"*",schema:"public",table:"matches",filter:`league_id=eq.${leagueId}`},()=>loadLeagueData())
+      .on("postgres_changes",{event:"*",schema:"public",table:"players",filter:`league_id=eq.${leagueId}`},()=>loadLeagueData())
+      .on("postgres_changes",{event:"*",schema:"public",table:"seasons",filter:`league_id=eq.${leagueId}`},()=>loadLeagueData())
+      .on("postgres_changes",{event:"*",schema:"public",table:"league_members",filter:`league_id=eq.${leagueId}`},()=>loadLeagueData())
+      .on("postgres_changes",{event:"*",schema:"public",table:"tournaments",filter:`league_id=eq.${leagueId}`},()=>loadLeagueData())
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   },[leagueId,user.id]);
 
   const loadLeagueData = async () => {
@@ -677,9 +848,9 @@ function AppContent({leagueId,user}){
     });
   },[players,matches]);
 
-  // Leaderboard (sorted by wins, then winRate, then name)
+  // Leaderboard — S1-01: Only show players with 1+ games played (hide 0-game players entirely)
   const lb = useMemo(()=>{
-    return [...ps].sort((a,b)=>{
+    return [...ps].filter(p=>p.games>0).sort((a,b)=>{
       if(b.wins!==a.wins)return b.wins-a.wins;
       if(b.winRate!==a.winRate)return b.winRate-a.winRate;
       return a.name.localeCompare(b.name);
@@ -778,32 +949,116 @@ function AppContent({leagueId,user}){
 
   return (
     <div style={{background:BG,minHeight:"100vh",paddingBottom:"calc(80px + env(safe-area-inset-bottom, 0px))",fontFamily:"'Outfit',sans-serif",color:TX}}>
-      {/* HEADER */}
+      {/* HEADER — Line 1: PadelHub branding, Line 2: League | Season */}
       <div style={{background:CD,borderBottom:`1px solid ${BD}`,padding:"12px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:10}}>
-        <div style={{display:"flex",alignItems:"center",gap:"12px"}}>
+        <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
           <PadelLogoSmall/>
           <div>
-            <h1 style={{fontSize:"18px",fontWeight:"bold",margin:0,color:A}}>{league?.name||"League"}</h1>
-            <p style={{fontSize:"11px",color:MT,margin:"2px 0 0 0"}}>ELO Season 1</p>
+            <div style={{display:"flex",alignItems:"center",gap:"6px"}}>
+              <h1 style={{fontSize:"16px",fontWeight:900,margin:0,letterSpacing:1,fontFamily:"'Outfit',sans-serif"}}><span style={{color:TX}}>Padel</span><span style={{color:A}}>Hub</span></h1>
+            </div>
+            <p style={{fontSize:"10px",color:MT,margin:"2px 0 0 0",fontWeight:500}}>
+              {league?.name||"League"}{seasons.find(s=>s.active) ? ` | ${seasons.find(s=>s.active).name}` : ""}
+            </p>
           </div>
         </div>
+        {/* User avatar — opens profile panel */}
         <button
-          onClick={()=>{
-            setSelectedLeagueId(null);
-          }}
+          onClick={()=>{setShowProfile(!showProfile);setEditDisplayName(user.user_metadata?.display_name||user.email?.split("@")[0]||"");setProfileMsg("");}}
           style={{
-            padding:"6px 12px",
-            background:CD2,
-            border:`1px solid ${BD}`,
-            borderRadius:"4px",
-            color:MT,
-            fontSize:"11px",
-            cursor:"pointer",
+            width:36,height:36,borderRadius:"50%",
+            background:showProfile?A:`${A}20`,
+            border:showProfile?`2px solid ${A}`:`2px solid ${A}40`,
+            color:showProfile?"#000":A,
+            fontSize:14,fontWeight:800,cursor:"pointer",
+            display:"flex",alignItems:"center",justifyContent:"center",
+            fontFamily:"'Outfit',sans-serif",transition:"all 0.2s",
           }}
+          title="Profile & Settings"
         >
-          Switch
+          {(user.user_metadata?.display_name||user.email||"U")[0].toUpperCase()}
         </button>
       </div>
+
+      {/* PROFILE & SETTINGS PANEL */}
+      {showProfile && (
+        <div style={{background:CD,borderBottom:`1px solid ${BD}`,padding:"16px",position:"sticky",top:61,zIndex:9}}>
+          <div style={{maxWidth:400,margin:"0 auto"}}>
+            {/* User info */}
+            <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
+              <div style={{width:48,height:48,borderRadius:"50%",background:`${A}20`,border:`2px solid ${A}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,fontWeight:800,color:A}}>
+                {(user.user_metadata?.display_name||user.email||"U")[0].toUpperCase()}
+              </div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:15,fontWeight:700,color:TX}}>{user.user_metadata?.display_name||user.email?.split("@")[0]||"User"}</div>
+                <div style={{fontSize:11,color:MT,marginTop:2}}>{user.email}</div>
+              </div>
+            </div>
+
+            {/* Edit display name */}
+            <div style={{marginBottom:14}}>
+              <label style={{display:"block",color:MT,fontSize:10,fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>Display Name</label>
+              <div style={{display:"flex",gap:8}}>
+                <input
+                  type="text"
+                  value={editDisplayName}
+                  onChange={(e)=>setEditDisplayName(e.target.value)}
+                  placeholder="Your name"
+                  style={{flex:1,padding:"8px 12px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:13,fontFamily:"'Outfit',sans-serif",outline:"none"}}
+                />
+                <button
+                  onClick={async ()=>{
+                    if(!editDisplayName.trim())return;
+                    setProfileSaving(true);setProfileMsg("");
+                    try{
+                      const {error:err}=await supabase.auth.updateUser({data:{display_name:editDisplayName.trim()}});
+                      if(err)throw err;
+                      // Also update profiles table
+                      await supabase.from("profiles").update({display_name:editDisplayName.trim()}).eq("id",user.id);
+                      // Update claimed player name if exists
+                      if(claimedPlayer){
+                        await supabase.from("players").update({name:editDisplayName.trim()}).eq("id",claimedPlayer.id);
+                        await loadLeagueData();
+                      }
+                      setProfileMsg("Saved!");
+                      setTimeout(()=>setProfileMsg(""),2000);
+                    }catch(err){setProfileMsg(err.message||"Failed to update");}
+                    setProfileSaving(false);
+                  }}
+                  disabled={profileSaving}
+                  style={{padding:"8px 14px",background:A,border:"none",borderRadius:8,color:"#000",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif",opacity:profileSaving?0.6:1}}
+                >
+                  {profileSaving?"...":"Save"}
+                </button>
+              </div>
+              {profileMsg && <div style={{fontSize:11,color:profileMsg==="Saved!"?A:DG,marginTop:4}}>{profileMsg}</div>}
+            </div>
+
+            {/* League info */}
+            <div style={{padding:"10px 12px",background:CD2,borderRadius:8,marginBottom:14}}>
+              <div style={{fontSize:10,color:MT,fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>Current League</div>
+              <div style={{fontSize:13,fontWeight:600,color:TX}}>{league?.name||"—"}</div>
+              {isAdmin && <div style={{fontSize:10,color:A,marginTop:2}}>Admin</div>}
+            </div>
+
+            {/* Action buttons */}
+            <div style={{display:"flex",gap:8}}>
+              <button
+                onClick={()=>{setSelectedLeagueId(null);setShowProfile(false);}}
+                style={{flex:1,padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}
+              >
+                Switch League
+              </button>
+              <button
+                onClick={async()=>{await supabase.auth.signOut();}}
+                style={{flex:1,padding:"10px",background:`${DG}15`,border:`1px solid ${DG}40`,borderRadius:8,color:DG,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* LEADERBOARD TAB */}
       {tab==="board"&&(
@@ -811,41 +1066,46 @@ function AppContent({leagueId,user}){
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
             <h2 style={{fontSize:"18px",fontWeight:"bold",margin:0}}>Leaderboard</h2>
             <div style={{fontSize:"12px",color:MT}}>
-              ELO • {lb.filter(p=>p.games>0).length} active
+              {lb.length} player{lb.length!==1?"s":""}
             </div>
           </div>
 
-          {/* Podium (Top 3) */}
-          {lb.length>=1&&lb[0].games>0&&(
+          {/* S1-01: Empty state when no players have games */}
+          {lb.length===0&&(
+            <div style={{textAlign:"center",padding:"40px 20px",background:CD,borderRadius:12,border:`1px solid ${BD}`}}>
+              <div style={{fontSize:40,marginBottom:12}}>🎾</div>
+              <div style={{fontSize:15,fontWeight:600,color:TX,marginBottom:6}}>No rankings yet</div>
+              <div style={{fontSize:12,color:MT,lineHeight:1.5}}>Play your first match to appear on the leaderboard.</div>
+            </div>
+          )}
+
+          {/* Podium (Top 3) — only when 3+ players qualified */}
+          {lb.length>=3&&(
             <div style={{marginBottom:"24px",background:CD,padding:"16px",borderRadius:"8px",border:`1px solid ${BD}`}}>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px",alignItems:"flex-end"}}>
                 {/* 2nd place */}
-                {lb.length>=2&&lb[1].games>0&&(
-                  <div style={{textAlign:"center",padding:"12px",background:CD2,borderRadius:"6px",borderTop:`3px solid ${SV}`}}>
-                    <div style={{fontSize:"20px",marginBottom:"4px"}}>🥈</div>
-                    <div style={{fontSize:"13px",fontWeight:"bold",marginBottom:"4px"}}>{lb[1].name}</div>
-                    <div style={{fontSize:"11px",color:MT}}>{lb[1].wins}W {lb[1].losses}L</div>
-                    <div style={{fontSize:"12px",color:A,fontWeight:"bold",marginTop:"4px"}}>{Math.round(elo[lb[1].id]||1500)}</div>
-                  </div>
-                )}
+                <div style={{textAlign:"center",padding:"12px",background:CD2,borderRadius:"6px",borderTop:`3px solid ${SV}`}}>
+                  <div style={{fontSize:"20px",marginBottom:"4px"}}>🥈</div>
+                  <div style={{fontSize:"13px",fontWeight:"bold",marginBottom:"4px"}}>{lb[1].nickname||lb[1].name}</div>
+                  <div style={{fontSize:"11px",color:MT}}>{lb[1].wins}W {lb[1].losses}L</div>
+                  <div style={{fontSize:"12px",color:A,fontWeight:"bold",marginTop:"4px"}}>{Math.round(elo[lb[1].id]||1500)}</div>
+                </div>
 
                 {/* 1st place */}
                 <div style={{textAlign:"center",padding:"16px",background:CD2,borderRadius:"6px",borderTop:`3px solid ${GD}`,transform:"scale(1.05)"}}>
                   <div style={{fontSize:"28px",marginBottom:"6px"}}>🥇</div>
-                  <div style={{fontSize:"14px",fontWeight:"bold",marginBottom:"6px"}}>{lb[0].name}</div>
+                  <div style={{fontSize:"14px",fontWeight:"bold",marginBottom:"6px"}}>{lb[0].nickname||lb[0].name}</div>
                   <div style={{fontSize:"12px",color:MT}}>{lb[0].wins}W {lb[0].losses}L</div>
                   <div style={{fontSize:"13px",color:GD,fontWeight:"bold",marginTop:"6px"}}>{Math.round(elo[lb[0].id]||1500)}</div>
                 </div>
 
                 {/* 3rd place */}
-                {lb.length>=3&&lb[2].games>0&&(
-                  <div style={{textAlign:"center",padding:"12px",background:CD2,borderRadius:"6px",borderTop:`3px solid ${BZ}`}}>
-                    <div style={{fontSize:"20px",marginBottom:"4px"}}>🥉</div>
-                    <div style={{fontSize:"13px",fontWeight:"bold",marginBottom:"4px"}}>{lb[2].name}</div>
-                    <div style={{fontSize:"11px",color:MT}}>{lb[2].wins}W {lb[2].losses}L</div>
-                    <div style={{fontSize:"12px",color:BZ,fontWeight:"bold",marginTop:"4px"}}>{Math.round(elo[lb[2].id]||1500)}</div>
-                  </div>
-                )}
+                <div style={{textAlign:"center",padding:"12px",background:CD2,borderRadius:"6px",borderTop:`3px solid ${BZ}`}}>
+                  <div style={{fontSize:"20px",marginBottom:"4px"}}>🥉</div>
+                  <div style={{fontSize:"13px",fontWeight:"bold",marginBottom:"4px"}}>{lb[2].nickname||lb[2].name}</div>
+                  <div style={{fontSize:"11px",color:MT}}>{lb[2].wins}W {lb[2].losses}L</div>
+                  <div style={{fontSize:"12px",color:BZ,fontWeight:"bold",marginTop:"4px"}}>{Math.round(elo[lb[2].id]||1500)}</div>
+                </div>
               </div>
             </div>
           )}
@@ -1441,8 +1701,25 @@ function CombosView({combos,players,fm,pm,getName}){
   },[players,fm]);
 
   const activePlayers=players.filter(p=>{const s=matrix[p.id];return s&&Object.values(s).some(v=>v.games>0);});
-  const top3=combos.filter(c=>c.games>=1).slice(0,3);
-  const worst3=combos.filter(c=>c.games>=1).slice(-3).reverse();
+  // S1-03: Fix combos — sort best by win rate desc, worst by win rate asc
+  // Only show worst when 6+ unique combos exist to prevent overlap with top 3
+  const activeCombos=combos.filter(c=>c.games>=1);
+  const sortedByWinRate=[...activeCombos].sort((a,b)=>{
+    const pA=a.games>0?a.wins/a.games:0, pB=b.games>0?b.wins/b.games:0;
+    if(pB!==pA)return pB-pA;
+    return b.games-a.games;
+  });
+  const top3=sortedByWinRate.slice(0,3);
+  const top3Keys=new Set(top3.map(c=>c.players.slice().sort().join(",")));
+  // Worst: sort ascending by win rate, exclude any that appear in top 3
+  const worstCandidates=[...activeCombos]
+    .filter(c=>!top3Keys.has(c.players.slice().sort().join(",")))
+    .sort((a,b)=>{
+      const pA=a.games>0?a.wins/a.games:0, pB=b.games>0?b.wins/b.games:0;
+      if(pA!==pB)return pA-pB;
+      return b.games-a.games;
+    });
+  const worst3=activeCombos.length>=6?worstCandidates.slice(0,3):[];
   const pctColor=(pct,games)=>{if(games===0)return BD;if(pct>=60)return A;if(pct>=40)return TX;return DG;};
 
   return (
@@ -1481,7 +1758,7 @@ function CombosView({combos,players,fm,pm,getName}){
           </div>);
         })}
 
-        {worst3.length>0&&worst3[0]!==top3[0]&&<div style={{marginTop:16}}>
+        {worst3.length>0&&<div style={{marginTop:16}}>
           <h2 style={{fontSize:16,fontWeight:700,marginBottom:14,color:DG}}>💔 Worst Partnerships</h2>
           {worst3.map((c,i)=>{
             const pct=c.games>0?(c.wins/c.games*100):0;
