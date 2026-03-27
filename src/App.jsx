@@ -66,9 +66,36 @@ const ARGUED=[
 // Court icon for nav bar "Matches" tab
 const CourtIcon = () => (<svg width="16" height="20" viewBox="0 0 24 30" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="24" rx="1"/><line x1="12" y1="3" x2="12" y2="27"/><line x1="2" y1="15" x2="22" y2="15"/><rect x="8" y="3" width="8" height="5" rx="0" fill="none"/><rect x="8" y="22" width="8" height="5" rx="0" fill="none"/></svg>);
 // Padel racket logo — large (login screen)
-// Official PadelHub logo — final version (racket only, white bg)
-const PadelLogo = () => (<img src="/icons/padelhub-logo-final.png" alt="PadelHub" style={{width:52,height:52,objectFit:"contain",borderRadius:10}}/>);
-const PadelLogoSmall = () => (<img src="/icons/padelhub-logo-final.png" alt="PadelHub" style={{width:36,height:36,objectFit:"contain",borderRadius:6}}/>);
+// PadelHub logo — inline SVG matching brand (padel racket + hub network, dark-bg friendly)
+const PadelLogo = () => (<svg width="48" height="48" viewBox="0 0 80 80" fill="none">
+  <ellipse cx="40" cy="28" rx="16" ry="20" stroke="#666" strokeWidth="3.5" fill="none"/>
+  <circle cx="40" cy="28" r="5" fill={A}/>
+  <circle cx="33" cy="20" r="2.5" fill={A}/><line x1="40" y1="28" x2="33" y2="20" stroke={A} strokeWidth="1.5" strokeDasharray="2 2"/>
+  <circle cx="47" cy="20" r="2.5" fill={A}/><line x1="40" y1="28" x2="47" y2="20" stroke={A} strokeWidth="1.5" strokeDasharray="2 2"/>
+  <circle cx="31" cy="30" r="2.5" fill={A}/><line x1="40" y1="28" x2="31" y2="30" stroke={A} strokeWidth="1.5" strokeDasharray="2 2"/>
+  <circle cx="49" cy="30" r="2.5" fill={A}/><line x1="40" y1="28" x2="49" y2="30" stroke={A} strokeWidth="1.5" strokeDasharray="2 2"/>
+  <circle cx="34" cy="37" r="2.5" fill={A}/><line x1="40" y1="28" x2="34" y2="37" stroke={A} strokeWidth="1.5" strokeDasharray="2 2"/>
+  <circle cx="46" cy="37" r="2.5" fill={A}/><line x1="40" y1="28" x2="46" y2="37" stroke={A} strokeWidth="1.5" strokeDasharray="2 2"/>
+  <circle cx="40" cy="17" r="2.5" fill={A}/><line x1="40" y1="28" x2="40" y2="17" stroke={A} strokeWidth="1.5" strokeDasharray="2 2"/>
+  <rect x="37" y="47" width="6" height="14" rx="2.5" fill="#666"/>
+  <line x1="38" y1="52" x2="42" y2="52" stroke="#888" strokeWidth="1"/><line x1="38" y1="55" x2="42" y2="55" stroke="#888" strokeWidth="1"/><line x1="38" y1="58" x2="42" y2="58" stroke="#888" strokeWidth="1"/>
+</svg>);
+const PadelLogoSmall = () => (<svg width="32" height="32" viewBox="0 0 80 80" fill="none">
+  <ellipse cx="40" cy="28" rx="16" ry="20" stroke="#666" strokeWidth="4" fill="none"/>
+  <circle cx="40" cy="28" r="5" fill={A}/>
+  <circle cx="33" cy="20" r="2.8" fill={A}/><circle cx="47" cy="20" r="2.8" fill={A}/>
+  <circle cx="31" cy="30" r="2.8" fill={A}/><circle cx="49" cy="30" r="2.8" fill={A}/>
+  <circle cx="34" cy="37" r="2.8" fill={A}/><circle cx="46" cy="37" r="2.8" fill={A}/>
+  <circle cx="40" cy="17" r="2.8" fill={A}/>
+  <line x1="40" y1="28" x2="33" y2="20" stroke={A} strokeWidth="1.5" strokeDasharray="2 2"/>
+  <line x1="40" y1="28" x2="47" y2="20" stroke={A} strokeWidth="1.5" strokeDasharray="2 2"/>
+  <line x1="40" y1="28" x2="31" y2="30" stroke={A} strokeWidth="1.5" strokeDasharray="2 2"/>
+  <line x1="40" y1="28" x2="49" y2="30" stroke={A} strokeWidth="1.5" strokeDasharray="2 2"/>
+  <line x1="40" y1="28" x2="34" y2="37" stroke={A} strokeWidth="1.5" strokeDasharray="2 2"/>
+  <line x1="40" y1="28" x2="46" y2="37" stroke={A} strokeWidth="1.5" strokeDasharray="2 2"/>
+  <line x1="40" y1="28" x2="40" y2="17" stroke={A} strokeWidth="1.5" strokeDasharray="2 2"/>
+  <rect x="37" y="47" width="6" height="14" rx="2.5" fill="#666"/>
+</svg>);
 
 // Error boundary to catch render crashes (shows message instead of blank screen)
 class ErrorBoundary extends React.Component{
@@ -2681,7 +2708,7 @@ function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,fm,supabase,l
               {analyticsData.biggestWins.map((m,i)=>{const gA=m.sets.reduce((s,x)=>s+x[0],0);const gB=m.sets.reduce((s,x)=>s+x[1],0);return(
                 <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:i<analyticsData.biggestWins.length-1?`1px solid ${BD}`:undefined}}>
                   <div><div style={{fontSize:12,color:TX,fontWeight:600}}>{formatTeam(getName(m.team_a[0]),getName(m.team_a[1]))}</div><div style={{fontSize:10,color:MT}}>{formatDate(m.date)}</div></div>
-                  <span style={{fontSize:12,fontWeight:700,fontFamily:"'JetBrains Mono'"}}>{m.sets.map((s,si)=><span key={si} style={{color:s[0]>s[1]?A:s[0]<s[1]?DG:MT}}>{si>0?", ":""}{s[0]}-{s[1]}</span>)}</span>
+                  <span style={{fontSize:12,fontWeight:700,fontFamily:"'JetBrains Mono'"}}>{m.sets.map((s,si)=><span key={si}>{si>0&&<span style={{color:MT}}>, </span>}<span style={{color:s[0]>s[1]?A:s[0]<s[1]?DG:MT}}>{s[0]}-{s[1]}</span></span>)}</span>
                 </div>
               );})}
             </div>}
@@ -2795,7 +2822,7 @@ function ScheduleView({challenges,players,supabase,leagueId,user,getName,isAdmin
         <div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:12}}>
           <div style={{background:`${A}12`,border:`1px solid ${A}`,borderRadius:10,padding:12,marginBottom:14,display:"flex",alignItems:"center",gap:10}}>
             <span style={{fontSize:16}}>🎾</span>
-            <span style={{fontSize:12,fontWeight:600,color:TX}}>Always Doubles — Select 4 Players</span>
+            <span style={{fontSize:12,fontWeight:600,color:TX}}>Select Players</span>
           </div>
           {/* Team 1 */}
           <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:8,textTransform:"uppercase",letterSpacing:0.5}}>Team 1</div>
