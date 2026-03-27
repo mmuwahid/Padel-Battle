@@ -66,26 +66,9 @@ const ARGUED=[
 // Court icon for nav bar "Matches" tab
 const CourtIcon = () => (<svg width="16" height="20" viewBox="0 0 24 30" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="24" rx="1"/><line x1="12" y1="3" x2="12" y2="27"/><line x1="2" y1="15" x2="22" y2="15"/><rect x="8" y="3" width="8" height="5" rx="0" fill="none"/><rect x="8" y="22" width="8" height="5" rx="0" fill="none"/></svg>);
 // Padel racket logo — large (login screen)
-const PadelLogo = () => (<div style={{width:56,height:56,borderRadius:16,background:`${A}12`,display:"flex",alignItems:"center",justifyContent:"center"}}>
-  <svg width="36" height="36" viewBox="0 0 64 64" fill="none">
-    <ellipse cx="32" cy="22" rx="11" ry="14" stroke={A} strokeWidth="2.5" fill={`${A}10`}/>
-    <circle cx="28" cy="16" r="1.3" fill={A} opacity="0.6"/><circle cx="32" cy="16" r="1.3" fill={A} opacity="0.6"/><circle cx="36" cy="16" r="1.3" fill={A} opacity="0.6"/>
-    <circle cx="28" cy="21" r="1.3" fill={A} opacity="0.6"/><circle cx="32" cy="21" r="1.3" fill={A} opacity="0.6"/><circle cx="36" cy="21" r="1.3" fill={A} opacity="0.6"/>
-    <circle cx="28" cy="26" r="1.3" fill={A} opacity="0.6"/><circle cx="32" cy="26" r="1.3" fill={A} opacity="0.6"/><circle cx="36" cy="26" r="1.3" fill={A} opacity="0.6"/>
-    <rect x="29.5" y="35" width="5" height="11" rx="2" fill={A}/>
-    <line x1="30.5" y1="39" x2="33.5" y2="39" stroke={BG} strokeWidth="0.8"/>
-    <line x1="30.5" y1="41.5" x2="33.5" y2="41.5" stroke={BG} strokeWidth="0.8"/>
-    <line x1="30.5" y1="44" x2="33.5" y2="44" stroke={BG} strokeWidth="0.8"/>
-  </svg>
-</div>);
-// Padel racket logo — small (header, league screen)
-const PadelLogoSmall = () => (<svg width="22" height="22" viewBox="0 0 64 64" fill="none">
-  <ellipse cx="32" cy="22" rx="11" ry="14" stroke={A} strokeWidth="3" fill={`${A}10`}/>
-  <circle cx="28" cy="16" r="1.5" fill={A} opacity="0.6"/><circle cx="32" cy="16" r="1.5" fill={A} opacity="0.6"/><circle cx="36" cy="16" r="1.5" fill={A} opacity="0.6"/>
-  <circle cx="28" cy="21" r="1.5" fill={A} opacity="0.6"/><circle cx="32" cy="21" r="1.5" fill={A} opacity="0.6"/><circle cx="36" cy="21" r="1.5" fill={A} opacity="0.6"/>
-  <circle cx="28" cy="26" r="1.5" fill={A} opacity="0.6"/><circle cx="32" cy="26" r="1.5" fill={A} opacity="0.6"/><circle cx="36" cy="26" r="1.5" fill={A} opacity="0.6"/>
-  <rect x="29.5" y="35" width="5" height="11" rx="2" fill={A}/>
-</svg>);
+// Official PadelHub logo (PNG from brand assets)
+const PadelLogo = () => (<img src="/icons/padelhub-logo.png" alt="PadelHub" style={{width:56,height:56,objectFit:"contain"}}/>);
+const PadelLogoSmall = () => (<img src="/icons/padelhub-logo.png" alt="PadelHub" style={{width:28,height:28,objectFit:"contain"}}/>);
 
 // Error boundary to catch render crashes (shows message instead of blank screen)
 class ErrorBoundary extends React.Component{
