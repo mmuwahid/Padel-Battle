@@ -9,6 +9,7 @@ const A="#4ADE80",BG="#0a0a0f",CD="#12121a",CD2="#1a1a26",BD="#2a2a3a",TX="#e4e4
 // Helper functions
 function formatTeam(p1,p2){return `${p1} x ${p2}`;}
 function win(sets){let a=0,b=0;sets.forEach(([x,y])=>{if(x>y)a++;else b++;});return a>b?"A":"B";}
+function formatDate(d){const dt=new Date(d);const dd=String(dt.getDate()).padStart(2,"0");const mmm=dt.toLocaleString("en-GB",{month:"short"});const yyyy=dt.getFullYear();return `${dd}/${mmm}/${yyyy}`;}
 function gid(){return"id_"+Math.random().toString(36).substr(2,9);}
 
 const K=40,ES=1500;
@@ -661,6 +662,10 @@ function AppContent({leagueId,user,onSwitchLeague}){
   // Admin Management state
   const [leagueMembers,setLeagueMembers]=useState([]);
   const [memberProfiles,setMemberProfiles]=useState({});
+  // PWA install prompt
+  const [installPrompt,setInstallPrompt]=useState(null);
+  useEffect(()=>{const h=(e)=>{e.preventDefault();setInstallPrompt(e);};window.addEventListener("beforeinstallprompt",h);return ()=>window.removeEventListener("beforeinstallprompt",h);},[]);
+  const handleInstall=async()=>{if(!installPrompt)return;installPrompt.prompt();const r=await installPrompt.userChoice;if(r.outcome==="accepted")setInstallPrompt(null);};
 
   // Load league data from Supabase
   useEffect(()=>{
@@ -1276,6 +1281,11 @@ function AppContent({leagueId,user,onSwitchLeague}){
             <button onClick={()=>{setSidebarView("settings");}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>
               Settings
             </button>
+            {installPrompt && (
+              <button onClick={handleInstall} style={{width:"100%",padding:"12px 16px",background:`${A}15`,border:`1px solid ${A}40`,borderRadius:8,color:A,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",transition:"all 0.2s"}}>
+                Install App
+              </button>
+            )}
           </div>
         </div>
 
@@ -1352,27 +1362,28 @@ function AppContent({leagueId,user,onSwitchLeague}){
                     </div>
                   </div>
 
-                  {/* ELO History */}
+                  {/* ELO History — only show when player has matches */}
+                  {matches.some(m=>m.team_a.includes(p.id)||m.team_b.includes(p.id)) && (
                   <div style={{marginBottom:24}}>
                     <h3 style={{fontSize:13,fontWeight:700,color:TX,marginBottom:12}}>ELO History</h3>
                     <div style={{display:"flex",alignItems:"flex-end",gap:2,height:100,background:CD2,padding:8,borderRadius:8}}>
                       {(() => {
                         const pMatches = matches.filter(m=>m.team_a.includes(p.id)||m.team_b.includes(p.id)).sort((a,b)=>new Date(a.date)-new Date(b.date));
                         const eloHistory = [];
-                        let currentElo = 1500;
                         pMatches.forEach(m => {
                           const allElo = calcElo(players, matches.filter(mm => new Date(mm.date) <= new Date(m.date)));
                           eloHistory.push(allElo[p.id] || 1500);
                         });
-                        const minElo = Math.min(...eloHistory, 1500);
-                        const maxElo = Math.max(...eloHistory, 1500);
+                        const minElo = Math.min(...eloHistory);
+                        const maxElo = Math.max(...eloHistory);
                         const range = maxElo - minElo || 1;
                         return eloHistory.slice(-10).map((e, i) => (
-                          <div key={i} style={{flex:1,background:A,borderRadius:2,height:`${((e-minElo)/range)*100}%`,minHeight:4,opacity:0.8}}/>
+                          <div key={i} style={{flex:1,background:A,borderRadius:2,height:`${Math.max(((e-minElo)/range)*100,5)}%`,opacity:0.8}}/>
                         ));
                       })()}
                     </div>
                   </div>
+                  )}
 
                   {/* Achievements */}
                   <div style={{marginBottom:24}}>
@@ -1384,7 +1395,8 @@ function AppContent({leagueId,user,onSwitchLeague}){
                           <div key={a.id} style={{padding:10,background:earned?CD2:`${CD2}80`,borderRadius:8,opacity:earned?1:0.5}}>
                             <div style={{fontSize:20,marginBottom:4}}>{a.icon}</div>
                             <div style={{fontSize:11,fontWeight:600,color:TX}}>{a.name}</div>
-                            {!earned && <div style={{fontSize:9,color:MT}}>🔒</div>}
+                            <div style={{fontSize:9,color:MT,marginTop:2}}>{a.desc}</div>
+                            {!earned && <div style={{fontSize:9,color:MT,marginTop:2}}>🔒 Locked</div>}
                           </div>
                         );
                       })}
@@ -1406,14 +1418,14 @@ function AppContent({leagueId,user,onSwitchLeague}){
                             </div>
                             <div style={{flex:1,fontSize:11}}>
                               <div style={{fontWeight:600,color:TX}}>{formatTeam(getName(m.team_a[0]),getName(m.team_a[1]))} vs {formatTeam(getName(m.team_b[0]),getName(m.team_b[1]))}</div>
-                              <div style={{color:MT,fontSize:10,marginTop:2}}>{m.sets.map((s,i)=>`${s[0]}-${s[1]}`).join(", ")}</div>
+                              <div style={{fontSize:10,marginTop:2,display:"flex",gap:4}}>{m.sets.map((s,i)=>{const pWon=pTeam==="A"?s[0]>s[1]:s[1]>s[0];return <span key={i} style={{color:pWon?A:DG}}>{s[0]}-{s[1]}</span>;})}</div>
                             </div>
-                            <div style={{fontSize:9,color:MT}}>{new Date(m.date).toLocaleDateString()}</div>
+                            <div style={{fontSize:9,color:MT}}>{formatDate(m.date)}</div>
                           </div>
                         );
                       })}
                     </div>
-                    <button onClick={()=>{setSidebarView(null);setTab("history");}} style={{width:"100%",marginTop:12,padding:"10px",background:"transparent",border:`1px solid ${BD}`,borderRadius:8,color:A,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
+                    <button onClick={()=>{setSidebarView(null);setSidebarOpen(false);setTab("history");}} style={{width:"100%",marginTop:12,padding:"10px",background:"transparent",border:`1px solid ${BD}`,borderRadius:8,color:A,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
                       View All Matches
                     </button>
                   </div>
@@ -1574,10 +1586,10 @@ function AppContent({leagueId,user,onSwitchLeague}){
                                   <div key={m.id} style={{padding:10,background:CD,borderRadius:8}}>
                                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
                                       <span style={{fontSize:11,fontWeight:600,color:p1Won?A:DG}}>{p1Won?"✓ Won":"✗ Lost"}</span>
-                                      <span style={{fontSize:10,color:MT}}>{new Date(m.date).toLocaleDateString()}</span>
+                                      <span style={{fontSize:10,color:MT}}>{formatDate(m.date)}</span>
                                     </div>
-                                    <div style={{fontSize:10,color:TX}}>
-                                      {m.sets.map((s,i)=>`${s[0]}-${s[1]}`).join(" ")}
+                                    <div style={{fontSize:10,display:"flex",gap:4}}>
+                                      {m.sets.map((s,i)=>{const isA=m.team_a.includes(h2hPlayer1);const pWon=isA?s[0]>s[1]:s[1]>s[0];return <span key={i} style={{color:pWon?A:DG}}>{s[0]}-{s[1]}</span>;})}
                                     </div>
                                   </div>
                                 );
@@ -1724,8 +1736,8 @@ function AppContent({leagueId,user,onSwitchLeague}){
             </div>
           </div>
 
-          {/* Season Awards Section */}
-          {selectedSeason && (() => {
+          {/* Season Awards Section — only shown for ended seasons */}
+          {selectedSeason && !seasons.find(s=>s.id===selectedSeason)?.active && (() => {
             const awards = calculateSeasonAwards(selectedSeason);
             const hasAwards = Object.keys(awards).length > 0;
             return hasAwards && (
@@ -1972,13 +1984,13 @@ function AppContent({leagueId,user,onSwitchLeague}){
       {/* BOTTOM NAV — Original layout: 3 left tabs + center "+" button + 3 right tabs */}
       <div style={{position:"fixed",bottom:0,left:0,right:0,background:`${CD}f0`,backdropFilter:"blur(20px)",borderTop:`1px solid ${BD}`,display:"flex",justifyContent:"space-around",alignItems:"flex-end",padding:`4px 0 env(safe-area-inset-bottom, 6px)`,zIndex:100}}>
         {TL.map(t => (
-          <button key={t.key} onClick={()=>setTab(t.key)} style={{background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:1,color:tab===t.key?A:MT,cursor:"pointer",padding:"5px 6px",flex:1}}>
+          <button key={t.key} onClick={()=>{setTab(t.key);setSidebarOpen(false);setSidebarView(null);}} style={{background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:1,color:tab===t.key?A:MT,cursor:"pointer",padding:"5px 6px",flex:1}}>
             <span style={{fontSize:16}}>{t.icon==="court"?<CourtIcon/>:t.icon}</span><span style={{fontSize:8,fontWeight:600}}>{t.label}</span>
           </button>
         ))}
-        <button onClick={()=>{setEditingMatch(null);setTab("log");}} style={{width:56,height:56,borderRadius:"50%",border:"none",background:`linear-gradient(135deg,${A},${A}cc)`,color:BG,fontSize:30,fontWeight:900,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",marginTop:-20,boxShadow:`0 4px 20px ${A}40`,flexShrink:0,lineHeight:1}}>+</button>
+        <button onClick={()=>{setEditingMatch(null);setTab("log");setSidebarOpen(false);setSidebarView(null);}} style={{width:56,height:56,borderRadius:"50%",border:"none",background:`linear-gradient(135deg,${A},${A}cc)`,color:BG,fontSize:30,fontWeight:900,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",marginTop:-20,boxShadow:`0 4px 20px ${A}40`,flexShrink:0,lineHeight:1}}>+</button>
         {TR.map(t => (
-          <button key={t.key} onClick={()=>setTab(t.key)} style={{background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:1,color:tab===t.key?A:MT,cursor:"pointer",padding:"5px 6px",flex:1}}>
+          <button key={t.key} onClick={()=>{setTab(t.key);setSidebarOpen(false);setSidebarView(null);}} style={{background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:1,color:tab===t.key?A:MT,cursor:"pointer",padding:"5px 6px",flex:1}}>
             <span style={{fontSize:16}}>{t.icon}</span><span style={{fontSize:8,fontWeight:600}}>{t.label}</span>
           </button>
         ))}
@@ -2352,7 +2364,7 @@ function MatchHistory({matches,pm,players,onEdit,supabase,isAdmin,getName,shareM
       {s.map(m=>{const w=win(m.sets);const tA=m.sets.reduce((s,x)=>s+x[0],0);const tB=m.sets.reduce((s,x)=>s+x[1],0);
         return (<div key={m.id} style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:8}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-            <span style={{fontSize:11,color:MT,fontWeight:500}}>{new Date(m.date).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"})}</span>
+            <span style={{fontSize:11,color:MT,fontWeight:500}}>{formatDate(m.date)}</span>
             <div style={{display:"flex",gap:4,alignItems:"center"}}>
               {m.motm&&<span style={{fontSize:10,background:`${GD}20`,color:GD,padding:"2px 6px",borderRadius:6,fontWeight:600}}>⭐{getName(m.motm)}</span>}
               <button onClick={()=>shareMatch(m)} style={{background:"none",border:"none",fontSize:13,cursor:"pointer",padding:"2px 4px"}}>📤</button>
