@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { supabase } from './supabase';
 
 // Color palette
@@ -194,7 +194,7 @@ function AuthGate({children}){
     try {
       const {error:err} = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo: window.location.origin + window.location.pathname + window.location.search }
+        options: { redirectTo: window.location.origin + window.location.pathname, queryParams: { prompt: "select_account" } }
       });
       if (err) throw err;
     } catch (err) { setError(err.message || "Google sign-in failed"); }
@@ -316,6 +316,7 @@ function LeagueGate({user,children}){
   const [error,setError]=useState("");
   const [editingLeagueId,setEditingLeagueId]=useState(null);
   const [editLeagueName,setEditLeagueName]=useState("");
+  const [joinMsg,setJoinMsg]=useState("");
 
   useEffect(()=>{
     const init = async () => {
@@ -354,6 +355,7 @@ function LeagueGate({user,children}){
       await loadUserLeagues();
       setSelectedLeagueId(leagueData.id);
       setInviteCode("");
+      setJoinMsg(`Welcome to ${leagueData.name}!`);
     } catch (err) {
       console.error("Auto-join error:", err);
       // Don't block — user can still manually join
@@ -509,6 +511,13 @@ function LeagueGate({user,children}){
           <p style={{color:MT,fontSize:11,fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginTop:6}}>Select a League</p>
         </div>
 
+        {/* Join success message */}
+        {joinMsg && (
+          <div style={{marginBottom:16,padding:"12px 16px",background:`${A}15`,border:`1px solid ${A}40`,borderRadius:12,color:A,fontSize:13,fontWeight:600,textAlign:"center"}}>
+            {joinMsg}
+          </div>
+        )}
+
         {/* Existing leagues */}
         {leagues.length > 0 && (
           <div style={{marginBottom:20}}>
@@ -662,10 +671,31 @@ function AppContent({leagueId,user,onSwitchLeague}){
   // Admin Management state
   const [leagueMembers,setLeagueMembers]=useState([]);
   const [memberProfiles,setMemberProfiles]=useState({});
+  // Toast notification system
+  const [toast,setToast]=useState(null);
+  const showToast=(msg,type="success")=>{setToast({msg,type});setTimeout(()=>setToast(null),3000);};
   // PWA install prompt
   const [installPrompt,setInstallPrompt]=useState(null);
   useEffect(()=>{const h=(e)=>{e.preventDefault();setInstallPrompt(e);};window.addEventListener("beforeinstallprompt",h);return ()=>window.removeEventListener("beforeinstallprompt",h);},[]);
   const handleInstall=async()=>{if(!installPrompt)return;installPrompt.prompt();const r=await installPrompt.userChoice;if(r.outcome==="accepted")setInstallPrompt(null);};
+
+  // Browser back button support — push state on tab/view changes, pop to go back
+  const prevTab=useRef(tab);
+  const prevView=useRef(sidebarView);
+  useEffect(()=>{
+    if(tab!==prevTab.current||sidebarView!==prevView.current){
+      window.history.pushState({tab,sidebarView,sidebarOpen},"");
+      prevTab.current=tab;prevView.current=sidebarView;
+    }
+  },[tab,sidebarView]);
+  useEffect(()=>{
+    const onPop=(e)=>{
+      if(e.state){setTab(e.state.tab||"board");setSidebarView(e.state.sidebarView||null);setSidebarOpen(!!e.state.sidebarOpen);}
+      else{setSidebarView(null);setSidebarOpen(false);setTab("board");}
+    };
+    window.addEventListener("popstate",onPop);
+    return ()=>window.removeEventListener("popstate",onPop);
+  },[]);
 
   // Load league data from Supabase
   useEffect(()=>{
@@ -881,7 +911,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
       await loadLeagueData();
     } catch (err) {
       console.error("Failed to update role:", err);
-      alert("Failed to update member role");
+      showToast("Failed to update member role","error");
     }
   };
 
@@ -896,7 +926,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
       await loadLeagueData();
     } catch (err) {
       console.error("Failed to update player:", err);
-      alert("Failed to update player name");
+      showToast("Failed to update player name","error");
     }
   };
 
@@ -911,14 +941,14 @@ function AppContent({leagueId,user,onSwitchLeague}){
       await loadLeagueData();
     } catch (err) {
       console.error("Failed to deactivate player:", err);
-      alert("Failed to deactivate player");
+      showToast("Failed to deactivate player","error");
     }
   };
 
   // Export matches as CSV
   const exportMatchesCSV = () => {
     if (matches.length === 0) {
-      alert("No matches to export");
+      showToast("No matches to export","error");
       return;
     }
     const csv = [
@@ -959,7 +989,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
       await loadLeagueData();
     } catch (err) {
       console.error("Failed to regenerate code:", err);
-      alert("Failed to regenerate invite code");
+      showToast("Failed to regenerate invite code","error");
     }
   };
 
@@ -980,16 +1010,16 @@ function AppContent({leagueId,user,onSwitchLeague}){
   // Request notification permission
   const requestNotificationPermission = async () => {
     if (!("Notification" in window)) {
-      alert("Browser doesn't support notifications");
+      showToast("Browser doesn't support notifications","error");
       return;
     }
     if (Notification.permission === "granted") {
-      alert("Notifications already enabled");
+      showToast("Notifications already enabled");
       return;
     }
     const permission = await Notification.requestPermission();
     if (permission === "granted") {
-      alert("Notifications enabled!");
+      showToast("Notifications enabled!");
     }
   };
 
@@ -1202,8 +1232,8 @@ function AppContent({leagueId,user,onSwitchLeague}){
         </button>
       </div>
 
-      {/* SIDEBAR OVERLAY */}
-      {sidebarOpen && (
+      {/* SIDEBAR OVERLAY — hidden when a sidebar view is active (content renders in main area) */}
+      {sidebarOpen && !sidebarView && (
         <div
           onClick={()=>setSidebarOpen(false)}
           style={{
@@ -1213,12 +1243,12 @@ function AppContent({leagueId,user,onSwitchLeague}){
         />
       )}
 
-      {/* SIDEBAR */}
+      {/* SIDEBAR — hidden when a sidebar view is active (content renders in main area) */}
       <div style={{
         position:"fixed",top:0,right:0,width:320,height:"100vh",
         background:CD,borderLeft:`1px solid ${BD}`,
         zIndex:99,
-        transform:sidebarOpen?"translateX(0)":"translateX(100%)",
+        transform:(sidebarOpen&&!sidebarView)?"translateX(0)":"translateX(100%)",
         transition:"transform 0.3s ease-in-out",
         display:"flex",flexDirection:"column",
         boxShadow:sidebarOpen?"0 0 20px rgba(0,0,0,0.5)":"none",
@@ -1247,7 +1277,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
             <button onClick={()=>{setSidebarView("h2h");}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>
               Head-to-Head
             </button>
-            <button onClick={()=>{setSidebarView(null);setTab("stats");setSidebarOpen(false);}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>
+            <button onClick={()=>{setSidebarView("profile");}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>
               My Stats
             </button>
           </div>
@@ -1267,7 +1297,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
             <button onClick={()=>{onSwitchLeague();}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>
               Switch League
             </button>
-            <button onClick={()=>{const code=league?.invite_code;if(code){const url=`${window.location.origin}${window.location.pathname}?invite=${code}`;if(navigator.share)navigator.share({title:"Join my PadelHub league",text:`Join "${league?.name}" on PadelHub!`,url});else{navigator.clipboard.writeText(url);alert("Invite link copied!");}}}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>
+            <button onClick={()=>{const code=league?.invite_code;if(code){const url=`${window.location.origin}${window.location.pathname}?invite=${code}`;if(navigator.share)navigator.share({title:"Join my PadelHub league",text:`Join "${league?.name}" on PadelHub!`,url});else{navigator.clipboard.writeText(url);showToast("Invite link copied!");}}}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>
               Invite Players
             </button>
           </div>
@@ -1877,6 +1907,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
           seasons={seasons}
           setCurSeason={setSelectedSeason}
           onSave={loadLeagueData}
+          showToast={showToast}
         />
       )}
 
@@ -1893,6 +1924,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
           shareMatch={shareMatch}
           sel={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:13,fontFamily:"Outfit"}}
           onMatchDeleted={loadLeagueData}
+          showToast={showToast}
         />
       )}
 
@@ -1981,6 +2013,13 @@ function AppContent({leagueId,user,onSwitchLeague}){
         ))}
       </div>}
 
+      {/* TOAST NOTIFICATION */}
+      {toast && (
+        <div style={{position:"fixed",top:20,left:"50%",transform:"translateX(-50%)",zIndex:200,padding:"12px 24px",borderRadius:12,background:toast.type==="success"?A:DG,color:toast.type==="success"?"#000":"#fff",fontSize:13,fontWeight:700,fontFamily:"'Outfit',sans-serif",boxShadow:"0 4px 20px rgba(0,0,0,0.3)",animation:"fadeIn 0.2s ease-out",maxWidth:"90%",textAlign:"center"}}>
+          {toast.msg}
+        </div>
+      )}
+
       {/* BOTTOM NAV — Original layout: 3 left tabs + center "+" button + 3 right tabs */}
       <div style={{position:"fixed",bottom:0,left:0,right:0,background:`${CD}f0`,backdropFilter:"blur(20px)",borderTop:`1px solid ${BD}`,display:"flex",justifyContent:"space-around",alignItems:"flex-end",padding:`4px 0 env(safe-area-inset-bottom, 6px)`,zIndex:100}}>
         {TL.map(t => (
@@ -2017,7 +2056,7 @@ function FD({f}){
 // ============================================================================
 // LOG MATCH COMPONENT
 // ============================================================================
-function LogMatch({players,matches,supabase,leagueId,pm,em,setEm,goBack,sel,lbl,getName,seasonId,seasons,setCurSeason,onSave}){
+function LogMatch({players,matches,supabase,leagueId,pm,em,setEm,goBack,sel,lbl,getName,seasonId,seasons,setCurSeason,onSave,showToast}){
   const isE=!!em;
   const [tA,setTA]=useState(["",""]);
   const [tB,setTB]=useState(["",""]);
@@ -2069,8 +2108,10 @@ function LogMatch({players,matches,supabase,leagueId,pm,em,setEm,goBack,sel,lbl,
       setSaved(true);
       setTimeout(()=>setSaved(false),2000);
       if(onSave)onSave();
+      if(showToast)showToast(em?"Match updated":"Match saved!");
     }catch(err){
       console.error("Submit match error:",err);
+      if(showToast)showToast("Failed to save match","error");
     }finally{
       setSaving(false);
     }
@@ -2334,7 +2375,7 @@ function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,fm,supabase,l
 // ============================================================================
 // MATCH HISTORY COMPONENT
 // ============================================================================
-function MatchHistory({matches,pm,players,onEdit,supabase,isAdmin,getName,shareMatch,sel,onMatchDeleted}){
+function MatchHistory({matches,pm,players,onEdit,supabase,isAdmin,getName,shareMatch,sel,onMatchDeleted,showToast}){
   const [fp,setFp]=useState("");
   const [cd,setCd]=useState(null);
   const f=fp?matches.filter(m=>m.team_a.includes(fp)||m.team_b.includes(fp)):matches;
@@ -2347,8 +2388,10 @@ function MatchHistory({matches,pm,players,onEdit,supabase,isAdmin,getName,shareM
       if(error)throw error;
       setCd(null);
       if(onMatchDeleted)onMatchDeleted();
+      if(showToast)showToast("Match deleted");
     }catch(err){
       console.error("Delete match error:",err);
+      if(showToast)showToast("Failed to delete match","error");
     }
   }
 
@@ -2361,6 +2404,13 @@ function MatchHistory({matches,pm,players,onEdit,supabase,isAdmin,getName,shareM
         </select>
       </div>
       <div style={{fontSize:11,color:MT,marginBottom:8,fontWeight:500}}>{s.length} matches</div>
+      {s.length===0&&(
+        <div style={{textAlign:"center",padding:"40px 20px"}}>
+          <div style={{fontSize:40,marginBottom:12}}>🎾</div>
+          <div style={{fontSize:15,fontWeight:600,color:TX,marginBottom:6}}>No matches yet</div>
+          <div style={{fontSize:12,color:MT,lineHeight:1.5}}>Tap the + button to log your first match.</div>
+        </div>
+      )}
       {s.map(m=>{const w=win(m.sets);const tA=m.sets.reduce((s,x)=>s+x[0],0);const tB=m.sets.reduce((s,x)=>s+x[1],0);
         return (<div key={m.id} style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:8}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
@@ -2437,6 +2487,16 @@ function CombosView({combos,players,fm,pm,getName}){
     });
   const worst3=activeCombos.length>=6?worstCandidates.slice(0,3):[];
   const pctColor=(pct,games)=>{if(games===0)return BD;if(pct>=60)return A;if(pct>=40)return TX;return DG;};
+
+  if(activeCombos.length===0)return (
+    <div style={{padding:"20px 16px",maxWidth:"600px",margin:"0 auto",textAlign:"center"}}>
+      <div style={{padding:"40px 20px"}}>
+        <div style={{fontSize:40,marginBottom:12}}>🤝</div>
+        <div style={{fontSize:15,fontWeight:600,color:TX,marginBottom:6}}>No partnerships yet</div>
+        <div style={{fontSize:12,color:MT,lineHeight:1.5}}>Play some doubles matches to see partnership stats here.</div>
+      </div>
+    </div>
+  );
 
   return (
     <div style={{padding:"20px 16px",maxWidth:"600px",margin:"0 auto"}}>
