@@ -1,122 +1,15 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { supabase } from './supabase';
+import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, BL, PU, TL, TR } from './theme';
+import { formatTeam, win, formatDate, gid } from './utils/helpers';
+import { calcElo } from './utils/elo';
+import { generateAmericanoSchedule, generateMexicanoRound } from './utils/tournaments';
 
-// Color palette
-const A="#4ADE80",BG="#0a0a0f",CD="#12121a",CD2="#1a1a26",BD="#2a2a3a",TX="#e4e4ef",MT="#7a7a8e",DG="#f87171",GD="#FFD700",SV="#C0C0C0",BZ="#CD7F32",BL="#4da6ff",PU="#a855f7";
-
-// No default roster — players created when users join and claim/create identity
-
-// Helper functions
-function formatTeam(p1,p2){return `${p1} x ${p2}`;}
-function win(sets){let a=0,b=0;sets.forEach(([x,y])=>{if(x>y)a++;else b++;});return a>b?"A":"B";}
-function formatDate(d){const dt=new Date(d);const dd=String(dt.getDate()).padStart(2,"0");const mmm=dt.toLocaleString("en-GB",{month:"short"});const yyyy=dt.getFullYear();return `${dd}/${mmm}/${yyyy}`;}
-function gid(){return"id_"+Math.random().toString(36).substr(2,9);}
-
-const K=40,ES=1500;
-function calcElo(pl,ma){
-  const r={};
-  pl.forEach(p=>{r[p.id]=ES;});
-  [...ma].sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(m=>{
-    const w=win(m.sets);
-    const aA=((r[m.team_a[0]]||ES)+(r[m.team_a[1]]||ES))/2;
-    const aB=((r[m.team_b[0]]||ES)+(r[m.team_b[1]]||ES))/2;
-    const eA=1/(1+Math.pow(10,(aB-aA)/400));
-    const sA=w==="A"?1:0;
-    m.team_a.forEach(p=>{if(r[p]!==undefined)r[p]+=Math.round(K*(sA-eA));});
-    m.team_b.forEach(p=>{if(r[p]!==undefined)r[p]+=Math.round(K*((1-sA)-(1-eA)));});
-  });
-  return r;
-}
-
-const ACHS=[
-  {id:"w1",icon:"🌟",name:"First Blood",desc:"Win first match",ck:s=>s.wins>=1},
-  {id:"s3",icon:"🔥",name:"Hot Streak",desc:"3 consecutive wins",ck:s=>{let m=0,c=0;s.streak.forEach(r=>{if(r==="W"){c++;m=Math.max(m,c);}else c=0;});return m>=3;}},
-  {id:"s5",icon:"💥",name:"Unstoppable",desc:"5 consecutive wins",ck:s=>{let m=0,c=0;s.streak.forEach(r=>{if(r==="W"){c++;m=Math.max(m,c);}else c=0;});return m>=5;}},
-  {id:"m3",icon:"⭐",name:"MVP Machine",desc:"3+ MOTM awards",ck:s=>s.motm>=3},
-  {id:"m5",icon:"🏅",name:"Living Legend",desc:"5+ MOTM awards",ck:s=>s.motm>=5},
-  {id:"cb",icon:"💪",name:"Comeback King",desc:"Win after losing set 1",ck:s=>s.comebacks>=1},
-  {id:"sh",icon:"🎯",name:"Sharpshooter",desc:"70%+ win rate (5+ games)",ck:s=>s.games>=5&&(s.wins/s.games)>=0.7},
-  {id:"t1",icon:"🔟",name:"Centurion",desc:"Play 10+ matches",ck:s=>s.games>=10},
-  {id:"t2",icon:"👑",name:"Veteran",desc:"Play 20+ matches",ck:s=>s.games>=20},
-  {id:"iw",icon:"🛡️",name:"Iron Wall",desc:"Positive game diff (5+ games)",ck:s=>s.games>=5&&(s.gamesWon-s.gamesLost)>0},
-];
-
-const RULES=[
-  {title:"Scoring",content:"Best of 3 sets. Tennis scoring: 15, 30, 40, deuce. Tiebreak at 6-6 (first to 7, win by 2). Agree on Golden Point vs Advantage before match."},
-  {title:"The Serve",content:"Underhand, bounce first, struck at/below waist. Diagonally into opposite box. Two attempts. Ball may hit glass after bounce (rally continues), but fence = fault."},
-  {title:"Return of Serve",content:"Must bounce first. You cannot volley the return — instant loss of point."},
-  {title:"Walls & Fences",content:"During rallies, ball can bounce off glass walls. Must always bounce on ground before hitting a wall on your side."},
-  {title:"Playing Outside Court",content:"Ball goes over back wall or through door after bouncing? You may leave the court to play it back before second bounce."},
-  {title:"Net Touch",content:"Touch net with racket, body, or clothing = lose point. No exceptions."},
-  {title:"Switching Sides",content:"Change ends after every odd game (1-0, 2-1, etc.). Max 90 seconds rest."},
-];
-
-const ARGUED=[
-  {q:"Serve hits net → bounces in box → goes out door?",a:"With out-of-court play: LET (replay). Without: FAULT. Agree before match."},
-  {q:"Ball hits fence (mesh) after serve bounce?",a:"FAULT. On serve, after bounce: glass = play on, fence = fault. Strictest rule in padel."},
-  {q:"Golden Point or Advantage at deuce?",a:"No universal default. WPT uses Golden Point. FIP uses advantage. MUST agree before match. Can't change mid-set."},
-  {q:"Opponent wasn't ready when I served?",a:"LET if they didn't attempt return. If they attempted return, can't claim 'not ready'."},
-  {q:"Ball bounces my side → hits glass → goes over net to opponent?",a:"YOUR point. Ball crossing back over after your wall = you win."},
-  {q:"Can I reach over the net?",a:"NO. Racket may cross net only on follow-through AFTER contact on your side."},
-  {q:"Ball hits my body during rally?",a:"You LOSE the point. Must only be struck with racket."},
-  {q:"Who serves first in tiebreak?",a:"Player whose turn it is serves 1 point, then each player serves 2 consecutive. Change ends every 6 points."},
-];
-
-// SVG Icons (exact match from original)
-// Court icon for nav bar "Matches" tab
-const CourtIcon = () => (<svg width="16" height="20" viewBox="0 0 24 30" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="24" rx="1"/><line x1="12" y1="3" x2="12" y2="27"/><line x1="2" y1="15" x2="22" y2="15"/><rect x="8" y="3" width="8" height="5" rx="0" fill="none"/><rect x="8" y="22" width="8" height="5" rx="0" fill="none"/></svg>);
-// Padel racket logo — large (login screen)
-// PadelHub logo — inline SVG matching brand (padel racket + hub network, dark-bg friendly)
-const PadelLogo = () => (<svg width="48" height="48" viewBox="0 0 80 80" fill="none">
-  <ellipse cx="40" cy="28" rx="16" ry="20" stroke="#666" strokeWidth="3.5" fill="none"/>
-  <circle cx="40" cy="28" r="5" fill={A}/>
-  <circle cx="33" cy="20" r="2.5" fill={A}/><line x1="40" y1="28" x2="33" y2="20" stroke={A} strokeWidth="1.5" strokeDasharray="2 2"/>
-  <circle cx="47" cy="20" r="2.5" fill={A}/><line x1="40" y1="28" x2="47" y2="20" stroke={A} strokeWidth="1.5" strokeDasharray="2 2"/>
-  <circle cx="31" cy="30" r="2.5" fill={A}/><line x1="40" y1="28" x2="31" y2="30" stroke={A} strokeWidth="1.5" strokeDasharray="2 2"/>
-  <circle cx="49" cy="30" r="2.5" fill={A}/><line x1="40" y1="28" x2="49" y2="30" stroke={A} strokeWidth="1.5" strokeDasharray="2 2"/>
-  <circle cx="34" cy="37" r="2.5" fill={A}/><line x1="40" y1="28" x2="34" y2="37" stroke={A} strokeWidth="1.5" strokeDasharray="2 2"/>
-  <circle cx="46" cy="37" r="2.5" fill={A}/><line x1="40" y1="28" x2="46" y2="37" stroke={A} strokeWidth="1.5" strokeDasharray="2 2"/>
-  <circle cx="40" cy="17" r="2.5" fill={A}/><line x1="40" y1="28" x2="40" y2="17" stroke={A} strokeWidth="1.5" strokeDasharray="2 2"/>
-  <rect x="37" y="47" width="6" height="14" rx="2.5" fill="#666"/>
-  <line x1="38" y1="52" x2="42" y2="52" stroke="#888" strokeWidth="1"/><line x1="38" y1="55" x2="42" y2="55" stroke="#888" strokeWidth="1"/><line x1="38" y1="58" x2="42" y2="58" stroke="#888" strokeWidth="1"/>
-</svg>);
-const PadelLogoSmall = () => (<svg width="32" height="32" viewBox="0 0 80 80" fill="none">
-  <ellipse cx="40" cy="28" rx="16" ry="20" stroke="#666" strokeWidth="4" fill="none"/>
-  <circle cx="40" cy="28" r="5" fill={A}/>
-  <circle cx="33" cy="20" r="2.8" fill={A}/><circle cx="47" cy="20" r="2.8" fill={A}/>
-  <circle cx="31" cy="30" r="2.8" fill={A}/><circle cx="49" cy="30" r="2.8" fill={A}/>
-  <circle cx="34" cy="37" r="2.8" fill={A}/><circle cx="46" cy="37" r="2.8" fill={A}/>
-  <circle cx="40" cy="17" r="2.8" fill={A}/>
-  <line x1="40" y1="28" x2="33" y2="20" stroke={A} strokeWidth="1.5" strokeDasharray="2 2"/>
-  <line x1="40" y1="28" x2="47" y2="20" stroke={A} strokeWidth="1.5" strokeDasharray="2 2"/>
-  <line x1="40" y1="28" x2="31" y2="30" stroke={A} strokeWidth="1.5" strokeDasharray="2 2"/>
-  <line x1="40" y1="28" x2="49" y2="30" stroke={A} strokeWidth="1.5" strokeDasharray="2 2"/>
-  <line x1="40" y1="28" x2="34" y2="37" stroke={A} strokeWidth="1.5" strokeDasharray="2 2"/>
-  <line x1="40" y1="28" x2="46" y2="37" stroke={A} strokeWidth="1.5" strokeDasharray="2 2"/>
-  <line x1="40" y1="28" x2="40" y2="17" stroke={A} strokeWidth="1.5" strokeDasharray="2 2"/>
-  <rect x="37" y="47" width="6" height="14" rx="2.5" fill="#666"/>
-</svg>);
-
-// Error boundary to catch render crashes (shows message instead of blank screen)
-class ErrorBoundary extends React.Component{
-  constructor(props){super(props);this.state={hasError:false,error:null};}
-  static getDerivedStateFromError(error){return{hasError:true,error};}
-  render(){
-    if(this.state.hasError)return(
-      <div style={{padding:20,textAlign:"center",color:"#e4e4ef",fontFamily:"'Outfit',sans-serif"}}>
-        <div style={{fontSize:24,marginBottom:8}}>⚠️</div>
-        <div style={{fontSize:14,fontWeight:600,marginBottom:8}}>Something went wrong</div>
-        <div style={{fontSize:11,color:"#7a7a8e",marginBottom:16}}>{this.state.error?.message||"Unknown error"}</div>
-        <button onClick={()=>this.setState({hasError:false,error:null})} style={{padding:"8px 16px",background:"#4ADE80",border:"none",borderRadius:8,color:"#000",fontSize:12,fontWeight:700,cursor:"pointer"}}>Try Again</button>
-      </div>
-    );
-    return this.props.children;
-  }
-}
-
-// Tab definitions (original layout: 3 left + center button + 3 right)
-const TL=[{key:"board",label:"Leaderboard",icon:"🏆"},{key:"history",label:"Matches",icon:"court"},{key:"combos",label:"Combos",icon:"🤝"}];
-const TR=[{key:"stats",label:"Players",icon:"📊"},{key:"gamemode",label:"Game Mode",icon:"⚡"},{key:"rules",label:"Rules",icon:"📖"}];
+import { ACHS } from './data/achievements';
+import { RULES, ARGUED } from './data/rules';
+import { CourtIcon, PadelLogo, PadelLogoSmall } from './components/icons';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { FD } from './components/FormDots';
 
 // ============================================================================
 // AUTH GATE - Shows login screen if not authenticated
@@ -2203,20 +2096,6 @@ function AppContent({leagueId,user,onSwitchLeague}){
 }
 
 // ============================================================================
-// FD COMPONENT - Form Dots (5 last games)
-// ============================================================================
-function FD({f}){
-  if(!f||!f.length)return null;
-  return (
-    <div style={{display:"flex",gap:3,alignItems:"center"}}>
-      {f.map((r,i)=>(
-        <div key={i} style={{width:8,height:8,borderRadius:"50%",background:r==="W"?A:DG,opacity:0.5+(i/f.length)*0.5}}/>
-      ))}
-    </div>
-  );
-}
-
-// ============================================================================
 // LOG MATCH COMPONENT
 // ============================================================================
 function LogMatch({players,matches,supabase,leagueId,pm,em,setEm,goBack,sel,lbl,getName,seasonId,seasons,setCurSeason,onSave,showToast}){
@@ -3220,27 +3099,6 @@ function CombosView({combos,players,fm,pm,getName}){
 // ============================================================================
 // GAME MODE COMPONENT
 // ============================================================================
-function generateAmericanoSchedule(playerIds,courts){
-  const n=playerIds.length;const rounds=[];const pids=[...playerIds];const totalRounds=n-1+(n%2===1?1:0);const hasBye=n%2===1;
-  if(hasBye)pids.push("BYE");const fixed=pids[0];const rotating=pids.slice(1);
-  for(let r=0;r<totalRounds;r++){
-    const current=[fixed,...rotating];const matches=[];const half=current.length/2;const pairs=[];
-    for(let i=0;i<half;i++){pairs.push([current[i],current[current.length-1-i]]);}
-    const validPairs=pairs.filter(p=>!p.includes("BYE"));const sitting=pairs.find(p=>p.includes("BYE"));const sittingPlayer=sitting?sitting.find(x=>x!=="BYE"):null;
-    for(let i=0;i<validPairs.length;i+=2){if(i+1<validPairs.length){matches.push({teamA:validPairs[i],teamB:validPairs[i+1],court:(matches.length%courts)+1});}}
-    rounds.push({round:r+1,matches,sitting:sittingPlayer});rotating.push(rotating.shift());
-  }
-  return rounds;
-}
-
-function generateMexicanoRound(playerIds,currentPoints,courts){
-  const sorted=[...playerIds].sort((a,b)=>(currentPoints[b]||0)-(currentPoints[a]||0));
-  const hasBye=sorted.length%2===1;const sitting=hasBye?sorted[sorted.length-1]:null;const active=hasBye?sorted.slice(0,-1):[...sorted];const matches=[];
-  for(let i=0;i<active.length-2;i+=4){if(i+3<active.length){matches.push({teamA:[active[i],active[i+3]],teamB:[active[i+1],active[i+2]],court:(matches.length%courts)+1});}}
-  if(active.length%4>=2){const rem=active.slice(-(active.length%4));if(rem.length>=4)matches.push({teamA:[rem[0],rem[3]],teamB:[rem[1],rem[2]],court:(matches.length%courts)+1});else if(rem.length===2)matches.push({teamA:[rem[0]],teamB:[rem[1]],court:(matches.length%courts)+1});}
-  return {matches,sitting,round:0};
-}
-
 function GameMode({players,getName,supabase,leagueId,tournament,setTournament,sel}){
   const [selPlayers,setSelP]=useState([]);
   const [courts,setCourts]=useState(2);
