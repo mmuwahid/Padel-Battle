@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { A, BG, CD, BD, TX, MT, DG, GD, PU } from '../theme';
 
-export function LogMatch({players,matches,supabase,leagueId,pm,em,setEm,goBack,sel,lbl,getName,seasonId,seasons,setCurSeason,onSave,showToast}){
+export function LogMatch({players,matches,supabase,leagueId,pm,em,setEm,goBack,sel,lbl,getName,seasonId,seasons,setCurSeason,onSave,showToast,sendPushNotification}){
   const isE=!!em;
   const [tA,setTA]=useState(["",""]);
   const [tB,setTB]=useState(["",""]);
@@ -55,6 +55,12 @@ export function LogMatch({players,matches,supabase,leagueId,pm,em,setEm,goBack,s
       setTimeout(()=>setSaved(false),2000);
       if(onSave)onSave();
       if(showToast)showToast(em?"Match updated":"Match saved!");
+      // Send push notification for new matches (not edits)
+      if(!isE&&sendPushNotification){
+        const tANames=[tA[0],tA[1]].map(id=>getName?getName(id):id).join(" x ");
+        const tBNames=[tB[0],tB[1]].map(id=>getName?getName(id):id).join(" x ");
+        sendPushNotification("match","New Match Logged",`${tANames} vs ${tBNames}`);
+      }
     }catch(err){
       console.error("Submit match error:",err);
       if(showToast)showToast("Failed to save match","error");

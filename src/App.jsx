@@ -9,6 +9,17 @@ import { RULES, ARGUED } from './data/rules';
 import { CourtIcon, PadelLogo, PadelLogoSmall } from './components/icons';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { FD } from './components/FormDots';
+import { VAPID_PUBLIC_KEY } from './vapidPublicKey';
+
+// Convert VAPID public key from base64 URL to Uint8Array (required by pushManager.subscribe)
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base64);
+  const arr = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; ++i) arr[i] = raw.charCodeAt(i);
+  return arr;
+}
 import { AuthGate } from './components/AuthGate';
 import { LeagueGate } from './components/LeagueGate';
 import { LogMatch } from './components/LogMatch';
@@ -107,6 +118,19 @@ function AppContent({leagueId,user,onSwitchLeague}){
   const [notifNewMatch,setNotifNewMatch]=useState(()=>JSON.parse(localStorage.getItem("notif_new_match")??'true'));
   const [notifRankingChange,setNotifRankingChange]=useState(()=>JSON.parse(localStorage.getItem("notif_ranking")??'true'));
   const [notifNewMembers,setNotifNewMembers]=useState(()=>JSON.parse(localStorage.getItem("notif_members")??'true'));
+  const [pushSubscribed,setPushSubscribed]=useState(false);
+
+  // Check if user already has a push subscription on mount
+  useEffect(()=>{
+    (async()=>{
+      if(!("serviceWorker" in navigator)||!("PushManager" in window))return;
+      try{
+        const reg=await navigator.serviceWorker.ready;
+        const sub=await reg.pushManager.getSubscription();
+        setPushSubscribed(!!sub);
+      }catch(e){console.log("Push check error:",e);}
+    })();
+  },[]);
   // Admin Management state
   const [leagueMembers,setLeagueMembers]=useState([]);
   const [memberProfiles,setMemberProfiles]=useState({});
@@ -455,8 +479,70 @@ function AppContent({leagueId,user,onSwitchLeague}){
     }
   };
 
-  // Handle notification toggle
-  const toggleNotification = (type, value) => {
+  // Subscribe to Web Push and save subscription to Supabase
+  const subscribeToPush = async () => {
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+      showToast("Push notifications not supported on this browser","error");
+      return false;
+    }
+    try {
+      // Request permission if needed
+      if ("Notification" in window && Notification.permission === "default") {
+        const perm = await Notification.requestPermission();
+        if (perm !== "granted") { showToast("Notification permission denied","error"); return false; }
+      }
+      if ("Notification" in window && Notification.permission === "denied") {
+        showToast("Notifications blocked. Enable in browser settings.","error");
+        return false;
+      }
+      const reg = await navigator.serviceWorker.ready;
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+        });
+      }
+      // Save to Supabase
+      const subJson = sub.toJSON();
+      const { error } = await supabase.from("push_subscriptions").upsert({
+        user_id: user.id,
+        league_id: leagueId,
+        endpoint: subJson.endpoint,
+        p256dh: subJson.keys.p256dh,
+        auth: subJson.keys.auth,
+        notif_new_match: notifNewMatch,
+        notif_ranking: notifRankingChange,
+        notif_members: notifNewMembers,
+      }, { onConflict: "user_id,endpoint" });
+      if (error) throw error;
+      setPushSubscribed(true);
+      return true;
+    } catch (err) {
+      console.error("Push subscribe error:", err);
+      showToast("Failed to enable notifications","error");
+      return false;
+    }
+  };
+
+  // Unsubscribe from Web Push and remove from Supabase
+  const unsubscribeFromPush = async () => {
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) {
+        const endpoint = sub.endpoint;
+        await sub.unsubscribe();
+        await supabase.from("push_subscriptions").delete().eq("user_id", user.id).eq("endpoint", endpoint);
+      }
+      setPushSubscribed(false);
+    } catch (err) {
+      console.error("Push unsubscribe error:", err);
+    }
+  };
+
+  // Handle notification toggle — syncs localStorage + Supabase preference
+  const toggleNotification = async (type, value) => {
     if (type === "match") {
       setNotifNewMatch(value);
       localStorage.setItem("notif_new_match", JSON.stringify(value));
@@ -467,21 +553,40 @@ function AppContent({leagueId,user,onSwitchLeague}){
       setNotifNewMembers(value);
       localStorage.setItem("notif_members", JSON.stringify(value));
     }
+    // Sync preferences to Supabase if subscribed
+    if (pushSubscribed) {
+      const prefs = {
+        notif_new_match: type === "match" ? value : notifNewMatch,
+        notif_ranking: type === "ranking" ? value : notifRankingChange,
+        notif_members: type === "members" ? value : notifNewMembers,
+      };
+      await supabase.from("push_subscriptions").update(prefs).eq("user_id", user.id);
+    }
   };
 
-  // Request notification permission
+  // Request notification permission + subscribe
   const requestNotificationPermission = async () => {
     if (!("Notification" in window)) {
       showToast("Browser doesn't support notifications","error");
       return;
     }
-    if (Notification.permission === "granted") {
+    if (Notification.permission === "granted" && pushSubscribed) {
       showToast("Notifications already enabled");
       return;
     }
-    const permission = await Notification.requestPermission();
-    if (permission === "granted") {
-      showToast("Notifications enabled!");
+    const success = await subscribeToPush();
+    if (success) showToast("Notifications enabled!");
+  };
+
+  // Send push notification to league members via Edge Function
+  const sendPushNotification = async (type, title, body) => {
+    try {
+      const { data, error } = await supabase.functions.invoke("push-notify", {
+        body: { league_id: leagueId, type, title, body, exclude_user_id: user.id },
+      });
+      if (error) console.error("Push notify error:", error);
+    } catch (err) {
+      console.error("Push notify failed:", err);
     }
   };
 
@@ -1161,10 +1266,21 @@ function AppContent({leagueId,user,onSwitchLeague}){
               <div style={{marginBottom:24}}>
                 <h3 style={{fontSize:12,fontWeight:700,color:MT,letterSpacing:1,textTransform:"uppercase",marginBottom:12}}>Notifications</h3>
 
-                {"Notification" in window && Notification.permission === 'default' && (
-                  <button onClick={requestNotificationPermission} style={{width:"100%",marginBottom:12,padding:"10px 12px",background:`${A}15`,border:`1px solid ${A}40`,borderRadius:8,color:A,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
-                    Enable Notifications
+                {/* Master push toggle */}
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 12px",background:pushSubscribed?`${A}10`:CD2,borderRadius:8,marginBottom:8,border:`1px solid ${pushSubscribed?`${A}30`:BD}`}}>
+                  <div>
+                    <label style={{fontSize:12,fontWeight:600,color:TX}}>Push Notifications</label>
+                    <div style={{fontSize:10,color:MT,marginTop:2}}>{pushSubscribed?"Enabled — receiving alerts":"Tap to enable"}</div>
+                  </div>
+                  <button onClick={()=>pushSubscribed?unsubscribeFromPush():subscribeToPush().then(ok=>{if(ok)showToast("Notifications enabled!");})} style={{width:48,height:28,borderRadius:14,background:pushSubscribed?A:BD,border:"none",cursor:"pointer",position:"relative",transition:"background 0.2s",padding:0}}>
+                    <div style={{width:24,height:24,background:CD,borderRadius:"50%",position:"absolute",top:2,left:pushSubscribed?22:2,transition:"left 0.2s"}}/>
                   </button>
+                </div>
+
+                {"Notification" in window && Notification.permission === 'denied' && (
+                  <div style={{padding:"8px 12px",background:`${DG}15`,border:`1px solid ${DG}30`,borderRadius:8,marginBottom:8,fontSize:11,color:DG}}>
+                    Notifications blocked. Enable in your browser settings.
+                  </div>
                 )}
 
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 12px",background:CD2,borderRadius:8,marginBottom:8}}>
@@ -1398,6 +1514,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
           setCurSeason={setSelectedSeason}
           onSave={loadLeagueData}
           showToast={showToast}
+          sendPushNotification={sendPushNotification}
         />
       )}
 
