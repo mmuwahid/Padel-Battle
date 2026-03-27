@@ -667,6 +667,9 @@ function AppContent({leagueId,user,onSwitchLeague}){
   const [selectedPlayer,setSelectedPlayer]=useState(null);
   const [selectedSeason,setSelectedSeason]=useState(null);
   const [tournament,setTournament]=useState(null);
+  // FT-05: Challenges/Scheduling
+  const [challenges,setChallenges]=useState([]);
+  const [matchSubTab,setMatchSubTab]=useState("history"); // history | schedule
   const [claimedPlayer,setClaimedPlayer]=useState(undefined); // undefined=loading, null=unclaimed, object=claimed
   const [newPlayerName,setNewPlayerName]=useState("");
   const [newPlayerNick,setNewPlayerNick]=useState("");
@@ -678,6 +681,56 @@ function AppContent({leagueId,user,onSwitchLeague}){
   const [editDisplayName,setEditDisplayName]=useState("");
   const [profileSaving,setProfileSaving]=useState(false);
   const [profileMsg,setProfileMsg]=useState("");
+  const [avatarUrl,setAvatarUrl]=useState(null);
+  const [avatarUploading,setAvatarUploading]=useState(false);
+
+  // FT-03: Load avatar URL from profiles table
+  useEffect(()=>{
+    (async()=>{
+      const {data}=await supabase.from("profiles").select("avatar_url").eq("id",user.id).single();
+      if(data?.avatar_url)setAvatarUrl(data.avatar_url);
+    })();
+  },[user.id]);
+
+  // FT-03: Upload avatar (resize to 200x200, upload to storage, save URL)
+  const uploadAvatar=async(file)=>{
+    if(!file)return;
+    setAvatarUploading(true);
+    try{
+      // Resize image to 200x200
+      const canvas=document.createElement("canvas");
+      canvas.width=200;canvas.height=200;
+      const ctx=canvas.getContext("2d");
+      const img=new Image();
+      await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=URL.createObjectURL(file);});
+      const s=Math.min(img.width,img.height);
+      const sx=(img.width-s)/2,sy=(img.height-s)/2;
+      ctx.drawImage(img,sx,sy,s,s,0,0,200,200);
+      const blob=await new Promise(r=>canvas.toBlob(r,"image/jpeg",0.85));
+      const path=`${user.id}/avatar.jpg`;
+      const {error:upErr}=await supabase.storage.from("avatars").upload(path,blob,{upsert:true,contentType:"image/jpeg"});
+      if(upErr)throw upErr;
+      const {data:{publicUrl}}=supabase.storage.from("avatars").getPublicUrl(path);
+      const url=publicUrl+"?t="+Date.now();
+      await supabase.from("profiles").update({avatar_url:url}).eq("id",user.id);
+      setAvatarUrl(url);
+      showToast("Photo updated!");
+    }catch(err){
+      console.error("Avatar upload error:",err);
+      showToast("Failed to upload photo","error");
+    }
+    setAvatarUploading(false);
+  };
+
+  const removeAvatar=async()=>{
+    try{
+      await supabase.storage.from("avatars").remove([`${user.id}/avatar.jpg`]);
+      await supabase.from("profiles").update({avatar_url:null}).eq("id",user.id);
+      setAvatarUrl(null);
+      showToast("Photo removed");
+    }catch(err){showToast("Failed to remove photo","error");}
+  };
+
   // H2H view state
   const [h2hPlayer1,setH2hPlayer1]=useState(null);
   const [h2hPlayer2,setH2hPlayer2]=useState(null);
@@ -827,6 +880,10 @@ function AppContent({leagueId,user,onSwitchLeague}){
 
       if (tournamentsErr) throw tournamentsErr;
       setTournaments(tournamentsData || []);
+
+      // FT-05: Load challenges
+      const {data:challengesData}=await supabase.from("challenges").select("*").eq("league_id",leagueId).in("status",["open","confirmed"]).order("date",{ascending:true});
+      setChallenges(challengesData||[]);
 
       // Check if current user has claimed a player in this league
       const claimed = (playersData||[]).find(p => p.user_id === user.id);
@@ -1267,11 +1324,11 @@ function AppContent({leagueId,user,onSwitchLeague}){
             color:sidebarOpen?"#000":A,
             fontSize:14,fontWeight:800,cursor:"pointer",
             display:"flex",alignItems:"center",justifyContent:"center",
-            fontFamily:"'Outfit',sans-serif",transition:"all 0.2s",
+            fontFamily:"'Outfit',sans-serif",transition:"all 0.2s",overflow:"hidden",padding:0,
           }}
           title="Profile & Settings"
         >
-          {(user.user_metadata?.display_name||user.email||"U")[0].toUpperCase()}
+          {avatarUrl?<img src={avatarUrl} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:(user.user_metadata?.display_name||user.email||"U")[0].toUpperCase()}
         </button>
         </div>
       </div>
@@ -1301,8 +1358,8 @@ function AppContent({leagueId,user,onSwitchLeague}){
         {/* Header with user info */}
         <div style={{padding:"20px 16px",borderBottom:`1px solid ${BD}`}}>
           <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
-            <div style={{width:56,height:56,borderRadius:"50%",background:`${A}20`,border:`2px solid ${A}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,fontWeight:800,color:A}}>
-              {(user.user_metadata?.display_name||user.email||"U")[0].toUpperCase()}
+            <div style={{width:56,height:56,borderRadius:"50%",background:`${A}20`,border:`2px solid ${A}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,fontWeight:800,color:A,overflow:"hidden"}}>
+              {avatarUrl?<img src={avatarUrl} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:(user.user_metadata?.display_name||user.email||"U")[0].toUpperCase()}
             </div>
             <div style={{flex:1}}>
               <div style={{fontSize:14,fontWeight:700,color:TX}}>{user.user_metadata?.display_name||user.email?.split("@")[0]||"User"}</div>
@@ -1370,11 +1427,19 @@ function AppContent({leagueId,user,onSwitchLeague}){
             <div style={{padding:"20px 16px",paddingBottom:"calc(80px + env(safe-area-inset-bottom, 0px))"}}>
               <button onClick={()=>setSidebarView(null)} style={{marginBottom:20,background:"none",border:"none",color:A,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>← Back</button>
 
-              {/* Profile Card */}
+              {/* Profile Card with Avatar Upload */}
               <div style={{textAlign:"center",marginBottom:24}}>
-                <div style={{width:80,height:80,borderRadius:"50%",background:`${A}20`,border:`3px solid ${A}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:40,fontWeight:800,color:A,margin:"0 auto 12px"}}>
-                  {(user.user_metadata?.display_name||user.email||"U")[0].toUpperCase()}
+                <div style={{position:"relative",display:"inline-block",marginBottom:12}}>
+                  <div style={{width:80,height:80,borderRadius:"50%",background:`${A}20`,border:`3px solid ${A}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:40,fontWeight:800,color:A,overflow:"hidden"}}>
+                    {avatarUrl?<img src={avatarUrl} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:(user.user_metadata?.display_name||user.email||"U")[0].toUpperCase()}
+                  </div>
+                  <label style={{position:"absolute",bottom:0,right:0,width:28,height:28,borderRadius:"50%",background:A,border:`2px solid ${CD}`,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14}}>
+                    📷
+                    <input type="file" accept="image/*" onChange={(e)=>uploadAvatar(e.target.files[0])} style={{display:"none"}}/>
+                  </label>
                 </div>
+                {avatarUploading && <div style={{fontSize:11,color:A,marginBottom:4}}>Uploading...</div>}
+                {avatarUrl && <button onClick={removeAvatar} style={{background:"none",border:"none",color:DG,fontSize:10,cursor:"pointer",marginBottom:4,fontFamily:"'Outfit',sans-serif"}}>Remove Photo</button>}
                 <h2 style={{fontSize:18,fontWeight:700,margin:0,color:TX}}>{user.user_metadata?.display_name||user.email?.split("@")[0]||"User"}</h2>
                 <p style={{fontSize:12,color:MT,margin:"4px 0 0 0"}}>{user.email}</p>
                 {claimedPlayer && <div style={{fontSize:11,color:A,marginTop:4,display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
@@ -1948,21 +2013,45 @@ function AppContent({leagueId,user,onSwitchLeague}){
         />
       )}
 
-      {/* MATCHES TAB */}
+      {/* MATCHES TAB — with History | Schedule sub-tabs */}
       {!sidebarView && tab==="history"&&(
-        <MatchHistory
-          matches={matches}
-          pm={Object.fromEntries(players.map(p=>[p.id,p]))}
-          players={players}
-          onEdit={(m)=>{setEditingMatch(m);setTab("log");}}
-          supabase={supabase}
-          isAdmin={isAdmin}
-          getName={getName}
-          shareMatch={shareMatch}
-          sel={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:13,fontFamily:"Outfit"}}
-          onMatchDeleted={loadLeagueData}
-          showToast={showToast}
-        />
+        <div style={{padding:"20px 16px",maxWidth:"600px",margin:"0 auto"}}>
+          {/* FT-05: Sub-tab toggle */}
+          <div style={{display:"flex",gap:4,marginBottom:16,background:CD,borderRadius:10,padding:3}}>
+            {["history","schedule"].map(t=>(
+              <button key={t} onClick={()=>setMatchSubTab(t)} style={{flex:1,padding:"8px 12px",borderRadius:8,border:"none",background:matchSubTab===t?A:"transparent",color:matchSubTab===t?"#000":MT,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif",textTransform:"capitalize"}}>{t}</button>
+            ))}
+          </div>
+
+          {matchSubTab==="history" ? (
+            <MatchHistory
+              matches={matches}
+              pm={Object.fromEntries(players.map(p=>[p.id,p]))}
+              players={players}
+              onEdit={(m)=>{setEditingMatch(m);setTab("log");}}
+              supabase={supabase}
+              isAdmin={isAdmin}
+              getName={getName}
+              shareMatch={shareMatch}
+              sel={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:13,fontFamily:"Outfit"}}
+              onMatchDeleted={loadLeagueData}
+              showToast={showToast}
+            />
+          ) : (
+            <ScheduleView
+              challenges={challenges}
+              players={players}
+              supabase={supabase}
+              leagueId={leagueId}
+              user={user}
+              getName={getName}
+              isAdmin={isAdmin}
+              onUpdate={loadLeagueData}
+              showToast={showToast}
+              sel={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:13,fontFamily:"Outfit"}}
+            />
+          )}
+        </div>
       )}
 
       {/* COMBOS TAB */}
@@ -2255,6 +2344,7 @@ function LogMatch({players,matches,supabase,leagueId,pm,em,setEm,goBack,sel,lbl,
 function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,fm,supabase,leagueId,isAdmin,getName,sel,onPlayersChange}){
   const player=sp?pm[sp]:null;
   const stats=sp?ps[sp]:null;
+  const [subTab,setSubTab]=useState("roster"); // roster | analytics
   const [editMode,setEditMode]=useState(false);
   const [editPid,setEditPid]=useState(null);
   const [editName,setEditName]=useState("");
@@ -2372,8 +2462,123 @@ function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,fm,supabase,l
     );
   }
 
+  // FT-04: Analytics computed data
+  const analyticsData=useMemo(()=>{
+    if(fm.length===0)return null;
+    const totalMatches=fm.length;
+    const totalSets=fm.reduce((t,m)=>t+m.sets.length,0);
+    const avgSetsPerMatch=totalSets/totalMatches;
+    // Most active players
+    const activity={};players.forEach(p=>{activity[p.id]=0;});
+    fm.forEach(m=>{[...m.team_a,...m.team_b].forEach(pid=>{if(activity[pid]!==undefined)activity[pid]++;});});
+    const mostActive=Object.entries(activity).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([pid,games])=>({pid,games}));
+    // Highest win rates (min 3 games)
+    const wr={};players.forEach(p=>{wr[p.id]={w:0,l:0};});
+    fm.forEach(m=>{const w=win(m.sets);m.team_a.forEach(pid=>{if(wr[pid])w==="A"?wr[pid].w++:wr[pid].l++;});m.team_b.forEach(pid=>{if(wr[pid])w==="B"?wr[pid].w++:wr[pid].l++;});});
+    const topWinRate=Object.entries(wr).filter(([,x])=>x.w+x.l>=3).map(([pid,x])=>({pid,pct:x.w/(x.w+x.l)*100,games:x.w+x.l})).sort((a,b)=>b.pct-a.pct).slice(0,5);
+    // Closest matches (sets decided by 1 point)
+    const closeMatches=fm.filter(m=>m.sets.some(s=>Math.abs(s[0]-s[1])<=1&&(s[0]+s[1])>0)).length;
+    // MOTM frequency
+    const motmCount={};fm.forEach(m=>{if(m.motm){motmCount[m.motm]=(motmCount[m.motm]||0)+1;}});
+    const topMotm=Object.entries(motmCount).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([pid,count])=>({pid,count}));
+    // Monthly match volume
+    const monthly={};fm.forEach(m=>{const key=m.date?.substring(0,7);if(key)monthly[key]=(monthly[key]||0)+1;});
+    const monthlyArr=Object.entries(monthly).sort().slice(-6);
+    return {totalMatches,totalSets,avgSetsPerMatch,mostActive,topWinRate,closeMatches,topMotm,monthlyArr};
+  },[fm,players]);
+
   return (
     <div style={{padding:"20px 16px",maxWidth:"600px",margin:"0 auto"}}>
+      {/* FT-04: Sub-tab toggle */}
+      <div style={{display:"flex",gap:4,marginBottom:16,background:CD,borderRadius:10,padding:3}}>
+        {["roster","analytics"].map(t=>(
+          <button key={t} onClick={()=>setSubTab(t)} style={{flex:1,padding:"8px 12px",borderRadius:8,border:"none",background:subTab===t?A:"transparent",color:subTab===t?"#000":MT,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif",textTransform:"capitalize"}}>{t}</button>
+        ))}
+      </div>
+
+      {subTab==="analytics" && analyticsData ? (
+        <div>
+          {/* League Overview */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:16}}>
+            <div style={{background:CD,borderRadius:12,padding:12,textAlign:"center",border:`1px solid ${BD}`}}>
+              <div style={{fontSize:22,fontWeight:800,color:A,fontFamily:"'JetBrains Mono'"}}>{analyticsData.totalMatches}</div>
+              <div style={{fontSize:10,color:MT,fontWeight:600}}>Matches</div>
+            </div>
+            <div style={{background:CD,borderRadius:12,padding:12,textAlign:"center",border:`1px solid ${BD}`}}>
+              <div style={{fontSize:22,fontWeight:800,color:BL,fontFamily:"'JetBrains Mono'"}}>{analyticsData.totalSets}</div>
+              <div style={{fontSize:10,color:MT,fontWeight:600}}>Sets</div>
+            </div>
+            <div style={{background:CD,borderRadius:12,padding:12,textAlign:"center",border:`1px solid ${BD}`}}>
+              <div style={{fontSize:22,fontWeight:800,color:GD,fontFamily:"'JetBrains Mono'"}}>{analyticsData.closeMatches}</div>
+              <div style={{fontSize:10,color:MT,fontWeight:600}}>Close Games</div>
+            </div>
+          </div>
+
+          {/* Most Active */}
+          <div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:12}}>
+            <h3 style={{fontSize:13,fontWeight:700,color:TX,marginBottom:10}}>🏃 Most Active</h3>
+            {analyticsData.mostActive.map((x,i)=>(
+              <div key={x.pid} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:i<analyticsData.mostActive.length-1?`1px solid ${BD}`:undefined}}>
+                <span style={{fontSize:12,color:TX}}>{i+1}. {getName(x.pid)}</span>
+                <span style={{fontSize:12,fontWeight:700,color:A,fontFamily:"'JetBrains Mono'"}}>{x.games} GP</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Highest Win Rate */}
+          <div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:12}}>
+            <h3 style={{fontSize:13,fontWeight:700,color:TX,marginBottom:10}}>🎯 Highest Win Rate (3+ games)</h3>
+            {analyticsData.topWinRate.map((x,i)=>(
+              <div key={x.pid} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:i<analyticsData.topWinRate.length-1?`1px solid ${BD}`:undefined}}>
+                <span style={{fontSize:12,color:TX}}>{i+1}. {getName(x.pid)}</span>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <div style={{width:60,height:6,background:BD,borderRadius:3,overflow:"hidden"}}><div style={{width:`${x.pct}%`,height:"100%",background:A,borderRadius:3}}/></div>
+                  <span style={{fontSize:12,fontWeight:700,color:A,fontFamily:"'JetBrains Mono'",width:40,textAlign:"right"}}>{x.pct.toFixed(0)}%</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* MOTM Stars */}
+          {analyticsData.topMotm.length>0 && (
+            <div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:12}}>
+              <h3 style={{fontSize:13,fontWeight:700,color:TX,marginBottom:10}}>⭐ Man of the Match</h3>
+              {analyticsData.topMotm.map((x,i)=>(
+                <div key={x.pid} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:i<analyticsData.topMotm.length-1?`1px solid ${BD}`:undefined}}>
+                  <span style={{fontSize:12,color:TX}}>{i+1}. {getName(x.pid)}</span>
+                  <span style={{fontSize:12,fontWeight:700,color:GD,fontFamily:"'JetBrains Mono'"}}>{x.count}× ⭐</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Monthly Trend */}
+          {analyticsData.monthlyArr.length>1 && (
+            <div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:12}}>
+              <h3 style={{fontSize:13,fontWeight:700,color:TX,marginBottom:10}}>📈 Monthly Matches</h3>
+              <div style={{display:"flex",alignItems:"flex-end",gap:4,height:80}}>
+                {analyticsData.monthlyArr.map(([month,count])=>{
+                  const max=Math.max(...analyticsData.monthlyArr.map(a=>a[1]));
+                  const h=max>0?(count/max)*60+10:10;
+                  return <div key={month} style={{flex:1,textAlign:"center"}}>
+                    <div style={{height:h,background:A,borderRadius:4,marginBottom:4}}/>
+                    <div style={{fontSize:8,color:MT}}>{month.slice(5)}</div>
+                    <div style={{fontSize:9,fontWeight:700,color:TX}}>{count}</div>
+                  </div>;
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      ) : subTab==="analytics" ? (
+        <div style={{textAlign:"center",padding:"40px 20px"}}>
+          <div style={{fontSize:40,marginBottom:12}}>📊</div>
+          <div style={{fontSize:15,fontWeight:600,color:TX,marginBottom:6}}>No analytics yet</div>
+          <div style={{fontSize:12,color:MT}}>Play some matches to see league analytics.</div>
+        </div>
+      ) : null}
+
+      {subTab==="roster" && <>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
         <h2 style={{fontSize:16,fontWeight:700}}>Player Roster ({players.length})</h2>
         <div style={{display:"flex",gap:6}}>
@@ -2405,6 +2610,133 @@ function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,fm,supabase,l
           <div style={{textAlign:"right"}}><div style={{fontSize:16,fontWeight:800,color:BL,fontFamily:"'JetBrains Mono'"}}>{e}</div><div style={{fontSize:10,color:MT}}>{s.games>0?(s.wins/s.games*100).toFixed(0):"—"}%</div></div>
         </div>);
       })}
+    </>}
+    </div>
+  );
+}
+
+// ============================================================================
+// FT-05: SCHEDULE / CHALLENGES COMPONENT
+// ============================================================================
+function ScheduleView({challenges,players,supabase,leagueId,user,getName,isAdmin,onUpdate,showToast,sel}){
+  const [showForm,setShowForm]=useState(false);
+  const [date,setDate]=useState(new Date().toISOString().split("T")[0]);
+  const [time,setTime]=useState("18:00");
+  const [location,setLocation]=useState("");
+  const [tA,setTA]=useState(["",""]);
+  const [tB,setTB]=useState(["",""]);
+  const [notes,setNotes]=useState("");
+  const [saving,setSaving]=useState(false);
+
+  const inp={background:CD2,color:TX,border:`1px solid ${BD}`,borderRadius:8,padding:"10px 12px",fontSize:13,width:"100%",outline:"none",fontFamily:"'Outfit',sans-serif"};
+
+  async function createChallenge(){
+    const teamA=tA.filter(Boolean);const teamB=tB.filter(Boolean);
+    if(!date||teamA.length===0){showToast("Select a date and at least 1 player per team","error");return;}
+    setSaving(true);
+    try{
+      const {error}=await supabase.from("challenges").insert({league_id:leagueId,created_by:user.id,date,time:time||null,location:location.trim()||null,team_a:teamA,team_b:teamB,notes:notes.trim()||null,status:teamB.length>0?"confirmed":"open"});
+      if(error)throw error;
+      showToast("Match scheduled!");
+      setShowForm(false);setTA(["",""]);setTB(["",""]);setNotes("");setLocation("");
+      if(onUpdate)onUpdate();
+    }catch(err){showToast("Failed to schedule","error");console.error(err);}
+    setSaving(false);
+  }
+
+  async function joinChallenge(ch,team){
+    const claimedP=players.find(p=>p.user_id===user.id);
+    if(!claimedP){showToast("Claim a player first","error");return;}
+    const pid=claimedP.id;
+    const updated=team==="a"?{team_a:[...ch.team_a,pid]}:{team_b:[...ch.team_b,pid]};
+    const newA=updated.team_a||ch.team_a;const newB=updated.team_b||ch.team_b;
+    const status=(newA.length>=2&&newB.length>=2)?"confirmed":"open";
+    const {error}=await supabase.from("challenges").update({...updated,status}).eq("id",ch.id);
+    if(error){showToast("Failed to join","error");}else{showToast("Joined!");if(onUpdate)onUpdate();}
+  }
+
+  async function cancelChallenge(id){
+    const {error}=await supabase.from("challenges").update({status:"cancelled"}).eq("id",id);
+    if(error){showToast("Failed to cancel","error");}else{showToast("Match cancelled");if(onUpdate)onUpdate();}
+  }
+
+  const upcoming=challenges.filter(c=>c.status==="open"||c.status==="confirmed");
+  const claimedP=players.find(p=>p.user_id===user.id);
+
+  return (
+    <div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+        <div style={{fontSize:11,color:MT,fontWeight:500}}>{upcoming.length} upcoming</div>
+        <button onClick={()=>setShowForm(!showForm)} style={{padding:"6px 14px",borderRadius:8,border:`1px solid ${A}`,background:`${A}15`,color:A,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>{showForm?"Cancel":"+ Schedule"}</button>
+      </div>
+
+      {/* New Challenge Form */}
+      {showForm&&(
+        <div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:12}}>
+          <div style={{display:"flex",gap:8,marginBottom:8}}>
+            <input type="date" value={date} onChange={e=>setDate(e.target.value)} style={{...inp,flex:1}}/>
+            <input type="time" value={time} onChange={e=>setTime(e.target.value)} style={{...inp,flex:1}}/>
+          </div>
+          <input placeholder="Location (optional)" value={location} onChange={e=>setLocation(e.target.value)} style={{...inp,marginBottom:8}}/>
+          <div style={{fontSize:11,color:MT,fontWeight:600,marginBottom:4}}>Team A</div>
+          <div style={{display:"flex",gap:4,marginBottom:8}}>
+            {[0,1].map(i=><select key={i} value={tA[i]} onChange={e=>{const n=[...tA];n[i]=e.target.value;setTA(n);}} style={{...sel,flex:1}}><option value="">Player {i+1}</option>{players.map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}</select>)}
+          </div>
+          <div style={{fontSize:11,color:MT,fontWeight:600,marginBottom:4}}>Team B</div>
+          <div style={{display:"flex",gap:4,marginBottom:8}}>
+            {[0,1].map(i=><select key={i} value={tB[i]} onChange={e=>{const n=[...tB];n[i]=e.target.value;setTB(n);}} style={{...sel,flex:1}}><option value="">Player {i+1}</option>{players.map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}</select>)}
+          </div>
+          <input placeholder="Notes (optional)" value={notes} onChange={e=>setNotes(e.target.value)} style={{...inp,marginBottom:10}}/>
+          <button onClick={createChallenge} disabled={saving} style={{width:"100%",padding:12,borderRadius:10,border:"none",background:A,color:BG,fontSize:13,fontWeight:700,cursor:"pointer",opacity:saving?0.6:1}}>{saving?"Scheduling...":"Schedule Match"}</button>
+        </div>
+      )}
+
+      {/* Challenge Cards */}
+      {upcoming.length===0&&!showForm&&(
+        <div style={{textAlign:"center",padding:"40px 20px"}}>
+          <div style={{fontSize:40,marginBottom:12}}>📅</div>
+          <div style={{fontSize:15,fontWeight:600,color:TX,marginBottom:6}}>No matches scheduled</div>
+          <div style={{fontSize:12,color:MT}}>Tap "+ Schedule" to set up your next game.</div>
+        </div>
+      )}
+
+      {upcoming.map(ch=>{
+        const isCreator=ch.created_by===user.id;
+        const myPid=claimedP?.id;
+        const imInA=ch.team_a.includes(myPid);
+        const imInB=ch.team_b.includes(myPid);
+        const canJoinA=!imInA&&!imInB&&ch.team_a.length<2&&ch.status==="open";
+        const canJoinB=!imInA&&!imInB&&ch.team_b.length<2&&ch.status==="open";
+        return (
+          <div key={ch.id} style={{background:CD,borderRadius:12,border:`1px solid ${ch.status==="confirmed"?`${A}40`:BD}`,padding:14,marginBottom:8}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+              <div>
+                <span style={{fontSize:12,fontWeight:700,color:TX}}>{formatDate(ch.date)}</span>
+                {ch.time&&<span style={{fontSize:11,color:MT,marginLeft:6}}>{ch.time}</span>}
+              </div>
+              <span style={{fontSize:10,fontWeight:700,padding:"3px 8px",borderRadius:6,background:ch.status==="confirmed"?`${A}20`:`${GD}20`,color:ch.status==="confirmed"?A:GD}}>{ch.status==="confirmed"?"Confirmed":"Open"}</span>
+            </div>
+            {ch.location&&<div style={{fontSize:11,color:MT,marginBottom:8}}>📍 {ch.location}</div>}
+            <div style={{display:"flex",gap:8,marginBottom:ch.notes?8:0}}>
+              <div style={{flex:1,background:CD2,borderRadius:8,padding:8,textAlign:"center"}}>
+                <div style={{fontSize:10,color:MT,fontWeight:600,marginBottom:4}}>Team A</div>
+                {ch.team_a.map(pid=><div key={pid} style={{fontSize:12,color:TX,fontWeight:600}}>{getName(pid)}</div>)}
+                {ch.team_a.length<2&&<div style={{fontSize:11,color:MT,fontStyle:"italic"}}>Needs player</div>}
+                {canJoinA&&<button onClick={()=>joinChallenge(ch,"a")} style={{marginTop:4,padding:"4px 10px",borderRadius:6,border:`1px solid ${A}`,background:"transparent",color:A,fontSize:10,fontWeight:700,cursor:"pointer"}}>Join</button>}
+              </div>
+              <div style={{display:"flex",alignItems:"center",color:MT,fontSize:12,fontWeight:800}}>vs</div>
+              <div style={{flex:1,background:CD2,borderRadius:8,padding:8,textAlign:"center"}}>
+                <div style={{fontSize:10,color:MT,fontWeight:600,marginBottom:4}}>Team B</div>
+                {ch.team_b.map(pid=><div key={pid} style={{fontSize:12,color:TX,fontWeight:600}}>{getName(pid)}</div>)}
+                {ch.team_b.length<2&&<div style={{fontSize:11,color:MT,fontStyle:"italic"}}>Needs player</div>}
+                {canJoinB&&<button onClick={()=>joinChallenge(ch,"b")} style={{marginTop:4,padding:"4px 10px",borderRadius:6,border:`1px solid ${A}`,background:"transparent",color:A,fontSize:10,fontWeight:700,cursor:"pointer"}}>Join</button>}
+              </div>
+            </div>
+            {ch.notes&&<div style={{fontSize:11,color:MT,fontStyle:"italic",marginTop:4}}>{ch.notes}</div>}
+            {(isCreator||isAdmin)&&<button onClick={()=>cancelChallenge(ch.id)} style={{marginTop:8,width:"100%",padding:"6px",borderRadius:6,border:`1px solid ${DG}40`,background:"transparent",color:DG,fontSize:10,fontWeight:600,cursor:"pointer"}}>Cancel Match</button>}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -2433,7 +2765,7 @@ function MatchHistory({matches,pm,players,onEdit,supabase,isAdmin,getName,shareM
   }
 
   return (
-    <div style={{padding:"20px 16px",maxWidth:"600px",margin:"0 auto"}}>
+    <div>
       <div style={{display:"flex",gap:8,marginBottom:12}}>
         <select value={fp} onChange={e=>setFp(e.target.value)} style={{...sel,flex:1}}>
           <option value="">All Players</option>
@@ -2721,7 +3053,33 @@ function GameMode({players,getName,supabase,leagueId,tournament,setTournament,se
   async function startTournament(){
     if(selPlayers.length<4)return;
     try{
-      const scheduleData={rounds:mode==="americano"?generateAmericanoSchedule(selPlayers,courts):[generateMexicanoRound(selPlayers,{},courts)]};
+      let scheduleData;
+      if(mode==="elimination"){
+        // FT-06: Generate single elimination bracket (pairs of 2 players = teams)
+        const shuffled=[...selPlayers].sort(()=>Math.random()-0.5);
+        // Create teams of 2
+        const teams=[];
+        for(let i=0;i<shuffled.length-1;i+=2)teams.push([shuffled[i],shuffled[i+1]]);
+        // If odd number of players, last player gets a bye with a random partner
+        if(shuffled.length%2===1)teams.push([shuffled[shuffled.length-1],null]);
+        // Generate bracket rounds
+        const rounds=[];let currentTeams=[...teams];
+        let roundNum=1;
+        while(currentTeams.length>1){
+          const matches=[];
+          for(let i=0;i<currentTeams.length-1;i+=2){
+            matches.push({team_a:currentTeams[i],team_b:currentTeams[i+1],winner:null});
+          }
+          // Bye if odd number of teams
+          if(currentTeams.length%2===1)matches.push({team_a:currentTeams[currentTeams.length-1],team_b:null,winner:"a"});
+          rounds.push({round:roundNum,matches});
+          currentTeams=matches.map(()=>null); // placeholders for next round
+          roundNum++;
+        }
+        scheduleData={rounds,bracket:true};
+      }else{
+        scheduleData={rounds:mode==="americano"?generateAmericanoSchedule(selPlayers,courts):[generateMexicanoRound(selPlayers,{},courts)]};
+      }
       if(mode==="mexicano")scheduleData.rounds[0].round=1;
       const {data,error}=await supabase.from("tournaments").insert({league_id:leagueId,date:new Date().toISOString().split("T")[0],mode,players:selPlayers,courts,pts_per_round:ptsPerRound,schedule:scheduleData,scores:{},status:"active"}).select().single();
       if(error)throw error;
@@ -2804,7 +3162,7 @@ function GameMode({players,getName,supabase,leagueId,tournament,setTournament,se
         <p style={{fontSize:12,color:MT,marginBottom:16,lineHeight:1.5}}>Tournament formats for your padel sessions</p>
 
         {prevLb&&<div style={{marginBottom:20}}>
-          <h3 style={{fontSize:14,fontWeight:700,color:GD,marginBottom:10}}>🏆 Last Tournament — {prevMode==="americano"?"Americano":"Mexicano"}</h3>
+          <h3 style={{fontSize:14,fontWeight:700,color:GD,marginBottom:10}}>🏆 Last Tournament — {prevMode==="americano"?"Americano":prevMode==="mexicano"?"Mexicano":"Elimination"}</h3>
           {prevLb.map((p,i)=>(
             <div key={p.pid} style={{display:"flex",alignItems:"center",padding:"10px 12px",marginBottom:4,background:CD,borderRadius:10,border:`1px solid ${i===0?`${GD}40`:BD}`}}>
               <span style={{fontSize:16,fontWeight:800,color:i<3?[GD,SV,BZ][i]:TX,width:28,fontFamily:"'JetBrains Mono'"}}>{i+1}</span>
@@ -2817,10 +3175,10 @@ function GameMode({players,getName,supabase,leagueId,tournament,setTournament,se
 
         <div style={{marginBottom:16}}>
           <div style={{fontSize:11,color:MT,fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Format</div>
-          <div style={{display:"flex",gap:6}}>
-            {[["americano","Americano","Pre-set rotation, play with everyone"],["mexicano","Mexicano","Dynamic pairing by standings"]].map(([k,l,d])=>(
-              <button key={k} onClick={()=>setMode(k)} style={{flex:1,padding:"12px 10px",borderRadius:12,border:`1px solid ${mode===k?PU:BD}`,background:mode===k?`${PU}15`:"transparent",cursor:"pointer",textAlign:"left"}}>
-                <div style={{fontSize:13,fontWeight:700,color:mode===k?PU:TX}}>⚡ {l}</div>
+          <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+            {[["americano","Americano","Pre-set rotation, play with everyone"],["mexicano","Mexicano","Dynamic pairing by standings"],["elimination","Elimination","Knockout bracket, single elimination"]].map(([k,l,d])=>(
+              <button key={k} onClick={()=>setMode(k)} style={{flex:"1 1 45%",padding:"12px 10px",borderRadius:12,border:`1px solid ${mode===k?PU:BD}`,background:mode===k?`${PU}15`:"transparent",cursor:"pointer",textAlign:"left"}}>
+                <div style={{fontSize:13,fontWeight:700,color:mode===k?PU:TX}}>{k==="elimination"?"🏆":"⚡"} {l}</div>
                 <div style={{fontSize:10,color:MT,marginTop:4,lineHeight:1.3}}>{d}</div>
               </button>
             ))}
@@ -2842,17 +3200,69 @@ function GameMode({players,getName,supabase,leagueId,tournament,setTournament,se
           <div><div style={{fontSize:11,color:MT,fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>Courts</div><select value={courts} onChange={e=>setCourts(+e.target.value)} style={sel}>{[1,2,3].map(n=><option key={n} value={n}>{n}</option>)}</select></div>
           <div><div style={{fontSize:11,color:MT,fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>Points / Round</div><select value={ptsPerRound} onChange={e=>setPPR(+e.target.value)} style={sel}>{[16,20,24,32].map(n=><option key={n} value={n}>{n}</option>)}</select></div>
         </div>
-        <button onClick={startTournament} disabled={selPlayers.length<4} style={{width:"100%",padding:"14px",borderRadius:12,border:"none",background:selPlayers.length>=4?`linear-gradient(135deg,${PU},${PU}cc)`:BD,color:selPlayers.length>=4?TX:MT,fontSize:15,fontWeight:800,cursor:selPlayers.length>=4?"pointer":"not-allowed",textTransform:"uppercase"}}>Start {mode==="americano"?"Americano":"Mexicano"} ({selPlayers.length} players)</button>
+        <button onClick={startTournament} disabled={selPlayers.length<4} style={{width:"100%",padding:"14px",borderRadius:12,border:"none",background:selPlayers.length>=4?`linear-gradient(135deg,${PU},${PU}cc)`:BD,color:selPlayers.length>=4?TX:MT,fontSize:15,fontWeight:800,cursor:selPlayers.length>=4?"pointer":"not-allowed",textTransform:"uppercase"}}>Start {mode==="americano"?"Americano":mode==="mexicano"?"Mexicano":"Elimination"} ({selPlayers.length} players)</button>
       </div>
     );
   }
 
   const leaderboard=getLeaderboard();
   const isMex=tournament.mode==="mexicano";
+  const isElim=tournament.mode==="elimination";
   const allRounds=tournament.schedule?.rounds||[];
   const totalMatches=allRounds.reduce((s,r)=>s+(r.matches||[]).length,0);
   const scored=Object.keys(tournament.scores).length;
   const lastRoundDone=(()=>{const ri=allRounds.length-1;if(ri<0)return false;const ms=allRounds[ri]?.matches||[];return ms.length>0&&ms.every((_,mi)=>tournament.scores[`${ri}-${mi}`]);})();
+
+  // FT-06: Elimination bracket view
+  if(isElim){
+    const roundNames=allRounds.length<=1?["Final"]:allRounds.length===2?["Semi-Final","Final"]:allRounds.length===3?["Quarter-Final","Semi-Final","Final"]:allRounds.map((_,i)=>`Round ${i+1}`);
+    return (
+      <div style={{padding:"20px 16px",maxWidth:"600px",margin:"0 auto"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+          <div><h2 style={{fontSize:18,fontWeight:800}}>🏆 Elimination</h2><p style={{fontSize:11,color:MT}}>{tournament.players.length} players · {allRounds.length} rounds</p></div>
+          <button onClick={()=>{if(confirm("End tournament?"))endTournament();}} style={{padding:"6px 14px",borderRadius:8,border:`1px solid ${DG}40`,color:DG,background:"transparent",fontSize:11,fontWeight:600,cursor:"pointer"}}>End</button>
+        </div>
+
+        {allRounds.map((round,ri)=>(
+          <div key={ri} style={{marginBottom:16}}>
+            <h3 style={{fontSize:13,fontWeight:700,color:PU,marginBottom:8}}>{roundNames[ri]||`Round ${ri+1}`}</h3>
+            {(round.matches||[]).map((match,mi)=>{
+              const sc=tournament.scores[`${ri}-${mi}`];
+              const teamANames=(match.team_a||[]).filter(Boolean).map(pid=>getName(pid)).join(" x ");
+              const teamBNames=match.team_b?(match.team_b||[]).filter(Boolean).map(pid=>getName(pid)).join(" x "):"BYE";
+              const isBye=!match.team_b;
+              return (
+                <div key={mi} style={{background:CD,borderRadius:12,border:`1px solid ${sc?`${A}40`:BD}`,padding:12,marginBottom:6}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:13,fontWeight:sc&&sc.a>sc.b?700:500,color:sc&&sc.a>sc.b?A:TX}}>{teamANames||"TBD"}</div>
+                      <div style={{fontSize:13,fontWeight:sc&&sc.b>sc.a?700:500,color:sc&&sc.b>sc.a?A:TX,marginTop:4}}>{teamBNames||"TBD"}</div>
+                    </div>
+                    {isBye ? (
+                      <span style={{fontSize:10,color:MT,fontWeight:600}}>BYE</span>
+                    ) : sc ? (
+                      <div style={{textAlign:"right"}}>
+                        <div style={{fontSize:16,fontWeight:800,color:sc.a>sc.b?A:TX,fontFamily:"'JetBrains Mono'"}}>{sc.a}</div>
+                        <div style={{fontSize:16,fontWeight:800,color:sc.b>sc.a?A:TX,fontFamily:"'JetBrains Mono'",marginTop:2}}>{sc.b}</div>
+                      </div>
+                    ) : (
+                      <div style={{display:"flex",flexDirection:"column",gap:2}}>
+                        <input type="number" min="0" placeholder="0" style={{width:40,padding:"4px",borderRadius:6,border:`1px solid ${BD}`,background:CD2,color:TX,textAlign:"center",fontSize:13,fontFamily:"'JetBrains Mono'"}} id={`elim-a-${ri}-${mi}`}/>
+                        <input type="number" min="0" placeholder="0" style={{width:40,padding:"4px",borderRadius:6,border:`1px solid ${BD}`,background:CD2,color:TX,textAlign:"center",fontSize:13,fontFamily:"'JetBrains Mono'"}} id={`elim-b-${ri}-${mi}`}/>
+                        <button onClick={()=>{const a=parseInt(document.getElementById(`elim-a-${ri}-${mi}`).value)||0;const b=parseInt(document.getElementById(`elim-b-${ri}-${mi}`).value)||0;if(a===b){return;}recordScore(ri,mi,a,b);}} style={{padding:"4px 8px",borderRadius:6,border:"none",background:A,color:BG,fontSize:9,fontWeight:700,cursor:"pointer"}}>Save</button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ))}
+
+        <button onClick={resetTournament} style={{marginTop:8,width:"100%",padding:"8px 16px",borderRadius:10,border:`1px solid ${BD}`,background:"transparent",color:MT,fontSize:12,fontWeight:600,cursor:"pointer"}}>Clear Tournament</button>
+      </div>
+    );
+  }
 
   return (
     <div style={{padding:"20px 16px",maxWidth:"600px",margin:"0 auto"}}>
