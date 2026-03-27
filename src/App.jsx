@@ -1600,17 +1600,23 @@ function AppContent({leagueId,user,onSwitchLeague}){
               <div style={{marginBottom:28}}>
                 <h3 style={{fontSize:13,fontWeight:700,color:A,marginBottom:12}}>Player Management</h3>
                 <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                  {players.map(p => (
-                    <div key={p.id} style={{padding:"12px",background:CD2,borderRadius:8,display:"flex",alignItems:"center",gap:8}}>
-                      <input type="text" defaultValue={p.name} onChange={(e)=>{}} style={{flex:1,padding:"8px 10px",background:CD,border:`1px solid ${BD}`,borderRadius:6,color:TX,fontSize:12,fontFamily:"'Outfit',sans-serif",outline:"none"}}/>
-                      <button onClick={()=>{const newName=prompt("New name:",p.name);if(newName)updatePlayerName(p.id,newName);}} style={{padding:"6px 10px",background:A,border:"none",borderRadius:6,color:"#000",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
-                        Rename
-                      </button>
-                      <button onClick={()=>{if(confirm("Deactivate "+p.name+"?"))deactivatePlayer(p.id);}} style={{padding:"6px 10px",background:DG,border:"none",borderRadius:6,color:"#fff",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
-                        Deactivate
-                      </button>
+                  {players.map(p => {const profile=p.user_id?memberProfiles[p.user_id]:null;const claimed=!!p.user_id;return(
+                    <div key={p.id} style={{padding:"12px",background:CD2,borderRadius:8}}>
+                      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:claimed?6:0}}>
+                        <div style={{width:8,height:8,borderRadius:"50%",background:claimed?A:MT,flexShrink:0}}/>
+                        <div style={{flex:1,minWidth:0}}>
+                          <div style={{fontSize:13,fontWeight:600,color:TX}}>{p.nickname||p.name}</div>
+                          <div style={{fontSize:10,color:claimed?MT:`${MT}80`}}>{claimed?(profile?.email||"Linked account"):"Not yet joined"}</div>
+                        </div>
+                        <button onClick={()=>{const newName=prompt("New name:",p.name);if(newName)updatePlayerName(p.id,newName);}} style={{padding:"6px 10px",background:A,border:"none",borderRadius:6,color:"#000",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
+                          Rename
+                        </button>
+                        <button onClick={()=>{if(confirm("Deactivate "+p.name+"?"))deactivatePlayer(p.id);}} style={{padding:"6px 10px",background:DG,border:"none",borderRadius:6,color:"#fff",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
+                          Deactivate
+                        </button>
+                      </div>
                     </div>
-                  ))}
+                  );})}
                 </div>
               </div>
 
@@ -1790,7 +1796,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
 
                 <div style={{padding:"10px 12px",background:CD2,borderRadius:8}}>
                   <label style={{display:"block",color:MT,fontSize:10,fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>Linked Accounts</label>
-                  <div style={{fontSize:12,color:MT}}>Google: Not connected</div>
+                  {(()=>{const gi=user.identities?.find(i=>i.provider==="google");return gi?(<div style={{fontSize:12,color:A,display:"flex",alignItems:"center",gap:6}}>✅ Google: Connected{gi.identity_data?.email&&<span style={{color:MT}}>({gi.identity_data.email})</span>}</div>):(<div style={{fontSize:12,color:MT}}>Google: Not connected</div>);})()}
                 </div>
               </div>
 
@@ -2066,6 +2072,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
             <ScheduleView
               challenges={challenges}
               players={players}
+              matches={matches}
               supabase={supabase}
               leagueId={leagueId}
               user={user}
@@ -2174,16 +2181,18 @@ function AppContent({leagueId,user,onSwitchLeague}){
         </div>
       )}
 
-      {/* BOTTOM NAV — Original layout: 3 left tabs + center "+" button + 3 right tabs */}
-      <div style={{position:"fixed",bottom:0,left:0,right:0,background:`${CD}f0`,backdropFilter:"blur(20px)",borderTop:`1px solid ${BD}`,display:"flex",justifyContent:"space-around",alignItems:"flex-end",padding:`4px 0 env(safe-area-inset-bottom, 6px)`,zIndex:100}}>
+      {/* BOTTOM NAV — 7-column grid: 3 left + center "+" + 3 right */}
+      <div style={{position:"fixed",bottom:0,left:0,right:0,background:`${CD}f0`,backdropFilter:"blur(20px)",borderTop:`1px solid ${BD}`,display:"grid",gridTemplateColumns:"repeat(7,1fr)",alignItems:"flex-end",padding:`4px 0 env(safe-area-inset-bottom, 6px)`,zIndex:100}}>
         {TL.map(t => (
-          <button key={t.key} onClick={()=>{setTab(t.key);setSidebarOpen(false);setSidebarView(null);}} style={{background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:1,color:tab===t.key?A:MT,cursor:"pointer",padding:"5px 6px",flex:1}}>
+          <button key={t.key} onClick={()=>{setTab(t.key);setSidebarOpen(false);setSidebarView(null);}} style={{background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:1,color:tab===t.key?A:MT,cursor:"pointer",padding:"5px 6px"}}>
             <span style={{fontSize:16}}>{t.icon==="court"?<CourtIcon/>:t.icon}</span><span style={{fontSize:8,fontWeight:600}}>{t.label}</span>
           </button>
         ))}
-        <button onClick={()=>{setEditingMatch(null);setTab("log");setSidebarOpen(false);setSidebarView(null);}} style={{width:56,height:56,borderRadius:"50%",border:"none",background:`linear-gradient(135deg,${A},${A}cc)`,color:BG,fontSize:30,fontWeight:900,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",marginTop:-20,boxShadow:`0 4px 20px ${A}40`,flexShrink:0,lineHeight:1}}>+</button>
+        <div style={{display:"flex",justifyContent:"center",alignItems:"flex-end"}}>
+          <button onClick={()=>{setEditingMatch(null);setTab("log");setSidebarOpen(false);setSidebarView(null);}} style={{width:56,height:56,borderRadius:"50%",border:"none",background:`linear-gradient(135deg,${A},${A}cc)`,color:BG,fontSize:30,fontWeight:900,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",marginTop:-20,boxShadow:`0 4px 20px ${A}40`,lineHeight:1}}>+</button>
+        </div>
         {TR.map(t => (
-          <button key={t.key} onClick={()=>{setTab(t.key);setSidebarOpen(false);setSidebarView(null);}} style={{background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:1,color:tab===t.key?A:MT,cursor:"pointer",padding:"5px 6px",flex:1}}>
+          <button key={t.key} onClick={()=>{setTab(t.key);setSidebarOpen(false);setSidebarView(null);}} style={{background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:1,color:tab===t.key?A:MT,cursor:"pointer",padding:"5px 6px"}}>
             <span style={{fontSize:16}}>{t.icon}</span><span style={{fontSize:8,fontWeight:600}}>{t.label}</span>
           </button>
         ))}
@@ -2239,6 +2248,7 @@ function LogMatch({players,matches,supabase,leagueId,pm,em,setEm,goBack,sel,lbl,
 
   async function submit(){
     if(tA.some(x=>!x)||tB.some(x=>!x))return;
+    if(date>new Date().toISOString().split("T")[0]){if(showToast)showToast("Cannot log a match for a future date","error");return;}
     const as=sets.slice(0,ns).filter(([a,b])=>a>0||b>0);
     if(!as.length)return;
 
@@ -2307,7 +2317,7 @@ function LogMatch({players,matches,supabase,leagueId,pm,em,setEm,goBack,sel,lbl,
 
       <div style={{marginBottom:16}}>
         <div style={lbl}>Date</div>
-        <input type="date" value={date} onChange={e=>setDate(e.target.value)} style={{...sel,colorScheme:"dark"}}/>
+        <input type="date" value={date} max={new Date().toISOString().split("T")[0]} onChange={e=>setDate(e.target.value)} style={{...sel,colorScheme:"dark"}}/>
       </div>
 
       <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",gap:8,marginBottom:16}}>
@@ -2762,7 +2772,7 @@ function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,fm,supabase,l
 // ============================================================================
 // FT-05: SCHEDULE / CHALLENGES COMPONENT
 // ============================================================================
-function ScheduleView({challenges,players,supabase,leagueId,user,getName,isAdmin,onUpdate,showToast,sel,elo}){
+function ScheduleView({challenges,players,matches,supabase,leagueId,user,getName,isAdmin,onUpdate,showToast,sel,elo}){
   const [showForm,setShowForm]=useState(false);
   const [step,setStep]=useState(1); // 1=teams, 2=date/venue
   const [date,setDate]=useState(new Date().toISOString().split("T")[0]);
@@ -2775,7 +2785,7 @@ function ScheduleView({challenges,players,supabase,leagueId,user,getName,isAdmin
   const [saving,setSaving]=useState(false);
 
   const inp={background:CD2,color:TX,border:`1px solid ${BD}`,borderRadius:8,padding:"10px 12px",fontSize:13,width:"100%",outline:"none",fontFamily:"'Outfit',sans-serif"};
-  const getEloBadge=(pid)=>{const e=elo?.[pid]||1500;if(e>=1600)return{label:"Pro",color:DG};if(e>=1400)return{label:"Advanced",color:GD};if(e>=1200)return{label:"Intermediate",color:PU};return{label:"Beginner",color:BL};};
+  const getEloBadge=(pid)=>{const gp=(matches||[]).filter(m=>(m.team_a||[]).includes(pid)||(m.team_b||[]).includes(pid)).length;if(gp<5)return null;const e=elo?.[pid]||1500;if(e>=1600)return{label:"Pro",color:DG};if(e>=1400)return{label:"Advanced",color:GD};if(e>=1200)return{label:"Intermediate",color:PU};return{label:"Beginner",color:BL};};
 
   async function createChallenge(){
     const teamA=tA.filter(Boolean);const teamB=tB.filter(Boolean);
