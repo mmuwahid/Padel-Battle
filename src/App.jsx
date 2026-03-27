@@ -118,6 +118,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
   const [notifNewMatch,setNotifNewMatch]=useState(()=>JSON.parse(localStorage.getItem("notif_new_match")??'true'));
   const [notifRankingChange,setNotifRankingChange]=useState(()=>JSON.parse(localStorage.getItem("notif_ranking")??'true'));
   const [notifNewMembers,setNotifNewMembers]=useState(()=>JSON.parse(localStorage.getItem("notif_members")??'true'));
+  const [notifChallenges,setNotifChallenges]=useState(()=>JSON.parse(localStorage.getItem("notif_challenges")??'true'));
   const [pushSubscribed,setPushSubscribed]=useState(false);
 
   // Check if user already has a push subscription on mount
@@ -552,6 +553,9 @@ function AppContent({leagueId,user,onSwitchLeague}){
     } else if (type === "members") {
       setNotifNewMembers(value);
       localStorage.setItem("notif_members", JSON.stringify(value));
+    } else if (type === "challenges") {
+      setNotifChallenges(value);
+      localStorage.setItem("notif_challenges", JSON.stringify(value));
     }
     // Sync preferences to Supabase if subscribed
     if (pushSubscribed) {
@@ -782,7 +786,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
   return (
     <div style={{background:BG,minHeight:"100vh",paddingBottom:"calc(80px + env(safe-area-inset-bottom, 0px))",fontFamily:"'Outfit',sans-serif",color:TX}}>
       {/* HEADER — Line 1: PadelHub branding, Line 2: League | Season */}
-      <div style={{background:CD,borderBottom:`1px solid ${BD}`,padding:"12px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:10}}>
+      <div style={{background:CD,borderBottom:`1px solid ${BD}`,padding:"12px 16px",paddingTop:"calc(env(safe-area-inset-top, 0px) + 12px)",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:10}}>
         <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
           <PadelLogoSmall/>
           <div>
@@ -839,7 +843,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
         overflow:"auto",
       }}>
         {/* Header with user info */}
-        <div style={{padding:"20px 16px",borderBottom:`1px solid ${BD}`}}>
+        <div style={{padding:"20px 16px",paddingTop:"calc(env(safe-area-inset-top, 0px) + 20px)",borderBottom:`1px solid ${BD}`}}>
           <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
             <div style={{width:56,height:56,borderRadius:"50%",background:`${A}20`,border:`2px solid ${A}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,fontWeight:800,color:A,overflow:"hidden"}}>
               {avatarUrl?<img src={avatarUrl} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:(user.user_metadata?.display_name||user.email||"U")[0].toUpperCase()}
@@ -1297,10 +1301,17 @@ function AppContent({leagueId,user,onSwitchLeague}){
                   </button>
                 </div>
 
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 12px",background:CD2,borderRadius:8}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 12px",background:CD2,borderRadius:8,marginBottom:8}}>
                   <label style={{fontSize:12,fontWeight:600,color:TX}}>New Members</label>
                   <button onClick={()=>toggleNotification("members",!notifNewMembers)} style={{width:48,height:28,borderRadius:14,background:notifNewMembers?A:BD,border:"none",cursor:"pointer",position:"relative",transition:"background 0.2s",padding:0}}>
                     <div style={{width:24,height:24,background:CD,borderRadius:"50%",position:"absolute",top:2,left:notifNewMembers?22:2,transition:"left 0.2s"}}/>
+                  </button>
+                </div>
+
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 12px",background:CD2,borderRadius:8}}>
+                  <label style={{fontSize:12,fontWeight:600,color:TX}}>Match Challenges</label>
+                  <button onClick={()=>toggleNotification("challenges",!notifChallenges)} style={{width:48,height:28,borderRadius:14,background:notifChallenges?A:BD,border:"none",cursor:"pointer",position:"relative",transition:"background 0.2s",padding:0}}>
+                    <div style={{width:24,height:24,background:CD,borderRadius:"50%",position:"absolute",top:2,left:notifChallenges?22:2,transition:"left 0.2s"}}/>
                   </button>
                 </div>
               </div>
