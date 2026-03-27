@@ -2453,29 +2453,62 @@ function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,fm,supabase,l
     );
   }
 
-  // FT-04: Analytics computed data
+  // FT-04: Analytics computed data (mockup-aligned: 5 sections)
+  const [analyticsSection,setAnalyticsSection]=useState("league");
   const analyticsData=useMemo(()=>{
     if(fm.length===0)return null;
     const totalMatches=fm.length;
     const totalSets=fm.reduce((t,m)=>t+m.sets.length,0);
-    const avgSetsPerMatch=totalSets/totalMatches;
-    // Most active players
+    // Per-player stats
+    const wr={};players.forEach(p=>{wr[p.id]={w:0,l:0,gw:0,gl:0};});
+    fm.forEach(m=>{const w=win(m.sets);const gA=m.sets.reduce((s,x)=>s+x[0],0);const gB=m.sets.reduce((s,x)=>s+x[1],0);
+      m.team_a.forEach(pid=>{if(wr[pid]){if(w==="A")wr[pid].w++;else wr[pid].l++;wr[pid].gw+=gA;wr[pid].gl+=gB;}});
+      m.team_b.forEach(pid=>{if(wr[pid]){if(w==="B")wr[pid].w++;else wr[pid].l++;wr[pid].gw+=gB;wr[pid].gl+=gA;}});
+    });
+    // Activity
     const activity={};players.forEach(p=>{activity[p.id]=0;});
     fm.forEach(m=>{[...m.team_a,...m.team_b].forEach(pid=>{if(activity[pid]!==undefined)activity[pid]++;});});
     const mostActive=Object.entries(activity).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([pid,games])=>({pid,games}));
-    // Highest win rates (min 3 games)
-    const wr={};players.forEach(p=>{wr[p.id]={w:0,l:0};});
-    fm.forEach(m=>{const w=win(m.sets);m.team_a.forEach(pid=>{if(wr[pid])w==="A"?wr[pid].w++:wr[pid].l++;});m.team_b.forEach(pid=>{if(wr[pid])w==="B"?wr[pid].w++:wr[pid].l++;});});
-    const topWinRate=Object.entries(wr).filter(([,x])=>x.w+x.l>=3).map(([pid,x])=>({pid,pct:x.w/(x.w+x.l)*100,games:x.w+x.l})).sort((a,b)=>b.pct-a.pct).slice(0,5);
-    // Closest matches (sets decided by 1 point)
+    const topWinRate=Object.entries(wr).filter(([,x])=>x.w+x.l>=3).map(([pid,x])=>({pid,pct:x.w/(x.w+x.l)*100,w:x.w,l:x.l,games:x.w+x.l})).sort((a,b)=>b.pct-a.pct).slice(0,5);
+    // Close matches
     const closeMatches=fm.filter(m=>m.sets.some(s=>Math.abs(s[0]-s[1])<=1&&(s[0]+s[1])>0)).length;
-    // MOTM frequency
+    // MOTM
     const motmCount={};fm.forEach(m=>{if(m.motm){motmCount[m.motm]=(motmCount[m.motm]||0)+1;}});
     const topMotm=Object.entries(motmCount).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([pid,count])=>({pid,count}));
-    // Monthly match volume
+    // Monthly
     const monthly={};fm.forEach(m=>{const key=m.date?.substring(0,7);if(key)monthly[key]=(monthly[key]||0)+1;});
     const monthlyArr=Object.entries(monthly).sort().slice(-6);
-    return {totalMatches,totalSets,avgSetsPerMatch,mostActive,topWinRate,closeMatches,topMotm,monthlyArr};
+    // Partnership stats
+    const partnerStats={};
+    fm.forEach(m=>{const w=win(m.sets);
+      [[m.team_a,w==="A"],[m.team_b,w==="B"]].forEach(([team,won])=>{
+        if(team.length===2){const [a,b]=team.sort();const k=`${a}|${b}`;
+          if(!partnerStats[k])partnerStats[k]={a,b,w:0,l:0};
+          if(won)partnerStats[k].w++;else partnerStats[k].l++;}
+      });
+    });
+    const partnerships=Object.values(partnerStats).filter(p=>p.w+p.l>=1).sort((a,b)=>(b.w/(b.w+b.l))-(a.w/(a.w+a.l)));
+    const bestPartnership=partnerships[0]||null;
+    const worstPartnership=partnerships.length>1?partnerships[partnerships.length-1]:null;
+    // H2H opponent analysis per player
+    const h2hAll={};
+    fm.forEach(m=>{const w=win(m.sets);
+      const process=(myTeam,oppTeam,won)=>{myTeam.forEach(me=>{oppTeam.forEach(opp=>{
+        if(!h2hAll[me])h2hAll[me]={};if(!h2hAll[me][opp])h2hAll[me][opp]={w:0,l:0};
+        if(won)h2hAll[me][opp].w++;else h2hAll[me][opp].l++;
+      });});};
+      process(m.team_a,m.team_b,w==="A");process(m.team_b,m.team_a,w==="B");
+    });
+    // Most competitive matchups
+    const matchups=[];
+    const seen=new Set();
+    Object.entries(h2hAll).forEach(([pid,opps])=>{Object.entries(opps).forEach(([opp,r])=>{
+      const k=[pid,opp].sort().join("|");if(!seen.has(k)&&r.w+r.l>=2){seen.add(k);const total=r.w+r.l;const pct=Math.min(r.w,r.l)/total*100;matchups.push({p1:pid,p2:opp,...r,games:total,balance:pct});}
+    });});
+    matchups.sort((a,b)=>b.balance-a.balance);
+    // Biggest wins (largest set differential)
+    const biggestWins=[...fm].map(m=>{const gA=m.sets.reduce((s,x)=>s+x[0],0);const gB=m.sets.reduce((s,x)=>s+x[1],0);return{...m,diff:Math.abs(gA-gB),winner:win(m.sets)};}).sort((a,b)=>b.diff-a.diff).slice(0,3);
+    return {totalMatches,totalSets,mostActive,topWinRate,closeMatches,topMotm,monthlyArr,wr,partnerships,bestPartnership,worstPartnership,h2hAll,matchups:matchups.slice(0,5),biggestWins};
   },[fm,players]);
 
   return (
@@ -2489,77 +2522,160 @@ function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,fm,supabase,l
 
       {subTab==="analytics" && analyticsData ? (
         <div>
-          {/* League Overview */}
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:16}}>
-            <div style={{background:CD,borderRadius:12,padding:12,textAlign:"center",border:`1px solid ${BD}`}}>
-              <div style={{fontSize:22,fontWeight:800,color:A,fontFamily:"'JetBrains Mono'"}}>{analyticsData.totalMatches}</div>
-              <div style={{fontSize:10,color:MT,fontWeight:600}}>Matches</div>
-            </div>
-            <div style={{background:CD,borderRadius:12,padding:12,textAlign:"center",border:`1px solid ${BD}`}}>
-              <div style={{fontSize:22,fontWeight:800,color:BL,fontFamily:"'JetBrains Mono'"}}>{analyticsData.totalSets}</div>
-              <div style={{fontSize:10,color:MT,fontWeight:600}}>Sets</div>
-            </div>
-            <div style={{background:CD,borderRadius:12,padding:12,textAlign:"center",border:`1px solid ${BD}`}}>
-              <div style={{fontSize:22,fontWeight:800,color:GD,fontFamily:"'JetBrains Mono'"}}>{analyticsData.closeMatches}</div>
-              <div style={{fontSize:10,color:MT,fontWeight:600}}>Close Games</div>
-            </div>
-          </div>
-
-          {/* Most Active */}
-          <div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:12}}>
-            <h3 style={{fontSize:13,fontWeight:700,color:TX,marginBottom:10}}>🏃 Most Active</h3>
-            {analyticsData.mostActive.map((x,i)=>(
-              <div key={x.pid} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:i<analyticsData.mostActive.length-1?`1px solid ${BD}`:undefined}}>
-                <span style={{fontSize:12,color:TX}}>{i+1}. {getName(x.pid)}</span>
-                <span style={{fontSize:12,fontWeight:700,color:A,fontFamily:"'JetBrains Mono'"}}>{x.games} GP</span>
-              </div>
+          {/* Analytics Section Tabs — matching mockup control panel */}
+          <div style={{display:"flex",gap:4,marginBottom:16,overflowX:"auto",paddingBottom:4}}>
+            {[["league","📈 League"],["partnership","🤝 Partners"],["opponent","🎯 H2H"],["insights","🏆 Insights"]].map(([k,l])=>(
+              <button key={k} onClick={()=>setAnalyticsSection(k)} style={{padding:"8px 12px",borderRadius:8,border:`1px solid ${analyticsSection===k?A:BD}`,background:analyticsSection===k?`${A}15`:"transparent",color:analyticsSection===k?A:MT,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif",whiteSpace:"nowrap"}}>{l}</button>
             ))}
           </div>
 
-          {/* Highest Win Rate */}
-          <div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:12}}>
-            <h3 style={{fontSize:13,fontWeight:700,color:TX,marginBottom:10}}>🎯 Highest Win Rate (3+ games)</h3>
-            {analyticsData.topWinRate.map((x,i)=>(
-              <div key={x.pid} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:i<analyticsData.topWinRate.length-1?`1px solid ${BD}`:undefined}}>
-                <span style={{fontSize:12,color:TX}}>{i+1}. {getName(x.pid)}</span>
-                <div style={{display:"flex",alignItems:"center",gap:8}}>
-                  <div style={{width:60,height:6,background:BD,borderRadius:3,overflow:"hidden"}}><div style={{width:`${x.pct}%`,height:"100%",background:A,borderRadius:3}}/></div>
-                  <span style={{fontSize:12,fontWeight:700,color:A,fontFamily:"'JetBrains Mono'",width:40,textAlign:"right"}}>{x.pct.toFixed(0)}%</span>
-                </div>
+          {/* LEAGUE-WIDE STATS */}
+          {analyticsSection==="league"&&<div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
+              <div style={{background:CD,borderRadius:12,padding:14,border:`1px solid ${BD}`}}>
+                <div style={{fontSize:10,color:MT,fontWeight:600,textTransform:"uppercase",letterSpacing:0.5,marginBottom:4}}>Total Matches</div>
+                <div style={{fontSize:24,fontWeight:800,color:A,fontFamily:"'JetBrains Mono'"}}>{analyticsData.totalMatches}</div>
               </div>
-            ))}
-          </div>
-
-          {/* MOTM Stars */}
-          {analyticsData.topMotm.length>0 && (
+              <div style={{background:CD,borderRadius:12,padding:14,border:`1px solid ${BD}`}}>
+                <div style={{fontSize:10,color:MT,fontWeight:600,textTransform:"uppercase",letterSpacing:0.5,marginBottom:4}}>Close Games</div>
+                <div style={{fontSize:24,fontWeight:800,color:GD,fontFamily:"'JetBrains Mono'"}}>{analyticsData.closeMatches}</div>
+              </div>
+            </div>
+            {/* Most Active */}
             <div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:12}}>
-              <h3 style={{fontSize:13,fontWeight:700,color:TX,marginBottom:10}}>⭐ Man of the Match</h3>
+              <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:12,textTransform:"uppercase",letterSpacing:0.5}}>Most Active Players</div>
+              {analyticsData.mostActive.map((x,i)=>(
+                <div key={x.pid} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderBottom:i<analyticsData.mostActive.length-1?`1px solid ${BD}`:undefined}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:32,height:32,borderRadius:"50%",background:`${A}15`,border:`2px solid ${A}30`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:A}}>{getName(x.pid)[0]}</div><span style={{fontSize:12,color:TX}}>{getName(x.pid)}</span></div>
+                  <div style={{textAlign:"right"}}><span style={{fontSize:14,fontWeight:700,color:A,fontFamily:"'JetBrains Mono'"}}>{x.games}</span><span style={{fontSize:10,color:MT,marginLeft:4}}>GP</span></div>
+                </div>
+              ))}
+            </div>
+            {/* Highest Win Rates */}
+            <div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:12}}>
+              <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:12,textTransform:"uppercase",letterSpacing:0.5}}>Highest Win Rates</div>
+              {analyticsData.topWinRate.map((x,i)=>(
+                <div key={x.pid} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderBottom:i<analyticsData.topWinRate.length-1?`1px solid ${BD}`:undefined}}>
+                  <span style={{fontSize:12,color:TX}}>{getName(x.pid)}</span>
+                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                    <span style={{fontSize:11,color:MT}}>{x.w}W-{x.l}L</span>
+                    <span style={{fontSize:14,fontWeight:700,color:x.pct>=60?A:x.pct>=40?TX:DG,fontFamily:"'JetBrains Mono'"}}>{x.pct.toFixed(0)}%</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {/* Most Competitive Matchups */}
+            {analyticsData.matchups.length>0&&<div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:12}}>
+              <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:12,textTransform:"uppercase",letterSpacing:0.5}}>Most Competitive Matchups</div>
+              {analyticsData.matchups.map((x,i)=>(
+                <div key={i} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderBottom:i<analyticsData.matchups.length-1?`1px solid ${BD}`:undefined}}>
+                  <span style={{fontSize:12,color:TX}}>{getName(x.p1)} vs {getName(x.p2)}</span>
+                  <div><span style={{fontSize:11,color:MT}}>{x.games} GP</span><span style={{fontSize:11,color:A,marginLeft:8}}>{Math.round(x.balance*2)}% balanced</span></div>
+                </div>
+              ))}
+            </div>}
+            {/* Monthly Trend */}
+            {analyticsData.monthlyArr.length>1&&<div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:12}}>
+              <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:12,textTransform:"uppercase",letterSpacing:0.5}}>League Activity</div>
+              <div style={{display:"flex",alignItems:"flex-end",gap:6,height:80}}>
+                {analyticsData.monthlyArr.map(([month,count])=>{
+                  const max=Math.max(...analyticsData.monthlyArr.map(a=>a[1]));
+                  const h=max>0?(count/max)*60+10:10;
+                  return <div key={month} style={{flex:1,textAlign:"center"}}><div style={{height:h,background:`linear-gradient(180deg,${A},${A}60)`,borderRadius:4,marginBottom:4}}/><div style={{fontSize:8,color:MT}}>{month.slice(5)}</div><div style={{fontSize:10,fontWeight:700,color:TX}}>{count}</div></div>;
+                })}
+              </div>
+            </div>}
+          </div>}
+
+          {/* PARTNERSHIP ANALYTICS */}
+          {analyticsSection==="partnership"&&<div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
+              {analyticsData.bestPartnership&&<div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14}}>
+                <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:8}}>Best Partner</div>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+                  <div style={{width:32,height:32,borderRadius:"50%",background:`${A}15`,border:`2px solid ${A}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:A}}>{getName(analyticsData.bestPartnership.a)[0]}</div>
+                  <div><div style={{fontSize:12,fontWeight:700,color:TX}}>{getName(analyticsData.bestPartnership.a)} x {getName(analyticsData.bestPartnership.b)}</div>
+                  <div style={{fontSize:11,color:A}}>{analyticsData.bestPartnership.w}W-{analyticsData.bestPartnership.l}L ({Math.round(analyticsData.bestPartnership.w/(analyticsData.bestPartnership.w+analyticsData.bestPartnership.l)*100)}%)</div></div>
+                </div>
+              </div>}
+              {analyticsData.worstPartnership&&<div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14}}>
+                <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:8}}>Least Compatible</div>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+                  <div style={{width:32,height:32,borderRadius:"50%",background:`${DG}15`,border:`2px solid ${DG}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:DG}}>{getName(analyticsData.worstPartnership.a)[0]}</div>
+                  <div><div style={{fontSize:12,fontWeight:700,color:TX}}>{getName(analyticsData.worstPartnership.a)} x {getName(analyticsData.worstPartnership.b)}</div>
+                  <div style={{fontSize:11,color:DG}}>{analyticsData.worstPartnership.w}W-{analyticsData.worstPartnership.l}L ({Math.round(analyticsData.worstPartnership.w/(analyticsData.worstPartnership.w+analyticsData.worstPartnership.l)*100)}%)</div></div>
+                </div>
+              </div>}
+            </div>
+            {/* All partnerships */}
+            <div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14}}>
+              <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:12,textTransform:"uppercase",letterSpacing:0.5}}>All Partnerships</div>
+              {analyticsData.partnerships.slice(0,10).map((p,i)=>{const pct=Math.round(p.w/(p.w+p.l)*100);return(
+                <div key={i} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0",borderBottom:i<Math.min(analyticsData.partnerships.length,10)-1?`1px solid ${BD}`:undefined}}>
+                  <span style={{fontSize:12,color:TX}}>{getName(p.a)} x {getName(p.b)}</span>
+                  <div style={{display:"flex",alignItems:"center",gap:6}}>
+                    <div style={{width:50,height:6,background:BD,borderRadius:3,overflow:"hidden"}}><div style={{width:`${pct}%`,height:"100%",background:pct>=60?A:pct>=40?BL:DG,borderRadius:3}}/></div>
+                    <span style={{fontSize:12,fontWeight:700,color:pct>=60?A:pct>=40?TX:DG,fontFamily:"'JetBrains Mono'",width:35,textAlign:"right"}}>{pct}%</span>
+                  </div>
+                </div>
+              );})}
+            </div>
+          </div>}
+
+          {/* OPPONENT ANALYSIS (H2H) */}
+          {analyticsSection==="opponent"&&<div>
+            <div style={{display:"flex",gap:12,marginBottom:12,fontSize:11}}>
+              <div style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:12,height:12,borderRadius:2,background:A}}/><span style={{color:MT}}>Wins</span></div>
+              <div style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:12,height:12,borderRadius:2,background:DG}}/><span style={{color:MT}}>Losses</span></div>
+            </div>
+            {/* H2H bars for each player pair */}
+            {analyticsData.matchups.slice(0,8).map((x,i)=>{const total=x.w+x.l;const wp=total>0?(x.w/total)*100:50;return(
+              <div key={i} style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                <div style={{minWidth:80,fontSize:11,color:TX,fontWeight:600}}>{getName(x.p1)}</div>
+                <div style={{flex:1,display:"flex",height:32,borderRadius:6,overflow:"hidden"}}>
+                  <div style={{width:`${wp}%`,background:A,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:"#000",minWidth:20}}>{x.w}W</div>
+                  <div style={{width:`${100-wp}%`,background:DG,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:"#fff",minWidth:20}}>{x.l}L</div>
+                </div>
+                <div style={{minWidth:50,textAlign:"right",fontSize:11,fontWeight:700,color:TX}}>{x.w}W-{x.l}L</div>
+              </div>
+            );})}
+          </div>}
+
+          {/* MATCH INSIGHTS */}
+          {analyticsSection==="insights"&&<div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
+              <div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14}}>
+                <div style={{fontSize:10,color:MT,fontWeight:600,textTransform:"uppercase",marginBottom:4}}>MOTM Awards</div>
+                <div style={{fontSize:20,fontWeight:800,color:GD,fontFamily:"'JetBrains Mono'"}}>{analyticsData.topMotm.reduce((s,x)=>s+x.count,0)}</div>
+                <div style={{fontSize:10,color:MT,marginTop:4}}>across all players</div>
+              </div>
+              <div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14}}>
+                <div style={{fontSize:10,color:MT,fontWeight:600,textTransform:"uppercase",marginBottom:4}}>Closest Matches</div>
+                <div style={{fontSize:20,fontWeight:800,color:A,fontFamily:"'JetBrains Mono'"}}>{analyticsData.closeMatches}</div>
+                <div style={{fontSize:10,color:MT,marginTop:4}}>decided by 1 point</div>
+              </div>
+            </div>
+            {/* MOTM Leaderboard */}
+            {analyticsData.topMotm.length>0&&<div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:12}}>
+              <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:12,textTransform:"uppercase",letterSpacing:0.5}}>⭐ MOTM Leaderboard</div>
               {analyticsData.topMotm.map((x,i)=>(
-                <div key={x.pid} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:i<analyticsData.topMotm.length-1?`1px solid ${BD}`:undefined}}>
+                <div key={x.pid} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:i<analyticsData.topMotm.length-1?`1px solid ${BD}`:undefined}}>
                   <span style={{fontSize:12,color:TX}}>{i+1}. {getName(x.pid)}</span>
                   <span style={{fontSize:12,fontWeight:700,color:GD,fontFamily:"'JetBrains Mono'"}}>{x.count}× ⭐</span>
                 </div>
               ))}
-            </div>
-          )}
-
-          {/* Monthly Trend */}
-          {analyticsData.monthlyArr.length>1 && (
-            <div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:12}}>
-              <h3 style={{fontSize:13,fontWeight:700,color:TX,marginBottom:10}}>📈 Monthly Matches</h3>
-              <div style={{display:"flex",alignItems:"flex-end",gap:4,height:80}}>
-                {analyticsData.monthlyArr.map(([month,count])=>{
-                  const max=Math.max(...analyticsData.monthlyArr.map(a=>a[1]));
-                  const h=max>0?(count/max)*60+10:10;
-                  return <div key={month} style={{flex:1,textAlign:"center"}}>
-                    <div style={{height:h,background:A,borderRadius:4,marginBottom:4}}/>
-                    <div style={{fontSize:8,color:MT}}>{month.slice(5)}</div>
-                    <div style={{fontSize:9,fontWeight:700,color:TX}}>{count}</div>
-                  </div>;
-                })}
-              </div>
-            </div>
-          )}
+            </div>}
+            {/* Biggest Wins */}
+            {analyticsData.biggestWins.length>0&&<div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14}}>
+              <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:12,textTransform:"uppercase",letterSpacing:0.5}}>Biggest Wins</div>
+              {analyticsData.biggestWins.map((m,i)=>{const gA=m.sets.reduce((s,x)=>s+x[0],0);const gB=m.sets.reduce((s,x)=>s+x[1],0);return(
+                <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:i<analyticsData.biggestWins.length-1?`1px solid ${BD}`:undefined}}>
+                  <div><div style={{fontSize:12,color:TX,fontWeight:600}}>{formatTeam(getName(m.team_a[0]),getName(m.team_a[1]))}</div><div style={{fontSize:10,color:MT}}>{formatDate(m.date)}</div></div>
+                  <span style={{fontSize:12,fontWeight:700,color:A,fontFamily:"'JetBrains Mono'"}}>{m.sets.map(s=>s.join("-")).join(", ")}</span>
+                </div>
+              );})}
+            </div>}
+          </div>}
         </div>
       ) : subTab==="analytics" ? (
         <div style={{textAlign:"center",padding:"40px 20px"}}>
