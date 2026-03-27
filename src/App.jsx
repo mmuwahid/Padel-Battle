@@ -1295,7 +1295,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
                 </div>
 
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 12px",background:CD2,borderRadius:8,marginBottom:8}}>
-                  <label style={{fontSize:12,fontWeight:600,color:TX}}>Ranking Changes</label>
+                  <label style={{fontSize:12,fontWeight:600,color:TX}}>Rank Change</label>
                   <button onClick={()=>toggleNotification("ranking",!notifRankingChange)} style={{width:48,height:28,borderRadius:14,background:notifRankingChange?A:BD,border:"none",cursor:"pointer",position:"relative",transition:"background 0.2s",padding:0}}>
                     <div style={{width:24,height:24,background:CD,borderRadius:"50%",position:"absolute",top:2,left:notifRankingChange?22:2,transition:"left 0.2s"}}/>
                   </button>
@@ -1565,6 +1565,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
               isAdmin={isAdmin}
               onUpdate={loadLeagueData}
               showToast={showToast}
+              sendPushNotification={sendPushNotification}
               elo={elo}
               sel={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:13,fontFamily:"Outfit"}}
             />
