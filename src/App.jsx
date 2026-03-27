@@ -2037,6 +2037,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
               isAdmin={isAdmin}
               onUpdate={loadLeagueData}
               showToast={showToast}
+              elo={elo}
               sel={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:13,fontFamily:"Outfit"}}
             />
           )}
@@ -2725,10 +2726,12 @@ function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,fm,supabase,l
 // ============================================================================
 // FT-05: SCHEDULE / CHALLENGES COMPONENT
 // ============================================================================
-function ScheduleView({challenges,players,supabase,leagueId,user,getName,isAdmin,onUpdate,showToast,sel}){
+function ScheduleView({challenges,players,supabase,leagueId,user,getName,isAdmin,onUpdate,showToast,sel,elo}){
   const [showForm,setShowForm]=useState(false);
+  const [step,setStep]=useState(1); // 1=teams, 2=date/venue
   const [date,setDate]=useState(new Date().toISOString().split("T")[0]);
   const [time,setTime]=useState("18:00");
+  const [duration,setDuration]=useState(90);
   const [location,setLocation]=useState("");
   const [tA,setTA]=useState(["",""]);
   const [tB,setTB]=useState(["",""]);
@@ -2736,6 +2739,7 @@ function ScheduleView({challenges,players,supabase,leagueId,user,getName,isAdmin
   const [saving,setSaving]=useState(false);
 
   const inp={background:CD2,color:TX,border:`1px solid ${BD}`,borderRadius:8,padding:"10px 12px",fontSize:13,width:"100%",outline:"none",fontFamily:"'Outfit',sans-serif"};
+  const getEloBadge=(pid)=>{const e=elo?.[pid]||1500;if(e>=1600)return{label:"Pro",color:DG};if(e>=1400)return{label:"Advanced",color:GD};if(e>=1200)return{label:"Intermediate",color:PU};return{label:"Beginner",color:BL};};
 
   async function createChallenge(){
     const teamA=tA.filter(Boolean);const teamB=tB.filter(Boolean);
@@ -2777,24 +2781,64 @@ function ScheduleView({challenges,players,supabase,leagueId,user,getName,isAdmin
         <button onClick={()=>setShowForm(!showForm)} style={{padding:"6px 14px",borderRadius:8,border:`1px solid ${A}`,background:`${A}15`,color:A,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>{showForm?"Cancel":"+ Schedule"}</button>
       </div>
 
-      {/* New Challenge Form */}
-      {showForm&&(
+      {/* New Challenge Form — Multi-step (mockup-aligned) */}
+      {showForm&&step===1&&(
         <div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:12}}>
-          <div style={{display:"flex",gap:8,marginBottom:8}}>
+          <div style={{background:`${A}12`,border:`1px solid ${A}`,borderRadius:10,padding:12,marginBottom:14,display:"flex",alignItems:"center",gap:10}}>
+            <span style={{fontSize:16}}>🎾</span>
+            <span style={{fontSize:12,fontWeight:600,color:TX}}>Always Doubles — Select 4 Players</span>
+          </div>
+          {/* Team 1 */}
+          <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:8,textTransform:"uppercase",letterSpacing:0.5}}>Team 1</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}}>
+            {[0,1].map(i=>{const allSel=[tA[0],tA[1],tB[0],tB[1]].filter(Boolean);const others=allSel.filter(v=>v!==tA[i]);const badge=tA[i]?getEloBadge(tA[i]):null;return(
+              <div key={i} style={{padding:12,background:CD2,border:`1px solid ${BD}`,borderRadius:8}}>
+                <div style={{fontSize:11,fontWeight:700,color:MT,textTransform:"uppercase",letterSpacing:0.5,marginBottom:8}}>Player {i+1}</div>
+                <select value={tA[i]} onChange={e=>{const n=[...tA];n[i]=e.target.value;setTA(n);}} style={{...sel,marginBottom:badge?6:0}}><option value="">Select Player...</option>{players.filter(p=>!others.includes(p.id)).map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}</select>
+                {badge&&<div style={{display:"inline-block",padding:"3px 8px",borderRadius:4,fontSize:10,fontWeight:700,background:`${badge.color}20`,color:badge.color,marginTop:4}}>{badge.label}</div>}
+              </div>
+            );})}
+          </div>
+          {/* Team 2 */}
+          <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:8,textTransform:"uppercase",letterSpacing:0.5}}>Team 2</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}}>
+            {[0,1].map(i=>{const allSel=[tA[0],tA[1],tB[0],tB[1]].filter(Boolean);const others=allSel.filter(v=>v!==tB[i]);const badge=tB[i]?getEloBadge(tB[i]):null;return(
+              <div key={i} style={{padding:12,background:CD2,border:`1px solid ${BD}`,borderRadius:8}}>
+                <div style={{fontSize:11,fontWeight:700,color:MT,textTransform:"uppercase",letterSpacing:0.5,marginBottom:8}}>Player {i+3}</div>
+                <select value={tB[i]} onChange={e=>{const n=[...tB];n[i]=e.target.value;setTB(n);}} style={{...sel,marginBottom:badge?6:0}}><option value="">Select Player...</option>{players.filter(p=>!others.includes(p.id)).map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}</select>
+                {badge&&<div style={{display:"inline-block",padding:"3px 8px",borderRadius:4,fontSize:10,fontWeight:700,background:`${badge.color}20`,color:badge.color,marginTop:4}}>{badge.label}</div>}
+              </div>
+            );})}
+          </div>
+          <div style={{display:"flex",gap:8}}>
+            <button onClick={()=>setStep(2)} disabled={!tA[0]} style={{flex:1,padding:12,borderRadius:8,border:"none",background:tA[0]?A:BD,color:tA[0]?BG:MT,fontSize:13,fontWeight:700,cursor:tA[0]?"pointer":"not-allowed",textTransform:"uppercase",letterSpacing:0.5}}>Continue</button>
+            <button onClick={()=>{setShowForm(false);setStep(1);}} style={{flex:1,padding:12,borderRadius:8,border:`1px solid ${BD}`,background:CD2,color:TX,fontSize:13,fontWeight:700,cursor:"pointer",textTransform:"uppercase",letterSpacing:0.5}}>Cancel</button>
+          </div>
+        </div>
+      )}
+      {showForm&&step===2&&(
+        <div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:12}}>
+          {/* Date */}
+          <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:8,textTransform:"uppercase",letterSpacing:0.5}}>Match Date</div>
+          <div style={{display:"flex",gap:8,marginBottom:14}}>
             <input type="date" value={date} onChange={e=>setDate(e.target.value)} style={{...inp,flex:1}}/>
             <input type="time" value={time} onChange={e=>setTime(e.target.value)} style={{...inp,flex:1}}/>
           </div>
-          <input placeholder="Location (optional)" value={location} onChange={e=>setLocation(e.target.value)} style={{...inp,marginBottom:8}}/>
-          <div style={{fontSize:11,color:MT,fontWeight:600,marginBottom:4}}>Team A</div>
-          <div style={{display:"flex",gap:4,marginBottom:8}}>
-            {[0,1].map(i=>{const allSel=[tA[0],tA[1],tB[0],tB[1]].filter(Boolean);const others=allSel.filter(v=>v!==tA[i]);return <select key={i} value={tA[i]} onChange={e=>{const n=[...tA];n[i]=e.target.value;setTA(n);}} style={{...sel,flex:1}}><option value="">Player {i+1}</option>{players.filter(p=>!others.includes(p.id)).map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}</select>;})}
+          {/* Duration */}
+          <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:8,textTransform:"uppercase",letterSpacing:0.5}}>Duration</div>
+          <div style={{display:"flex",gap:8,marginBottom:14}}>
+            {[60,90,120].map(d=>(
+              <button key={d} onClick={()=>setDuration(d)} style={{flex:1,padding:"10px 12px",borderRadius:20,border:`1px solid ${duration===d?A:BD}`,background:duration===d?A:"transparent",color:duration===d?"#000":TX,fontSize:13,fontWeight:600,cursor:"pointer"}}>{d} min</button>
+            ))}
           </div>
-          <div style={{fontSize:11,color:MT,fontWeight:600,marginBottom:4}}>Team B</div>
-          <div style={{display:"flex",gap:4,marginBottom:8}}>
-            {[0,1].map(i=>{const allSel=[tA[0],tA[1],tB[0],tB[1]].filter(Boolean);const others=allSel.filter(v=>v!==tB[i]);return <select key={i} value={tB[i]} onChange={e=>{const n=[...tB];n[i]=e.target.value;setTB(n);}} style={{...sel,flex:1}}><option value="">Player {i+1}</option>{players.filter(p=>!others.includes(p.id)).map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}</select>;})}
+          {/* Court/Location */}
+          <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:8,textTransform:"uppercase",letterSpacing:0.5}}>Court</div>
+          <input placeholder="e.g., Harmony 3 - Padel Court 1" value={location} onChange={e=>setLocation(e.target.value)} style={{...inp,marginBottom:10}}/>
+          <input placeholder="Notes (optional)" value={notes} onChange={e=>setNotes(e.target.value)} style={{...inp,marginBottom:14}}/>
+          <div style={{display:"flex",gap:8}}>
+            <button onClick={createChallenge} disabled={saving} style={{flex:1,padding:12,borderRadius:8,border:"none",background:A,color:BG,fontSize:13,fontWeight:700,cursor:"pointer",opacity:saving?0.6:1,textTransform:"uppercase",letterSpacing:0.5}}>{saving?"Scheduling...":"Schedule Match"}</button>
+            <button onClick={()=>setStep(1)} style={{flex:1,padding:12,borderRadius:8,border:`1px solid ${BD}`,background:CD2,color:TX,fontSize:13,fontWeight:700,cursor:"pointer",textTransform:"uppercase",letterSpacing:0.5}}>Back</button>
           </div>
-          <input placeholder="Notes (optional)" value={notes} onChange={e=>setNotes(e.target.value)} style={{...inp,marginBottom:10}}/>
-          <button onClick={createChallenge} disabled={saving} style={{width:"100%",padding:12,borderRadius:10,border:"none",background:A,color:BG,fontSize:13,fontWeight:700,cursor:"pointer",opacity:saving?0.6:1}}>{saving?"Scheduling...":"Schedule Match"}</button>
         </div>
       )}
 
