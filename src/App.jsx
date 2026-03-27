@@ -87,6 +87,23 @@ const PadelLogoSmall = () => (<svg width="22" height="22" viewBox="0 0 64 64" fi
   <rect x="29.5" y="35" width="5" height="11" rx="2" fill={A}/>
 </svg>);
 
+// Error boundary to catch render crashes (shows message instead of blank screen)
+class ErrorBoundary extends React.Component{
+  constructor(props){super(props);this.state={hasError:false,error:null};}
+  static getDerivedStateFromError(error){return{hasError:true,error};}
+  render(){
+    if(this.state.hasError)return(
+      <div style={{padding:20,textAlign:"center",color:"#e4e4ef",fontFamily:"'Outfit',sans-serif"}}>
+        <div style={{fontSize:24,marginBottom:8}}>⚠️</div>
+        <div style={{fontSize:14,fontWeight:600,marginBottom:8}}>Something went wrong</div>
+        <div style={{fontSize:11,color:"#7a7a8e",marginBottom:16}}>{this.state.error?.message||"Unknown error"}</div>
+        <button onClick={()=>this.setState({hasError:false,error:null})} style={{padding:"8px 16px",background:"#4ADE80",border:"none",borderRadius:8,color:"#000",fontSize:12,fontWeight:700,cursor:"pointer"}}>Try Again</button>
+      </div>
+    );
+    return this.props.children;
+  }
+}
+
 // Tab definitions (original layout: 3 left + center button + 3 right)
 const TL=[{key:"board",label:"Leaderboard",icon:"🏆"},{key:"history",label:"Matches",icon:"court"},{key:"combos",label:"Combos",icon:"🤝"}];
 const TR=[{key:"stats",label:"Players",icon:"📊"},{key:"gamemode",label:"Game Mode",icon:"⚡"},{key:"rules",label:"Rules",icon:"📖"}];
@@ -1659,6 +1676,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
               <button onClick={()=>setSidebarView(null)} style={{marginBottom:20,background:"none",border:"none",color:A,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>← Back</button>
 
               <h2 style={{fontSize:18,fontWeight:700,marginBottom:20,color:TX}}>Settings</h2>
+              <ErrorBoundary>
 
               {/* Account Section */}
               <div style={{marginBottom:24}}>
@@ -1690,7 +1708,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
               <div style={{marginBottom:24}}>
                 <h3 style={{fontSize:12,fontWeight:700,color:MT,letterSpacing:1,textTransform:"uppercase",marginBottom:12}}>Notifications</h3>
 
-                {Notification?.permission === 'default' && (
+                {"Notification" in window && Notification.permission === 'default' && (
                   <button onClick={requestNotificationPermission} style={{width:"100%",marginBottom:12,padding:"10px 12px",background:`${A}15`,border:`1px solid ${A}40`,borderRadius:8,color:A,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
                     Enable Notifications
                   </button>
@@ -1769,6 +1787,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
               <div style={{textAlign:"center",paddingTop:20,borderTop:`1px solid ${BD}`,marginTop:20}}>
                 <div style={{fontSize:10,color:MT,fontWeight:600}}>PadelHub v2.0</div>
               </div>
+              </ErrorBoundary>
             </div>
           )}
         </div>
