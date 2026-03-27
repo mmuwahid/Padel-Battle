@@ -1294,15 +1294,13 @@ function AppContent({leagueId,user,onSwitchLeague}){
           </div>
         </div>
 
-        {/* Sidebar content — menu or view */}
+        {/* Sidebar content — NAVIGATION ONLY, closes on selection */}
         <div style={{flex:1,padding:"16px",overflow:"auto"}}>
-          {!sidebarView ? (<>
-          {/* MENU */}
           <div>
-            <button onClick={()=>{setSidebarView("profile");}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>
+            <button onClick={()=>{setSidebarView("profile");setSidebarOpen(false);}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>
               My Profile
             </button>
-            <button onClick={()=>{setSidebarView("h2h");}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>
+            <button onClick={()=>{setSidebarView("h2h");setSidebarOpen(false);}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>
               Head-to-Head
             </button>
           </div>
@@ -1329,7 +1327,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
 
           <div>
             <div style={{fontSize:10,color:MT,fontWeight:600,letterSpacing:1,textTransform:"uppercase",paddingLeft:16,marginBottom:8}}>App</div>
-            <button onClick={()=>{setSidebarView("settings");}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>
+            <button onClick={()=>{setSidebarView("settings");setSidebarOpen(false);}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>
               Settings
             </button>
             {installPrompt && (
@@ -1344,7 +1342,12 @@ function AppContent({leagueId,user,onSwitchLeague}){
               Sign Out
             </button>
           </div>
-          </>) : (<>
+        </div>
+      </div>
+
+      {/* SIDEBAR VIEWS — render in main content area (sidebar closes first) */}
+      {sidebarView && (
+        <div style={{padding:"0"}}>
           {/* PROFILE VIEW */}
           {sidebarView==="profile" && (
             <div style={{padding:"20px 16px",paddingBottom:"calc(80px + env(safe-area-inset-bottom, 0px))"}}>
@@ -1768,9 +1771,8 @@ function AppContent({leagueId,user,onSwitchLeague}){
               </div>
             </div>
           )}
-          </>)}
         </div>
-      </div>
+      )}
 
       {/* LEADERBOARD TAB - only show if no sidebar view is active */}
       {!sidebarView && tab==="board"&&(
