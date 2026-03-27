@@ -697,12 +697,14 @@ function AppContent({leagueId,user,onSwitchLeague}){
     if(!file)return;
     setAvatarUploading(true);
     try{
-      // Resize image to 200x200
+      // Read file as data URL (works for all image formats including HEIF on iOS)
+      const dataUrl=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file);});
       const canvas=document.createElement("canvas");
       canvas.width=200;canvas.height=200;
       const ctx=canvas.getContext("2d");
       const img=new Image();
-      await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=URL.createObjectURL(file);});
+      await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(new Error("Failed to load image"));img.src=dataUrl;});
+      if(!img.width||!img.height)throw new Error("Invalid image dimensions");
       const s=Math.min(img.width,img.height);
       const sx=(img.width-s)/2,sy=(img.height-s)/2;
       ctx.drawImage(img,sx,sy,s,s,0,0,200,200);
@@ -1404,11 +1406,15 @@ function AppContent({leagueId,user,onSwitchLeague}){
             <button onClick={()=>{setSidebarView("settings");setSidebarOpen(false);}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>
               Settings
             </button>
-            {installPrompt && (
+            {installPrompt ? (
               <button onClick={handleInstall} style={{width:"100%",padding:"12px 16px",background:`${A}15`,border:`1px solid ${A}40`,borderRadius:8,color:A,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",transition:"all 0.2s"}}>
-                Install App
+                📲 Install App
               </button>
-            )}
+            ) : !window.matchMedia("(display-mode: standalone)").matches && /iPhone|iPad/i.test(navigator.userAgent) ? (
+              <div style={{padding:"12px 16px",background:`${BL}10`,border:`1px solid ${BL}30`,borderRadius:8,fontSize:11,color:MT,lineHeight:1.4}}>
+                📲 To install: tap <span style={{color:BL}}>Share</span> → <span style={{color:BL}}>Add to Home Screen</span>
+              </div>
+            ) : null}
           </div>
 
           <div style={{padding:"16px 0",borderTop:`1px solid ${BD}`,marginTop:12}}>
@@ -2130,6 +2136,8 @@ function AppContent({leagueId,user,onSwitchLeague}){
         {[
           ["Americano","The most popular social padel format. Players rotate partners every round so everyone plays with everyone. Points are scored individually — each point your team wins gives you a personal point. After all rounds, the player with the most accumulated points wins. Typical setup: 24 or 32 points per round. Perfect for groups of 4-16 players.","How it works: Set a points-per-round target (e.g., 24). Two pairs play until all points are used — score might be 14-10. Each player gets their team's points. Partners rotate. Repeat until all combinations are played. Individual leaderboard crowns the winner."],
           ["Mexicano","A dynamic variant of Americano where pairings are determined by current standings after each round. The top-ranked player pairs with the lowest-ranked, 2nd pairs with 2nd-lowest, etc. This means as you win more, you face tougher opponents — it self-balances throughout the tournament. Scoring works the same as Americano (individual point accumulation).","Key difference from Americano: In Americano, pairings are pre-set. In Mexicano, they adapt based on live results. This creates tighter competitions because dominant players get paired against each other. The format can run indefinitely — you decide when to stop."],
+          ["Single Elimination","The classic knockout format — lose once and you're out. Teams are randomly seeded into a bracket and play through Quarterfinals, Semifinals, and the Final. Fast-paced, high-stakes format perfect for a decisive winner-takes-all tournament. Best for 4-16 players.","How it works: 8 teams start → 4 advance from Quarterfinals → 2 advance from Semifinals → 1 Champion. Each match is winner-takes-all. The entire tournament can be completed in a single session."],
+          ["Double Elimination","Second chances matter. Teams that lose in the Winners bracket drop to a Losers bracket for a comeback opportunity. Only a second loss eliminates you. The Grand Final pits the Winners bracket champion against the Losers bracket champion, with the Winners champion having a 1-game advantage.","How it works: All teams start in the Winners bracket. Losers drop to the Losers bracket. Lose in the Losers bracket and you're eliminated. Grand Final: Winners champ vs Losers champ. If Losers champ wins Game 1, a decisive Game 2 is played."],
         ].map(([title,desc,detail],i) => (
           <div key={i} style={{background:CD,borderRadius:12,border:`1px solid ${PU}25`,padding:14,marginBottom:8}}>
             <h3 style={{fontSize:14,fontWeight:700,color:PU,marginBottom:6}}>⚡ {title}</h3>
@@ -2640,7 +2648,7 @@ function ScheduleView({challenges,players,supabase,leagueId,user,getName,isAdmin
       showToast("Match scheduled!");
       setShowForm(false);setTA(["",""]);setTB(["",""]);setNotes("");setLocation("");
       if(onUpdate)onUpdate();
-    }catch(err){showToast("Failed to schedule","error");console.error(err);}
+    }catch(err){showToast(err.message||"Failed to schedule","error");console.error("Schedule error:",err);}
     setSaving(false);
   }
 
@@ -2680,11 +2688,11 @@ function ScheduleView({challenges,players,supabase,leagueId,user,getName,isAdmin
           <input placeholder="Location (optional)" value={location} onChange={e=>setLocation(e.target.value)} style={{...inp,marginBottom:8}}/>
           <div style={{fontSize:11,color:MT,fontWeight:600,marginBottom:4}}>Team A</div>
           <div style={{display:"flex",gap:4,marginBottom:8}}>
-            {[0,1].map(i=><select key={i} value={tA[i]} onChange={e=>{const n=[...tA];n[i]=e.target.value;setTA(n);}} style={{...sel,flex:1}}><option value="">Player {i+1}</option>{players.map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}</select>)}
+            {[0,1].map(i=>{const allSel=[tA[0],tA[1],tB[0],tB[1]].filter(Boolean);const others=allSel.filter(v=>v!==tA[i]);return <select key={i} value={tA[i]} onChange={e=>{const n=[...tA];n[i]=e.target.value;setTA(n);}} style={{...sel,flex:1}}><option value="">Player {i+1}</option>{players.filter(p=>!others.includes(p.id)).map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}</select>;})}
           </div>
           <div style={{fontSize:11,color:MT,fontWeight:600,marginBottom:4}}>Team B</div>
           <div style={{display:"flex",gap:4,marginBottom:8}}>
-            {[0,1].map(i=><select key={i} value={tB[i]} onChange={e=>{const n=[...tB];n[i]=e.target.value;setTB(n);}} style={{...sel,flex:1}}><option value="">Player {i+1}</option>{players.map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}</select>)}
+            {[0,1].map(i=>{const allSel=[tA[0],tA[1],tB[0],tB[1]].filter(Boolean);const others=allSel.filter(v=>v!==tB[i]);return <select key={i} value={tB[i]} onChange={e=>{const n=[...tB];n[i]=e.target.value;setTB(n);}} style={{...sel,flex:1}}><option value="">Player {i+1}</option>{players.filter(p=>!others.includes(p.id)).map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}</select>;})}
           </div>
           <input placeholder="Notes (optional)" value={notes} onChange={e=>setNotes(e.target.value)} style={{...inp,marginBottom:10}}/>
           <button onClick={createChallenge} disabled={saving} style={{width:"100%",padding:12,borderRadius:10,border:"none",background:A,color:BG,fontSize:13,fontWeight:700,cursor:"pointer",opacity:saving?0.6:1}}>{saving?"Scheduling...":"Schedule Match"}</button>
