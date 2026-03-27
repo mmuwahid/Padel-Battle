@@ -66,9 +66,9 @@ const ARGUED=[
 // Court icon for nav bar "Matches" tab
 const CourtIcon = () => (<svg width="16" height="20" viewBox="0 0 24 30" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="24" rx="1"/><line x1="12" y1="3" x2="12" y2="27"/><line x1="2" y1="15" x2="22" y2="15"/><rect x="8" y="3" width="8" height="5" rx="0" fill="none"/><rect x="8" y="22" width="8" height="5" rx="0" fill="none"/></svg>);
 // Padel racket logo — large (login screen)
-// Official PadelHub logo (PNG from brand assets)
-const PadelLogo = () => (<img src="/icons/padelhub-logo.png" alt="PadelHub" style={{width:56,height:56,objectFit:"contain"}}/>);
-const PadelLogoSmall = () => (<img src="/icons/padelhub-logo.png" alt="PadelHub" style={{width:28,height:28,objectFit:"contain"}}/>);
+// Official PadelHub logo — final version (racket only, white bg)
+const PadelLogo = () => (<img src="/icons/padelhub-logo-final.png" alt="PadelHub" style={{width:52,height:52,objectFit:"contain",borderRadius:10}}/>);
+const PadelLogoSmall = () => (<img src="/icons/padelhub-logo-final.png" alt="PadelHub" style={{width:36,height:36,objectFit:"contain",borderRadius:6}}/>);
 
 // Error boundary to catch render crashes (shows message instead of blank screen)
 class ErrorBoundary extends React.Component{
@@ -1115,9 +1115,18 @@ function AppContent({leagueId,user,onSwitchLeague}){
   };
 
   const shareMatch = (m) => {
-    const text = `${formatTeam(getName(m.team_a[0]),getName(m.team_a[1]))} vs ${formatTeam(getName(m.team_b[0]),getName(m.team_b[1]))}\n${m.sets.map((s,i)=>`Set ${i+1}: ${s[0]}-${s[1]}`).join("\n")}`;
-    if(navigator.share) navigator.share({title:"Match",text});
-    else alert(text);
+    const tA=formatTeam(getName(m.team_a[0]),getName(m.team_a[1]));
+    const tB=formatTeam(getName(m.team_b[0]),getName(m.team_b[1]));
+    const w=win(m.sets);
+    const gA=m.sets.reduce((s,x)=>s+x[0],0);
+    const gB=m.sets.reduce((s,x)=>s+x[1],0);
+    const winner=w==="A"?tA:tB;
+    const loser=w==="A"?tB:tA;
+    const mvp=m.motm?getName(m.motm):"—";
+    const sets=m.sets.map((s,i)=>`Set ${i+1}: ${s[0]}-${s[1]}`).join("\n");
+    const text=`🎾 PadelHub - Match Result\n🗓️ ${formatDate(m.date)}\n\n${tA}\nVs\n${tB}\n\n${sets}\n\nFinal Score: ${gA}-${gB}\n\n✅ Winners: ${winner}\n❌ Losers: ${loser}\n⭐ MVP: ${mvp}`;
+    if(navigator.share) navigator.share({title:"PadelHub Match Result",text});
+    else{navigator.clipboard.writeText(text);showToast("Match result copied!");}
   };
 
   // Set initial season
@@ -2469,7 +2478,7 @@ function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,fm,supabase,l
     // Activity
     const activity={};players.forEach(p=>{activity[p.id]=0;});
     fm.forEach(m=>{[...m.team_a,...m.team_b].forEach(pid=>{if(activity[pid]!==undefined)activity[pid]++;});});
-    const mostActive=Object.entries(activity).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([pid,games])=>({pid,games}));
+    const mostActive=Object.entries(activity).filter(([,g])=>g>0).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([pid,games])=>({pid,games}));
     const topWinRate=Object.entries(wr).filter(([,x])=>x.w+x.l>=3).map(([pid,x])=>({pid,pct:x.w/(x.w+x.l)*100,w:x.w,l:x.l,games:x.w+x.l})).sort((a,b)=>b.pct-a.pct).slice(0,5);
     // Close matches
     const closeMatches=fm.filter(m=>m.sets.some(s=>Math.abs(s[0]-s[1])<=1&&(s[0]+s[1])>0)).length;
@@ -2592,7 +2601,7 @@ function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,fm,supabase,l
           {analyticsSection==="partnership"&&<div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
               {analyticsData.bestPartnership&&<div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14}}>
-                <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:8}}>Best Partner</div>
+                <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:8}}>Best Partnerships</div>
                 <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
                   <div style={{width:32,height:32,borderRadius:"50%",background:`${A}15`,border:`2px solid ${A}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:A}}>{getName(analyticsData.bestPartnership.a)[0]}</div>
                   <div><div style={{fontSize:12,fontWeight:700,color:TX}}>{getName(analyticsData.bestPartnership.a)} x {getName(analyticsData.bestPartnership.b)}</div>
@@ -2600,7 +2609,7 @@ function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,fm,supabase,l
                 </div>
               </div>}
               {analyticsData.worstPartnership&&<div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14}}>
-                <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:8}}>Least Compatible</div>
+                <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:8}}>Worst Partnerships</div>
                 <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
                   <div style={{width:32,height:32,borderRadius:"50%",background:`${DG}15`,border:`2px solid ${DG}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:DG}}>{getName(analyticsData.worstPartnership.a)[0]}</div>
                   <div><div style={{fontSize:12,fontWeight:700,color:TX}}>{getName(analyticsData.worstPartnership.a)} x {getName(analyticsData.worstPartnership.b)}</div>
@@ -2672,7 +2681,7 @@ function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,fm,supabase,l
               {analyticsData.biggestWins.map((m,i)=>{const gA=m.sets.reduce((s,x)=>s+x[0],0);const gB=m.sets.reduce((s,x)=>s+x[1],0);return(
                 <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:i<analyticsData.biggestWins.length-1?`1px solid ${BD}`:undefined}}>
                   <div><div style={{fontSize:12,color:TX,fontWeight:600}}>{formatTeam(getName(m.team_a[0]),getName(m.team_a[1]))}</div><div style={{fontSize:10,color:MT}}>{formatDate(m.date)}</div></div>
-                  <span style={{fontSize:12,fontWeight:700,color:A,fontFamily:"'JetBrains Mono'"}}>{m.sets.map(s=>s.join("-")).join(", ")}</span>
+                  <span style={{fontSize:12,fontWeight:700,fontFamily:"'JetBrains Mono'"}}>{m.sets.map((s,si)=><span key={si} style={{color:s[0]>s[1]?A:s[0]<s[1]?DG:MT}}>{si>0?", ":""}{s[0]}-{s[1]}</span>)}</span>
                 </div>
               );})}
             </div>}
