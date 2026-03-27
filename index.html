@@ -2,18 +2,37 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='80' font-size='80'>🎾</text></svg>" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="theme-color" content="#0a0a0f" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com"/>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
     <title>PadelHub</title>
+    <meta name="description" content="Track padel matches, ELO rankings, partnerships and tournaments with your friends" />
+    <!-- OG tags for link previews (GN-18) -->
+    <meta property="og:title" content="PadelHub — Track Your Padel Game" />
+    <meta property="og:description" content="Log matches, track ELO rankings, and discover your best partnerships." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://padel-battle.vercel.app" />
+    <meta property="og:image" content="https://padel-battle.vercel.app/icons/icon-512.png" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="PadelHub — Track Your Padel Game" />
+    <meta name="twitter:description" content="Log matches, track ELO rankings, and discover your best partnerships." />
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(() => {});
+        });
+      }
+    </script>
   </body>
 </html>

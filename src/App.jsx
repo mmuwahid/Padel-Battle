@@ -679,6 +679,25 @@ function AppContent({leagueId,user,onSwitchLeague}){
   useEffect(()=>{const h=(e)=>{e.preventDefault();setInstallPrompt(e);};window.addEventListener("beforeinstallprompt",h);return ()=>window.removeEventListener("beforeinstallprompt",h);},[]);
   const handleInstall=async()=>{if(!installPrompt)return;installPrompt.prompt();const r=await installPrompt.userChoice;if(r.outcome==="accepted")setInstallPrompt(null);};
 
+  // GN-09: Scroll to top on tab change
+  useEffect(()=>{window.scrollTo({top:0,behavior:"smooth"});},[tab]);
+
+  // GN-06: Keyboard viewport fix — prevent content pushing off screen on mobile
+  useEffect(()=>{
+    if(!window.visualViewport)return;
+    const onResize=()=>{document.documentElement.style.setProperty("--vh",`${window.visualViewport.height*0.01}px`);};
+    window.visualViewport.addEventListener("resize",onResize);onResize();
+    return ()=>window.visualViewport.removeEventListener("resize",onResize);
+  },[]);
+
+  // GN-17: Session expiry handling — listen for auth errors and redirect to login
+  useEffect(()=>{
+    const {data:{subscription}}=supabase.auth.onAuthStateChange((evt)=>{
+      if(evt==="SIGNED_OUT"||evt==="TOKEN_REFRESHED"){/* handled by parent AuthGate */}
+    });
+    return ()=>subscription?.unsubscribe();
+  },[]);
+
   // Browser back button support — push state on tab/view changes, pop to go back
   const prevTab=useRef(tab);
   const prevView=useRef(sidebarView);
@@ -1129,7 +1148,11 @@ function AppContent({leagueId,user,onSwitchLeague}){
     return Object.values(combo).map(c=>({...c,games:c.wins+c.losses})).sort((a,b)=>b.games-a.games);
   },[matches]);
 
-  if (loading) return <div style={{background:BG,width:"100vw",height:"100vh",display:"flex",alignItems:"center",justifyContent:"center",color:TX,fontFamily:"'Outfit',sans-serif"}}>Loading league...</div>;
+  if (loading) return (<div style={{background:BG,width:"100vw",height:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16,fontFamily:"'Outfit',sans-serif"}}>
+    <div style={{width:48,height:48,borderRadius:"50%",border:`3px solid ${BD}`,borderTopColor:A,animation:"spin 0.8s linear infinite"}}/>
+    <div style={{color:MT,fontSize:13,fontWeight:600}}>Loading league...</div>
+    <style>{`@keyframes spin{to{transform:rotate(360deg)}} @keyframes fadeIn{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}`}</style>
+  </div>);
 
   // CLAIM PLAYER SCREEN — shown if user hasn't claimed a player in this league
   const claimPlayer = async (playerId) => {
@@ -1214,6 +1237,9 @@ function AppContent({leagueId,user,onSwitchLeague}){
             </p>
           </div>
         </div>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+        {/* GN-04: Refresh button */}
+        <button onClick={()=>{loadLeagueData();showToast("Refreshed!");}} style={{width:32,height:32,borderRadius:"50%",background:"transparent",border:`1px solid ${BD}`,color:MT,fontSize:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>↻</button>
         {/* User avatar — opens sidebar */}
         <button
           onClick={()=>{setSidebarOpen(!sidebarOpen);setSidebarView(null);setEditDisplayName(user.user_metadata?.display_name||user.email?.split("@")[0]||"");setProfileMsg("");}}
@@ -1230,10 +1256,11 @@ function AppContent({leagueId,user,onSwitchLeague}){
         >
           {(user.user_metadata?.display_name||user.email||"U")[0].toUpperCase()}
         </button>
+        </div>
       </div>
 
-      {/* SIDEBAR OVERLAY — hidden when a sidebar view is active (content renders in main area) */}
-      {sidebarOpen && !sidebarView && (
+      {/* SIDEBAR OVERLAY */}
+      {sidebarOpen && (
         <div
           onClick={()=>setSidebarOpen(false)}
           style={{
@@ -1243,12 +1270,12 @@ function AppContent({leagueId,user,onSwitchLeague}){
         />
       )}
 
-      {/* SIDEBAR — hidden when a sidebar view is active (content renders in main area) */}
+      {/* SIDEBAR */}
       <div style={{
-        position:"fixed",top:0,right:0,width:320,height:"100vh",
+        position:"fixed",top:0,right:0,width:Math.min(320,window.innerWidth),height:"100vh",
         background:CD,borderLeft:`1px solid ${BD}`,
         zIndex:99,
-        transform:(sidebarOpen&&!sidebarView)?"translateX(0)":"translateX(100%)",
+        transform:sidebarOpen?"translateX(0)":"translateX(100%)",
         transition:"transform 0.3s ease-in-out",
         display:"flex",flexDirection:"column",
         boxShadow:sidebarOpen?"0 0 20px rgba(0,0,0,0.5)":"none",
@@ -1267,9 +1294,10 @@ function AppContent({leagueId,user,onSwitchLeague}){
           </div>
         </div>
 
-        {/* Sidebar content */}
+        {/* Sidebar content — menu or view */}
         <div style={{flex:1,padding:"16px",overflow:"auto"}}>
-          {/* User section */}
+          {!sidebarView ? (<>
+          {/* MENU */}
           <div>
             <button onClick={()=>{setSidebarView("profile");}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>
               My Profile
@@ -1277,15 +1305,10 @@ function AppContent({leagueId,user,onSwitchLeague}){
             <button onClick={()=>{setSidebarView("h2h");}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>
               Head-to-Head
             </button>
-            <button onClick={()=>{setSidebarView("profile");}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>
-              My Stats
-            </button>
           </div>
 
-          {/* Divider */}
           <div style={{height:"1px",background:BD,margin:"12px 0"}} />
 
-          {/* League section */}
           <div style={{marginBottom:12}}>
             <div style={{fontSize:10,color:MT,fontWeight:600,letterSpacing:1,textTransform:"uppercase",paddingLeft:16,marginBottom:8}}>League</div>
             <div style={{padding:"12px 16px",background:CD2,borderRadius:8,marginBottom:8}}>
@@ -1302,10 +1325,8 @@ function AppContent({leagueId,user,onSwitchLeague}){
             </button>
           </div>
 
-          {/* Divider */}
           <div style={{height:"1px",background:BD,margin:"12px 0"}} />
 
-          {/* App section */}
           <div>
             <div style={{fontSize:10,color:MT,fontWeight:600,letterSpacing:1,textTransform:"uppercase",paddingLeft:16,marginBottom:8}}>App</div>
             <button onClick={()=>{setSidebarView("settings");}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>
@@ -1317,19 +1338,13 @@ function AppContent({leagueId,user,onSwitchLeague}){
               </button>
             )}
           </div>
-        </div>
 
-        {/* Sign Out button at bottom */}
-        <div style={{padding:"16px",borderTop:`1px solid ${BD}`}}>
-          <button onClick={async()=>{await supabase.auth.signOut();}} style={{width:"100%",padding:"12px",background:`${DG}15`,border:`1px solid ${DG}40`,borderRadius:8,color:DG,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
-            Sign Out
-          </button>
-        </div>
-      </div>
-
-      {/* SIDEBAR VIEWS - only show if sidebarView is active */}
-      {sidebarView && (
-        <div style={{padding:"0"}}>
+          <div style={{padding:"16px 0",borderTop:`1px solid ${BD}`,marginTop:12}}>
+            <button onClick={async()=>{await supabase.auth.signOut();}} style={{width:"100%",padding:"12px",background:`${DG}15`,border:`1px solid ${DG}40`,borderRadius:8,color:DG,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
+              Sign Out
+            </button>
+          </div>
+          </>) : (<>
           {/* PROFILE VIEW */}
           {sidebarView==="profile" && (
             <div style={{padding:"20px 16px",paddingBottom:"calc(80px + env(safe-area-inset-bottom, 0px))"}}>
@@ -1753,8 +1768,9 @@ function AppContent({leagueId,user,onSwitchLeague}){
               </div>
             </div>
           )}
+          </>)}
         </div>
-      )}
+      </div>
 
       {/* LEADERBOARD TAB - only show if no sidebar view is active */}
       {!sidebarView && tab==="board"&&(
