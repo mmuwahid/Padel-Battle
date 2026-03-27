@@ -1,0 +1,169 @@
+import React, { useState } from "react";
+import { A, BG, CD, CD2, BD, TX, MT, DG, GD, BL, PU } from '../theme';
+import { formatDate } from '../utils/helpers';
+
+export function ScheduleView({challenges,players,matches,supabase,leagueId,user,getName,isAdmin,onUpdate,showToast,sel,elo}){
+  const [showForm,setShowForm]=useState(false);
+  const [step,setStep]=useState(1); // 1=teams, 2=date/venue
+  const [date,setDate]=useState(new Date().toISOString().split("T")[0]);
+  const [time,setTime]=useState("18:00");
+  const [duration,setDuration]=useState(90);
+  const [location,setLocation]=useState("");
+  const [tA,setTA]=useState(["",""]);
+  const [tB,setTB]=useState(["",""]);
+  const [notes,setNotes]=useState("");
+  const [saving,setSaving]=useState(false);
+
+  const inp={background:CD2,color:TX,border:`1px solid ${BD}`,borderRadius:8,padding:"10px 12px",fontSize:13,width:"100%",outline:"none",fontFamily:"'Outfit',sans-serif"};
+  const getEloBadge=(pid)=>{const gp=(matches||[]).filter(m=>(m.team_a||[]).includes(pid)||(m.team_b||[]).includes(pid)).length;if(gp<5)return null;const e=elo?.[pid]||1500;if(e>=1600)return{label:"Pro",color:DG};if(e>=1400)return{label:"Advanced",color:GD};if(e>=1200)return{label:"Intermediate",color:PU};return{label:"Beginner",color:BL};};
+
+  async function createChallenge(){
+    const teamA=tA.filter(Boolean);const teamB=tB.filter(Boolean);
+    if(!date||teamA.length===0){showToast("Select a date and at least 1 player per team","error");return;}
+    setSaving(true);
+    try{
+      const {error}=await supabase.from("challenges").insert({league_id:leagueId,created_by:user.id,date,time:time||null,location:location.trim()||null,team_a:teamA,team_b:teamB,notes:notes.trim()||null,status:teamB.length>0?"confirmed":"open"});
+      if(error)throw error;
+      showToast("Match scheduled!");
+      setShowForm(false);setTA(["",""]);setTB(["",""]);setNotes("");setLocation("");
+      if(onUpdate)onUpdate();
+    }catch(err){showToast(err.message||"Failed to schedule","error");console.error("Schedule error:",err);}
+    setSaving(false);
+  }
+
+  async function joinChallenge(ch,team){
+    const claimedP=players.find(p=>p.user_id===user.id);
+    if(!claimedP){showToast("Claim a player first","error");return;}
+    const pid=claimedP.id;
+    const updated=team==="a"?{team_a:[...ch.team_a,pid]}:{team_b:[...ch.team_b,pid]};
+    const newA=updated.team_a||ch.team_a;const newB=updated.team_b||ch.team_b;
+    const status=(newA.length>=2&&newB.length>=2)?"confirmed":"open";
+    const {error}=await supabase.from("challenges").update({...updated,status}).eq("id",ch.id);
+    if(error){showToast("Failed to join","error");}else{showToast("Joined!");if(onUpdate)onUpdate();}
+  }
+
+  async function cancelChallenge(id){
+    const {error}=await supabase.from("challenges").update({status:"cancelled"}).eq("id",id);
+    if(error){showToast("Failed to cancel","error");}else{showToast("Match cancelled");if(onUpdate)onUpdate();}
+  }
+
+  const upcoming=challenges.filter(c=>c.status==="open"||c.status==="confirmed");
+  const claimedP=players.find(p=>p.user_id===user.id);
+
+  return (
+    <div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+        <div style={{fontSize:11,color:MT,fontWeight:500}}>{upcoming.length} upcoming</div>
+        <button onClick={()=>setShowForm(!showForm)} style={{padding:"6px 14px",borderRadius:8,border:`1px solid ${A}`,background:`${A}15`,color:A,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>{showForm?"Cancel":"+ Schedule"}</button>
+      </div>
+
+      {/* New Challenge Form — Multi-step (mockup-aligned) */}
+      {showForm&&step===1&&(
+        <div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:12}}>
+          <div style={{background:`${A}12`,border:`1px solid ${A}`,borderRadius:10,padding:12,marginBottom:14,display:"flex",alignItems:"center",gap:10}}>
+            <span style={{fontSize:16}}>🎾</span>
+            <span style={{fontSize:12,fontWeight:600,color:TX}}>Select Players</span>
+          </div>
+          {/* Team 1 */}
+          <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:8,textTransform:"uppercase",letterSpacing:0.5}}>Team 1</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}}>
+            {[0,1].map(i=>{const allSel=[tA[0],tA[1],tB[0],tB[1]].filter(Boolean);const others=allSel.filter(v=>v!==tA[i]);const badge=tA[i]?getEloBadge(tA[i]):null;return(
+              <div key={i} style={{padding:12,background:CD2,border:`1px solid ${BD}`,borderRadius:8}}>
+                <div style={{fontSize:11,fontWeight:700,color:MT,textTransform:"uppercase",letterSpacing:0.5,marginBottom:8}}>Player {i+1}</div>
+                <select value={tA[i]} onChange={e=>{const n=[...tA];n[i]=e.target.value;setTA(n);}} style={{...sel,marginBottom:badge?6:0}}><option value="">Select Player...</option>{players.filter(p=>!others.includes(p.id)).map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}</select>
+                {badge&&<div style={{display:"inline-block",padding:"3px 8px",borderRadius:4,fontSize:10,fontWeight:700,background:`${badge.color}20`,color:badge.color,marginTop:4}}>{badge.label}</div>}
+              </div>
+            );})}
+          </div>
+          {/* Team 2 */}
+          <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:8,textTransform:"uppercase",letterSpacing:0.5}}>Team 2</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}}>
+            {[0,1].map(i=>{const allSel=[tA[0],tA[1],tB[0],tB[1]].filter(Boolean);const others=allSel.filter(v=>v!==tB[i]);const badge=tB[i]?getEloBadge(tB[i]):null;return(
+              <div key={i} style={{padding:12,background:CD2,border:`1px solid ${BD}`,borderRadius:8}}>
+                <div style={{fontSize:11,fontWeight:700,color:MT,textTransform:"uppercase",letterSpacing:0.5,marginBottom:8}}>Player {i+3}</div>
+                <select value={tB[i]} onChange={e=>{const n=[...tB];n[i]=e.target.value;setTB(n);}} style={{...sel,marginBottom:badge?6:0}}><option value="">Select Player...</option>{players.filter(p=>!others.includes(p.id)).map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}</select>
+                {badge&&<div style={{display:"inline-block",padding:"3px 8px",borderRadius:4,fontSize:10,fontWeight:700,background:`${badge.color}20`,color:badge.color,marginTop:4}}>{badge.label}</div>}
+              </div>
+            );})}
+          </div>
+          <div style={{display:"flex",gap:8}}>
+            <button onClick={()=>setStep(2)} disabled={!tA[0]} style={{flex:1,padding:12,borderRadius:8,border:"none",background:tA[0]?A:BD,color:tA[0]?BG:MT,fontSize:13,fontWeight:700,cursor:tA[0]?"pointer":"not-allowed",textTransform:"uppercase",letterSpacing:0.5}}>Continue</button>
+            <button onClick={()=>{setShowForm(false);setStep(1);}} style={{flex:1,padding:12,borderRadius:8,border:`1px solid ${BD}`,background:CD2,color:TX,fontSize:13,fontWeight:700,cursor:"pointer",textTransform:"uppercase",letterSpacing:0.5}}>Cancel</button>
+          </div>
+        </div>
+      )}
+      {showForm&&step===2&&(
+        <div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:12}}>
+          {/* Date */}
+          <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:8,textTransform:"uppercase",letterSpacing:0.5}}>Match Date</div>
+          <div style={{display:"flex",gap:8,marginBottom:14}}>
+            <input type="date" value={date} onChange={e=>setDate(e.target.value)} style={{...inp,flex:1}}/>
+            <input type="time" value={time} onChange={e=>setTime(e.target.value)} style={{...inp,flex:1}}/>
+          </div>
+          {/* Duration */}
+          <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:8,textTransform:"uppercase",letterSpacing:0.5}}>Duration</div>
+          <div style={{display:"flex",gap:8,marginBottom:14}}>
+            {[60,90,120].map(d=>(
+              <button key={d} onClick={()=>setDuration(d)} style={{flex:1,padding:"10px 12px",borderRadius:20,border:`1px solid ${duration===d?A:BD}`,background:duration===d?A:"transparent",color:duration===d?"#000":TX,fontSize:13,fontWeight:600,cursor:"pointer"}}>{d} min</button>
+            ))}
+          </div>
+          {/* Court/Location */}
+          <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:8,textTransform:"uppercase",letterSpacing:0.5}}>Court</div>
+          <input placeholder="e.g., Harmony 3 - Padel Court 1" value={location} onChange={e=>setLocation(e.target.value)} style={{...inp,marginBottom:10}}/>
+          <input placeholder="Notes (optional)" value={notes} onChange={e=>setNotes(e.target.value)} style={{...inp,marginBottom:14}}/>
+          <div style={{display:"flex",gap:8}}>
+            <button onClick={createChallenge} disabled={saving} style={{flex:1,padding:12,borderRadius:8,border:"none",background:A,color:BG,fontSize:13,fontWeight:700,cursor:"pointer",opacity:saving?0.6:1,textTransform:"uppercase",letterSpacing:0.5}}>{saving?"Scheduling...":"Schedule Match"}</button>
+            <button onClick={()=>setStep(1)} style={{flex:1,padding:12,borderRadius:8,border:`1px solid ${BD}`,background:CD2,color:TX,fontSize:13,fontWeight:700,cursor:"pointer",textTransform:"uppercase",letterSpacing:0.5}}>Back</button>
+          </div>
+        </div>
+      )}
+
+      {/* Challenge Cards */}
+      {upcoming.length===0&&!showForm&&(
+        <div style={{textAlign:"center",padding:"40px 20px"}}>
+          <div style={{fontSize:40,marginBottom:12}}>📅</div>
+          <div style={{fontSize:15,fontWeight:600,color:TX,marginBottom:6}}>No matches scheduled</div>
+          <div style={{fontSize:12,color:MT}}>Tap "+ Schedule" to set up your next game.</div>
+        </div>
+      )}
+
+      {upcoming.map(ch=>{
+        const isCreator=ch.created_by===user.id;
+        const myPid=claimedP?.id;
+        const imInA=ch.team_a.includes(myPid);
+        const imInB=ch.team_b.includes(myPid);
+        const canJoinA=!imInA&&!imInB&&ch.team_a.length<2&&ch.status==="open";
+        const canJoinB=!imInA&&!imInB&&ch.team_b.length<2&&ch.status==="open";
+        return (
+          <div key={ch.id} style={{background:CD,borderRadius:12,border:`1px solid ${ch.status==="confirmed"?`${A}40`:BD}`,padding:14,marginBottom:8}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+              <div>
+                <span style={{fontSize:12,fontWeight:700,color:TX}}>{formatDate(ch.date)}</span>
+                {ch.time&&<span style={{fontSize:11,color:MT,marginLeft:6}}>{ch.time}</span>}
+              </div>
+              <span style={{fontSize:10,fontWeight:700,padding:"3px 8px",borderRadius:6,background:ch.status==="confirmed"?`${A}20`:`${GD}20`,color:ch.status==="confirmed"?A:GD}}>{ch.status==="confirmed"?"Confirmed":"Open"}</span>
+            </div>
+            {ch.location&&<div style={{fontSize:11,color:MT,marginBottom:8}}>📍 {ch.location}</div>}
+            <div style={{display:"flex",gap:8,marginBottom:ch.notes?8:0}}>
+              <div style={{flex:1,background:CD2,borderRadius:8,padding:8,textAlign:"center"}}>
+                <div style={{fontSize:10,color:MT,fontWeight:600,marginBottom:4}}>Team A</div>
+                {ch.team_a.map(pid=><div key={pid} style={{fontSize:12,color:TX,fontWeight:600}}>{getName(pid)}</div>)}
+                {ch.team_a.length<2&&<div style={{fontSize:11,color:MT,fontStyle:"italic"}}>Needs player</div>}
+                {canJoinA&&<button onClick={()=>joinChallenge(ch,"a")} style={{marginTop:4,padding:"4px 10px",borderRadius:6,border:`1px solid ${A}`,background:"transparent",color:A,fontSize:10,fontWeight:700,cursor:"pointer"}}>Join</button>}
+              </div>
+              <div style={{display:"flex",alignItems:"center",color:MT,fontSize:12,fontWeight:800}}>vs</div>
+              <div style={{flex:1,background:CD2,borderRadius:8,padding:8,textAlign:"center"}}>
+                <div style={{fontSize:10,color:MT,fontWeight:600,marginBottom:4}}>Team B</div>
+                {ch.team_b.map(pid=><div key={pid} style={{fontSize:12,color:TX,fontWeight:600}}>{getName(pid)}</div>)}
+                {ch.team_b.length<2&&<div style={{fontSize:11,color:MT,fontStyle:"italic"}}>Needs player</div>}
+                {canJoinB&&<button onClick={()=>joinChallenge(ch,"b")} style={{marginTop:4,padding:"4px 10px",borderRadius:6,border:`1px solid ${A}`,background:"transparent",color:A,fontSize:10,fontWeight:700,cursor:"pointer"}}>Join</button>}
+              </div>
+            </div>
+            {ch.notes&&<div style={{fontSize:11,color:MT,fontStyle:"italic",marginTop:4}}>{ch.notes}</div>}
+            {(isCreator||isAdmin)&&<button onClick={()=>cancelChallenge(ch.id)} style={{marginTop:8,width:"100%",padding:"6px",borderRadius:6,border:`1px solid ${DG}40`,background:"transparent",color:DG,fontSize:10,fontWeight:600,cursor:"pointer"}}>Cancel Match</button>}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
