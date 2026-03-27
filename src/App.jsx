@@ -7,6 +7,7 @@ const A="#4ADE80",BG="#0a0a0f",CD="#12121a",CD2="#1a1a26",BD="#2a2a3a",TX="#e4e4
 // No default roster — players created when users join and claim/create identity
 
 // Helper functions
+function formatTeam(p1,p2){return `${p1} x ${p2}`;}
 function win(sets){let a=0,b=0;sets.forEach(([x,y])=>{if(x>y)a++;else b++;});return a>b?"A":"B";}
 function gid(){return"id_"+Math.random().toString(36).substr(2,9);}
 
@@ -63,19 +64,26 @@ const ARGUED=[
 // SVG Icons (exact match from original)
 // Court icon for nav bar "Matches" tab
 const CourtIcon = () => (<svg width="16" height="20" viewBox="0 0 24 30" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="24" rx="1"/><line x1="12" y1="3" x2="12" y2="27"/><line x1="2" y1="15" x2="22" y2="15"/><rect x="8" y="3" width="8" height="5" rx="0" fill="none"/><rect x="8" y="22" width="8" height="5" rx="0" fill="none"/></svg>);
-// Tennis ball logo — large (login screen)
-const PadelLogo = () => (<div style={{width:48,height:48,borderRadius:14,background:`${A}12`,display:"flex",alignItems:"center",justifyContent:"center"}}>
-  <svg width="32" height="32" viewBox="0 0 50 50" fill="none">
-    <circle cx="25" cy="25" r="22" stroke={A} strokeWidth="2.5" fill={`${A}10`}/>
-    <path d="M8 20 Q25 8 42 20" stroke={A} strokeWidth="2" fill="none"/>
-    <path d="M8 30 Q25 42 42 30" stroke={A} strokeWidth="2" fill="none"/>
+// Padel racket logo — large (login screen)
+const PadelLogo = () => (<div style={{width:56,height:56,borderRadius:16,background:`${A}12`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+  <svg width="36" height="36" viewBox="0 0 64 64" fill="none">
+    <ellipse cx="32" cy="22" rx="11" ry="14" stroke={A} strokeWidth="2.5" fill={`${A}10`}/>
+    <circle cx="28" cy="16" r="1.3" fill={A} opacity="0.6"/><circle cx="32" cy="16" r="1.3" fill={A} opacity="0.6"/><circle cx="36" cy="16" r="1.3" fill={A} opacity="0.6"/>
+    <circle cx="28" cy="21" r="1.3" fill={A} opacity="0.6"/><circle cx="32" cy="21" r="1.3" fill={A} opacity="0.6"/><circle cx="36" cy="21" r="1.3" fill={A} opacity="0.6"/>
+    <circle cx="28" cy="26" r="1.3" fill={A} opacity="0.6"/><circle cx="32" cy="26" r="1.3" fill={A} opacity="0.6"/><circle cx="36" cy="26" r="1.3" fill={A} opacity="0.6"/>
+    <rect x="29.5" y="35" width="5" height="11" rx="2" fill={A}/>
+    <line x1="30.5" y1="39" x2="33.5" y2="39" stroke={BG} strokeWidth="0.8"/>
+    <line x1="30.5" y1="41.5" x2="33.5" y2="41.5" stroke={BG} strokeWidth="0.8"/>
+    <line x1="30.5" y1="44" x2="33.5" y2="44" stroke={BG} strokeWidth="0.8"/>
   </svg>
 </div>);
-// Tennis ball logo — small (header, league screen)
-const PadelLogoSmall = () => (<svg width="22" height="22" viewBox="0 0 50 50" fill="none">
-  <circle cx="25" cy="25" r="22" stroke={A} strokeWidth="2.5" fill={`${A}10`}/>
-  <path d="M8 20 Q25 8 42 20" stroke={A} strokeWidth="2" fill="none"/>
-  <path d="M8 30 Q25 42 42 30" stroke={A} strokeWidth="2" fill="none"/>
+// Padel racket logo — small (header, league screen)
+const PadelLogoSmall = () => (<svg width="22" height="22" viewBox="0 0 64 64" fill="none">
+  <ellipse cx="32" cy="22" rx="11" ry="14" stroke={A} strokeWidth="3" fill={`${A}10`}/>
+  <circle cx="28" cy="16" r="1.5" fill={A} opacity="0.6"/><circle cx="32" cy="16" r="1.5" fill={A} opacity="0.6"/><circle cx="36" cy="16" r="1.5" fill={A} opacity="0.6"/>
+  <circle cx="28" cy="21" r="1.5" fill={A} opacity="0.6"/><circle cx="32" cy="21" r="1.5" fill={A} opacity="0.6"/><circle cx="36" cy="21" r="1.5" fill={A} opacity="0.6"/>
+  <circle cx="28" cy="26" r="1.5" fill={A} opacity="0.6"/><circle cx="32" cy="26" r="1.5" fill={A} opacity="0.6"/><circle cx="36" cy="26" r="1.5" fill={A} opacity="0.6"/>
+  <rect x="29.5" y="35" width="5" height="11" rx="2" fill={A}/>
 </svg>);
 
 // Tab definitions (original layout: 3 left + center button + 3 right)
@@ -84,17 +92,16 @@ const TR=[{key:"stats",label:"Players",icon:"📊"},{key:"gamemode",label:"Game 
 
 // ============================================================================
 // AUTH GATE - Shows login screen if not authenticated
-// Supports: Magic Link, Email/Password Sign Up, Email/Password Sign In, Google OAuth
+// Supports: Email/Password Sign In, Email/Password Sign Up, Google OAuth
 // ============================================================================
 function AuthGate({children}){
   const [user,setUser]=useState(null);
   const [loading,setLoading]=useState(true);
-  // authMode: "magic" | "signup" | "signin" | (future: "google")
+  // authMode: "signin" | "signup"
   const [authMode,setAuthMode]=useState("signin");
   const [email,setEmail]=useState("");
   const [password,setPassword]=useState("");
   const [displayName,setDisplayName]=useState("");
-  const [sent,setSent]=useState(false);
   const [error,setError]=useState("");
   const [successMsg,setSuccessMsg]=useState("");
 
@@ -133,18 +140,17 @@ function AuthGate({children}){
 
   const clearForm = () => { setError(""); setSuccessMsg(""); };
 
-  // Magic Link
-  const handleSendLink = async (e) => {
-    e.preventDefault();
+  // Forgot Password
+  const handleForgotPassword = async () => {
     clearForm();
-    if (!email.trim()) { setError("Please enter your email"); return; }
+    if (!email.trim()) { setError("Enter your email above, then tap 'Forgot password?'"); return; }
     try {
-      const redirectUrl = window.location.origin + window.location.pathname + window.location.search;
-      const {error:err} = await supabase.auth.signInWithOtp({email:email.trim(), options:{emailRedirectTo:redirectUrl}});
+      const {error:err} = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: window.location.origin + window.location.pathname
+      });
       if (err) throw err;
-      setSent(true);
-      setTimeout(()=>setSent(false),8000);
-    } catch (err) { setError(err.message || "Failed to send magic link"); }
+      setSuccessMsg("Password reset link sent! Check your email.");
+    } catch (err) { setError(err.message || "Failed to send reset link"); }
   };
 
   // Email/Password Sign Up
@@ -206,43 +212,29 @@ function AuthGate({children}){
       color:"#000",fontWeight:800,fontSize:15,cursor:"pointer",fontFamily:"'Outfit',sans-serif",
       textTransform:"uppercase",letterSpacing:1,width:"100%",
     };
-    const btnOutline = (color) => ({
-      padding:"12px",background:"transparent",border:`1px solid ${color}40`,borderRadius:10,
-      color,fontWeight:600,fontSize:13,cursor:"pointer",fontFamily:"'Outfit',sans-serif",width:"100%",
-    });
-    const tabStyle = (active) => ({
-      flex:1,padding:"10px 0",background:active?`${A}15`:"transparent",border:"none",
-      borderBottom:active?`2px solid ${A}`:`2px solid transparent`,color:active?A:MT,
-      fontWeight:600,fontSize:13,cursor:"pointer",fontFamily:"'Outfit',sans-serif",
-      textTransform:"uppercase",letterSpacing:0.5,transition:"all 0.2s",
-    });
+    const linkStyle = {background:"none",border:"none",color:A,fontSize:12,cursor:"pointer",fontFamily:"'Outfit',sans-serif",textDecoration:"underline"};
+    const btnGoogle = {
+      padding:"12px",background:"transparent",border:`1px solid ${TX}40`,borderRadius:10,
+      color:TX,fontWeight:600,fontSize:13,cursor:"pointer",fontFamily:"'Outfit',sans-serif",width:"100%",
+    };
 
     return (
       <div style={{background:BG,minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:"20px",fontFamily:"'Outfit',sans-serif"}}>
         <div style={{maxWidth:"380px",width:"100%"}}>
-          {/* Logo */}
+          {/* Logo + Wordmark (no tagline) */}
           <div style={{textAlign:"center",marginBottom:"28px"}}>
             <div style={{display:"flex",justifyContent:"center"}}><PadelLogo/></div>
             <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:"8px",marginTop:"16px"}}>
               <PadelLogoSmall/>
-              <h1 style={{fontSize:22,fontWeight:900,letterSpacing:2,color:TX,fontFamily:"'Outfit',sans-serif"}}><span style={{color:A}}>Padel</span>Hub</h1>
+              <h1 style={{fontSize:22,fontWeight:900,letterSpacing:2,color:TX,fontFamily:"'Outfit',sans-serif"}}><span style={{color:TX}}>Padel</span><span style={{color:A}}>Hub</span></h1>
             </div>
-            <p style={{color:MT,fontSize:12,fontWeight:500,letterSpacing:1,marginTop:6,textTransform:"uppercase"}}>Track your game. Master the court.</p>
-          </div>
-
-          {/* Auth Mode Tabs */}
-          <div style={{display:"flex",marginBottom:"20px",borderRadius:8,overflow:"hidden",border:`1px solid ${BD}`}}>
-            <button onClick={()=>{setAuthMode("signin");clearForm();}} style={tabStyle(authMode==="signin")}>Sign In</button>
-            <button onClick={()=>{setAuthMode("signup");clearForm();}} style={tabStyle(authMode==="signup")}>Sign Up</button>
-            <button onClick={()=>{setAuthMode("magic");clearForm();}} style={tabStyle(authMode==="magic")}>Magic Link</button>
           </div>
 
           {/* Error / Success Messages */}
           {error && <div style={{color:DG,fontSize:12,padding:"10px 14px",background:`${DG}15`,borderRadius:10,border:`1px solid ${DG}30`,marginBottom:12}}>{error}</div>}
           {successMsg && <div style={{color:A,fontSize:12,padding:"10px 14px",background:`${A}15`,borderRadius:10,border:`1px solid ${A}30`,marginBottom:12}}>{successMsg}</div>}
-          {sent && <div style={{color:A,fontSize:12,padding:"10px 14px",background:`${A}15`,borderRadius:10,border:`1px solid ${A}30`,marginBottom:12}}>✓ Check your email for the magic link!</div>}
 
-          {/* SIGN IN FORM */}
+          {/* SIGN IN VIEW (default) */}
           {authMode==="signin" && (
             <form onSubmit={handleSignIn} style={{display:"flex",flexDirection:"column",gap:"12px"}}>
               <div>
@@ -255,14 +247,16 @@ function AuthGate({children}){
               </div>
               <button type="submit" style={btnPrimary}>Sign In</button>
               <div style={{textAlign:"center",marginTop:4}}>
-                <button type="button" onClick={()=>{setAuthMode("magic");clearForm();}} style={{background:"none",border:"none",color:A,fontSize:12,cursor:"pointer",fontFamily:"'Outfit',sans-serif",textDecoration:"underline"}}>
-                  Forgot password? Use magic link
-                </button>
+                <button type="button" onClick={handleForgotPassword} style={linkStyle}>Forgot password?</button>
+              </div>
+              <div style={{textAlign:"center",marginTop:2}}>
+                <span style={{color:MT,fontSize:12}}>Don't have an account? </span>
+                <button type="button" onClick={()=>{setAuthMode("signup");clearForm();}} style={linkStyle}>Sign Up</button>
               </div>
             </form>
           )}
 
-          {/* SIGN UP FORM */}
+          {/* SIGN UP VIEW */}
           {authMode==="signup" && (
             <form onSubmit={handleSignUp} style={{display:"flex",flexDirection:"column",gap:"12px"}}>
               <div>
@@ -278,31 +272,21 @@ function AuthGate({children}){
                 <input type="password" value={password} onChange={(e)=>setPassword(e.target.value)} placeholder="Min 6 characters" style={inputStyle}/>
               </div>
               <button type="submit" style={btnPrimary}>Create Account</button>
-            </form>
-          )}
-
-          {/* MAGIC LINK FORM */}
-          {authMode==="magic" && (
-            <form onSubmit={handleSendLink} style={{display:"flex",flexDirection:"column",gap:"12px"}}>
-              <div>
-                <label style={labelStyle}>Email</label>
-                <input type="email" value={email} onChange={(e)=>setEmail(e.target.value)} placeholder="your@email.com" style={inputStyle}/>
+              <div style={{textAlign:"center",marginTop:4}}>
+                <span style={{color:MT,fontSize:12}}>Already have an account? </span>
+                <button type="button" onClick={()=>{setAuthMode("signin");clearForm();}} style={linkStyle}>Sign In</button>
               </div>
-              <button type="submit" style={btnPrimary}>Send Magic Link</button>
-              <p style={{color:MT,fontSize:11,textAlign:"center",marginTop:4,lineHeight:1.5}}>
-                We'll send you a secure link to sign in — no password needed.
-              </p>
             </form>
           )}
 
-          {/* Google Sign-In (shows when OAuth is configured in Supabase) */}
+          {/* Divider + Google Sign-In */}
           <div style={{marginTop:16}}>
             <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
               <div style={{flex:1,height:1,background:BD}}/>
-              <span style={{color:MT,fontSize:11,fontWeight:500}}>OR</span>
+              <span style={{color:MT,fontSize:11,fontWeight:600,letterSpacing:1}}>OR</span>
               <div style={{flex:1,height:1,background:BD}}/>
             </div>
-            <button onClick={handleGoogleSignIn} style={btnOutline(TX)}>
+            <button onClick={handleGoogleSignIn} style={btnGoogle}>
               <span style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
                 <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
                 Continue with Google
@@ -379,11 +363,11 @@ function LeagueGate({user,children}){
     try {
       const {data,error:err} = await supabase
         .from("league_members")
-        .select("league_id,leagues(id,name,invite_code)")
+        .select("league_id,role,leagues(id,name,invite_code,created_by)")
         .eq("user_id",user.id);
 
       if (err) throw err;
-      const userLeagues = data?.map(m=>m.leagues).filter(Boolean) || [];
+      const userLeagues = data?.map(m=>({...m.leagues,_userRole:m.role})).filter(Boolean) || [];
       setLeagues(userLeagues);
       setLoading(false);
     } catch (err) {
@@ -496,8 +480,9 @@ function LeagueGate({user,children}){
     } catch(err) { setError(err.message || "Failed to rename league"); }
   };
 
-  const handleDeleteLeague = async (leagueId) => {
-    if(!confirm("Delete this league and ALL its data (players, matches, seasons)? This cannot be undone.")) return;
+  const handleDeleteLeague = async (leagueId, leagueName) => {
+    const typed = prompt(`This will permanently delete "${leagueName}" and ALL its data (players, matches, seasons).\n\nType the league name to confirm:`);
+    if(!typed || typed.trim() !== leagueName.trim()) { if(typed !== null) alert("League name didn't match. Delete cancelled."); return; }
     try {
       const {error:err} = await supabase.from("leagues").delete().eq("id",leagueId);
       if(err) throw err;
@@ -542,8 +527,8 @@ function LeagueGate({user,children}){
                         <span style={{fontSize:18}}>🏟️</span> {l.name}
                       </button>
                       <button onClick={()=>{const url=`${window.location.origin}${window.location.pathname}?invite=${l.invite_code}`;if(navigator.share)navigator.share({title:"Join my PadelHub league",text:`Join "${l.name}" on PadelHub!`,url});else{navigator.clipboard.writeText(url);alert("Invite link copied!");}}} style={{background:"none",border:`1px solid ${A}40`,borderRadius:6,color:A,fontSize:10,fontWeight:600,cursor:"pointer",padding:"4px 8px",fontFamily:"'Outfit',sans-serif"}} title="Share invite link">Invite</button>
-                      <button onClick={()=>{setEditingLeagueId(l.id);setEditLeagueName(l.name);}} style={{background:"none",border:`1px solid ${BD}`,borderRadius:6,color:MT,fontSize:10,fontWeight:600,cursor:"pointer",padding:"4px 8px",fontFamily:"'Outfit',sans-serif"}} title="Edit">Edit</button>
-                      <button onClick={()=>handleDeleteLeague(l.id)} style={{background:"none",border:`1px solid ${DG}40`,borderRadius:6,color:DG,fontSize:10,fontWeight:600,cursor:"pointer",padding:"4px 8px",fontFamily:"'Outfit',sans-serif"}} title="Delete">Delete</button>
+                      {(l.created_by===user.id || l._userRole==="admin") && <button onClick={()=>{setEditingLeagueId(l.id);setEditLeagueName(l.name);}} style={{background:"none",border:`1px solid ${BD}`,borderRadius:6,color:MT,fontSize:10,fontWeight:600,cursor:"pointer",padding:"4px 8px",fontFamily:"'Outfit',sans-serif"}} title="Edit">Edit</button>}
+                      {l.created_by===user.id && <button onClick={()=>handleDeleteLeague(l.id,l.name)} style={{background:"none",border:`1px solid ${DG}40`,borderRadius:6,color:DG,fontSize:10,fontWeight:600,cursor:"pointer",padding:"4px 8px",fontFamily:"'Outfit',sans-serif"}} title="Delete">Delete</button>}
                     </>
                   )}
                 </div>
@@ -935,11 +920,11 @@ function AppContent({leagueId,user,onSwitchLeague}){
       ["Date", "Team A", "Team B", "Sets", "Winner"].join(","),
       ...matches.map(m => {
         const w = win(m.sets);
-        const winnerTeam = w === "A" ? `${getName(m.team_a[0])} & ${getName(m.team_a[1])}` : `${getName(m.team_b[0])} & ${getName(m.team_b[1])}`;
+        const winnerTeam = w === "A" ? formatTeam(getName(m.team_a[0]),getName(m.team_a[1])) : formatTeam(getName(m.team_b[0]),getName(m.team_b[1]));
         return [
           new Date(m.date).toLocaleDateString(),
-          `${getName(m.team_a[0])} & ${getName(m.team_a[1])}`,
-          `${getName(m.team_b[0])} & ${getName(m.team_b[1])}`,
+          formatTeam(getName(m.team_a[0]),getName(m.team_a[1])),
+          formatTeam(getName(m.team_b[0]),getName(m.team_b[1])),
           m.sets.map(s => `${s[0]}-${s[1]}`).join(" "),
           winnerTeam
         ].map(v => `"${v}"`).join(",");
@@ -1017,7 +1002,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
   };
 
   const shareMatch = (m) => {
-    const text = `${getName(m.team_a[0])} & ${getName(m.team_a[1])} vs ${getName(m.team_b[0])} & ${getName(m.team_b[1])}\n${m.sets.map((s,i)=>`Set ${i+1}: ${s[0]}-${s[1]}`).join("\n")}`;
+    const text = `${formatTeam(getName(m.team_a[0]),getName(m.team_a[1]))} vs ${formatTeam(getName(m.team_b[0]),getName(m.team_b[1]))}\n${m.sets.map((s,i)=>`Set ${i+1}: ${s[0]}-${s[1]}`).join("\n")}`;
     if(navigator.share) navigator.share({title:"Match",text});
     else alert(text);
   };
@@ -1332,7 +1317,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
                     </div>
                     <div style={{background:CD2,padding:12,borderRadius:8,textAlign:"center"}}>
                       <div style={{fontSize:11,color:MT,fontWeight:600,marginBottom:4}}>Losses</div>
-                      <div style={{fontSize:20,fontWeight:800,color:A}}>{p.losses}</div>
+                      <div style={{fontSize:20,fontWeight:800,color:p.losses>0?DG:TX}}>{p.losses}</div>
                     </div>
                     <div style={{background:CD2,padding:12,borderRadius:8,textAlign:"center"}}>
                       <div style={{fontSize:11,color:MT,fontWeight:600,marginBottom:4}}>ELO</div>
@@ -1420,7 +1405,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
                               {won?"W":"L"}
                             </div>
                             <div style={{flex:1,fontSize:11}}>
-                              <div style={{fontWeight:600,color:TX}}>{getName(m.team_a[0])} & {getName(m.team_a[1])} vs {getName(m.team_b[0])} & {getName(m.team_b[1])}</div>
+                              <div style={{fontWeight:600,color:TX}}>{formatTeam(getName(m.team_a[0]),getName(m.team_a[1]))} vs {formatTeam(getName(m.team_b[0]),getName(m.team_b[1]))}</div>
                               <div style={{color:MT,fontSize:10,marginTop:2}}>{m.sets.map((s,i)=>`${s[0]}-${s[1]}`).join(", ")}</div>
                             </div>
                             <div style={{fontSize:9,color:MT}}>{new Date(m.date).toLocaleDateString()}</div>
@@ -1558,7 +1543,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
                                 {(() => {
                                   const pWins = partnerMatches.filter(m=>{const w=win(m.sets);return (m.team_a.includes(h2hPlayer1)&&w==="A")||(m.team_b.includes(h2hPlayer1)&&w==="B");}).length;
                                   const pLoss = partnerMatches.length - pWins;
-                                  return <div style={{fontSize:13,fontWeight:700,color:A}}>{pWins}W - {pLoss}L</div>;
+                                  return <div style={{fontSize:13,fontWeight:700}}><span style={{color:A}}>{pWins}W</span><span style={{color:MT}}> - </span><span style={{color:pLoss>0?DG:TX}}>{pLoss}L</span></div>;
                                 })()}
                               </div>
                             ) : <div style={{fontSize:12,color:MT}}>No matches</div>}
@@ -1570,7 +1555,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
                                 {(() => {
                                   const oWins = opponentMatches.filter(m=>{const w=win(m.sets);return (m.team_a.includes(h2hPlayer1)&&w==="A")||(m.team_b.includes(h2hPlayer1)&&w==="B");}).length;
                                   const oLoss = opponentMatches.length - oWins;
-                                  return <div style={{fontSize:13,fontWeight:700,color:A}}>{oWins}W - {oLoss}L</div>;
+                                  return <div style={{fontSize:13,fontWeight:700}}><span style={{color:A}}>{oWins}W</span><span style={{color:MT}}> - </span><span style={{color:oLoss>0?DG:TX}}>{oLoss}L</span></div>;
                                 })()}
                               </div>
                             ) : <div style={{fontSize:12,color:MT}}>No matches</div>}
@@ -1766,7 +1751,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
                   {awards.bestPartnership && (
                     <div style={{padding:12,background:CD2,borderRadius:8,border:`1px solid ${A}40`}}>
                       <div style={{fontSize:10,color:MT,fontWeight:600,marginBottom:4}}>Best Partnership</div>
-                      <div style={{fontSize:13,fontWeight:700,color:TX,marginBottom:2}}>{getName(awards.bestPartnership.playerIds[0])} & {getName(awards.bestPartnership.playerIds[1])}</div>
+                      <div style={{fontSize:13,fontWeight:700,color:TX,marginBottom:2}}>{formatTeam(getName(awards.bestPartnership.playerIds[0]),getName(awards.bestPartnership.playerIds[1]))}</div>
                       <div style={{fontSize:11,color:A,fontWeight:600}}>{awards.bestPartnership.winRate}% WR</div>
                     </div>
                   )}
@@ -1806,7 +1791,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
                 <div style={{textAlign:"center",padding:"12px",background:CD2,borderRadius:"6px",borderTop:`3px solid ${SV}`}}>
                   <div style={{fontSize:"20px",marginBottom:"4px"}}>🥈</div>
                   <div style={{fontSize:"13px",fontWeight:"bold",marginBottom:"4px"}}>{lb[1].nickname||lb[1].name}</div>
-                  <div style={{fontSize:"11px",color:MT}}>{lb[1].wins}W {lb[1].losses}L</div>
+                  <div style={{fontSize:"11px"}}><span style={{color:A}}>{lb[1].wins}W</span> <span style={{color:lb[1].losses>0?DG:TX}}>{lb[1].losses}L</span></div>
                   <div style={{fontSize:"12px",color:A,fontWeight:"bold",marginTop:"4px"}}>{Math.round(elo[lb[1].id]||1500)}</div>
                 </div>
 
@@ -1814,7 +1799,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
                 <div style={{textAlign:"center",padding:"16px",background:CD2,borderRadius:"6px",borderTop:`3px solid ${GD}`,transform:"scale(1.05)"}}>
                   <div style={{fontSize:"28px",marginBottom:"6px"}}>🥇</div>
                   <div style={{fontSize:"14px",fontWeight:"bold",marginBottom:"6px"}}>{lb[0].nickname||lb[0].name}</div>
-                  <div style={{fontSize:"12px",color:MT}}>{lb[0].wins}W {lb[0].losses}L</div>
+                  <div style={{fontSize:"12px"}}><span style={{color:A}}>{lb[0].wins}W</span> <span style={{color:lb[0].losses>0?DG:TX}}>{lb[0].losses}L</span></div>
                   <div style={{fontSize:"13px",color:GD,fontWeight:"bold",marginTop:"6px"}}>{Math.round(elo[lb[0].id]||1500)}</div>
                 </div>
 
@@ -1822,7 +1807,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
                 <div style={{textAlign:"center",padding:"12px",background:CD2,borderRadius:"6px",borderTop:`3px solid ${BZ}`}}>
                   <div style={{fontSize:"20px",marginBottom:"4px"}}>🥉</div>
                   <div style={{fontSize:"13px",fontWeight:"bold",marginBottom:"4px"}}>{lb[2].nickname||lb[2].name}</div>
-                  <div style={{fontSize:"11px",color:MT}}>{lb[2].wins}W {lb[2].losses}L</div>
+                  <div style={{fontSize:"11px"}}><span style={{color:A}}>{lb[2].wins}W</span> <span style={{color:lb[2].losses>0?DG:TX}}>{lb[2].losses}L</span></div>
                   <div style={{fontSize:"12px",color:BZ,fontWeight:"bold",marginTop:"4px"}}>{Math.round(elo[lb[2].id]||1500)}</div>
                 </div>
               </div>
@@ -1849,7 +1834,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
                   </div>
                   <div style={{textAlign:"right",minWidth:"50px"}}>
                     <div style={{fontSize:"13px",fontWeight:"bold"}}>{p.wins}W</div>
-                    <div style={{fontSize:"10px",color:MT}}>{p.losses}L</div>
+                    <div style={{fontSize:"10px",color:p.losses>0?DG:TX}}>{p.losses}L</div>
                   </div>
                   <div style={{textAlign:"right",minWidth:"40px"}}>
                     <div style={{fontSize:"13px",fontWeight:"bold",color:(p.winRate>0.5?A:DG)}}>{(p.winRate*100).toFixed(0)}%</div>
