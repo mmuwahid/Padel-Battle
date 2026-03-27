@@ -1,7 +1,7 @@
 import React from "react";
 import { A } from "../theme";
 
-export const CourtIcon = () => (<svg width="16" height="20" viewBox="0 0 24 30" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="24" rx="1"/><line x1="12" y1="3" x2="12" y2="27"/><line x1="2" y1="15" x2="22" y2="15"/><rect x="8" y="3" width="8" height="5" rx="0" fill="none"/><rect x="8" y="22" width="8" height="5" rx="0" fill="none"/></svg>);
+export const CourtIcon = () => (<svg width="20" height="16" viewBox="0 0 30 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="2" width="24" height="20" rx="1"/><line x1="15" y1="2" x2="15" y2="22"/><line x1="3" y1="12" x2="27" y2="12"/><rect x="3" y="8" width="5" height="8" rx="0" fill="none"/><rect x="22" y="8" width="5" height="8" rx="0" fill="none"/></svg>);
 
 export const PadelLogo = () => (<svg width="48" height="48" viewBox="0 0 80 80" fill="none">
   <ellipse cx="40" cy="28" rx="16" ry="20" stroke="#666" strokeWidth="3.5" fill="none"/>

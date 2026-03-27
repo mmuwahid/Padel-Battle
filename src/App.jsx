@@ -1654,18 +1654,20 @@ function AppContent({leagueId,user,onSwitchLeague}){
       )}
 
       {/* BOTTOM NAV — 7-column grid: 3 left + center "+" + 3 right */}
-      <div style={{position:"fixed",bottom:0,left:0,right:0,background:`${CD}f0`,backdropFilter:"blur(20px)",borderTop:`1px solid ${BD}`,display:"grid",gridTemplateColumns:"repeat(7,1fr)",alignItems:"flex-end",padding:`4px 0 env(safe-area-inset-bottom, 6px)`,zIndex:100}}>
+      <div style={{position:"fixed",bottom:0,left:0,right:0,background:`${CD}f0`,backdropFilter:"blur(20px)",borderTop:`1px solid ${BD}`,display:"grid",gridTemplateColumns:"repeat(7,1fr)",alignItems:"end",padding:`6px 0 env(safe-area-inset-bottom, 6px)`,zIndex:100}}>
         {TL.map(t => (
-          <button key={t.key} onClick={()=>{setTab(t.key);setSidebarOpen(false);setSidebarView(null);}} style={{background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:1,color:tab===t.key?A:MT,cursor:"pointer",padding:"5px 6px"}}>
-            <span style={{fontSize:16}}>{t.icon==="court"?<CourtIcon/>:t.icon}</span><span style={{fontSize:8,fontWeight:600}}>{t.label}</span>
+          <button key={t.key} onClick={()=>{setTab(t.key);setSidebarOpen(false);setSidebarView(null);}} style={{background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",color:tab===t.key?A:MT,cursor:"pointer",padding:"4px 0"}}>
+            <div style={{height:24,display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:18,lineHeight:1}}>{t.icon==="court"?<CourtIcon/>:t.icon}</span></div>
+            <div style={{height:12,display:"flex",alignItems:"center"}}><span style={{fontSize:9,fontWeight:600}}>{t.label}</span></div>
           </button>
         ))}
         <div style={{display:"flex",justifyContent:"center",alignItems:"flex-end"}}>
           <button onClick={()=>{setEditingMatch(null);setTab("log");setSidebarOpen(false);setSidebarView(null);}} style={{width:56,height:56,borderRadius:"50%",border:"none",background:`linear-gradient(135deg,${A},${A}cc)`,color:BG,fontSize:30,fontWeight:900,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",marginTop:-20,boxShadow:`0 4px 20px ${A}40`,lineHeight:1}}>+</button>
         </div>
         {TR.map(t => (
-          <button key={t.key} onClick={()=>{setTab(t.key);setSidebarOpen(false);setSidebarView(null);}} style={{background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:1,color:tab===t.key?A:MT,cursor:"pointer",padding:"5px 6px"}}>
-            <span style={{fontSize:16}}>{t.icon}</span><span style={{fontSize:8,fontWeight:600}}>{t.label}</span>
+          <button key={t.key} onClick={()=>{setTab(t.key);setSidebarOpen(false);setSidebarView(null);}} style={{background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",color:tab===t.key?A:MT,cursor:"pointer",padding:"4px 0"}}>
+            <div style={{height:24,display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:18,lineHeight:1}}>{t.icon}</span></div>
+            <div style={{height:12,display:"flex",alignItems:"center"}}><span style={{fontSize:9,fontWeight:600}}>{t.label}</span></div>
           </button>
         ))}
       </div>
