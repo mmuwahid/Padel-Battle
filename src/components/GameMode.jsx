@@ -1233,7 +1233,7 @@ export function GameMode({ players, getName, supabase, leagueId, tournament, set
         <div style={{ marginBottom: 18 }}>
           <label style={{ fontSize: 11, fontWeight: 600, color: MT, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8, display: "block" }}>Teams ({seTeams.length} registered)</label>
           <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
-            {seTeams.map((team, idx) => (
+            {seTeams.map((team, idx) => { const seAllSel = seTeams.flatMap(t => [t.p1, t.p2]).filter(Boolean); const p1O = seAllSel.filter(v => v !== team.p1); const p2O = seAllSel.filter(v => v !== team.p2); return (
               <div key={idx} style={{ background: CD, border: `1px solid ${BD}`, borderRadius: 12, padding: "12px 14px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                   <input type="text" value={team.name} onChange={e => updateTeam(idx, "name", e.target.value)} style={{ background: "transparent", border: "none", color: TX, fontSize: 13, fontWeight: 600, outline: "none", width: "60%" }} />
@@ -1242,15 +1242,15 @@ export function GameMode({ players, getName, supabase, leagueId, tournament, set
                 <div style={{ display: "flex", gap: 8 }}>
                   <select value={team.p1} onChange={e => updateTeam(idx, "p1", e.target.value)} style={{ ...sel, flex: 1, fontSize: 12 }}>
                     <option value="">Player 1</option>
-                    {players.map(p => <option key={p.id} value={p.id}>{p.nickname || p.name}</option>)}
+                    {players.filter(p => !p1O.includes(p.id)).map(p => <option key={p.id} value={p.id}>{p.nickname || p.name}</option>)}
                   </select>
                   <select value={team.p2} onChange={e => updateTeam(idx, "p2", e.target.value)} style={{ ...sel, flex: 1, fontSize: 12 }}>
                     <option value="">Player 2</option>
-                    {players.map(p => <option key={p.id} value={p.id}>{p.nickname || p.name}</option>)}
+                    {players.filter(p => !p2O.includes(p.id)).map(p => <option key={p.id} value={p.id}>{p.nickname || p.name}</option>)}
                   </select>
                 </div>
               </div>
-            ))}
+            ); })}
           </div>
 
           {/* Add Team Button */}
@@ -1284,7 +1284,7 @@ export function GameMode({ players, getName, supabase, leagueId, tournament, set
         <div style={{ marginBottom: 18 }}>
           <label style={{ fontSize: 11, fontWeight: 600, color: MT, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8, display: "block" }}>Teams ({deTeams.length} registered)</label>
           <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
-            {deTeams.map((team, idx) => (
+            {deTeams.map((team, idx) => { const deAllSel = deTeams.flatMap(t => [t.p1, t.p2]).filter(Boolean); const p1O = deAllSel.filter(v => v !== team.p1); const p2O = deAllSel.filter(v => v !== team.p2); return (
               <div key={idx} style={{ background: CD, border: "1px solid " + BD, borderRadius: 12, padding: "12px 14px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                   <input type="text" value={team.name} onChange={e => updateDeTeam(idx, "name", e.target.value)} style={{ background: "transparent", border: "none", color: TX, fontSize: 13, fontWeight: 600, outline: "none", width: "60%" }} />
@@ -1293,15 +1293,15 @@ export function GameMode({ players, getName, supabase, leagueId, tournament, set
                 <div style={{ display: "flex", gap: 8 }}>
                   <select value={team.p1} onChange={e => updateDeTeam(idx, "p1", e.target.value)} style={{ ...sel, flex: 1, fontSize: 12 }}>
                     <option value="">Player 1</option>
-                    {players.map(p => <option key={p.id} value={p.id}>{p.nickname || p.name}</option>)}
+                    {players.filter(p => !p1O.includes(p.id)).map(p => <option key={p.id} value={p.id}>{p.nickname || p.name}</option>)}
                   </select>
                   <select value={team.p2} onChange={e => updateDeTeam(idx, "p2", e.target.value)} style={{ ...sel, flex: 1, fontSize: 12 }}>
                     <option value="">Player 2</option>
-                    {players.map(p => <option key={p.id} value={p.id}>{p.nickname || p.name}</option>)}
+                    {players.filter(p => !p2O.includes(p.id)).map(p => <option key={p.id} value={p.id}>{p.nickname || p.name}</option>)}
                   </select>
                 </div>
               </div>
-            ))}
+            ); })}
           </div>
           <button onClick={addDeTeam} style={{ width: "100%", padding: 12, background: CD2, border: "1px dashed " + BD, borderRadius: 12, color: MT, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>+ Add Team</button>
         </div>
@@ -1331,7 +1331,7 @@ export function GameMode({ players, getName, supabase, leagueId, tournament, set
         <div style={{ marginBottom: 18 }}>
           <label style={{ fontSize: 11, fontWeight: 600, color: MT, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8, display: "block" }}>Teams ({rrTeams.length} registered)</label>
           <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
-            {rrTeams.map((team, idx) => (
+            {rrTeams.map((team, idx) => { const rrAllSel = rrTeams.flatMap(t => [t.p1, t.p2]).filter(Boolean); const p1O = rrAllSel.filter(v => v !== team.p1); const p2O = rrAllSel.filter(v => v !== team.p2); return (
               <div key={idx} style={{ background: CD, border: "1px solid " + BD, borderRadius: 12, padding: "12px 14px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                   <input type="text" value={team.name} onChange={e => updateRrTeam(idx, "name", e.target.value)} style={{ background: "transparent", border: "none", color: TX, fontSize: 13, fontWeight: 600, outline: "none", width: "60%" }} />
@@ -1340,15 +1340,15 @@ export function GameMode({ players, getName, supabase, leagueId, tournament, set
                 <div style={{ display: "flex", gap: 8 }}>
                   <select value={team.p1} onChange={e => updateRrTeam(idx, "p1", e.target.value)} style={{ ...sel, flex: 1, fontSize: 12 }}>
                     <option value="">Player 1</option>
-                    {players.map(p => <option key={p.id} value={p.id}>{p.nickname || p.name}</option>)}
+                    {players.filter(p => !p1O.includes(p.id)).map(p => <option key={p.id} value={p.id}>{p.nickname || p.name}</option>)}
                   </select>
                   <select value={team.p2} onChange={e => updateRrTeam(idx, "p2", e.target.value)} style={{ ...sel, flex: 1, fontSize: 12 }}>
                     <option value="">Player 2</option>
-                    {players.map(p => <option key={p.id} value={p.id}>{p.nickname || p.name}</option>)}
+                    {players.filter(p => !p2O.includes(p.id)).map(p => <option key={p.id} value={p.id}>{p.nickname || p.name}</option>)}
                   </select>
                 </div>
               </div>
-            ))}
+            ); })}
           </div>
           <button onClick={addRrTeam} style={{ width: "100%", padding: 12, background: CD2, border: "1px dashed " + BD, borderRadius: 12, color: MT, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>+ Add Team</button>
         </div>
