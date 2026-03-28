@@ -208,13 +208,34 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
                     {canJoinB&&<button onClick={()=>joinChallenge(ch,"b")} style={{marginTop:4,padding:"4px 10px",borderRadius:6,border:`1px solid ${A}`,background:"transparent",color:A,fontSize:10,fontWeight:700,cursor:"pointer"}}>Join Team B</button>}
                   </div>
                 </div>
-                {linkedMatch&&(<div style={{background:,borderRadius:8,padding:10,marginBottom:8,textAlign:"center"}}>
+                {linkedMatch&&(<div style={{background:`${A}08`,borderRadius:8,padding:10,marginBottom:8,textAlign:"center"}}>
         <div style={{display:"flex",justifyContent:"center",gap:12}}>{linkedMatch.sets.map((s,i)=>{const aWon=s[0]>s[1];return <div key={i} style={{fontSize:14,fontWeight:700,fontFamily:"'JetBrains Mono'"}}><span style={{color:aWon?A:DG}}>{s[0]}</span><span style={{color:MT}}>-</span><span style={{color:!aWon?A:DG}}>{s[1]}</span></div>;})}</div>
         {linkedMatch.motm&&<div style={{fontSize:10,color:GD,marginTop:4}}>⭐ MVP: {getName(linkedMatch.motm)}</div>}
       </div>)}
       {ch.notes&&<div style={{fontSize:11,color:MT,fontStyle:"italic",marginBottom:8}}>{ch.notes}</div>}
+      {isLogging&&(<div style={{background:CD2,borderRadius:10,border:`1px solid ${A}40`,padding:12,marginBottom:8}}>
+        <div style={{fontSize:13,fontWeight:700,color:A,marginBottom:10}}>🎾 Log Match Result</div>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+          <div style={{fontSize:11,color:MT,fontWeight:600}}>Sets</div>
+          <div style={{display:'flex',gap:4}}>{[2,3].map(n=>(<button key={n} onClick={()=>setLogNs(n)} style={{padding:'3px 8px',borderRadius:6,border:`1px solid ${logNs===n?A:BD}`,background:logNs===n?A+'15':'transparent',color:logNs===n?A:MT,fontSize:10,fontWeight:600,cursor:'pointer'}}>{n}</button>))}</div>
+        </div>
+        {logSets.slice(0,logNs).map((s,i)=>(<div key={i} style={{display:'flex',alignItems:'center',gap:6,marginBottom:4}}>
+          <span style={{fontSize:10,color:MT,width:32,fontWeight:600}}>Set {i+1}</span>
+          <input type='number' min='0' max='7' value={s[0]} onFocus={e=>e.target.select()} onChange={e=>{const n=logSets.map(x=>[...x]);n[i]=[+e.target.value,n[i][1]];setLogSets(n);}} style={{width:48,padding:'6px',borderRadius:6,border:`1px solid ${A}40`,background:CD,color:TX,textAlign:'center',fontSize:14,fontFamily:"'JetBrains Mono'",fontWeight:700}}/>
+          <span style={{color:MT,fontWeight:700}}>-</span>
+          <input type='number' min='0' max='7' value={s[1]} onFocus={e=>e.target.select()} onChange={e=>{const n=logSets.map(x=>[...x]);n[i]=[n[i][0],+e.target.value];setLogSets(n);}} style={{width:48,padding:'6px',borderRadius:6,border:`1px solid ${DG}40`,background:CD,color:TX,textAlign:'center',fontSize:14,fontFamily:"'JetBrains Mono'",fontWeight:700}}/>
+        </div>))}
+        <div style={{marginTop:8,marginBottom:10}}>
+          <div style={{fontSize:10,color:MT,fontWeight:600,marginBottom:4}}>⭐ Man of the Match</div>
+          <select value={logMotm} onChange={e=>setLogMotm(e.target.value)} style={{...sel,fontSize:12}}><option value=''>Select MVP</option>{[...(ch.team_a||[]),...(ch.team_b||[])].map(pid=>(<option key={pid} value={pid}>{getName(pid)}</option>))}</select>
+        </div>
+        <div style={{display:'flex',gap:6}}>
+          <button onClick={saveLoggedMatch} disabled={logSaving} style={{flex:1,padding:'8px',borderRadius:8,border:'none',background:A,color:BG,fontSize:12,fontWeight:700,cursor:'pointer',opacity:logSaving?0.6:1}}>{logSaving?'Saving...':'Save Match'}</button>
+          <button onClick={()=>setLoggingMatch(null)} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${BD}`,background:CD,color:TX,fontSize:12,fontWeight:700,cursor:'pointer'}}>Cancel</button>
+        </div>
+      </div>)}
                 {/* Action buttons */}
-                <div style={{display:"flex",gap:6}}>
+                {!isPast&&!isLogging&&(<div style={{display:"flex",gap:6}}>
                   {imIn&&!isCreator&&ch.status==="open"&&(
                     <button onClick={()=>leaveChallenge(ch)} style={{flex:1,padding:"6px",borderRadius:6,border:`1px solid ${DG}40`,background:"transparent",color:DG,fontSize:10,fontWeight:600,cursor:"pointer"}}>Leave</button>
                   )}
@@ -222,7 +243,7 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
                   {(isCreator||isAdmin)&&(
                     <button onClick={()=>cancelChallenge(ch.id)} style={{flex:1,padding:"6px",borderRadius:6,border:`1px solid ${DG}40`,background:"transparent",color:DG,fontSize:10,fontWeight:600,cursor:"pointer"}}>Cancel</button>
                   )}
-                </div>
+                </div>)}
               </div>
             );
           })}
