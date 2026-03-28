@@ -1,4 +1,4 @@
-const CACHE_NAME = 'padelhub-v4';
+const CACHE_NAME = 'padelhub-v5';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -22,17 +22,35 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch — network first, fallback to cache
+// Fetch — smart caching strategy
 self.addEventListener('fetch', (event) => {
-  // Skip non-GET and Supabase API requests
   if (event.request.method !== 'GET') return;
   if (event.request.url.includes('supabase.co')) return;
   if (event.request.url.includes('googleapis.com')) return;
 
+  const url = new URL(event.request.url);
+
+  // PA-09: Hashed assets (contain hash in filename) — cache-first (immutable)
+  if (url.pathname.match(/\/assets\/.*-[a-f0-9]{8}\./)) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        if (cached) return cached;
+        return fetch(event.request).then((response) => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return response;
+        });
+      })
+    );
+    return;
+  }
+
+  // Everything else — network first, fallback to cache
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // Cache successful responses
         if (response.ok) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));

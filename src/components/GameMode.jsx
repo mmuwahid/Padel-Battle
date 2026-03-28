@@ -746,12 +746,12 @@ export function GameMode({ players, getName, supabase, leagueId, tournament, set
                       <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: sc ? (sc.b > sc.a ? A : TX) : TX }}>{tB.map(p => getName(p)).join(" x ")}</span>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
-                      <input type="number" min="0" max={ptsPerRound} value={sc?.a || ""} placeholder="0"
+                      <input type="number" inputMode="numeric" pattern="[0-9]*" min="0" max={ptsPerRound} value={sc?.a || ""} placeholder="0"
                         onFocus={e => e.target.select()}
                         onChange={e => { const v = Math.min(+e.target.value || 0, ptsPerRound); recordScore(ri, mi, v, ptsPerRound - v); }}
                         style={{ width: 50, textAlign: "center", background: CD2, color: TX, border: `1px solid ${A}30`, borderRadius: 8, padding: "6px", fontSize: 16, fontWeight: 700, fontFamily: "'JetBrains Mono'", outline: "none" }} />
                       <span style={{ color: MT, fontWeight: 700, fontSize: 12 }}>-</span>
-                      <input type="number" min="0" max={ptsPerRound} value={sc?.b || ""} placeholder="0"
+                      <input type="number" inputMode="numeric" pattern="[0-9]*" min="0" max={ptsPerRound} value={sc?.b || ""} placeholder="0"
                         onFocus={e => e.target.select()}
                         onChange={e => { const v = Math.min(+e.target.value || 0, ptsPerRound); recordScore(ri, mi, ptsPerRound - v, v); }}
                         style={{ width: 50, textAlign: "center", background: CD2, color: TX, border: `1px solid ${DG}30`, borderRadius: 8, padding: "6px", fontSize: 16, fontWeight: 700, fontFamily: "'JetBrains Mono'", outline: "none" }} />
@@ -871,8 +871,8 @@ export function GameMode({ players, getName, supabase, leagueId, tournament, set
                       <div style={{ fontSize: 13, fontWeight: 600, marginTop: 4 }}>{m.team_b_name || m.team_b?.filter(Boolean).map(pid => getName(pid)).join(" x ") || "TBD"}</div>
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 2, alignItems: "center" }}>
-                      <input type="number" min="0" placeholder="0" id={`se-a-${ri}-${mi}`} style={{ width: 44, padding: "4px", borderRadius: 6, border: `1px solid ${BD}`, background: CD2, color: TX, textAlign: "center", fontSize: 13, fontFamily: "'JetBrains Mono'" }} />
-                      <input type="number" min="0" placeholder="0" id={`se-b-${ri}-${mi}`} style={{ width: 44, padding: "4px", borderRadius: 6, border: `1px solid ${BD}`, background: CD2, color: TX, textAlign: "center", fontSize: 13, fontFamily: "'JetBrains Mono'" }} />
+                      <input type="number" inputMode="numeric" pattern="[0-9]*" min="0" placeholder="0" id={`se-a-${ri}-${mi}`} style={{ width: 44, padding: "4px", borderRadius: 6, border: `1px solid ${BD}`, background: CD2, color: TX, textAlign: "center", fontSize: 13, fontFamily: "'JetBrains Mono'" }} />
+                      <input type="number" inputMode="numeric" pattern="[0-9]*" min="0" placeholder="0" id={`se-b-${ri}-${mi}`} style={{ width: 44, padding: "4px", borderRadius: 6, border: `1px solid ${BD}`, background: CD2, color: TX, textAlign: "center", fontSize: 13, fontFamily: "'JetBrains Mono'" }} />
                       <button onClick={() => {
                         const a = parseInt(document.getElementById(`se-a-${ri}-${mi}`).value) || 0;
                         const b = parseInt(document.getElementById(`se-b-${ri}-${mi}`).value) || 0;
@@ -999,8 +999,8 @@ export function GameMode({ players, getName, supabase, leagueId, tournament, set
                     </div>
                     {!sc && m.team_a && m.team_b && (
                       <div style={{ display:"flex", alignItems:"center", gap:6, justifyContent:"center" }}>
-                        <input type="number" min="0" placeholder="0" id={"de-la-"+ri+"-"+mi} style={{ width:44, padding:"4px", borderRadius:6, border:"1px solid "+BD, background:CD2, color:TX, textAlign:"center", fontSize:13, fontFamily:"JetBrains Mono" }} />
-                        <input type="number" min="0" placeholder="0" id={"de-lb-"+ri+"-"+mi} style={{ width:44, padding:"4px", borderRadius:6, border:"1px solid "+BD, background:CD2, color:TX, textAlign:"center", fontSize:13, fontFamily:"JetBrains Mono" }} />
+                        <input type="number" inputMode="numeric" pattern="[0-9]*" min="0" placeholder="0" id={"de-la-"+ri+"-"+mi} style={{ width:44, padding:"4px", borderRadius:6, border:"1px solid "+BD, background:CD2, color:TX, textAlign:"center", fontSize:13, fontFamily:"JetBrains Mono" }} />
+                        <input type="number" inputMode="numeric" pattern="[0-9]*" min="0" placeholder="0" id={"de-lb-"+ri+"-"+mi} style={{ width:44, padding:"4px", borderRadius:6, border:"1px solid "+BD, background:CD2, color:TX, textAlign:"center", fontSize:13, fontFamily:"JetBrains Mono" }} />
                         <button onClick={()=>{const a=parseInt(document.getElementById("de-la-"+ri+"-"+mi).value)||0;const b=parseInt(document.getElementById("de-lb-"+ri+"-"+mi).value)||0;if(a===b)return;recordDEScore("losers",ri,mi,a,b);}} style={{ padding:"4px 10px", borderRadius:6, border:"none", background:A, color:BG, fontSize:9, fontWeight:700, cursor:"pointer" }}>Save</button>
                       </div>
                     )}
@@ -1023,9 +1023,9 @@ export function GameMode({ players, getName, supabase, leagueId, tournament, set
             </div>
             {!gfScore && gf.team_a && gf.team_b && (
               <div style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
-                <input type="number" min="0" placeholder="0" id="de-gf-a" style={{ width:50, padding:"6px", borderRadius:8, border:"1px solid "+GD+"40", background:CD2, color:TX, textAlign:"center", fontSize:16, fontWeight:700, fontFamily:"JetBrains Mono" }} />
+                <input type="number" inputMode="numeric" pattern="[0-9]*" min="0" placeholder="0" id="de-gf-a" style={{ width:50, padding:"6px", borderRadius:8, border:"1px solid "+GD+"40", background:CD2, color:TX, textAlign:"center", fontSize:16, fontWeight:700, fontFamily:"JetBrains Mono" }} />
                 <span style={{ color: MT, fontWeight: 700 }}>-</span>
-                <input type="number" min="0" placeholder="0" id="de-gf-b" style={{ width:50, padding:"6px", borderRadius:8, border:"1px solid "+GD+"40", background:CD2, color:TX, textAlign:"center", fontSize:16, fontWeight:700, fontFamily:"JetBrains Mono" }} />
+                <input type="number" inputMode="numeric" pattern="[0-9]*" min="0" placeholder="0" id="de-gf-b" style={{ width:50, padding:"6px", borderRadius:8, border:"1px solid "+GD+"40", background:CD2, color:TX, textAlign:"center", fontSize:16, fontWeight:700, fontFamily:"JetBrains Mono" }} />
                 <button onClick={()=>{const a=parseInt(document.getElementById("de-gf-a").value)||0;const b=parseInt(document.getElementById("de-gf-b").value)||0;if(a===b)return;recordDEScore("grand_final",0,0,a,b);}} style={{ padding:"6px 14px", borderRadius:8, border:"none", background:GD, color:BG, fontSize:11, fontWeight:700, cursor:"pointer" }}>Save</button>
               </div>
             )}
@@ -1158,11 +1158,11 @@ export function GameMode({ players, getName, supabase, leagueId, tournament, set
                       <span style={{ flex:1, fontSize:13, fontWeight:600, color: sc?(sc.b>sc.a?A:TX):TX }}>{m.team_b_name}</span>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
-                      <input type="number" min="0" value={sc?.a??""} placeholder="0" onFocus={e=>e.target.select()}
+                      <input type="number" inputMode="numeric" pattern="[0-9]*" min="0" value={sc?.a??""} placeholder="0" onFocus={e=>e.target.select()}
                         onChange={e=>{const v=parseInt(e.target.value)||0;recordRRScore(ri,mi,v,sc?.b||0);}}
                         style={{ width:50, textAlign:"center", background:CD2, color:TX, border:"1px solid "+A+"30", borderRadius:8, padding:"6px", fontSize:16, fontWeight:700, fontFamily:"JetBrains Mono", outline:"none" }} />
                       <span style={{ color:MT, fontWeight:700, fontSize:12 }}>-</span>
-                      <input type="number" min="0" value={sc?.b??""} placeholder="0" onFocus={e=>e.target.select()}
+                      <input type="number" inputMode="numeric" pattern="[0-9]*" min="0" value={sc?.b??""} placeholder="0" onFocus={e=>e.target.select()}
                         onChange={e=>{const v=parseInt(e.target.value)||0;recordRRScore(ri,mi,sc?.a||0,v);}}
                         style={{ width:50, textAlign:"center", background:CD2, color:TX, border:"1px solid "+DG+"30", borderRadius:8, padding:"6px", fontSize:16, fontWeight:700, fontFamily:"JetBrains Mono", outline:"none" }} />
                     </div>

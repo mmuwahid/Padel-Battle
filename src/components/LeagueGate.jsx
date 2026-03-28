@@ -3,7 +3,7 @@ import { supabase } from '../supabase';
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, PU } from '../theme';
 import { PadelLogoSmall } from './icons';
 
-export function LeagueGate({user,children}){
+export function LeagueGate({user,children,showToast}){
   const [leagues,setLeagues]=useState([]);
   const [selectedLeagueId,setSelectedLeagueId]=useState(null);
   const [loading,setLoading]=useState(true);
@@ -181,9 +181,11 @@ export function LeagueGate({user,children}){
     } catch(err) { setError(err.message || "Failed to rename league"); }
   };
 
+  const [deleteConfirmId,setDeleteConfirmId]=useState(null);
+  const [deleteTyped,setDeleteTyped]=useState("");
   const handleDeleteLeague = async (leagueId, leagueName) => {
-    const typed = prompt(`This will permanently delete "${leagueName}" and ALL its data (players, matches, seasons).\n\nType the league name to confirm:`);
-    if(!typed || typed.trim() !== leagueName.trim()) { if(typed !== null) alert("League name didn't match. Delete cancelled."); return; }
+    if(deleteConfirmId!==leagueId){setDeleteConfirmId(leagueId);setDeleteTyped("");return;}
+    if(deleteTyped.trim()!==leagueName.trim()){if(showToast)showToast("Name didn't match","error");return;}
     try {
       const {error:err} = await supabase.from("leagues").delete().eq("id",leagueId);
       if(err) throw err;
@@ -234,9 +236,9 @@ export function LeagueGate({user,children}){
                       <button onClick={()=>setSelectedLeagueId(l.id)} style={{flex:1,background:"none",border:"none",color:TX,fontSize:14,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",gap:10}}>
                         <span style={{fontSize:18}}>🏟️</span> {l.name}
                       </button>
-                      <button onClick={()=>{const url=`${window.location.origin}${window.location.pathname}?invite=${l.invite_code}`;if(navigator.share)navigator.share({title:"Join my PadelHub league",text:`Join "${l.name}" on PadelHub!`,url});else{navigator.clipboard.writeText(url);alert("Invite link copied!");}}} style={{background:"none",border:`1px solid ${A}40`,borderRadius:6,color:A,fontSize:10,fontWeight:600,cursor:"pointer",padding:"4px 8px",fontFamily:"'Outfit',sans-serif"}} title="Share invite link">Invite</button>
+                      <button onClick={()=>{const url=`${window.location.origin}${window.location.pathname}?invite=${l.invite_code}`;if(navigator.share)navigator.share({title:"Join my PadelHub league",text:`Join "${l.name}" on PadelHub!`,url});else{navigator.clipboard.writeText(url);if(showToast)showToast("Invite link copied!");;}}} style={{background:"none",border:`1px solid ${A}40`,borderRadius:6,color:A,fontSize:10,fontWeight:600,cursor:"pointer",padding:"4px 8px",fontFamily:"'Outfit',sans-serif"}} title="Share invite link">Invite</button>
                       {(l.created_by===user.id || l._userRole==="admin") && <button onClick={()=>{setEditingLeagueId(l.id);setEditLeagueName(l.name);}} style={{background:"none",border:`1px solid ${BD}`,borderRadius:6,color:MT,fontSize:10,fontWeight:600,cursor:"pointer",padding:"4px 8px",fontFamily:"'Outfit',sans-serif"}} title="Edit">Edit</button>}
-                      {l.created_by===user.id && <button onClick={()=>handleDeleteLeague(l.id,l.name)} style={{background:"none",border:`1px solid ${DG}40`,borderRadius:6,color:DG,fontSize:10,fontWeight:600,cursor:"pointer",padding:"4px 8px",fontFamily:"'Outfit',sans-serif"}} title="Delete">Delete</button>}
+                      {l.created_by===user.id && (deleteConfirmId===l.id?<div style={{display:"flex",gap:4,alignItems:"center",flexWrap:"wrap"}}><input value={deleteTyped} onChange={e=>setDeleteTyped(e.target.value)} placeholder={"Type \""+l.name+"\" to delete"} style={{width:140,padding:"4px 6px",borderRadius:6,border:"1px solid "+DG,background:CD2,color:TX,fontSize:10,fontFamily:"'Outfit',sans-serif"}}/><button onClick={()=>handleDeleteLeague(l.id,l.name)} style={{padding:"4px 8px",background:DG,border:"none",borderRadius:6,color:"#fff",fontSize:10,fontWeight:700,cursor:"pointer"}}>Confirm</button><button onClick={()=>{setDeleteConfirmId(null);setDeleteTyped("");}} style={{padding:"4px 6px",background:"none",border:"1px solid "+BD,borderRadius:6,color:MT,fontSize:10,cursor:"pointer"}}>X</button></div>:<button onClick={()=>handleDeleteLeague(l.id,l.name)} style={{background:"none",border:`1px solid ${DG}40`,borderRadius:6,color:DG,fontSize:10,fontWeight:600,cursor:"pointer",padding:"4px 8px",fontFamily:"'Outfit',sans-serif"}} title="Delete">Delete</button>)}
                     </>
                   )}
                 </div>

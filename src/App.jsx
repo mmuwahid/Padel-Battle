@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useMemo, useEffect, useRef, Suspense, lazy } from "react";
 import { supabase } from './supabase';
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, BL, PU, TL, TR } from './theme';
 import { formatTeam, win, formatDate, gid } from './utils/helpers';
@@ -23,12 +23,15 @@ function urlBase64ToUint8Array(base64String) {
 import { AuthGate } from './components/AuthGate';
 import { LeagueGate } from './components/LeagueGate';
 import { LogMatch } from './components/LogMatch';
-import { PlayerStats } from './components/PlayerStats';
+const PlayerStats = lazy(() => import('./components/PlayerStats').then(m => ({default: m.PlayerStats})));
 import { ScheduleView } from './components/ScheduleView';
 import { MatchHistory } from './components/MatchHistory';
-import { CombosView } from './components/CombosView';
-import { GameMode } from './components/GameMode';
+const CombosView = lazy(() => import('./components/CombosView').then(m => ({default: m.CombosView})));
+const GameMode = lazy(() => import('./components/GameMode').then(m => ({default: m.GameMode})));
 
+
+// Lazy loading fallback
+const LazyFallback = () => <div style={{display:'flex',justifyContent:'center',alignItems:'center',padding:40,color:'#7a7a8e'}}>Loading...</div>;
 // MAIN APP COMPONENT
 // ============================================================================
 function AppContent({leagueId,user,onSwitchLeague}){
@@ -200,31 +203,30 @@ function AppContent({leagueId,user,onSwitchLeague}){
     try {
       setLoading(true);
 
-      // Fetch league
-      const {data:leagueData,error:leagueErr} = await supabase
-        .from("leagues")
-        .select("*")
-        .eq("id",leagueId)
-        .single();
+      // PA-04: Parallelize all independent queries
+      const [
+        {data:leagueData,error:leagueErr},
+        {data:memberData},
+        {data:membersData},
+        {data:playersData,error:playersErr},
+        {data:matchesData,error:matchesErr},
+        {data:seasonsData,error:seasonsErr},
+        {data:tournamentsData,error:tournamentsErr},
+        {data:challengesData}
+      ] = await Promise.all([
+        supabase.from("leagues").select("*").eq("id",leagueId).single(),
+        supabase.from("league_members").select("role").eq("league_id",leagueId).eq("user_id",user.id).single(),
+        supabase.from("league_members").select("user_id,role,profiles(id,email,user_metadata)").eq("league_id",leagueId),
+        supabase.from("players").select("*").eq("league_id",leagueId).order("name"),
+        supabase.from("matches").select("*").eq("league_id",leagueId).order("date",{ascending:false}),
+        supabase.from("seasons").select("*").eq("league_id",leagueId).order("start_date"),
+        supabase.from("tournaments").select("*").eq("league_id",leagueId).order("created_at"),
+        supabase.from("challenges").select("*").eq("league_id",leagueId).in("status",["open","confirmed","played"]).order("date",{ascending:true})
+      ]);
 
       if (leagueErr) throw leagueErr;
       setLeague(leagueData);
-
-      // Check user role
-      const {data:memberData} = await supabase
-        .from("league_members")
-        .select("role")
-        .eq("league_id",leagueId)
-        .eq("user_id",user.id)
-        .single();
-
       setIsAdmin(memberData?.role==="admin" || leagueData?.created_by === user.id);
-
-      // Load all league members with profiles (for admin management)
-      const {data:membersData} = await supabase
-        .from("league_members")
-        .select("user_id,role,profiles(id,email,user_metadata)")
-        .eq("league_id",leagueId);
 
       if(membersData){
         setLeagueMembers(membersData);
@@ -235,51 +237,19 @@ function AppContent({leagueId,user,onSwitchLeague}){
         setMemberProfiles(profiles);
       }
 
-      // Fetch players
-      const {data:playersData,error:playersErr} = await supabase
-        .from("players")
-        .select("*")
-        .eq("league_id",leagueId)
-        .order("name");
-
       if (playersErr) throw playersErr;
       setPlayers(playersData || []);
-
-      // Fetch matches
-      const {data:matchesData,error:matchesErr} = await supabase
-        .from("matches")
-        .select("*")
-        .eq("league_id",leagueId)
-        .order("date",{ascending:false});
 
       if (matchesErr) throw matchesErr;
       setMatches(matchesData || []);
 
-      // Fetch seasons
-      const {data:seasonsData,error:seasonsErr} = await supabase
-        .from("seasons")
-        .select("*")
-        .eq("league_id",leagueId)
-        .order("start_date");
-
       if (seasonsErr) throw seasonsErr;
       setSeasons(seasonsData || []);
 
-      // Fetch tournaments
-      const {data:tournamentsData,error:tournamentsErr} = await supabase
-        .from("tournaments")
-        .select("*")
-        .eq("league_id",leagueId)
-        .order("created_at");
-
       if (tournamentsErr) throw tournamentsErr;
       setTournaments(tournamentsData || []);
-
-      // FT-05: Load challenges
-      const {data:challengesData}=await supabase.from("challenges").select("*").eq("league_id",leagueId).in("status",["open","confirmed","played"]).order("date",{ascending:true});
       setChallenges(challengesData||[]);
 
-      // Check if current user has claimed a player in this league
       const claimed = (playersData||[]).find(p => p.user_id === user.id);
       setClaimedPlayer(claimed || null);
 
@@ -288,7 +258,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
       console.error("Load league data error:",err);
       setLoading(false);
     }
-  };
+  };;
 
   // Helper functions
   const getName = (pid) => {
@@ -990,15 +960,23 @@ function AppContent({leagueId,user,onSwitchLeague}){
                     <div style={{display:"flex",alignItems:"flex-end",gap:2,height:100,background:CD2,padding:8,borderRadius:8}}>
                       {(() => {
                         const pMatches = matches.filter(m=>m.team_a.includes(p.id)||m.team_b.includes(p.id)).sort((a,b)=>new Date(a.date)-new Date(b.date));
+                        if(!pMatches.length) return null;
+                        const sortedAll = [...matches].sort((a,b)=>new Date(a.date)-new Date(b.date));
                         const eloHistory = [];
-                        pMatches.forEach(m => {
-                          const allElo = calcElo(players, matches.filter(mm => new Date(mm.date) <= new Date(m.date)));
-                          eloHistory.push(allElo[p.id] || 1500);
-                        });
-                        const minElo = Math.min(...eloHistory);
-                        const maxElo = Math.max(...eloHistory);
+                        const pMatchIds = new Set(pMatches.map(m=>m.id));
+                        let runningMatches = [];
+                        for(const m of sortedAll){
+                          runningMatches.push(m);
+                          if(pMatchIds.has(m.id)){
+                            const snap = calcElo(players, runningMatches);
+                            eloHistory.push(snap[p.id] || 1500);
+                          }
+                        }
+                        const last10 = eloHistory.slice(-10);
+                        const minElo = Math.min(...last10);
+                        const maxElo = Math.max(...last10);
                         const range = maxElo - minElo || 1;
-                        return eloHistory.slice(-10).map((e, i) => (
+                        return last10.map((e, i) => (
                           <div key={i} style={{flex:1,background:A,borderRadius:2,height:`${Math.max(((e-minElo)/range)*100,5)}%`,opacity:0.8}}/>
                         ));
                       })()}
@@ -1074,10 +1052,10 @@ function AppContent({leagueId,user,onSwitchLeague}){
                           <div style={{fontSize:13,fontWeight:600,color:TX}}>{p.nickname||p.name}</div>
                           <div style={{fontSize:10,color:claimed?MT:`${MT}80`}}>{claimed?(profile?.email||"Linked account"):"Not yet joined"}</div>
                         </div>
-                        <button onClick={()=>{const newName=prompt("New name:",p.name);if(newName)updatePlayerName(p.id,newName);}} style={{padding:"6px 10px",background:A,border:"none",borderRadius:6,color:"#000",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
+                        adminEditId===p.id?<div style={{display:"flex",gap:4,alignItems:"center"}}><input value={adminEditName} onChange={e=>setAdminEditName(e.target.value)} style={{width:80,padding:"4px 6px",borderRadius:6,border:"1px solid "+A,background:CD2,color:TX,fontSize:11,fontFamily:"'Outfit',sans-serif"}} autoFocus onKeyDown={e=>{if(e.key==="Enter"&&adminEditName.trim()){updatePlayerName(p.id,adminEditName.trim());setAdminEditId(null);}if(e.key==="Escape")setAdminEditId(null);}}/><button onClick={()=>{if(adminEditName.trim()){updatePlayerName(p.id,adminEditName.trim());}setAdminEditId(null);}} style={{padding:"4px 8px",background:A,border:"none",borderRadius:6,color:"#000",fontSize:10,fontWeight:700,cursor:"pointer"}}>OK</button><button onClick={()=>setAdminEditId(null)} style={{padding:"4px 6px",background:"none",border:"1px solid "+BD,borderRadius:6,color:MT,fontSize:10,cursor:"pointer"}}>X</button></div>:<button onClick={()=>{setAdminEditId(p.id);setAdminEditName(p.name);}} style={{padding:"6px 10px",background:A,border:"none",borderRadius:6,color:"#000",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
                           Rename
                         </button>
-                        <button onClick={()=>{if(confirm("Deactivate "+p.name+"?"))deactivatePlayer(p.id);}} style={{padding:"6px 10px",background:DG,border:"none",borderRadius:6,color:"#fff",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
+                        confirmDeactivate===p.id?<div style={{display:"flex",gap:4,alignItems:"center"}}><span style={{fontSize:10,color:DG}}>Sure?</span><button onClick={()=>{deactivatePlayer(p.id);setConfirmDeactivate(null);}} style={{padding:"4px 8px",background:DG,border:"none",borderRadius:6,color:"#fff",fontSize:10,fontWeight:700,cursor:"pointer"}}>Yes</button><button onClick={()=>setConfirmDeactivate(null)} style={{padding:"4px 6px",background:"none",border:"1px solid "+BD,borderRadius:6,color:MT,fontSize:10,cursor:"pointer"}}>No</button></div>:<button onClick={()=>setConfirmDeactivate(p.id)} style={{padding:"6px 10px",background:DG,border:"none",borderRadius:6,color:"#fff",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
                           Deactivate
                         </button>
                       </div>
@@ -1097,12 +1075,12 @@ function AppContent({leagueId,user,onSwitchLeague}){
                   <div style={{fontSize:11,color:MT,fontWeight:600,marginBottom:4}}>Invite Code</div>
                   <div style={{display:"flex",gap:8,alignItems:"center"}}>
                     <code style={{flex:1,padding:"8px 10px",background:CD,borderRadius:6,color:A,fontSize:12,fontWeight:700,wordBreak:"break-all"}}>{league?.invite_code}</code>
-                    <button onClick={()=>{navigator.clipboard.writeText(`${window.location.origin}?invite=${league?.invite_code}`);alert("Invite link copied!");}} style={{padding:"6px 10px",background:A,border:"none",borderRadius:6,color:"#000",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif",whiteSpace:"nowrap"}}>
+                    <button onClick={()=>{navigator.clipboard.writeText(`${window.location.origin}?invite=${league?.invite_code}`);showToast("Invite link copied!");}} style={{padding:"6px 10px",background:A,border:"none",borderRadius:6,color:"#000",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif",whiteSpace:"nowrap"}}>
                       Copy Link
                     </button>
                   </div>
                 </div>
-                <button onClick={()=>{if(confirm("Regenerate invite code? Old links won't work."))regenerateInviteCode();}} style={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
+                confirmRegenCode?<div style={{display:"flex",gap:8,alignItems:"center",justifyContent:"center",width:"100%"}}><span style={{fontSize:11,color:TX}}>Old links stop working. Sure?</span><button onClick={()=>{regenerateInviteCode();setConfirmRegenCode(false);}} style={{padding:"6px 10px",background:DG,border:"none",borderRadius:6,color:"#fff",fontSize:11,fontWeight:600,cursor:"pointer"}}>Yes</button><button onClick={()=>setConfirmRegenCode(false)} style={{padding:"6px 10px",background:CD2,border:"1px solid "+BD,borderRadius:6,color:MT,fontSize:11,cursor:"pointer"}}>No</button></div>:<button onClick={()=>setConfirmRegenCode(true)} style={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
                   Regenerate Code
                 </button>
               </div>
@@ -1562,18 +1540,18 @@ function AppContent({leagueId,user,onSwitchLeague}){
 
       {/* COMBOS TAB */}
       {!sidebarView && tab==="combos"&&(
-        <CombosView
+        <Suspense fallback={<LazyFallback/>}><CombosView
           combos={combos}
           players={players}
           fm={matches}
           pm={Object.fromEntries(players.map(p=>[p.id,p]))}
           getName={getName}
-        />
+        /></Suspense>
       )}
 
       {/* PLAYERS TAB */}
       {!sidebarView && tab==="stats"&&(
-        <PlayerStats
+        <Suspense fallback={<LazyFallback/>}><PlayerStats
           players={players}
           ps={Object.fromEntries(ps.map(p=>[p.id,p]))}
           pm={Object.fromEntries(players.map(p=>[p.id,p]))}
@@ -1590,12 +1568,12 @@ function AppContent({leagueId,user,onSwitchLeague}){
           getName={getName}
           sel={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:13,fontFamily:"Outfit"}}
           onPlayersChange={loadLeagueData}
-        />
+        /></Suspense>
       )}
 
       {/* GAMEMODE TAB */}
       {!sidebarView && tab==="gamemode"&&(
-        <GameMode
+        <Suspense fallback={<LazyFallback/>}><GameMode
           players={players}
           getName={getName}
           supabase={supabase}
@@ -1603,7 +1581,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
           tournament={tournament}
           setTournament={setTournament}
           sel={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:13,fontFamily:"Outfit"}}
-        />
+        /></Suspense>
       )}
 
       {/* RULES TAB */}
@@ -1658,7 +1636,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
       {/* BOTTOM NAV — 7-column grid: 3 left + center "+" + 3 right */}
       <div style={{position:"fixed",bottom:0,left:0,right:0,background:`${CD}f0`,backdropFilter:"blur(20px)",borderTop:`1px solid ${BD}`,display:"grid",gridTemplateColumns:"repeat(7,1fr)",alignItems:"end",padding:`6px 0 env(safe-area-inset-bottom, 6px)`,zIndex:100}}>
         {TL.map(t => (
-          <button key={t.key} onClick={()=>{setTab(t.key);setSidebarOpen(false);setSidebarView(null);}} style={{background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",color:tab===t.key?A:MT,cursor:"pointer",padding:"4px 0"}}>
+          <button key={t.key} onClick={()=>{setTab(t.key);setSidebarOpen(false);setSidebarView(null);}} style={{background:tab===t.key?A+"15":"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",color:tab===t.key?A:MT,cursor:"pointer",padding:"6px 0",borderRadius:8,minHeight:44}}>
             <div style={{height:24,display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:18,lineHeight:1}}>{t.icon==="court"?<CourtIcon/>:t.icon}</span></div>
             <div style={{height:12,display:"flex",alignItems:"center"}}><span style={{fontSize:9,fontWeight:600}}>{t.label}</span></div>
           </button>
@@ -1667,7 +1645,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
           <button onClick={()=>{setEditingMatch(null);setTab("log");setSidebarOpen(false);setSidebarView(null);}} style={{width:56,height:56,borderRadius:"50%",border:"none",background:`linear-gradient(135deg,${A},${A}cc)`,color:BG,fontSize:30,fontWeight:900,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",marginTop:-20,boxShadow:`0 4px 20px ${A}40`,lineHeight:1}}>+</button>
         </div>
         {TR.map(t => (
-          <button key={t.key} onClick={()=>{setTab(t.key);setSidebarOpen(false);setSidebarView(null);}} style={{background:"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",color:tab===t.key?A:MT,cursor:"pointer",padding:"4px 0"}}>
+          <button key={t.key} onClick={()=>{setTab(t.key);setSidebarOpen(false);setSidebarView(null);}} style={{background:tab===t.key?A+"15":"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",color:tab===t.key?A:MT,cursor:"pointer",padding:"6px 0",borderRadius:8,minHeight:44}}>
             <div style={{height:24,display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:18,lineHeight:1}}>{t.icon}</span></div>
             <div style={{height:12,display:"flex",alignItems:"center"}}><span style={{fontSize:9,fontWeight:600}}>{t.label}</span></div>
           </button>

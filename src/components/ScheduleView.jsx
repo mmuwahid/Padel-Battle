@@ -15,6 +15,8 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
   const [saving,setSaving]=useState(false);
   const [viewTab,setViewTab]=useState("upcoming");
   const [loggingMatch,setLoggingMatch]=useState(null);
+  const [cancelConfirmId,setCancelConfirmId]=useState(null);
+  const [actionLoading,setActionLoading]=useState(null);
   const [logSets,setLogSets]=useState([[0,0],[0,0],[0,0]]);
   const [logNs,setLogNs]=useState(2);
   const [logMotm,setLogMotm]=useState("");
@@ -74,8 +76,10 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
   }
 
   async function cancelChallenge(id){
+    setActionLoading(id+"-cancel");
     const {error}=await supabase.from("challenges").update({status:"cancelled"}).eq("id",id);
     if(error){showToast("Failed to cancel","error");}else{showToast("Match cancelled");if(onUpdate)onUpdate();}
+    setActionLoading(null);
   }
 
   function openLogMatch(ch){setLoggingMatch(ch.id);setLogSets([[0,0],[0,0],[0,0]]);setLogNs(2);setLogMotm("");}
@@ -218,9 +222,9 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
                   </div>
                   {logSets.slice(0,logNs).map((s,i)=>(<div key={i} style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
                     <span style={{fontSize:10,color:MT,width:32,fontWeight:600}}>Set {i+1}</span>
-                    <input type="number" min="0" max="7" value={s[0]} onFocus={e=>e.target.select()} onChange={e=>{const n=logSets.map(x=>[...x]);n[i]=[+e.target.value,n[i][1]];setLogSets(n);}} style={{width:48,padding:"6px",borderRadius:6,border:`1px solid ${A}40`,background:CD,color:TX,textAlign:"center",fontSize:14,fontFamily:"JetBrains Mono",fontWeight:700}}/>
+                    <input type="number" inputMode="numeric" pattern="[0-9]*" min="0" max="7" value={s[0]} onFocus={e=>e.target.select()} onChange={e=>{const n=logSets.map(x=>[...x]);n[i]=[+e.target.value,n[i][1]];setLogSets(n);}} style={{width:48,padding:"6px",borderRadius:6,border:`1px solid ${A}40`,background:CD,color:TX,textAlign:"center",fontSize:14,fontFamily:"JetBrains Mono",fontWeight:700}}/>
                     <span style={{color:MT,fontWeight:700}}>-</span>
-                    <input type="number" min="0" max="7" value={s[1]} onFocus={e=>e.target.select()} onChange={e=>{const n=logSets.map(x=>[...x]);n[i]=[n[i][0],+e.target.value];setLogSets(n);}} style={{width:48,padding:"6px",borderRadius:6,border:`1px solid ${DG}40`,background:CD,color:TX,textAlign:"center",fontSize:14,fontFamily:"JetBrains Mono",fontWeight:700}}/>
+                    <input type="number" inputMode="numeric" pattern="[0-9]*" min="0" max="7" value={s[1]} onFocus={e=>e.target.select()} onChange={e=>{const n=logSets.map(x=>[...x]);n[i]=[n[i][0],+e.target.value];setLogSets(n);}} style={{width:48,padding:"6px",borderRadius:6,border:`1px solid ${DG}40`,background:CD,color:TX,textAlign:"center",fontSize:14,fontFamily:"JetBrains Mono",fontWeight:700}}/>
                   </div>))}
                   <div style={{marginTop:8,marginBottom:10}}>
                     <div style={{fontSize:10,color:MT,fontWeight:600,marginBottom:4}}>⭐ Man of the Match</div>
@@ -240,7 +244,7 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
                     <button onClick={()=>openLogMatch(ch)} style={{flex:1,padding:"8px",borderRadius:6,border:"none",background:`${A}15`,color:A,fontSize:11,fontWeight:700,cursor:"pointer"}}>🎾 Log Match</button>
                   )}
                   {(isCreator||isAdmin)&&(
-                    <button onClick={()=>cancelChallenge(ch.id)} style={{flex:1,padding:"6px",borderRadius:6,border:`1px solid ${DG}40`,background:"transparent",color:DG,fontSize:10,fontWeight:600,cursor:"pointer"}}>Cancel</button>
+                    cancelConfirmId===ch.id?<div style={{display:"flex",gap:4,flex:1}}><button onClick={()=>{cancelChallenge(ch.id);setCancelConfirmId(null);}} style={{flex:1,padding:"6px",borderRadius:6,background:DG,border:"none",color:"#fff",fontSize:10,fontWeight:600,cursor:"pointer"}}>Yes</button><button onClick={()=>setCancelConfirmId(null)} style={{flex:1,padding:"6px",borderRadius:6,border:`1px solid ${BD}`,background:"transparent",color:MT,fontSize:10,cursor:"pointer"}}>No</button></div>:<button onClick={()=>setCancelConfirmId(ch.id)} style={{flex:1,padding:"6px",borderRadius:6,border:`1px solid ${DG}40`,background:"transparent",color:DG,fontSize:10,fontWeight:600,cursor:"pointer"}}>Cancel</button>
                   )}
                 </div>
               </div>
