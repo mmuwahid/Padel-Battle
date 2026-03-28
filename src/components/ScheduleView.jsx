@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, BL, PU } from '../theme';
-import { formatDate } from '../utils/helpers';
+import { formatDate, win } from '../utils/helpers';
 
-export function ScheduleView({challenges,players,matches,supabase,leagueId,user,getName,isAdmin,onUpdate,showToast,sendPushNotification,sel,elo}){
+export function ScheduleView({challenges,players,matches,supabase,leagueId,user,getName,isAdmin,onUpdate,showToast,sendPushNotification,sel,elo,seasonId}){
   const [showForm,setShowForm]=useState(false);
   const [step,setStep]=useState(1); // 1=teams, 2=date/venue
   const [date,setDate]=useState(new Date().toISOString().split("T")[0]);
@@ -13,7 +13,12 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
   const [tB,setTB]=useState(["",""]);
   const [notes,setNotes]=useState("");
   const [saving,setSaving]=useState(false);
-  const [viewTab,setViewTab]=useState("upcoming"); // upcoming | past
+  const [viewTab,setViewTab]=useState("upcoming");
+  const [loggingMatch,setLoggingMatch]=useState(null);
+  const [logSets,setLogSets]=useState([[0,0],[0,0],[0,0]]);
+  const [logNs,setLogNs]=useState(2);
+  const [logMotm,setLogMotm]=useState("");
+  const [logSaving,setLogSaving]=useState(false);
 
   const inp={background:CD2,color:TX,border:`1px solid ${BD}`,borderRadius:8,padding:"10px 12px",fontSize:13,width:"100%",outline:"none",fontFamily:"'Outfit',sans-serif"};
   const getEloBadge=(pid)=>{const gp=(matches||[]).filter(m=>(m.team_a||[]).includes(pid)||(m.team_b||[]).includes(pid)).length;if(gp<5)return null;const e=elo?.[pid]||1500;if(e>=1600)return{label:"Pro",color:DG};if(e>=1400)return{label:"Advanced",color:GD};if(e>=1200)return{label:"Intermediate",color:PU};return{label:"Beginner",color:BL};};
@@ -71,9 +76,20 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
     if(error){showToast("Failed to cancel","error");}else{showToast("Match cancelled");if(onUpdate)onUpdate();}
   }
 
-  async function markPlayed(id){
-    const {error}=await supabase.from("challenges").update({status:"played"}).eq("id",id);
-    if(error){showToast("Failed to update","error");}else{showToast("Marked as played");if(onUpdate)onUpdate();}
+  function openLogMatch(ch){setLoggingMatch(ch.id);setLogSets([[0,0],[0,0],[0,0]]);setLogNs(2);setLogMotm("");}
+  async function saveLoggedMatch(){
+    const ch=challenges.find(c=>c.id===loggingMatch);if(!ch)return;
+    const setsData=logSets.slice(0,logNs).filter(([a,b])=>a>0||b>0);
+    if(!setsData.length){showToast("Enter at least one set score","error");return;}
+    setLogSaving(true);
+    try{
+      const {data:matchData,error:matchErr}=await supabase.from("matches").insert({league_id:leagueId,season_id:seasonId||null,date:ch.date,team_a:[...ch.team_a],team_b:[...ch.team_b],sets:setsData,motm:logMotm||null,logged_by:user.id}).select().single();
+      if(matchErr)throw matchErr;
+      const {error:updateErr}=await supabase.from("challenges").update({status:"played",match_id:matchData.id}).eq("id",ch.id);
+      if(updateErr)throw updateErr;
+      showToast("Match logged!");setLoggingMatch(null);if(onUpdate)onUpdate();
+    }catch(err){console.error("Log match error:",err);showToast(err.message||"Failed to log match","error");}
+    setLogSaving(false);
   }
 
   const upcoming=challenges.filter(c=>c.status==="open"||c.status==="confirmed");
@@ -165,7 +181,8 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
             const imIn=imInA||imInB;
             const canJoinA=!imIn&&ch.team_a.length<2&&ch.status==="open";
             const canJoinB=!imIn&&ch.team_b.length<2&&ch.status==="open";
-            const isConfirmed=ch.status==="confirmed";
+            const isConfirmed=ch.status==="confirmed";const isLogging=loggingMatch===ch.id;
+    const linkedMatch=ch.match_id?(matches||[]).find(m=>m.id===ch.match_id):null;
             return (
               <div key={ch.id} style={{background:CD,borderRadius:12,border:`1px solid ${isConfirmed?`${A}40`:BD}`,padding:14,marginBottom:8}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
@@ -191,15 +208,17 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
                     {canJoinB&&<button onClick={()=>joinChallenge(ch,"b")} style={{marginTop:4,padding:"4px 10px",borderRadius:6,border:`1px solid ${A}`,background:"transparent",color:A,fontSize:10,fontWeight:700,cursor:"pointer"}}>Join Team B</button>}
                   </div>
                 </div>
-                {ch.notes&&<div style={{fontSize:11,color:MT,fontStyle:"italic",marginBottom:8}}>{ch.notes}</div>}
+                {linkedMatch&&(<div style={{background:,borderRadius:8,padding:10,marginBottom:8,textAlign:"center"}}>
+        <div style={{display:"flex",justifyContent:"center",gap:12}}>{linkedMatch.sets.map((s,i)=>{const aWon=s[0]>s[1];return <div key={i} style={{fontSize:14,fontWeight:700,fontFamily:"'JetBrains Mono'"}}><span style={{color:aWon?A:DG}}>{s[0]}</span><span style={{color:MT}}>-</span><span style={{color:!aWon?A:DG}}>{s[1]}</span></div>;})}</div>
+        {linkedMatch.motm&&<div style={{fontSize:10,color:GD,marginTop:4}}>⭐ MVP: {getName(linkedMatch.motm)}</div>}
+      </div>)}
+      {ch.notes&&<div style={{fontSize:11,color:MT,fontStyle:"italic",marginBottom:8}}>{ch.notes}</div>}
                 {/* Action buttons */}
                 <div style={{display:"flex",gap:6}}>
                   {imIn&&!isCreator&&ch.status==="open"&&(
                     <button onClick={()=>leaveChallenge(ch)} style={{flex:1,padding:"6px",borderRadius:6,border:`1px solid ${DG}40`,background:"transparent",color:DG,fontSize:10,fontWeight:600,cursor:"pointer"}}>Leave</button>
                   )}
-                  {isConfirmed&&(
-                    <button onClick={()=>markPlayed(ch.id)} style={{flex:1,padding:"6px",borderRadius:6,border:`1px solid ${A}`,background:`${A}15`,color:A,fontSize:10,fontWeight:700,cursor:"pointer"}}>Mark as Played</button>
-                  )}
+                  {isConfirmed&&!isLogging&&(<button onClick={()=>openLogMatch(ch)} style={{flex:1,padding:"8px",borderRadius:6,border:"none",background:A+"15",color:A,fontSize:11,fontWeight:700,cursor:"pointer"}}>🎾 Log Match</button>)}
                   {(isCreator||isAdmin)&&(
                     <button onClick={()=>cancelChallenge(ch.id)} style={{flex:1,padding:"6px",borderRadius:6,border:`1px solid ${DG}40`,background:"transparent",color:DG,fontSize:10,fontWeight:600,cursor:"pointer"}}>Cancel</button>
                   )}

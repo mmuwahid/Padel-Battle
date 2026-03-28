@@ -276,7 +276,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
       setTournaments(tournamentsData || []);
 
       // FT-05: Load challenges
-      const {data:challengesData}=await supabase.from("challenges").select("*").eq("league_id",leagueId).in("status",["open","confirmed"]).order("date",{ascending:true});
+      const {data:challengesData}=await supabase.from("challenges").select("*").eq("league_id",leagueId).in("status",["open","confirmed","played","cancelled"]).order("date",{ascending:true});
       setChallenges(challengesData||[]);
 
       // Check if current user has claimed a player in this league
@@ -1553,6 +1553,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
               showToast={showToast}
               sendPushNotification={sendPushNotification}
               elo={elo}
+              seasonId={selectedSeason}
               sel={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:13,fontFamily:"Outfit"}}
             />
           )}
@@ -1579,6 +1580,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
           getStreak={getStreak}
           getForm={getForm}
           elo={elo}
+              seasonId={selectedSeason}
           sp={selectedPlayer}
           setSp={setSelectedPlayer}
           fm={matches}
