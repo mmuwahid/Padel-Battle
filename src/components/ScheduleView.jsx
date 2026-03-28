@@ -93,7 +93,7 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
   }
 
   const upcoming=challenges.filter(c=>c.status==="open"||c.status==="confirmed");
-  const past=challenges.filter(c=>c.status==="played"||c.status==="cancelled");
+  const past=challenges.filter(c=>c.status==="played");
   const claimedP=players.find(p=>p.user_id===user.id);
 
   return (

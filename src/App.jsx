@@ -276,7 +276,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
       setTournaments(tournamentsData || []);
 
       // FT-05: Load challenges
-      const {data:challengesData}=await supabase.from("challenges").select("*").eq("league_id",leagueId).in("status",["open","confirmed","played","cancelled"]).order("date",{ascending:true});
+      const {data:challengesData}=await supabase.from("challenges").select("*").eq("league_id",leagueId).in("status",["open","confirmed","played"]).order("date",{ascending:true});
       setChallenges(challengesData||[]);
 
       // Check if current user has claimed a player in this league
