@@ -25,7 +25,9 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
 
   async function createChallenge(){
     const teamA=tA.filter(Boolean);const teamB=tB.filter(Boolean);
-    if(!date||teamA.length===0){showToast("Select a date and at least 1 player per team","error");return;}
+    const today=new Date().toISOString().split("T")[0];
+    if(!date||date<today){showToast("Select a future date","error");return;}
+    if(teamA.length===0){showToast("Select at least 1 player per team","error");return;}
     setSaving(true);
     try{
       const {error}=await supabase.from("challenges").insert({league_id:leagueId,created_by:user.id,date,time:time||null,location:location.trim()||null,team_a:teamA,team_b:teamB,notes:notes.trim()||null,status:teamB.length>0?"confirmed":"open"});
@@ -143,7 +145,7 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
         <div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:12}}>
           <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:8,textTransform:"uppercase",letterSpacing:0.5}}>Match Date</div>
           <div style={{display:"flex",gap:8,marginBottom:14}}>
-            <input type="date" value={date} onChange={e=>setDate(e.target.value)} style={{...inp,flex:1}}/>
+            <input type="date" value={date} min={new Date().toISOString().split("T")[0]} onChange={e=>setDate(e.target.value)} style={{...inp,flex:1}}/>
             <input type="time" value={time} onChange={e=>setTime(e.target.value)} style={{...inp,flex:1}}/>
           </div>
           <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:8,textTransform:"uppercase",letterSpacing:0.5}}>Duration</div>
