@@ -259,29 +259,41 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
               <div style={{fontSize:12,color:MT}}>Completed and cancelled matches will appear here.</div>
             </div>
           )}
-          {past.map(ch=>(
-            <div key={ch.id} style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:8,opacity:ch.status==="cancelled"?0.5:1}}>
+          {past.map(ch=>{
+            const lm=ch.match_id?(matches||[]).find(m=>m.id===ch.match_id):null;
+            const w=lm?win(lm.sets):null;
+            const tA=lm?lm.sets.reduce((t,x)=>t+x[0],0):0;
+            const tB=lm?lm.sets.reduce((t,x)=>t+x[1],0):0;
+            return (
+            <div key={ch.id} style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:8}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
                 <div>
                   <span style={{fontSize:12,fontWeight:700,color:TX}}>{formatDate(ch.date)}</span>
                   {ch.time&&<span style={{fontSize:11,color:MT,marginLeft:6}}>{ch.time}</span>}
                 </div>
-                <span style={{fontSize:10,fontWeight:700,padding:"3px 8px",borderRadius:6,background:ch.status==="played"?`${A}20`:`${DG}20`,color:ch.status==="played"?A:DG}}>
-                  {ch.status==="played"?"📅 Played":"Cancelled"}
-                </span>
+                <span style={{fontSize:10,fontWeight:700,padding:"3px 8px",borderRadius:6,background:`${A}20`,color:A}}>📅 Played</span>
               </div>
               {ch.location&&<div style={{fontSize:11,color:MT,marginBottom:6}}>📍 {ch.location}</div>}
-              <div style={{display:"flex",gap:8}}>
-                <div style={{flex:1,background:CD2,borderRadius:8,padding:8,textAlign:"center"}}>
-                  {ch.team_a.map(pid=><div key={pid} style={{fontSize:12,color:TX,fontWeight:600}}>{getName(pid)}</div>)}
+              <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",gap:8,alignItems:"center"}}>
+                <div style={{textAlign:"center"}}>
+                  {ch.team_a.map(pid=><div key={pid} style={{fontSize:13,fontWeight:700,color:w==="A"?A:w==="B"?DG:TX}}>{getName(pid)}</div>)}
+                  {w==="A"&&<div style={{fontSize:10,color:A,fontWeight:700,marginTop:3}}>WIN</div>}
+                  {w==="B"&&<div style={{fontSize:10,color:DG,fontWeight:700,marginTop:3}}>LOSS</div>}
                 </div>
-                <div style={{display:"flex",alignItems:"center",color:MT,fontSize:12,fontWeight:800}}>vs</div>
-                <div style={{flex:1,background:CD2,borderRadius:8,padding:8,textAlign:"center"}}>
-                  {ch.team_b.map(pid=><div key={pid} style={{fontSize:12,color:TX,fontWeight:600}}>{getName(pid)}</div>)}
+                <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                  {lm?<><div style={{display:"flex",gap:6,fontFamily:"JetBrains Mono",fontWeight:700,fontSize:16}}>
+                    {lm.sets.map((s,i)=><span key={i} style={{color:s[0]>s[1]?A:DG}}>{s[0]}-{s[1]}</span>)}
+                  </div><span style={{fontSize:10,color:MT,fontFamily:"JetBrains Mono"}}>{tA}-{tB}</span></>:<span style={{color:MT,fontSize:11}}>No scores</span>}
+                </div>
+                <div style={{textAlign:"center"}}>
+                  {ch.team_b.map(pid=><div key={pid} style={{fontSize:13,fontWeight:700,color:w==="B"?A:w==="A"?DG:TX}}>{getName(pid)}</div>)}
+                  {w==="B"&&<div style={{fontSize:10,color:A,fontWeight:700,marginTop:3}}>WIN</div>}
+                  {w==="A"&&<div style={{fontSize:10,color:DG,fontWeight:700,marginTop:3}}>LOSS</div>}
                 </div>
               </div>
-            </div>
-          ))}
+              {lm&&lm.motm&&<div style={{textAlign:"center",fontSize:10,color:GD,marginTop:6}}>⭐ MVP: {getName(lm.motm)}</div>}
+            </div>);
+          })}
         </div>
       )}
     </div>
