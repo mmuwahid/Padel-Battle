@@ -57,7 +57,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
   const [claimError,setClaimError]=useState("");
   // Sidebar and view management
   const [sidebarOpen,setSidebarOpen]=useState(false);
-  const [sidebarView,setSidebarView]=useState(null); // null | "profile" | "h2h" | "settings" | "admin"
+  const [sidebarView,setSidebarView]=useState(null); // null | "profile" | "settings" | "admin"
   // Settings/Profile panel (reused for both)
   const [editDisplayName,setEditDisplayName]=useState("");
   const [profileSaving,setProfileSaving]=useState(false);
@@ -849,9 +849,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
             <button onClick={()=>{onSwitchLeague();}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>
               Switch League
             </button>
-            <button onClick={()=>{const code=league?.invite_code;if(code){const url=`${window.location.origin}${window.location.pathname}?invite=${code}`;if(navigator.share)navigator.share({title:"Join my PadelHub league",text:`Join "${league?.name}" on PadelHub!`,url});else{navigator.clipboard.writeText(url);showToast("Invite link copied!");}}}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>
-              Invite Players
-            </button>
+            <button onClick={()=>{const code=league?.invite_code;if(code){const url=`${window.location.origin}${window.location.pathname}?invite=${code}`;if(navigator.share)navigator.share({title:"Join my PadelHub league",text:`Join "${league?.name}" on PadelHub!`,url});else{navigator.clipboard.writeText(url);showToast("Invite link copied!");}}}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>📩 Invite Players</button>
           </div>
 
           <div style={{height:"1px",background:BD,margin:"12px 0"}} />
@@ -1095,120 +1093,6 @@ function AppContent({leagueId,user,onSwitchLeague}){
             </div>
           )}
 
-          {/* H2H VIEW */}
-          {sidebarView==="h2h" && (
-            <div style={{padding:"20px 16px",paddingBottom:"calc(80px + env(safe-area-inset-bottom, 0px))"}}>
-              <button onClick={()=>setSidebarView(null)} style={{marginBottom:20,background:"none",border:"none",color:A,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>← Back</button>
-
-              <h2 style={{fontSize:18,fontWeight:700,marginBottom:16,color:TX}}>Head-to-Head</h2>
-
-              {/* Player Selectors */}
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20}}>
-                <div>
-                  <label style={{display:"block",fontSize:11,color:MT,fontWeight:600,marginBottom:6}}>Player 1</label>
-                  <select value={h2hPlayer1||""} onChange={(e)=>setH2hPlayer1(e.target.value||null)} style={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:12,fontFamily:"'Outfit',sans-serif",outline:"none",cursor:"pointer"}}>
-                    <option value="">Select player</option>
-                    {ps.map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label style={{display:"block",fontSize:11,color:MT,fontWeight:600,marginBottom:6}}>Player 2</label>
-                  <select value={h2hPlayer2||""} onChange={(e)=>setH2hPlayer2(e.target.value||null)} style={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:12,fontFamily:"'Outfit',sans-serif",outline:"none",cursor:"pointer"}}>
-                    <option value="">Select player</option>
-                    {ps.map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}
-                  </select>
-                </div>
-              </div>
-
-              {h2hPlayer1 && h2hPlayer2 && (
-                <>
-                  {(() => {
-                    const p1 = ps.find(p=>p.id===h2hPlayer1);
-                    const p2 = ps.find(p=>p.id===h2hPlayer2);
-                    const h2hMatches = matches.filter(m=>(m.team_a.includes(h2hPlayer1)&&m.team_b.includes(h2hPlayer2))||(m.team_a.includes(h2hPlayer2)&&m.team_b.includes(h2hPlayer1)));
-                    const p1Wins = h2hMatches.filter(m=>{const w=win(m.sets);return (m.team_a.includes(h2hPlayer1)&&w==="A")||(m.team_b.includes(h2hPlayer1)&&w==="B");}).length;
-                    const p2Wins = h2hMatches.length - p1Wins;
-
-                    const partnerMatches = matches.filter(m=>(m.team_a.includes(h2hPlayer1)&&m.team_a.includes(h2hPlayer2))||(m.team_b.includes(h2hPlayer1)&&m.team_b.includes(h2hPlayer2)));
-                    const opponentMatches = matches.filter(m=>(m.team_a.includes(h2hPlayer1)&&m.team_b.includes(h2hPlayer2))||(m.team_a.includes(h2hPlayer2)&&m.team_b.includes(h2hPlayer1)));
-
-                    return (
-                      <>
-                        {/* H2H Card */}
-                        <div style={{background:CD2,padding:16,borderRadius:12,marginBottom:20,textAlign:"center"}}>
-                          <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:12,marginBottom:12}}>
-                            <div style={{width:48,height:48,borderRadius:"50%",background:`${A}20`,border:`2px solid ${A}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:800,color:A}}>
-                              {(p1?.name||"?")[0]}
-                            </div>
-                            <div style={{fontSize:16,fontWeight:700,color:TX}}>{p1Wins} - {p2Wins}</div>
-                            <div style={{width:48,height:48,borderRadius:"50%",background:`${A}20`,border:`2px solid ${A}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:800,color:A}}>
-                              {(p2?.name||"?")[0]}
-                            </div>
-                          </div>
-                          <div style={{width:"100%",height:4,background:CD,borderRadius:2,overflow:"hidden",marginBottom:8}}>
-                            <div style={{width:`${h2hMatches.length>0?(p1Wins/h2hMatches.length)*100:50}%`,height:"100%",background:A}}/>
-                          </div>
-                          <div style={{fontSize:11,color:MT}}>All-time record ({h2hMatches.length} matches)</div>
-                        </div>
-
-                        {/* As Partners vs As Opponents */}
-                        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20}}>
-                          <div style={{background:CD2,padding:12,borderRadius:8}}>
-                            <div style={{fontSize:11,color:MT,fontWeight:600,marginBottom:8}}>As Partners</div>
-                            {partnerMatches.length > 0 ? (
-                              <div>
-                                {(() => {
-                                  const pWins = partnerMatches.filter(m=>{const w=win(m.sets);return (m.team_a.includes(h2hPlayer1)&&w==="A")||(m.team_b.includes(h2hPlayer1)&&w==="B");}).length;
-                                  const pLoss = partnerMatches.length - pWins;
-                                  return <div style={{fontSize:13,fontWeight:700}}><span style={{color:A}}>{pWins}W</span><span style={{color:MT}}> - </span><span style={{color:pLoss>0?DG:TX}}>{pLoss}L</span></div>;
-                                })()}
-                              </div>
-                            ) : <div style={{fontSize:12,color:MT}}>No matches</div>}
-                          </div>
-                          <div style={{background:CD2,padding:12,borderRadius:8}}>
-                            <div style={{fontSize:11,color:MT,fontWeight:600,marginBottom:8}}>As Opponents</div>
-                            {opponentMatches.length > 0 ? (
-                              <div>
-                                {(() => {
-                                  const oWins = opponentMatches.filter(m=>{const w=win(m.sets);return (m.team_a.includes(h2hPlayer1)&&w==="A")||(m.team_b.includes(h2hPlayer1)&&w==="B");}).length;
-                                  const oLoss = opponentMatches.length - oWins;
-                                  return <div style={{fontSize:13,fontWeight:700}}><span style={{color:A}}>{oWins}W</span><span style={{color:MT}}> - </span><span style={{color:oLoss>0?DG:TX}}>{oLoss}L</span></div>;
-                                })()}
-                              </div>
-                            ) : <div style={{fontSize:12,color:MT}}>No matches</div>}
-                          </div>
-                        </div>
-
-                        {/* Last 5 Encounters */}
-                        {h2hMatches.length > 0 && (
-                          <div>
-                            <h3 style={{fontSize:13,fontWeight:700,color:TX,marginBottom:12}}>Last 5 Encounters</h3>
-                            <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                              {h2hMatches.sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5).map(m=>{
-                                const w=win(m.sets);
-                                const p1Won=(m.team_a.includes(h2hPlayer1)&&w==="A")||(m.team_b.includes(h2hPlayer1)&&w==="B");
-                                return (
-                                  <div key={m.id} style={{padding:10,background:CD,borderRadius:8}}>
-                                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
-                                      <span style={{fontSize:11,fontWeight:600,color:p1Won?A:DG}}>{p1Won?"✓ Won":"✗ Lost"}</span>
-                                      <span style={{fontSize:10,color:MT}}>{formatDate(m.date)}</span>
-                                    </div>
-                                    <div style={{fontSize:10,display:"flex",gap:4}}>
-                                      {m.sets.map((s,i)=>{const isA=m.team_a.includes(h2hPlayer1);const pWon=isA?s[0]>s[1]:s[1]>s[0];return <span key={i} style={{color:pWon?A:DG}}>{s[0]}-{s[1]}</span>;})}
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
-                      </>
-                    );
-                  })()}
-                </>
-              )}
-            </div>
-          )}
 
           {/* SETTINGS VIEW */}
           {sidebarView==="settings" && (

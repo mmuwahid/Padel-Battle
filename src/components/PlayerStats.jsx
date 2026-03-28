@@ -127,6 +127,8 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,fm,sup
 
   // FT-04: Analytics computed data (mockup-aligned: 5 sections)
   const [analyticsSection,setAnalyticsSection]=useState("league");
+  const [h2hP1,setH2hP1]=useState(null);
+  const [h2hP2,setH2hP2]=useState(null);
   const analyticsData=useMemo(()=>{
     if(fm.length===0)return null;
     const totalMatches=fm.length;
@@ -196,7 +198,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,fm,sup
         <div>
           {/* Analytics Section Tabs — matching mockup control panel */}
           <div style={{display:"flex",gap:4,marginBottom:16,overflowX:"auto",paddingBottom:4}}>
-            {[["league","📈 League"],["partnership","🤝 Partners"],["opponent","🎯 H2H"],["insights","🏆 Insights"]].map(([k,l])=>(
+            {[["league","📈 League"],["partnership","🤝 Partners"],["opponent","⚔️ H2H"],["insights","💡 Insights"]].map(([k,l])=>(
               <button key={k} onClick={()=>setAnalyticsSection(k)} style={{padding:"8px 12px",borderRadius:8,border:`1px solid ${analyticsSection===k?A:BD}`,background:analyticsSection===k?`${A}15`:"transparent",color:analyticsSection===k?A:MT,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif",whiteSpace:"nowrap"}}>{l}</button>
             ))}
           </div>
@@ -296,21 +298,81 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,fm,sup
 
           {/* OPPONENT ANALYSIS (H2H) */}
           {analyticsSection==="opponent"&&<div>
-            <div style={{display:"flex",gap:12,marginBottom:12,fontSize:11}}>
-              <div style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:12,height:12,borderRadius:2,background:A}}/><span style={{color:MT}}>Wins</span></div>
-              <div style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:12,height:12,borderRadius:2,background:DG}}/><span style={{color:MT}}>Losses</span></div>
-            </div>
-            {/* H2H bars for each player pair */}
-            {analyticsData.matchups.slice(0,8).map((x,i)=>{const total=x.w+x.l;const wp=total>0?(x.w/total)*100:50;return(
-              <div key={i} style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-                <div style={{minWidth:80,fontSize:11,color:TX,fontWeight:600}}>{getName(x.p1)}</div>
-                <div style={{flex:1,display:"flex",height:32,borderRadius:6,overflow:"hidden"}}>
-                  <div style={{width:`${wp}%`,background:A,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:"#000",minWidth:20}}>{x.w}W</div>
-                  <div style={{width:`${100-wp}%`,background:DG,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:"#fff",minWidth:20}}>{x.l}L</div>
-                </div>
-                <div style={{minWidth:50,textAlign:"right",fontSize:11,fontWeight:700,color:TX}}>{x.w}W-{x.l}L</div>
+            {/* Player Selectors */}
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
+              <div>
+                <label style={{display:"block",fontSize:11,color:MT,fontWeight:600,marginBottom:6}}>Player 1</label>
+                <select value={h2hP1||""} onChange={e=>setH2hP1(e.target.value||null)} style={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:12,fontFamily:"'Outfit',sans-serif",outline:"none",cursor:"pointer"}}>
+                  <option value="">Select player</option>
+                  {players.map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}
+                </select>
               </div>
-            );})}
+              <div>
+                <label style={{display:"block",fontSize:11,color:MT,fontWeight:600,marginBottom:6}}>Player 2</label>
+                <select value={h2hP2||""} onChange={e=>setH2hP2(e.target.value||null)} style={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:12,fontFamily:"'Outfit',sans-serif",outline:"none",cursor:"pointer"}}>
+                  <option value="">Select player</option>
+                  {players.filter(p=>p.id!==h2hP1).map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}
+                </select>
+              </div>
+            </div>
+
+            {h2hP1&&h2hP2?(() => {
+              const p1=players.find(p=>p.id===h2hP1);
+              const p2=players.find(p=>p.id===h2hP2);
+              const h2hM=matches.filter(m=>(m.team_a.includes(h2hP1)&&m.team_b.includes(h2hP2))||(m.team_a.includes(h2hP2)&&m.team_b.includes(h2hP1)));
+              const p1W=h2hM.filter(m=>{const w=win(m.sets);return (m.team_a.includes(h2hP1)&&w==="A")||(m.team_b.includes(h2hP1)&&w==="B");}).length;
+              const p2W=h2hM.length-p1W;
+              const partM=matches.filter(m=>(m.team_a.includes(h2hP1)&&m.team_a.includes(h2hP2))||(m.team_b.includes(h2hP1)&&m.team_b.includes(h2hP2)));
+              const oppM=matches.filter(m=>(m.team_a.includes(h2hP1)&&m.team_b.includes(h2hP2))||(m.team_a.includes(h2hP2)&&m.team_b.includes(h2hP1)));
+              const pW=partM.filter(m=>{const w=win(m.sets);return (m.team_a.includes(h2hP1)&&w==="A")||(m.team_b.includes(h2hP1)&&w==="B");}).length;
+              const pL=partM.length-pW;
+              return (<>
+                {/* H2H Card */}
+                <div style={{background:CD2,padding:16,borderRadius:12,marginBottom:16,textAlign:"center"}}>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:12,marginBottom:12}}>
+                    <div style={{width:48,height:48,borderRadius:"50%",background:`${A}20`,border:`2px solid ${A}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:800,color:A}}>{(p1?.name||"?")[0]}</div>
+                    <div style={{fontSize:16,fontWeight:700,color:TX}}>{p1W} - {p2W}</div>
+                    <div style={{width:48,height:48,borderRadius:"50%",background:`${A}20`,border:`2px solid ${A}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:800,color:A}}>{(p2?.name||"?")[0]}</div>
+                  </div>
+                  <div style={{width:"100%",height:4,background:CD,borderRadius:2,overflow:"hidden",marginBottom:8}}>
+                    <div style={{width:`${h2hM.length>0?(p1W/h2hM.length)*100:50}%`,height:"100%",background:A}}/>
+                  </div>
+                  <div style={{fontSize:11,color:MT}}>All-time record ({h2hM.length} matches)</div>
+                </div>
+
+                {/* As Partners / As Opponents */}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
+                  <div style={{background:CD2,padding:12,borderRadius:8}}>
+                    <div style={{fontSize:11,color:MT,fontWeight:600,marginBottom:8}}>As Partners</div>
+                    {partM.length>0?<div style={{fontSize:13,fontWeight:700}}><span style={{color:A}}>{pW}W</span><span style={{color:MT}}> - </span><span style={{color:pL>0?DG:TX}}>{pL}L</span></div>:<div style={{fontSize:12,color:MT}}>No matches</div>}
+                  </div>
+                  <div style={{background:CD2,padding:12,borderRadius:8}}>
+                    <div style={{fontSize:11,color:MT,fontWeight:600,marginBottom:8}}>As Opponents</div>
+                    {oppM.length>0?<div style={{fontSize:13,fontWeight:700}}><span style={{color:A}}>{p1W}W</span><span style={{color:MT}}> - </span><span style={{color:p2W>0?DG:TX}}>{p2W}L</span></div>:<div style={{fontSize:12,color:MT}}>No matches</div>}
+                  </div>
+                </div>
+
+                {/* Last 5 Encounters */}
+                {h2hM.length>0&&<div>
+                  <h3 style={{fontSize:13,fontWeight:700,color:TX,marginBottom:12}}>Last 5 Encounters</h3>
+                  <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                    {h2hM.sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5).map(m=>{
+                      const w=win(m.sets);
+                      const p1Won=(m.team_a.includes(h2hP1)&&w==="A")||(m.team_b.includes(h2hP1)&&w==="B");
+                      return (<div key={m.id} style={{padding:10,background:CD,borderRadius:8}}>
+                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+                          <span style={{fontSize:11,fontWeight:600,color:p1Won?A:DG}}>{p1Won?"\u2713 "+getName(h2hP1)+" won":"\u2717 "+getName(h2hP2)+" won"}</span>
+                          <span style={{fontSize:10,color:MT}}>{formatDate(m.date)}</span>
+                        </div>
+                        <div style={{fontSize:10,display:"flex",gap:4}}>
+                          {m.sets.map((s,i)=>{const isA=m.team_a.includes(h2hP1);const pWon=isA?s[0]>s[1]:s[1]>s[0];return <span key={i} style={{color:pWon?A:DG}}>{s[0]}-{s[1]}</span>;})}
+                        </div>
+                      </div>);
+                    })}
+                  </div>
+                </div>}
+              </>);
+            })():<div style={{textAlign:"center",padding:24,color:MT,fontSize:12}}>Select two players to compare their head-to-head record</div>}
           </div>}
 
           {/* MATCH INSIGHTS */}

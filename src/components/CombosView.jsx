@@ -54,7 +54,7 @@ export function CombosView({combos,players,fm,pm,getName}){
   return (
     <div style={{padding:"20px 16px",maxWidth:"600px",margin:"0 auto"}}>
       <div style={{display:"flex",gap:6,marginBottom:16}}>
-        {[["duos","🔥 Best Duos"],["player","👤 My Combos"],["matrix","📊 Chemistry"]].map(([k,l])=>(
+        {[["duos","🔥 Best Duos"],["player","👤 My Combos"],["matrix","🧪 Chemistry"]].map(([k,l])=>(
           <button key={k} onClick={()=>setView(k)} style={{padding:"6px 12px",borderRadius:8,border:`1px solid ${view===k?A:BD}`,background:view===k?`${A}15`:"transparent",color:view===k?A:MT,fontSize:11,fontWeight:600,cursor:"pointer",flex:1,textAlign:"center"}}>{l}</button>
         ))}
       </div>
