@@ -56,6 +56,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
   const [adminEditName,setAdminEditName]=useState("");
   const [confirmDeactivate,setConfirmDeactivate]=useState(null);
   const [confirmRegenCode,setConfirmRegenCode]=useState(false);
+  const [adminLoading,setAdminLoading]=useState(null);
   const [newPlayerName,setNewPlayerName]=useState("");
   const [newPlayerNick,setNewPlayerNick]=useState("");
   const [claimError,setClaimError]=useState("");
@@ -103,7 +104,6 @@ function AppContent({leagueId,user,onSwitchLeague}){
       setAvatarUrl(url);
       showToast("Photo updated!");
     }catch(err){
-      console.error("Avatar upload error:",err);
       showToast("Failed to upload photo","error");
     }
     setAvatarUploading(false);
@@ -133,7 +133,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
         const reg=await navigator.serviceWorker.ready;
         const sub=await reg.pushManager.getSubscription();
         setPushSubscribed(!!sub);
-      }catch(e){console.log("Push check error:",e);}
+      }catch(e){/* push check — non-critical */}
     })();
   },[]);
   // Admin Management state
@@ -256,7 +256,6 @@ function AppContent({leagueId,user,onSwitchLeague}){
 
       setLoading(false);
     } catch (err) {
-      console.error("Load league data error:",err);
       setLoading(false);
     }
   };;
@@ -368,13 +367,13 @@ function AppContent({leagueId,user,onSwitchLeague}){
       if (err) throw err;
       await loadLeagueData();
     } catch (err) {
-      console.error("Failed to update role:", err);
       showToast("Failed to update member role","error");
     }
   };
 
   // Update player name
   const updatePlayerName = async (playerId, newName) => {
+    setAdminLoading(playerId+"-rename");
     try {
       const {error:err} = await supabase
         .from("players")
@@ -383,13 +382,14 @@ function AppContent({leagueId,user,onSwitchLeague}){
       if (err) throw err;
       await loadLeagueData();
     } catch (err) {
-      console.error("Failed to update player:", err);
       showToast("Failed to update player name","error");
     }
+    setAdminLoading(null);
   };
 
   // Deactivate player
   const deactivatePlayer = async (playerId) => {
+    setAdminLoading(playerId+"-deactivate");
     try {
       const {error:err} = await supabase
         .from("players")
@@ -398,9 +398,9 @@ function AppContent({leagueId,user,onSwitchLeague}){
       if (err) throw err;
       await loadLeagueData();
     } catch (err) {
-      console.error("Failed to deactivate player:", err);
       showToast("Failed to deactivate player","error");
     }
+    setAdminLoading(null);
   };
 
   // Export matches as CSV
@@ -446,7 +446,6 @@ function AppContent({leagueId,user,onSwitchLeague}){
       if (err) throw err;
       await loadLeagueData();
     } catch (err) {
-      console.error("Failed to regenerate code:", err);
       showToast("Failed to regenerate invite code","error");
     }
   };
@@ -491,7 +490,6 @@ function AppContent({leagueId,user,onSwitchLeague}){
       setPushSubscribed(true);
       return true;
     } catch (err) {
-      console.error("Push subscribe error:", err);
       showToast("Failed to enable notifications","error");
       return false;
     }
@@ -509,7 +507,6 @@ function AppContent({leagueId,user,onSwitchLeague}){
       }
       setPushSubscribed(false);
     } catch (err) {
-      console.error("Push unsubscribe error:", err);
     }
   };
 
@@ -559,9 +556,8 @@ function AppContent({leagueId,user,onSwitchLeague}){
       const { data, error } = await supabase.functions.invoke("push-notify", {
         body: { league_id: leagueId, type, title, body, exclude_user_id: user.id },
       });
-      if (error) console.error("Push notify error:", error);
+      if (error) { /* push notify error — non-critical */ }
     } catch (err) {
-      console.error("Push notify failed:", err);
     }
   };
 
@@ -815,6 +811,9 @@ function AppContent({leagueId,user,onSwitchLeague}){
       }}>
         {/* Header with user info */}
         <div style={{padding:"20px 16px",paddingTop:"calc(env(safe-area-inset-top, 0px) + 20px)",borderBottom:`1px solid ${BD}`}}>
+          <div style={{display:"flex",justifyContent:"flex-end",marginBottom:8}}>
+            <button onClick={()=>setSidebarOpen(false)} style={{background:"none",border:"none",color:MT,fontSize:20,cursor:"pointer",padding:"4px 8px",lineHeight:1}} aria-label="Close sidebar">✕</button>
+          </div>
           <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
             <div style={{width:56,height:56,borderRadius:"50%",background:`${A}20`,border:`2px solid ${A}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,fontWeight:800,color:A,overflow:"hidden"}}>
               {avatarUrl?<img src={avatarUrl} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:(user.user_metadata?.display_name||user.email||"U")[0].toUpperCase()}
@@ -827,10 +826,13 @@ function AppContent({leagueId,user,onSwitchLeague}){
         </div>
 
         {/* Sidebar content — NAVIGATION ONLY, closes on selection */}
-        <div style={{flex:1,padding:"16px",overflow:"auto"}}>
+          <style>{`
+            .sidebar-nav button:active { background: ${CD2} !important; }
+          `}</style>
+        <div className="sidebar-nav" style={{flex:1,padding:"16px",overflow:"auto"}}>
           <div>
             <button onClick={()=>{setSidebarView("profile");setSidebarOpen(false);}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>
-              My Profile
+              👤 My Profile
             </button>
           </div>
 
@@ -845,7 +847,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
               </div>
             </div>
             <button onClick={()=>{onSwitchLeague();}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>
-              Switch League
+              🔄 Switch League
             </button>
             <button onClick={()=>{const code=league?.invite_code;if(code){const url=`${window.location.origin}${window.location.pathname}?invite=${code}`;if(navigator.share)navigator.share({title:"Join my PadelHub league",text:`Join "${league?.name}" on PadelHub!`,url});else{navigator.clipboard.writeText(url);showToast("Invite link copied!");}}}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>📩 Invite Players</button>
           </div>
@@ -855,7 +857,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
           <div>
             <div style={{fontSize:10,color:MT,fontWeight:600,letterSpacing:1,textTransform:"uppercase",paddingLeft:16,marginBottom:8}}>App</div>
             <button onClick={()=>{setSidebarView("settings");setSidebarOpen(false);}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>
-              Settings
+              ⚙️ Settings
             </button>
             {installPrompt ? (
               <button onClick={handleInstall} style={{width:"100%",padding:"12px 16px",background:`${A}15`,border:`1px solid ${A}40`,borderRadius:8,color:A,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",transition:"all 0.2s"}}>
@@ -972,9 +974,15 @@ function AppContent({leagueId,user,onSwitchLeague}){
                         const minElo = Math.min(...last10);
                         const maxElo = Math.max(...last10);
                         const range = maxElo - minElo || 1;
-                        return last10.map((e, i) => (
-                          <div key={i} style={{flex:1,background:A,borderRadius:2,height:`${Math.max(((e-minElo)/range)*100,5)}%`,opacity:0.8}}/>
-                        ));
+                        return (<>
+                          <div style={{display:"flex",flexDirection:"column",justifyContent:"space-between",marginRight:4,fontSize:9,color:MT,fontFamily:"'JetBrains Mono'",fontWeight:600,minWidth:28,textAlign:"right"}}>
+                            <span>{Math.round(maxElo)}</span>
+                            <span>{Math.round(minElo)}</span>
+                          </div>
+                          {last10.map((e, i) => (
+                            <div key={i} style={{flex:1,background:A,borderRadius:2,height:`${Math.max(((e-minElo)/range)*100,5)}%`,opacity:0.8}}/>
+                          ))}
+                        </>);
                       })()}
                     </div>
                   </div>
@@ -1048,10 +1056,10 @@ function AppContent({leagueId,user,onSwitchLeague}){
                           <div style={{fontSize:13,fontWeight:600,color:TX}}>{p.nickname||p.name}</div>
                           <div style={{fontSize:10,color:claimed?MT:`${MT}80`}}>{claimed?(profile?.email||"Linked account"):"Not yet joined"}</div>
                         </div>
-                        {adminEditId===p.id?<div style={{display:"flex",gap:4,alignItems:"center"}}><input value={adminEditName} onChange={e=>setAdminEditName(e.target.value)} style={{width:80,padding:"4px 6px",borderRadius:6,border:"1px solid "+A,background:CD2,color:TX,fontSize:11,fontFamily:"'Outfit',sans-serif"}} autoFocus onKeyDown={e=>{if(e.key==="Enter"&&adminEditName.trim()){updatePlayerName(p.id,adminEditName.trim());setAdminEditId(null);}if(e.key==="Escape")setAdminEditId(null);}}/><button onClick={()=>{if(adminEditName.trim()){updatePlayerName(p.id,adminEditName.trim());}setAdminEditId(null);}} style={{padding:"4px 8px",background:A,border:"none",borderRadius:6,color:"#000",fontSize:10,fontWeight:700,cursor:"pointer"}}>OK</button><button onClick={()=>setAdminEditId(null)} style={{padding:"4px 6px",background:"none",border:"1px solid "+BD,borderRadius:6,color:MT,fontSize:10,cursor:"pointer"}}>X</button></div>:<button onClick={()=>{setAdminEditId(p.id);setAdminEditName(p.name);}} style={{padding:"6px 10px",background:A,border:"none",borderRadius:6,color:"#000",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
+                        {adminEditId===p.id?<div style={{display:"flex",gap:4,alignItems:"center"}}><input value={adminEditName} onChange={e=>setAdminEditName(e.target.value)} style={{width:80,padding:"4px 6px",borderRadius:6,border:"1px solid "+A,background:CD2,color:TX,fontSize:11,fontFamily:"'Outfit',sans-serif"}} autoFocus onKeyDown={e=>{if(e.key==="Enter"&&adminEditName.trim()){updatePlayerName(p.id,adminEditName.trim());setAdminEditId(null);}if(e.key==="Escape")setAdminEditId(null);}}/><button onClick={()=>{if(adminEditName.trim()){updatePlayerName(p.id,adminEditName.trim());}setAdminEditId(null);}} disabled={adminLoading===p.id+"-rename"} style={{padding:"4px 8px",background:A,border:"none",borderRadius:6,color:"#000",fontSize:10,fontWeight:700,cursor:"pointer",opacity:adminLoading===p.id+"-rename"?0.5:1}}>{adminLoading===p.id+"-rename"?"..":"OK"}</button><button onClick={()=>setAdminEditId(null)} style={{padding:"4px 6px",background:"none",border:"1px solid "+BD,borderRadius:6,color:MT,fontSize:10,cursor:"pointer"}}>X</button></div>:<button onClick={()=>{setAdminEditId(p.id);setAdminEditName(p.name);}} style={{padding:"6px 10px",background:A,border:"none",borderRadius:6,color:"#000",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
                           Rename
                         </button>}
-                        {confirmDeactivate===p.id?<div style={{display:"flex",gap:4,alignItems:"center"}}><span style={{fontSize:10,color:DG}}>Sure?</span><button onClick={()=>{deactivatePlayer(p.id);setConfirmDeactivate(null);}} style={{padding:"4px 8px",background:DG,border:"none",borderRadius:6,color:"#fff",fontSize:10,fontWeight:700,cursor:"pointer"}}>Yes</button><button onClick={()=>setConfirmDeactivate(null)} style={{padding:"4px 6px",background:"none",border:"1px solid "+BD,borderRadius:6,color:MT,fontSize:10,cursor:"pointer"}}>No</button></div>:<button onClick={()=>setConfirmDeactivate(p.id)} style={{padding:"6px 10px",background:DG,border:"none",borderRadius:6,color:"#fff",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
+                        {confirmDeactivate===p.id?<div style={{display:"flex",gap:4,alignItems:"center"}}><span style={{fontSize:10,color:DG}}>Sure?</span><button onClick={()=>{deactivatePlayer(p.id);setConfirmDeactivate(null);}} disabled={adminLoading===p.id+"-deactivate"} style={{padding:"4px 8px",background:DG,border:"none",borderRadius:6,color:"#fff",fontSize:10,fontWeight:700,cursor:"pointer",opacity:adminLoading===p.id+"-deactivate"?0.5:1}}>{adminLoading===p.id+"-deactivate"?"..":"Yes"}</button><button onClick={()=>setConfirmDeactivate(null)} style={{padding:"4px 6px",background:"none",border:"1px solid "+BD,borderRadius:6,color:MT,fontSize:10,cursor:"pointer"}}>No</button></div>:<button onClick={()=>setConfirmDeactivate(p.id)} style={{padding:"6px 10px",background:DG,border:"none",borderRadius:6,color:"#fff",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
                           Deactivate
                         </button>}
                       </div>
@@ -1425,7 +1433,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
         <Suspense fallback={<LazyFallback/>}><CombosView
           combos={combos}
           players={players}
-          fm={matches}
+          matches={matches}
           pm={Object.fromEntries(players.map(p=>[p.id,p]))}
           getName={getName}
         /></Suspense>
@@ -1443,7 +1451,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
               seasonId={selectedSeason}
           sp={selectedPlayer}
           setSp={setSelectedPlayer}
-          fm={matches}
+          matches={matches}
           supabase={supabase}
           leagueId={leagueId}
           isAdmin={isAdmin}

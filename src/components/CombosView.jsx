@@ -2,14 +2,14 @@ import React, { useState, useMemo } from "react";
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, BL, PU } from '../theme';
 import { formatTeam, win } from '../utils/helpers';
 
-export function CombosView({combos,players,fm,pm,getName}){
+export function CombosView({combos,players,matches,pm,getName}){
   const [view,setView]=useState("duos");
   const [selPlayer,setSelP]=useState("");
 
   const matrix=useMemo(()=>{
     const m={};
     players.forEach(p=>{m[p.id]={};players.forEach(q=>{if(p.id!==q.id)m[p.id][q.id]={w:0,l:0,games:0};});});
-    fm.forEach(match=>{
+    matches.forEach(match=>{
       const w=win(match.sets);
       [[match.team_a,w==="A"],[match.team_b,w==="B"]].forEach(([team,won])=>{
         const [a,b]=team;
@@ -17,7 +17,7 @@ export function CombosView({combos,players,fm,pm,getName}){
       });
     });
     return m;
-  },[players,fm]);
+  },[players,matches]);
 
   const activePlayers=players.filter(p=>{const s=matrix[p.id];return s&&Object.values(s).some(v=>v.games>0);});
   // S1-03: Fix combos — sort best by win rate desc, worst by win rate asc
@@ -173,6 +173,7 @@ export function CombosView({combos,players,fm,pm,getName}){
         <h2 style={{fontSize:16,fontWeight:700,marginBottom:6}}>Chemistry Matrix</h2>
         <p style={{fontSize:12,color:MT,marginBottom:14}}>Win % when paired. GP = Games Played.</p>
         {activePlayers.length<2?<p style={{fontSize:13,color:MT}}>Need at least 2 active players</p>:
+        <div style={{position:"relative"}}>
         <div style={{overflowX:"auto",paddingBottom:8}}>
           <div style={{display:"inline-grid",gridTemplateColumns:`70px repeat(${activePlayers.length},52px)`,gap:2,fontSize:10}}>
             <div/>
@@ -198,6 +199,8 @@ export function CombosView({combos,players,fm,pm,getName}){
               </React.Fragment>
             ))}
           </div>
+        </div>
+        <div style={{position:"absolute",top:0,right:0,bottom:8,width:32,background:`linear-gradient(to right, transparent, ${BG})`,pointerEvents:"none"}}/>
         </div>}
       </div>}
     </div>

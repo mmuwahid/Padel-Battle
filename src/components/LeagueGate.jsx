@@ -15,6 +15,10 @@ export function LeagueGate({user,children,showToast}){
   const [editingLeagueId,setEditingLeagueId]=useState(null);
   const [editLeagueName,setEditLeagueName]=useState("");
   const [joinMsg,setJoinMsg]=useState("");
+  const [creating,setCreating]=useState(false);
+  const [joining,setJoining]=useState(false);
+  const [toast,setToast]=useState(null);
+  const _toast=(msg,type="success")=>{if(showToast)showToast(msg,type);else{setToast({msg,type});setTimeout(()=>setToast(null),3000);}};
 
   useEffect(()=>{
     const init = async () => {
@@ -55,7 +59,6 @@ export function LeagueGate({user,children,showToast}){
       setInviteCode("");
       setJoinMsg(`Welcome to ${leagueData.name}!`);
     } catch (err) {
-      console.error("Auto-join error:", err);
       // Don't block — user can still manually join
     }
   };
@@ -72,7 +75,6 @@ export function LeagueGate({user,children,showToast}){
       setLeagues(userLeagues);
       setLoading(false);
     } catch (err) {
-      console.error("Load leagues error:",err);
       setLoading(false);
     }
   };
@@ -84,6 +86,7 @@ export function LeagueGate({user,children,showToast}){
       setError("League name required");
       return;
     }
+    setCreating(true);
     try {
       // Create league (created_by required for RLS, trigger auto-adds user as admin)
       const {data:leagueData,error:leagueErr} = await supabase
@@ -117,6 +120,7 @@ export function LeagueGate({user,children,showToast}){
     } catch (err) {
       setError(err.message || "Failed to create league");
     }
+    setCreating(false);
   };
 
   const handleJoinLeague = async (e) => {
@@ -126,6 +130,7 @@ export function LeagueGate({user,children,showToast}){
       setError("Invite code required");
       return;
     }
+    setJoining(true);
     try {
       // Find league by invite_code
       const {data:leagues,error:findErr} = await supabase
@@ -168,6 +173,7 @@ export function LeagueGate({user,children,showToast}){
     } catch (err) {
       setError(err.message || "Failed to join league");
     }
+    setJoining(false);
   };
 
   const handleRenameLeague = async (leagueId) => {
@@ -185,7 +191,7 @@ export function LeagueGate({user,children,showToast}){
   const [deleteTyped,setDeleteTyped]=useState("");
   const handleDeleteLeague = async (leagueId, leagueName) => {
     if(deleteConfirmId!==leagueId){setDeleteConfirmId(leagueId);setDeleteTyped("");return;}
-    if(deleteTyped.trim()!==leagueName.trim()){if(showToast)showToast("Name didn't match","error");return;}
+    if(deleteTyped.trim()!==leagueName.trim()){_toast("Name didn't match","error");return;}
     try {
       const {error:err} = await supabase.from("leagues").delete().eq("id",leagueId);
       if(err) throw err;
@@ -270,6 +276,7 @@ export function LeagueGate({user,children,showToast}){
             />
             <button
               type="submit"
+              disabled={creating}
               style={{
                 padding:"10px 18px",
                 background:A,
@@ -278,11 +285,12 @@ export function LeagueGate({user,children,showToast}){
                 color:"#000",
                 fontWeight:700,
                 fontSize:13,
-                cursor:"pointer",
+                cursor:creating?"not-allowed":"pointer",
                 fontFamily:"'Outfit',sans-serif",
+                opacity:creating?0.6:1,
               }}
             >
-              Create
+              {creating?"Creating...":"Create"}
             </button>
           </form>
         </div>
@@ -310,6 +318,7 @@ export function LeagueGate({user,children,showToast}){
             />
             <button
               type="submit"
+              disabled={joining}
               style={{
                 padding:"10px 18px",
                 background:A,
@@ -318,16 +327,18 @@ export function LeagueGate({user,children,showToast}){
                 color:"#000",
                 fontWeight:700,
                 fontSize:13,
-                cursor:"pointer",
+                cursor:joining?"not-allowed":"pointer",
                 fontFamily:"'Outfit',sans-serif",
+                opacity:joining?0.6:1,
               }}
             >
-              Join
+              {joining?"Joining...":"Join"}
             </button>
           </form>
         </div>
 
         {error && <div style={{marginTop:14,color:DG,fontSize:12,padding:"10px 14px",background:`${DG}15`,borderRadius:10,border:`1px solid ${DG}30`}}>{error}</div>}
+        {toast && <div role="alert" aria-live="polite" style={{position:"fixed",top:`calc(env(safe-area-inset-top, 0px) + 12px)`,left:"50%",transform:"translateX(-50%)",padding:"10px 20px",borderRadius:10,background:toast.type==="error"?DG:A,color:"#fff",fontSize:12,fontWeight:700,zIndex:9999,boxShadow:"0 4px 12px rgba(0,0,0,0.3)"}}>{toast.msg}</div>}
       </div>
     </div>
   );

@@ -18,7 +18,6 @@ export function MatchHistory({matches,pm,players,onEdit,supabase,isAdmin,getName
       if(onMatchDeleted)onMatchDeleted();
       if(showToast)showToast("Match deleted");
     }catch(err){
-      console.error("Delete match error:",err);
       if(showToast)showToast("Failed to delete match","error");
     }
   }

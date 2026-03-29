@@ -4,7 +4,7 @@ import { ACHS } from '../data/achievements';
 import { FD } from './FormDots';
 import { formatTeam, win, formatDate } from '../utils/helpers';
 
-export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,fm,supabase,leagueId,isAdmin,getName,sel,onPlayersChange}){
+export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matches,supabase,leagueId,isAdmin,getName,sel,onPlayersChange}){
   const player=sp?pm[sp]:null;
   const stats=sp?ps[sp]:null;
   const [subTab,setSubTab]=useState("roster"); // roster | analytics
@@ -20,7 +20,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,fm,sup
   const h2h=useMemo(()=>{
     if(!sp)return[];
     const r={};
-    fm.forEach(m=>{
+    matches.forEach(m=>{
       const w=win(m.sets);
       const my=m.team_a.includes(sp)?"A":m.team_b.includes(sp)?"B":null;
       if(!my)return;
@@ -32,7 +32,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,fm,sup
       });
     });
     return Object.entries(r).map(([pid,x])=>({pid,...x,games:x.w+x.l})).sort((a,b)=>b.games-a.games);
-  },[sp,fm]);
+  },[sp,matches]);
 
   const inp={background:CD2,color:TX,border:`1px solid ${BD}`,borderRadius:10,padding:"10px 12px",fontSize:14,width:"100%",outline:"none",fontWeight:500};
 
@@ -46,7 +46,6 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,fm,sup
       setShowAddPlayer(false);
       if(onPlayersChange)onPlayersChange();
     }catch(err){
-      console.error("Add player error:",err);
     }
   }
 
@@ -57,7 +56,6 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,fm,sup
       setEditPid(null);
       if(onPlayersChange)onPlayersChange();
     }catch(err){
-      console.error("Update player error:",err);
     }
   }
 
@@ -71,7 +69,6 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,fm,sup
       if(playerErr)throw playerErr;
       if(onPlayersChange)onPlayersChange();
     }catch(err){
-      console.error("Delete player error:",err);
     }
   }
 
@@ -130,31 +127,31 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,fm,sup
   const [h2hP1,setH2hP1]=useState(null);
   const [h2hP2,setH2hP2]=useState(null);
   const analyticsData=useMemo(()=>{
-    if(fm.length===0)return null;
-    const totalMatches=fm.length;
-    const totalSets=fm.reduce((t,m)=>t+m.sets.length,0);
+    if(matches.length===0)return null;
+    const totalMatches=matches.length;
+    const totalSets=matches.reduce((t,m)=>t+m.sets.length,0);
     // Per-player stats
     const wr={};players.forEach(p=>{wr[p.id]={w:0,l:0,gw:0,gl:0};});
-    fm.forEach(m=>{const w=win(m.sets);const gA=m.sets.reduce((s,x)=>s+x[0],0);const gB=m.sets.reduce((s,x)=>s+x[1],0);
+    matches.forEach(m=>{const w=win(m.sets);const gA=m.sets.reduce((s,x)=>s+x[0],0);const gB=m.sets.reduce((s,x)=>s+x[1],0);
       m.team_a.forEach(pid=>{if(wr[pid]){if(w==="A")wr[pid].w++;else wr[pid].l++;wr[pid].gw+=gA;wr[pid].gl+=gB;}});
       m.team_b.forEach(pid=>{if(wr[pid]){if(w==="B")wr[pid].w++;else wr[pid].l++;wr[pid].gw+=gB;wr[pid].gl+=gA;}});
     });
     // Activity
     const activity={};players.forEach(p=>{activity[p.id]=0;});
-    fm.forEach(m=>{[...m.team_a,...m.team_b].forEach(pid=>{if(activity[pid]!==undefined)activity[pid]++;});});
+    matches.forEach(m=>{[...m.team_a,...m.team_b].forEach(pid=>{if(activity[pid]!==undefined)activity[pid]++;});});
     const mostActive=Object.entries(activity).filter(([,g])=>g>0).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([pid,games])=>({pid,games}));
     const topWinRate=Object.entries(wr).filter(([,x])=>x.w+x.l>=3).map(([pid,x])=>({pid,pct:x.w/(x.w+x.l)*100,w:x.w,l:x.l,games:x.w+x.l})).sort((a,b)=>b.pct-a.pct).slice(0,5);
     // Close matches
-    const closeMatches=fm.filter(m=>m.sets.some(s=>Math.abs(s[0]-s[1])<=1&&(s[0]+s[1])>0)).length;
+    const closeMatches=matches.filter(m=>m.sets.some(s=>Math.abs(s[0]-s[1])<=1&&(s[0]+s[1])>0)).length;
     // MOTM
-    const motmCount={};fm.forEach(m=>{if(m.motm){motmCount[m.motm]=(motmCount[m.motm]||0)+1;}});
+    const motmCount={};matches.forEach(m=>{if(m.motm){motmCount[m.motm]=(motmCount[m.motm]||0)+1;}});
     const topMotm=Object.entries(motmCount).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([pid,count])=>({pid,count}));
     // Monthly
-    const monthly={};fm.forEach(m=>{const key=m.date?.substring(0,7);if(key)monthly[key]=(monthly[key]||0)+1;});
+    const monthly={};matches.forEach(m=>{const key=m.date?.substring(0,7);if(key)monthly[key]=(monthly[key]||0)+1;});
     const monthlyArr=Object.entries(monthly).sort().slice(-6);
     // Partnership stats
     const partnerStats={};
-    fm.forEach(m=>{const w=win(m.sets);
+    matches.forEach(m=>{const w=win(m.sets);
       [[m.team_a,w==="A"],[m.team_b,w==="B"]].forEach(([team,won])=>{
         if(team.length===2){const [a,b]=team.sort();const k=`${a}|${b}`;
           if(!partnerStats[k])partnerStats[k]={a,b,w:0,l:0};
@@ -166,7 +163,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,fm,sup
     const worstPartnership=partnerships.length>1?partnerships[partnerships.length-1]:null;
     // H2H opponent analysis per player
     const h2hAll={};
-    fm.forEach(m=>{const w=win(m.sets);
+    matches.forEach(m=>{const w=win(m.sets);
       const process=(myTeam,oppTeam,won)=>{myTeam.forEach(me=>{oppTeam.forEach(opp=>{
         if(!h2hAll[me])h2hAll[me]={};if(!h2hAll[me][opp])h2hAll[me][opp]={w:0,l:0};
         if(won)h2hAll[me][opp].w++;else h2hAll[me][opp].l++;
@@ -181,9 +178,9 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,fm,sup
     });});
     matchups.sort((a,b)=>b.balance-a.balance);
     // Biggest wins (largest set differential)
-    const biggestWins=[...fm].map(m=>{const gA=m.sets.reduce((s,x)=>s+x[0],0);const gB=m.sets.reduce((s,x)=>s+x[1],0);return{...m,diff:Math.abs(gA-gB),winner:win(m.sets)};}).sort((a,b)=>b.diff-a.diff).slice(0,3);
+    const biggestWins=[...matches].map(m=>{const gA=m.sets.reduce((s,x)=>s+x[0],0);const gB=m.sets.reduce((s,x)=>s+x[1],0);return{...m,diff:Math.abs(gA-gB),winner:win(m.sets)};}).sort((a,b)=>b.diff-a.diff).slice(0,3);
     return {totalMatches,totalSets,mostActive,topWinRate,closeMatches,topMotm,monthlyArr,wr,partnerships,bestPartnership,worstPartnership,h2hAll,matchups:matchups.slice(0,5),biggestWins};
-  },[fm,players]);
+  },[matches,players]);
 
   return (
     <div style={{padding:"20px 16px",maxWidth:"600px",margin:"0 auto"}}>
@@ -319,11 +316,11 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,fm,sup
             {h2hP1&&h2hP2?(() => {
               const p1=players.find(p=>p.id===h2hP1);
               const p2=players.find(p=>p.id===h2hP2);
-              const h2hM=fm.filter(m=>(m.team_a.includes(h2hP1)&&m.team_b.includes(h2hP2))||(m.team_a.includes(h2hP2)&&m.team_b.includes(h2hP1)));
+              const h2hM=matches.filter(m=>(m.team_a.includes(h2hP1)&&m.team_b.includes(h2hP2))||(m.team_a.includes(h2hP2)&&m.team_b.includes(h2hP1)));
               const p1W=h2hM.filter(m=>{const w=win(m.sets);return (m.team_a.includes(h2hP1)&&w==="A")||(m.team_b.includes(h2hP1)&&w==="B");}).length;
               const p2W=h2hM.length-p1W;
-              const partM=fm.filter(m=>(m.team_a.includes(h2hP1)&&m.team_a.includes(h2hP2))||(m.team_b.includes(h2hP1)&&m.team_b.includes(h2hP2)));
-              const oppM=fm.filter(m=>(m.team_a.includes(h2hP1)&&m.team_b.includes(h2hP2))||(m.team_a.includes(h2hP2)&&m.team_b.includes(h2hP1)));
+              const partM=matches.filter(m=>(m.team_a.includes(h2hP1)&&m.team_a.includes(h2hP2))||(m.team_b.includes(h2hP1)&&m.team_b.includes(h2hP2)));
+              const oppM=matches.filter(m=>(m.team_a.includes(h2hP1)&&m.team_b.includes(h2hP2))||(m.team_a.includes(h2hP2)&&m.team_b.includes(h2hP1)));
               const pW=partM.filter(m=>{const w=win(m.sets);return (m.team_a.includes(h2hP1)&&w==="A")||(m.team_b.includes(h2hP1)&&w==="B");}).length;
               const pL=partM.length-pW;
               if(h2hM.length===0 && partM.length===0) return (

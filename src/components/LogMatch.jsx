@@ -62,7 +62,6 @@ export function LogMatch({players,matches,supabase,leagueId,pm,em,setEm,goBack,s
         sendPushNotification("match","New Match Logged",`${tANames} vs ${tBNames}`);
       }
     }catch(err){
-      console.error("Submit match error:",err);
       if(showToast)showToast("Failed to save match","error");
     }finally{
       setSaving(false);

@@ -42,7 +42,7 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
       }
       setShowForm(false);setStep(1);setTA(["",""]);setTB(["",""]);setNotes("");setLocation("");
       if(onUpdate)onUpdate();
-    }catch(err){showToast(err.message||"Failed to schedule","error");console.error("Schedule error:",err);}
+    }catch(err){showToast(err.message||"Failed to schedule","error");}
     setSaving(false);
   }
 
@@ -94,7 +94,7 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
       const {error:ue}=await supabase.from("challenges").update({status:"played",match_id:md.id}).eq("id",ch.id);
       if(ue)throw ue;
       showToast("Match logged!");setLoggingMatch(null);if(onUpdate)onUpdate();
-    }catch(err){console.error("Log match error:",err);showToast(err.message||"Failed to log match","error");}
+    }catch(err){showToast(err.message||"Failed to log match","error");}
     setLogSaving(false);
   }
 
@@ -115,6 +115,12 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
       {/* New Challenge Form — Multi-step */}
       {showForm&&step===1&&(
         <div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:12}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:12}}>
+            <div style={{width:24,height:24,borderRadius:"50%",background:A,color:BG,fontSize:11,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>1</div>
+            <div style={{width:32,height:2,background:`${BD}`}}/>
+            <div style={{width:24,height:24,borderRadius:"50%",background:BD,color:MT,fontSize:11,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>2</div>
+            <span style={{fontSize:10,color:MT,marginLeft:4}}>Players → Details</span>
+          </div>
           <div style={{background:`${A}12`,border:`1px solid ${A}`,borderRadius:10,padding:12,marginBottom:14,display:"flex",alignItems:"center",gap:10}}>
             <span style={{fontSize:16}}>🎾</span>
             <span style={{fontSize:12,fontWeight:600,color:TX}}>Select Players</span>
@@ -147,6 +153,12 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
       )}
       {showForm&&step===2&&(
         <div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:12}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:12}}>
+            <div style={{width:24,height:24,borderRadius:"50%",background:`${A}30`,color:A,fontSize:11,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>✓</div>
+            <div style={{width:32,height:2,background:A}}/>
+            <div style={{width:24,height:24,borderRadius:"50%",background:A,color:BG,fontSize:11,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>2</div>
+            <span style={{fontSize:10,color:MT,marginLeft:4}}>Players → Details</span>
+          </div>
           <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:8,textTransform:"uppercase",letterSpacing:0.5}}>Match Date</div>
           <div style={{display:"flex",gap:8,marginBottom:14}}>
             <input type="date" value={date} min={new Date().toISOString().split("T")[0]} onChange={e=>setDate(e.target.value)} style={{...inp,flex:1}}/>

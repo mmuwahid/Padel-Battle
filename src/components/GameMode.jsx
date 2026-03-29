@@ -239,8 +239,7 @@ export function GameMode({ players, getName, supabase, leagueId, tournament, set
       if (error) throw error;
       setTournament(data);
     } catch (err) {
-      console.error("Start tournament error:", err);
-    }
+      }
   }
 
   async function recordScore(roundIdx, matchIdx, scoreA, scoreB) {
@@ -250,8 +249,7 @@ export function GameMode({ players, getName, supabase, leagueId, tournament, set
       if (error) throw error;
       setTournament({ ...tournament, scores: newScores });
     } catch (err) {
-      console.error("Record score error:", err);
-    }
+      }
   }
 
   function getPoints() {
@@ -289,8 +287,7 @@ export function GameMode({ players, getName, supabase, leagueId, tournament, set
       if (error) throw error;
       setTournament({ ...tournament, schedule: newSchedule });
     } catch (err) {
-      console.error("Next round error:", err);
-    }
+      }
   }
 
   async function endTournament() {
@@ -299,8 +296,7 @@ export function GameMode({ players, getName, supabase, leagueId, tournament, set
       if (error) throw error;
       setTournament({ ...tournament, status: "complete" });
     } catch (err) {
-      console.error("End tournament error:", err);
-    }
+      }
   }
 
   function resetTournament() {
@@ -383,8 +379,7 @@ export function GameMode({ players, getName, supabase, leagueId, tournament, set
       setTournament(data);
       setScreen("se-active");
     } catch (err) {
-      console.error("Create SE tournament error:", err);
-    }
+      }
   }
 
   // Advance winners in bracket after recording a score
@@ -416,8 +411,7 @@ export function GameMode({ players, getName, supabase, leagueId, tournament, set
         if (error) throw error;
         setTournament({ ...tournament, scores: newScores, schedule: newSchedule });
       } catch (err) {
-        console.error("Record SE score error:", err);
-      }
+        }
     } else {
       // Final round — just record score
       try {
@@ -425,8 +419,7 @@ export function GameMode({ players, getName, supabase, leagueId, tournament, set
         if (error) throw error;
         setTournament({ ...tournament, scores: newScores });
       } catch (err) {
-        console.error("Record SE score error:", err);
-      }
+        }
     }
   }
 
@@ -522,7 +515,7 @@ export function GameMode({ players, getName, supabase, leagueId, tournament, set
       if (error) throw error;
       setTournament(data);
       setScreen("de-active");
-    } catch (err) { console.error("Create DE tournament error:", err); }
+    } catch (err) { }
   }
 
   async function recordDEScore(bracket, roundIdx, matchIdx, scoreA, scoreB) {
@@ -567,7 +560,7 @@ export function GameMode({ players, getName, supabase, leagueId, tournament, set
       const { error } = await supabase.from("tournaments").update({ scores: newScores, schedule: newSchedule }).eq("id", tournament.id);
       if (error) throw error;
       setTournament({ ...tournament, scores: newScores, schedule: newSchedule });
-    } catch (err) { console.error("Record DE score error:", err); }
+    } catch (err) { }
   }
 
   function getDEStandings() {
@@ -659,7 +652,7 @@ export function GameMode({ players, getName, supabase, leagueId, tournament, set
       }).select().single();
       if (error) throw error;
       setTournament(data); setScreen("rr-active");
-    } catch (err) { console.error("Create RR tournament error:", err); }
+    } catch (err) { }
   }
 
   async function recordRRScore(roundIdx, matchIdx, scoreA, scoreB) {
@@ -668,7 +661,7 @@ export function GameMode({ players, getName, supabase, leagueId, tournament, set
       const { error } = await supabase.from("tournaments").update({ scores: newScores }).eq("id", tournament.id);
       if (error) throw error;
       setTournament({ ...tournament, scores: newScores });
-    } catch (err) { console.error("Record RR score error:", err); }
+    } catch (err) { }
   }
 
   function getRRStandings() {
