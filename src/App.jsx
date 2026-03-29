@@ -52,6 +52,10 @@ function AppContent({leagueId,user,onSwitchLeague}){
   const [challenges,setChallenges]=useState([]);
   const [matchSubTab,setMatchSubTab]=useState("history"); // history | schedule
   const [claimedPlayer,setClaimedPlayer]=useState(undefined); // undefined=loading, null=unclaimed, object=claimed
+  const [adminEditId,setAdminEditId]=useState(null);
+  const [adminEditName,setAdminEditName]=useState("");
+  const [confirmDeactivate,setConfirmDeactivate]=useState(null);
+  const [confirmRegenCode,setConfirmRegenCode]=useState(false);
   const [newPlayerName,setNewPlayerName]=useState("");
   const [newPlayerNick,setNewPlayerNick]=useState("");
   const [claimError,setClaimError]=useState("");
