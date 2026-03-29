@@ -319,13 +319,20 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,fm,sup
             {h2hP1&&h2hP2?(() => {
               const p1=players.find(p=>p.id===h2hP1);
               const p2=players.find(p=>p.id===h2hP2);
-              const h2hM=matches.filter(m=>(m.team_a.includes(h2hP1)&&m.team_b.includes(h2hP2))||(m.team_a.includes(h2hP2)&&m.team_b.includes(h2hP1)));
+              const h2hM=fm.filter(m=>(m.team_a.includes(h2hP1)&&m.team_b.includes(h2hP2))||(m.team_a.includes(h2hP2)&&m.team_b.includes(h2hP1)));
               const p1W=h2hM.filter(m=>{const w=win(m.sets);return (m.team_a.includes(h2hP1)&&w==="A")||(m.team_b.includes(h2hP1)&&w==="B");}).length;
               const p2W=h2hM.length-p1W;
-              const partM=matches.filter(m=>(m.team_a.includes(h2hP1)&&m.team_a.includes(h2hP2))||(m.team_b.includes(h2hP1)&&m.team_b.includes(h2hP2)));
-              const oppM=matches.filter(m=>(m.team_a.includes(h2hP1)&&m.team_b.includes(h2hP2))||(m.team_a.includes(h2hP2)&&m.team_b.includes(h2hP1)));
+              const partM=fm.filter(m=>(m.team_a.includes(h2hP1)&&m.team_a.includes(h2hP2))||(m.team_b.includes(h2hP1)&&m.team_b.includes(h2hP2)));
+              const oppM=fm.filter(m=>(m.team_a.includes(h2hP1)&&m.team_b.includes(h2hP2))||(m.team_a.includes(h2hP2)&&m.team_b.includes(h2hP1)));
               const pW=partM.filter(m=>{const w=win(m.sets);return (m.team_a.includes(h2hP1)&&w==="A")||(m.team_b.includes(h2hP1)&&w==="B");}).length;
               const pL=partM.length-pW;
+              if(h2hM.length===0 && partM.length===0) return (
+                <div style={{textAlign:"center",padding:32}}>
+                  <div style={{fontSize:48,marginBottom:12}}>⚔️</div>
+                  <div style={{fontSize:14,fontWeight:600,color:TX,marginBottom:8}}>No matches found between these two players yet</div>
+                  <div style={{fontSize:12,color:MT}}>Play a match together or against each other to see your rivalry stats</div>
+                </div>
+              );
               return (<>
                 {/* H2H Card */}
                 <div style={{background:CD2,padding:16,borderRadius:12,marginBottom:16,textAlign:"center"}}>

@@ -114,9 +114,6 @@ function AppContent({leagueId,user,onSwitchLeague}){
     }catch(err){showToast("Failed to remove photo","error");}
   };
 
-  // H2H view state
-  const [h2hPlayer1,setH2hPlayer1]=useState(null);
-  const [h2hPlayer2,setH2hPlayer2]=useState(null);
   // Notifications toggle state
   const [notifNewMatch,setNotifNewMatch]=useState(()=>JSON.parse(localStorage.getItem("notif_new_match")??'true'));
   const [notifRankingChange,setNotifRankingChange]=useState(()=>JSON.parse(localStorage.getItem("notif_ranking")??'true'));
@@ -830,9 +827,6 @@ function AppContent({leagueId,user,onSwitchLeague}){
           <div>
             <button onClick={()=>{setSidebarView("profile");setSidebarOpen(false);}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>
               My Profile
-            </button>
-            <button onClick={()=>{setSidebarView("h2h");setSidebarOpen(false);}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>
-              Head-to-Head
             </button>
           </div>
 
