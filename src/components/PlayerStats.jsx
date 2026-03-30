@@ -34,7 +34,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
     return Object.entries(r).map(([pid,x])=>({pid,...x,games:x.w+x.l})).sort((a,b)=>b.games-a.games);
   },[sp,matches]);
 
-  const inp={background:CD2,color:TX,border:`1px solid ${BD}`,borderRadius:10,padding:"10px 12px",fontSize:14,width:"100%",outline:"none",fontWeight:500};
+  const inp={background:CD2,color:TX,border:`1px solid ${BD}`,borderRadius:10,padding:"10px 12px",fontSize:14,width:"100%",outline:"none",fontWeight:400};
 
   async function addPlayer(){
     if(!newName.trim())return;
@@ -301,14 +301,14 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                 <label style={{display:"block",fontSize:11,color:MT,fontWeight:600,marginBottom:6}}>Player 1</label>
                 <select value={h2hP1||""} onChange={e=>setH2hP1(e.target.value||null)} style={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:12,fontFamily:"'Outfit',sans-serif",outline:"none",cursor:"pointer"}}>
                   <option value="">Select player</option>
-                  {players.map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}
+                  {players.map(p=><option key={p.id} value={p.id}>{(p.nickname||p.name)+(elo?` (${Math.round(elo[p.id]||1500)})`:"")} </option>)}
                 </select>
               </div>
               <div>
                 <label style={{display:"block",fontSize:11,color:MT,fontWeight:600,marginBottom:6}}>Player 2</label>
                 <select value={h2hP2||""} onChange={e=>setH2hP2(e.target.value||null)} style={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:12,fontFamily:"'Outfit',sans-serif",outline:"none",cursor:"pointer"}}>
                   <option value="">Select player</option>
-                  {players.filter(p=>p.id!==h2hP1).map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}
+                  {players.filter(p=>p.id!==h2hP1).map(p=><option key={p.id} value={p.id}>{(p.nickname||p.name)+(elo?` (${Math.round(elo[p.id]||1500)})`:"")} </option>)}
                 </select>
               </div>
             </div>

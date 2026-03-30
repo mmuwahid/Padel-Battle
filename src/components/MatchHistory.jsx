@@ -30,7 +30,7 @@ export function MatchHistory({matches,pm,players,onEdit,supabase,isAdmin,getName
           {players.map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}
         </select>
       </div>
-      <div style={{fontSize:11,color:MT,marginBottom:8,fontWeight:500}}>{s.length} matches</div>
+      <div style={{fontSize:11,color:MT,marginBottom:8,fontWeight:400}}>{s.length} matches</div>
       {s.length===0&&(
         <div style={{textAlign:"center",padding:"40px 20px"}}>
           <div style={{fontSize:40,marginBottom:12}}>🎾</div>
@@ -41,7 +41,7 @@ export function MatchHistory({matches,pm,players,onEdit,supabase,isAdmin,getName
       {s.map(m=>{const w=win(m.sets);const tA=m.sets.reduce((s,x)=>s+x[0],0);const tB=m.sets.reduce((s,x)=>s+x[1],0);
         return (<div key={m.id} style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:8}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-            <span style={{fontSize:11,color:MT,fontWeight:500}}>{formatDate(m.date)}</span>
+            <span style={{fontSize:11,color:MT,fontWeight:400}}>{formatDate(m.date)}</span>
             <div style={{display:"flex",gap:4,alignItems:"center"}}>
               {m.motm&&<span style={{fontSize:10,background:`${GD}20`,color:GD,padding:"2px 6px",borderRadius:6,fontWeight:600}}>⭐{getName(m.motm)}</span>}
               <button onClick={()=>shareMatch(m)} style={{background:"none",border:"none",fontSize:13,cursor:"pointer",padding:"2px 4px"}}>📤</button>

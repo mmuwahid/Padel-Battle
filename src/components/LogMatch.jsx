@@ -93,12 +93,15 @@ export function LogMatch({players,matches,supabase,leagueId,pm,em,setEm,goBack,s
       {/* Season tag */}
       {!isE&&<div style={{marginBottom:12}}>
         <div style={lbl}>Season</div>
-        <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
-          {seasons.filter(s=>s.active||s.id===seasonId).map(s=>(
-            <button key={s.id} onClick={()=>setCurSeason(s.id)} style={{padding:"6px 12px",borderRadius:8,border:`1px solid ${seasonId===s.id?PU:BD}`,background:seasonId===s.id?`${PU}15`:"transparent",color:seasonId===s.id?PU:MT,fontSize:12,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:4}}>
-              {s.active&&<span style={{width:5,height:5,borderRadius:"50%",background:A}}/>}{s.name}
-            </button>
-          ))}
+        <div style={{position:"relative"}}>
+          <div style={{display:"flex",gap:4,overflowX:"auto",scrollbarWidth:"none",WebkitOverflowScrolling:"touch"}}>
+            {seasons.filter(s=>s.active||s.id===seasonId).map(s=>(
+              <button key={s.id} onClick={()=>setCurSeason(s.id)} style={{padding:"6px 12px",borderRadius:8,border:`1px solid ${seasonId===s.id?PU:BD}`,background:seasonId===s.id?`${PU}15`:"transparent",color:seasonId===s.id?PU:MT,fontSize:12,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:4,whiteSpace:"nowrap",flexShrink:0}}>
+                {s.active&&<span style={{width:5,height:5,borderRadius:"50%",background:A}}/>}{s.name}
+              </button>
+            ))}
+          </div>
+          {seasons.filter(s=>s.active||s.id===seasonId).length>3&&<div style={{position:"absolute",right:0,top:0,bottom:0,width:24,background:`linear-gradient(to right,transparent,${BG})`,pointerEvents:"none"}}/>}
         </div>
       </div>}
 

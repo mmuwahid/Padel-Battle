@@ -676,10 +676,25 @@ function AppContent({leagueId,user,onSwitchLeague}){
     return Object.values(combo).map(c=>({...c,games:c.wins+c.losses})).sort((a,b)=>b.games-a.games);
   },[matches]);
 
-  if (loading) return (<div style={{background:BG,width:"100vw",height:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16,fontFamily:"'Outfit',sans-serif"}}>
-    <div style={{width:48,height:48,borderRadius:"50%",border:`3px solid ${BD}`,borderTopColor:A,animation:"spin 0.8s linear infinite"}}/>
-    <div style={{color:MT,fontSize:13,fontWeight:600}}>Loading league...</div>
-    <style>{`@keyframes spin{to{transform:rotate(360deg)}} @keyframes fadeIn{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}`}</style>
+  if (loading) return (<div style={{background:BG,width:"100vw",height:"100vh",fontFamily:"'Outfit',sans-serif"}}>
+    <style>{`@keyframes shimmer{0%{background-position:-200px 0}100%{background-position:200px 0}} .skel{background:linear-gradient(90deg,${CD} 25%,${CD2} 50%,${CD} 75%);background-size:400px 100%;animation:shimmer 1.5s infinite;border-radius:6px;}`}</style>
+    {/* Skeleton header */}
+    <div style={{background:CD,borderBottom:`1px solid ${BD}`,padding:"12px 16px",paddingTop:"calc(env(safe-area-inset-top, 0px) + 12px)",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+      <div style={{display:"flex",alignItems:"center",gap:10}}>
+        <div className="skel" style={{width:32,height:32,borderRadius:"50%"}}/>
+        <div><div className="skel" style={{width:80,height:14,marginBottom:4}}/><div className="skel" style={{width:140,height:10}}/></div>
+      </div>
+      <div className="skel" style={{width:32,height:32,borderRadius:"50%"}}/>
+    </div>
+    {/* Skeleton leaderboard rows */}
+    <div style={{padding:"20px 16px"}}>
+      <div className="skel" style={{width:120,height:18,marginBottom:20}}/>
+      {[...Array(5)].map((_,i)=><div key={i} style={{display:"flex",alignItems:"center",padding:12,background:CD,borderRadius:6,border:`1px solid ${BD}`,marginBottom:8,gap:12}}>
+        <div className="skel" style={{width:32,height:32,borderRadius:"50%"}}/>
+        <div style={{flex:1}}><div className="skel" style={{width:100,height:13,marginBottom:4}}/><div className="skel" style={{width:60,height:10}}/></div>
+        <div className="skel" style={{width:40,height:13}}/>
+      </div>)}
+    </div>
   </div>);
 
   // CLAIM PLAYER SCREEN — shown if user hasn't claimed a player in this league
@@ -752,6 +767,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
 
   return (
     <div style={{background:BG,minHeight:"100vh",paddingBottom:"calc(80px + env(safe-area-inset-bottom, 0px))",fontFamily:"'Outfit',sans-serif",color:TX}}>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}} @keyframes fadeIn{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}} input:focus,select:focus,textarea:focus{border-color:${A} !important;box-shadow:0 0 0 2px ${A}30 !important;}`}</style>
       {/* HEADER — Line 1: PadelHub branding, Line 2: League | Season */}
       <div style={{background:CD,borderBottom:`1px solid ${BD}`,padding:"12px 16px",paddingTop:"calc(env(safe-area-inset-top, 0px) + 12px)",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:10}}>
         <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
@@ -760,7 +776,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
             <div style={{display:"flex",alignItems:"center",gap:"6px"}}>
               <h1 style={{fontSize:"16px",fontWeight:900,margin:0,letterSpacing:1,fontFamily:"'Outfit',sans-serif"}}><span style={{color:TX}}>Padel</span><span style={{color:A}}>Hub</span></h1>
             </div>
-            <p style={{fontSize:"10px",color:MT,margin:"2px 0 0 0",fontWeight:500}}>
+            <p style={{fontSize:"10px",color:MT,margin:"2px 0 0 0",fontWeight:400}}>
               {league?.name||"League"}{seasons.find(s=>s.active) ? ` | ${seasons.find(s=>s.active).name}` : ""}
             </p>
           </div>
@@ -1219,7 +1235,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
 
               {/* Version */}
               <div style={{textAlign:"center",paddingTop:20,borderTop:`1px solid ${BD}`,marginTop:20}}>
-                <div style={{fontSize:10,color:MT,fontWeight:600}}>PadelHub v2.0</div>
+                <div style={{fontSize:10,color:MT,fontWeight:600}}>PadelHub</div>
               </div>
               </ErrorBoundary>
             </div>
@@ -1393,7 +1409,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
             ))}
           </div>
 
-          {matchSubTab==="history" ? (
+          <div style={{display:matchSubTab==="history"?"block":"none"}}>
             <MatchHistory
               matches={matches}
               pm={Object.fromEntries(players.map(p=>[p.id,p]))}
@@ -1407,7 +1423,8 @@ function AppContent({leagueId,user,onSwitchLeague}){
               onMatchDeleted={loadLeagueData}
               showToast={showToast}
             />
-          ) : (
+          </div>
+          <div style={{display:matchSubTab==="schedule"?"block":"none"}}>
             <ScheduleView
               challenges={challenges}
               players={players}
@@ -1424,7 +1441,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
               seasonId={selectedSeason}
               sel={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:13,fontFamily:"Outfit"}}
             />
-          )}
+          </div>
         </div>
       )}
 
@@ -1489,7 +1506,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
         {ARGUED.map((r,i) => (
           <div key={i} style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:8}}>
             <h3 style={{fontSize:13,fontWeight:700,color:A,marginBottom:8}}>❓ {r.q}</h3>
-            <p style={{fontSize:13,color:TX,lineHeight:1.5,fontWeight:500}}>{r.a}</p>
+            <p style={{fontSize:13,color:TX,lineHeight:1.5,fontWeight:400}}>{r.a}</p>
           </div>
         ))}
         <h2 style={{fontSize:18,fontWeight:800,marginTop:20,marginBottom:4,color:BL}}>📐 What is ELO Rating?</h2>
