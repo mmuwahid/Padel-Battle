@@ -399,6 +399,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
         notif_new_match: notifNewMatch,
         notif_ranking: notifRankingChange,
         notif_members: notifNewMembers,
+        notif_challenges: notifChallenges,
       }, { onConflict: "user_id,endpoint" });
       if (error) throw error;
       setPushSubscribed(true);
@@ -445,6 +446,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
         notif_new_match: type === "match" ? value : notifNewMatch,
         notif_ranking: type === "ranking" ? value : notifRankingChange,
         notif_members: type === "members" ? value : notifNewMembers,
+        notif_challenges: type === "challenges" ? value : notifChallenges,
       };
       await supabase.from("push_subscriptions").update(prefs).eq("user_id", user.id);
     }
