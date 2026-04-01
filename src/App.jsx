@@ -217,7 +217,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
         supabase.from("matches").select("*").eq("league_id",leagueId).order("date",{ascending:false}),
         supabase.from("seasons").select("*").eq("league_id",leagueId).order("start_date"),
         supabase.from("tournaments").select("*").eq("league_id",leagueId).order("created_at"),
-        supabase.from("challenges").select("*").eq("league_id",leagueId).in("status",["open","confirmed","played"]).order("date",{ascending:true})
+        supabase.from("challenges").select("*").eq("league_id",leagueId).in("status",["open","pending","confirmed","played"]).order("date",{ascending:true})
       ]);
 
       if (leagueErr) throw leagueErr;

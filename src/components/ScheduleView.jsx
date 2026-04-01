@@ -32,13 +32,18 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
     if(teamA.length===0){showToast("Select at least 1 player per team","error");return;}
     setSaving(true);
     try{
-      const {error}=await supabase.from("challenges").insert({league_id:leagueId,created_by:user.id,date,time:time||null,location:location.trim()||null,team_a:teamA,team_b:teamB,notes:notes.trim()||null,status:teamB.length>0?"confirmed":"open"});
+      // Creator is auto-accepted. All 4 players selected → pending (needs confirmation from others)
+      const creatorPid=claimedP?.id;
+      const allPlayerIds=[...teamA,...teamB];
+      const initialResponses={};
+      if(creatorPid&&allPlayerIds.includes(creatorPid)) initialResponses[creatorPid]="accepted";
+      const hasFourPlayers=teamA.length>=2&&teamB.length>=2;
+      const {error}=await supabase.from("challenges").insert({league_id:leagueId,created_by:user.id,date,time:time||null,duration:duration||null,location:location.trim()||null,team_a:teamA,team_b:teamB,notes:notes.trim()||null,status:hasFourPlayers?"pending":"open",responses:initialResponses});
       if(error)throw error;
-      showToast("Match scheduled!");
-      // Send push notification for challenge
+      showToast("Match scheduled — waiting for players to confirm!");
       if(sendPushNotification){
-        const allNames=[...teamA,...teamB].map(id=>getName(id)).join(", ");
-        sendPushNotification("challenges","Match Challenge",`New match scheduled for ${formatDate(date)} — ${allNames}`);
+        const allNames=allPlayerIds.map(id=>getName(id)).join(", ");
+        sendPushNotification("challenges","Match Invitation",`You've been invited to a match on ${formatDate(date)} — ${allNames}. Tap to accept or decline.`);
       }
       setShowForm(false);setStep(1);setTA(["",""]);setTB(["",""]);setNotes("");setLocation("");
       if(onUpdate)onUpdate();
@@ -46,20 +51,48 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
     setSaving(false);
   }
 
+  async function respondToChallenge(ch,response){
+    if(!claimedP){showToast("Claim a player first","error");return;}
+    const pid=claimedP.id;
+    const newResponses={...(ch.responses||{}), [pid]:response};
+    const allPlayerIds=[...ch.team_a,...ch.team_b];
+    const allAccepted=allPlayerIds.every(p=>newResponses[p]==="accepted");
+    const newStatus=allAccepted?"confirmed":ch.status;
+    try{
+      const {error}=await supabase.from("challenges").update({responses:newResponses,status:newStatus}).eq("id",ch.id);
+      if(error)throw error;
+      if(response==="accepted") showToast("You accepted the match!");
+      else showToast("You declined the match");
+      if(newStatus==="confirmed"&&sendPushNotification){
+        const allNames=allPlayerIds.map(id=>getName(id)).join(", ");
+        sendPushNotification("challenges","Match Confirmed!",`All players confirmed for ${formatDate(ch.date)} — ${allNames}`);
+      }
+      if(response==="declined"&&sendPushNotification){
+        sendPushNotification("challenges","Player Declined",`${getName(pid)} declined the match on ${formatDate(ch.date)}`);
+      }
+      if(onUpdate)onUpdate();
+    }catch(err){showToast("Failed to respond","error");}
+  }
+
   async function joinChallenge(ch,team){
-    const claimedP=players.find(p=>p.user_id===user.id);
     if(!claimedP){showToast("Claim a player first","error");return;}
     const pid=claimedP.id;
     const updated=team==="a"?{team_a:[...ch.team_a,pid]}:{team_b:[...ch.team_b,pid]};
     const newA=updated.team_a||ch.team_a;const newB=updated.team_b||ch.team_b;
-    const status=(newA.length>=2&&newB.length>=2)?"confirmed":"open";
-    const {error}=await supabase.from("challenges").update({...updated,status}).eq("id",ch.id);
+    const newResponses={...(ch.responses||{}), [pid]:"accepted"};
+    const allPlayerIds=[...newA,...newB];
+    const hasFour=newA.length>=2&&newB.length>=2;
+    const allAccepted=hasFour&&allPlayerIds.every(p=>newResponses[p]==="accepted");
+    const status=allAccepted?"confirmed":hasFour?"pending":"open";
+    const {error}=await supabase.from("challenges").update({...updated,status,responses:newResponses}).eq("id",ch.id);
     if(error){showToast("Failed to join","error");}else{
       showToast("Joined!");
-      // Notify when match becomes confirmed (all 4 players)
       if(status==="confirmed"&&sendPushNotification){
-        const allNames=[...newA,...newB].map(id=>getName(id)).join(", ");
+        const allNames=allPlayerIds.map(id=>getName(id)).join(", ");
         sendPushNotification("challenges","Match Confirmed!",`All players confirmed for ${formatDate(ch.date)} — ${allNames}`);
+      } else if(hasFour&&sendPushNotification){
+        const allNames=allPlayerIds.map(id=>getName(id)).join(", ");
+        sendPushNotification("challenges","Match Invitation",`You've been invited to a match on ${formatDate(ch.date)} — ${allNames}. Tap to accept or decline.`);
       }
       if(onUpdate)onUpdate();
     }
@@ -98,7 +131,7 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
     setLogSaving(false);
   }
 
-  const upcoming=challenges.filter(c=>c.status==="open"||c.status==="confirmed");
+  const upcoming=challenges.filter(c=>c.status==="open"||c.status==="pending"||c.status==="confirmed");
   const past=challenges.filter(c=>c.status==="played");
   const claimedP=players.find(p=>p.user_id===user.id);
 
@@ -200,31 +233,50 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
             const canJoinA=!imIn&&ch.team_a.length<2&&ch.status==="open";
             const canJoinB=!imIn&&ch.team_b.length<2&&ch.status==="open";
             const isConfirmed=ch.status==="confirmed";
+            const isPending=ch.status==="pending";
+            const myResponse=myPid?(ch.responses||{})[myPid]:null;
+            const needsMyResponse=isPending&&imIn&&!myResponse;
+            const statusBg=isConfirmed?`${A}20`:isPending?`${GD}20`:`${MT}20`;
+            const statusColor=isConfirmed?A:isPending?GD:MT;
+            const statusText=isConfirmed?"Confirmed":isPending?"Pending":"Open";
             return (
-              <div key={ch.id} style={{background:CD,borderRadius:12,border:`1px solid ${isConfirmed?`${A}40`:BD}`,padding:14,marginBottom:8}}>
+              <div key={ch.id} style={{background:CD,borderRadius:12,border:`1px solid ${isConfirmed?`${A}40`:isPending?`${GD}40`:BD}`,padding:14,marginBottom:8}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
                   <div>
                     <span style={{fontSize:12,fontWeight:700,color:TX}}>{formatDate(ch.date)}</span>
                     {ch.time&&<span style={{fontSize:11,color:MT,marginLeft:6}}>{ch.time}</span>}
                   </div>
-                  <span style={{fontSize:10,fontWeight:700,padding:"3px 8px",borderRadius:6,background:isConfirmed?`${A}20`:`${GD}20`,color:isConfirmed?A:GD}}>{isConfirmed?"Confirmed":"Open"}</span>
+                  <span style={{fontSize:10,fontWeight:700,padding:"3px 8px",borderRadius:6,background:statusBg,color:statusColor}}>{statusText}</span>
                 </div>
                 {ch.location&&<div style={{fontSize:11,color:MT,marginBottom:8}}>📍 {ch.location}</div>}
                 <div style={{display:"flex",gap:8,marginBottom:8}}>
                   <div style={{flex:1,background:CD2,borderRadius:8,padding:8,textAlign:"center"}}>
                     <div style={{fontSize:10,color:MT,fontWeight:600,marginBottom:4}}>Team A</div>
-                    {ch.team_a.map(pid=><div key={pid} style={{fontSize:12,color:TX,fontWeight:600}}>{getName(pid)}</div>)}
+                    {ch.team_a.map(pid=>{const r=(ch.responses||{})[pid];return <div key={pid} style={{fontSize:12,color:TX,fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>{getName(pid)}{isPending&&r==="accepted"&&<span style={{fontSize:9,color:A}}>{"\u2713"}</span>}{isPending&&r==="declined"&&<span style={{fontSize:9,color:DG}}>{"\u2717"}</span>}{isPending&&!r&&<span style={{fontSize:9,color:GD}}>{"\u23F3"}</span>}</div>;})}
                     {ch.team_a.length<2&&<div style={{fontSize:11,color:MT,fontStyle:"italic"}}>Needs player</div>}
                     {canJoinA&&<button onClick={()=>joinChallenge(ch,"a")} style={{marginTop:4,padding:"4px 10px",borderRadius:6,border:`1px solid ${A}`,background:"transparent",color:A,fontSize:10,fontWeight:700,cursor:"pointer"}}>Join Team A</button>}
                   </div>
                   <div style={{display:"flex",alignItems:"center",color:MT,fontSize:12,fontWeight:800}}>vs</div>
                   <div style={{flex:1,background:CD2,borderRadius:8,padding:8,textAlign:"center"}}>
                     <div style={{fontSize:10,color:MT,fontWeight:600,marginBottom:4}}>Team B</div>
-                    {ch.team_b.map(pid=><div key={pid} style={{fontSize:12,color:TX,fontWeight:600}}>{getName(pid)}</div>)}
+                    {ch.team_b.map(pid=>{const r=(ch.responses||{})[pid];return <div key={pid} style={{fontSize:12,color:TX,fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>{getName(pid)}{isPending&&r==="accepted"&&<span style={{fontSize:9,color:A}}>{"\u2713"}</span>}{isPending&&r==="declined"&&<span style={{fontSize:9,color:DG}}>{"\u2717"}</span>}{isPending&&!r&&<span style={{fontSize:9,color:GD}}>{"\u23F3"}</span>}</div>;})}
                     {ch.team_b.length<2&&<div style={{fontSize:11,color:MT,fontStyle:"italic"}}>Needs player</div>}
                     {canJoinB&&<button onClick={()=>joinChallenge(ch,"b")} style={{marginTop:4,padding:"4px 10px",borderRadius:6,border:`1px solid ${A}`,background:"transparent",color:A,fontSize:10,fontWeight:700,cursor:"pointer"}}>Join Team B</button>}
                   </div>
                 </div>
+                {/* Accept/Decline buttons for pending challenges */}
+                {needsMyResponse&&(
+                  <div style={{display:"flex",gap:8,marginBottom:8}}>
+                    <button onClick={()=>respondToChallenge(ch,"accepted")} style={{flex:1,padding:"10px",borderRadius:8,border:"none",background:A,color:BG,fontSize:12,fontWeight:700,cursor:"pointer"}}>Accept</button>
+                    <button onClick={()=>respondToChallenge(ch,"declined")} style={{flex:1,padding:"10px",borderRadius:8,border:`1px solid ${DG}`,background:"transparent",color:DG,fontSize:12,fontWeight:700,cursor:"pointer"}}>Decline</button>
+                  </div>
+                )}
+                {isPending&&imIn&&myResponse==="accepted"&&(
+                  <div style={{fontSize:11,color:A,fontWeight:600,textAlign:"center",marginBottom:8}}>{"\u2713"} You accepted — waiting for others</div>
+                )}
+                {isPending&&imIn&&myResponse==="declined"&&(
+                  <div style={{fontSize:11,color:DG,fontWeight:600,textAlign:"center",marginBottom:8}}>{"\u2717"} You declined this match</div>
+                )}
                 {ch.notes&&<div style={{fontSize:11,color:MT,fontStyle:"italic",marginBottom:8}}>{ch.notes}</div>}
                 {loggingMatch===ch.id&&(<div style={{background:CD2,borderRadius:10,border:`1px solid ${A}40`,padding:12,marginBottom:8}}>
                   <div style={{fontSize:13,fontWeight:700,color:A,marginBottom:10}}>🎾 Log Match Result</div>
