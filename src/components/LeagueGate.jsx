@@ -39,8 +39,8 @@ export function LeagueGate({user,children,showToast}){
 
   const autoJoinByInvite = async (code) => {
     try {
-      const {data:leagueData,error:findErr} = await supabase
-        .from("leagues").select("id,name").eq("invite_code",code.trim()).single();
+      const {data:rpcData,error:findErr} = await supabase.rpc("lookup_league_by_invite",{code:code.trim()});
+      const leagueData=rpcData?.[0]||null;
       if (findErr || !leagueData) return; // silently fail — invalid code
       // Check if already member
       const {data:existing} = await supabase
@@ -137,16 +137,13 @@ export function LeagueGate({user,children,showToast}){
     }
     setJoining(true);
     try {
-      // Find league by invite_code
-      const {data:leagues,error:findErr} = await supabase
-        .from("leagues")
-        .select("id")
-        .eq("invite_code",inviteCode.trim())
-        .single();
+      // Find league by invite_code (uses RPC to bypass restricted leagues_select)
+      const {data:rpcData,error:findErr} = await supabase.rpc("lookup_league_by_invite",{code:inviteCode.trim()});
+      const foundLeague=rpcData?.[0]||null;
 
-      if (findErr || !leagues) throw new Error("Invalid invite code");
+      if (findErr || !foundLeague) throw new Error("Invalid invite code");
 
-      const leagueId = leagues.id;
+      const leagueId = foundLeague.id;
 
       // Check if already member
       const {data:existing} = await supabase

@@ -24,6 +24,7 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
 
   const inp={background:CD2,color:TX,border:`1px solid ${BD}`,borderRadius:8,padding:"10px 12px",fontSize:13,width:"100%",outline:"none",fontFamily:"'Outfit',sans-serif"};
   const getEloBadge=(pid)=>{const gp=(matches||[]).filter(m=>(m.team_a||[]).includes(pid)||(m.team_b||[]).includes(pid)).length;if(gp<5)return null;const e=elo?.[pid]||1500;if(e>=1600)return{label:"Pro",color:DG};if(e>=1400)return{label:"Advanced",color:GD};if(e>=1200)return{label:"Intermediate",color:PU};return{label:"Beginner",color:BL};};
+  const claimedP=players.find(p=>p.user_id===user.id);
 
   async function createChallenge(){
     const teamA=tA.filter(Boolean);const teamB=tB.filter(Boolean);
@@ -99,7 +100,6 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
   }
 
   async function leaveChallenge(ch){
-    const claimedP=players.find(p=>p.user_id===user.id);
     if(!claimedP)return;
     const pid=claimedP.id;
     const newA=ch.team_a.filter(id=>id!==pid);
@@ -146,7 +146,6 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
 
   const upcoming=challenges.filter(c=>c.status==="open"||c.status==="pending"||c.status==="confirmed");
   const past=challenges.filter(c=>c.status==="played");
-  const claimedP=players.find(p=>p.user_id===user.id);
 
   return (
     <div>

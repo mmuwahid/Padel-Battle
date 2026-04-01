@@ -25,15 +25,16 @@ export function AdminDashboard({ memberProfiles, setSidebarView }) {
     setAdminLoading(null);
   };
 
-  // Deactivate player
+  // Remove player from league (deletes player record — matches are preserved)
   const deactivatePlayer = async (playerId) => {
     setAdminLoading(playerId+"-deactivate");
     try {
-      const {error:err} = await supabase.from("players").update({active: false}).eq("id", playerId);
+      const {error:err} = await supabase.from("players").delete().eq("id", playerId);
       if (err) throw err;
+      showToast("Player removed from league");
       await loadLeagueData();
     } catch (err) {
-      showToast("Failed to deactivate player","error");
+      showToast("Failed to remove player — they may have match history","error");
     }
     setAdminLoading(null);
   };
@@ -55,7 +56,7 @@ export function AdminDashboard({ memberProfiles, setSidebarView }) {
           formatTeam(getName(m.team_b[0]),getName(m.team_b[1])),
           m.sets.map(s => `${s[0]}-${s[1]}`).join(" "),
           winnerTeam
-        ].map(v => `"${v}"`).join(",");
+        ].map(v => {let s=String(v).replace(/"/g,'""');if(/^[=+\-@\t\r]/.test(s))s="'"+s;return `"${s}"`;}).join(",");
       })
     ].join("\n");
 
@@ -103,8 +104,8 @@ export function AdminDashboard({ memberProfiles, setSidebarView }) {
                 {adminEditId===p.id?<div style={{display:"flex",gap:4,alignItems:"center"}}><input value={adminEditName} onChange={e=>setAdminEditName(e.target.value)} style={{width:80,padding:"4px 6px",borderRadius:6,border:"1px solid "+A,background:CD2,color:TX,fontSize:11,fontFamily:"'Outfit',sans-serif"}} autoFocus onKeyDown={e=>{if(e.key==="Enter"&&adminEditName.trim()){updatePlayerName(p.id,adminEditName.trim());setAdminEditId(null);}if(e.key==="Escape")setAdminEditId(null);}}/><button onClick={()=>{if(adminEditName.trim()){updatePlayerName(p.id,adminEditName.trim());}setAdminEditId(null);}} disabled={adminLoading===p.id+"-rename"} style={{padding:"4px 8px",background:A,border:"none",borderRadius:6,color:"#000",fontSize:10,fontWeight:700,cursor:"pointer",opacity:adminLoading===p.id+"-rename"?0.5:1}}>{adminLoading===p.id+"-rename"?"..":"OK"}</button><button onClick={()=>setAdminEditId(null)} style={{padding:"4px 6px",background:"none",border:"1px solid "+BD,borderRadius:6,color:MT,fontSize:10,cursor:"pointer"}}>X</button></div>:<button onClick={()=>{setAdminEditId(p.id);setAdminEditName(p.name);}} style={{padding:"6px 10px",background:A,border:"none",borderRadius:6,color:"#000",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
                   Rename
                 </button>}
-                {confirmDeactivate===p.id?<div style={{display:"flex",gap:4,alignItems:"center"}}><span style={{fontSize:10,color:DG}}>Sure?</span><button onClick={()=>{deactivatePlayer(p.id);setConfirmDeactivate(null);}} disabled={adminLoading===p.id+"-deactivate"} style={{padding:"4px 8px",background:DG,border:"none",borderRadius:6,color:"#fff",fontSize:10,fontWeight:700,cursor:"pointer",opacity:adminLoading===p.id+"-deactivate"?0.5:1}}>{adminLoading===p.id+"-deactivate"?"..":"Yes"}</button><button onClick={()=>setConfirmDeactivate(null)} style={{padding:"4px 6px",background:"none",border:"1px solid "+BD,borderRadius:6,color:MT,fontSize:10,cursor:"pointer"}}>No</button></div>:<button onClick={()=>setConfirmDeactivate(p.id)} style={{padding:"6px 10px",background:DG,border:"none",borderRadius:6,color:"#fff",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
-                  Deactivate
+                {confirmDeactivate===p.id?<div style={{display:"flex",gap:4,alignItems:"center"}}><span style={{fontSize:10,color:DG}}>Remove?</span><button onClick={()=>{deactivatePlayer(p.id);setConfirmDeactivate(null);}} disabled={adminLoading===p.id+"-deactivate"} style={{padding:"4px 8px",background:DG,border:"none",borderRadius:6,color:"#fff",fontSize:10,fontWeight:700,cursor:"pointer",opacity:adminLoading===p.id+"-deactivate"?0.5:1}}>{adminLoading===p.id+"-deactivate"?"..":"Yes"}</button><button onClick={()=>setConfirmDeactivate(null)} style={{padding:"4px 6px",background:"none",border:"1px solid "+BD,borderRadius:6,color:MT,fontSize:10,cursor:"pointer"}}>No</button></div>:<button onClick={()=>setConfirmDeactivate(p.id)} style={{padding:"6px 10px",background:DG,border:"none",borderRadius:6,color:"#fff",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
+                  Remove
                 </button>}
               </div>
             </div>
