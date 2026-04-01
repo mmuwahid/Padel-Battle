@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { supabase } from '../supabase';
 import { A, CD, CD2, BD, TX, MT, DG } from '../theme';
 import { formatTeam, win } from '../utils/helpers';
+import { useLeague } from '../LeagueContext';
 
-export function AdminDashboard({ players, memberProfiles, league, leagueId, showToast, loadLeagueData, setSidebarView, getName, matches }) {
+export function AdminDashboard({ memberProfiles, setSidebarView }) {
+  const { supabase, players, league, leagueId, showToast, loadLeagueData, getName, matches } = useLeague();
   // State moved from AppContent — admin-only, never used elsewhere
   const [adminEditId, setAdminEditId] = useState(null);
   const [adminEditName, setAdminEditName] = useState("");

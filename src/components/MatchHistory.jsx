@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, BL, PU } from '../theme';
 import { win, formatDate } from '../utils/helpers';
+import { useLeague } from '../LeagueContext';
 
 const REACTIONS = [
   { key: "fire", emoji: "\uD83D\uDD25" },
@@ -10,7 +11,8 @@ const REACTIONS = [
   { key: "shock", emoji: "\uD83D\uDE31" },
 ];
 
-export function MatchHistory({matches,pm,players,onEdit,supabase,isAdmin,getName,shareMatch,sel,onMatchDeleted,showToast,user}){
+export function MatchHistory({onEdit,shareMatch,sel,onMatchDeleted}){
+  const { supabase, user, players, matches, isAdmin, getName, showToast } = useLeague();
   const [fp,setFp]=useState("");
   const [cd,setCd]=useState(null);
   const [deleting,setDeleting]=useState(false);

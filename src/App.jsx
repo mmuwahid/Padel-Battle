@@ -265,8 +265,9 @@ function AppContent({leagueId,user,onSwitchLeague}){
       setLoading(false);
     } catch (err) {
       setLoading(false);
+      showToast("Failed to load data — tap refresh to retry", "error");
     }
-  };;
+  };
 
   // Helper functions
   const getName = (pid) => {
@@ -753,7 +754,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
             <ProfileView user={user} avatarUrl={avatarUrl} avatarUploading={avatarUploading} uploadAvatar={uploadAvatar} removeAvatar={removeAvatar} claimedPlayer={claimedPlayer} ps={ps} elo={elo} matches={matches} players={players} isAdmin={isAdmin} getName={getName} getStreak={getStreak} setSidebarView={setSidebarView} setTab={setTab} setSidebarOpen={setSidebarOpen}/>
           )}
           {sidebarView==="admin" && (
-            <AdminDashboard players={players} memberProfiles={memberProfiles} league={league} leagueId={leagueId} showToast={showToast} loadLeagueData={loadLeagueData} setSidebarView={setSidebarView} getName={getName} matches={matches}/>
+            <AdminDashboard memberProfiles={memberProfiles} setSidebarView={setSidebarView}/>
           )}
           {sidebarView==="settings" && (
             <SettingsView user={user} claimedPlayer={claimedPlayer} isAdmin={isAdmin} league={league} leagueMembers={leagueMembers} memberProfiles={memberProfiles} pushSubscribed={pushSubscribed} subscribeToPush={subscribeToPush} unsubscribeFromPush={unsubscribeFromPush} notifNewMatch={notifNewMatch} notifRankingChange={notifRankingChange} notifNewMembers={notifNewMembers} notifChallenges={notifChallenges} toggleNotification={toggleNotification} updateMemberRole={updateMemberRole} onSwitchLeague={onSwitchLeague} setSidebarView={setSidebarView} showToast={showToast} loadLeagueData={loadLeagueData}/>
@@ -932,18 +933,10 @@ function AppContent({leagueId,user,onSwitchLeague}){
 
           <div style={{display:matchSubTab==="history"?"block":"none"}}>
             <MatchHistory
-              matches={matches}
-              pm={Object.fromEntries(players.map(p=>[p.id,p]))}
-              players={players}
               onEdit={(m)=>{setEditingMatch(m);setTab("log");}}
-              supabase={supabase}
-              isAdmin={isAdmin}
-              getName={getName}
               shareMatch={shareMatch}
               sel={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:13,fontFamily:"Outfit"}}
               onMatchDeleted={loadLeagueData}
-              showToast={showToast}
-              user={user}
             />
           </div>
           <div style={{display:matchSubTab==="schedule"?"block":"none"}}>
@@ -1003,10 +996,6 @@ function AppContent({leagueId,user,onSwitchLeague}){
       {/* GAMEMODE TAB */}
       {!sidebarView && tab==="gamemode"&&(
         <Suspense fallback={<LazyFallback/>}><GameMode
-          players={players}
-          getName={getName}
-          supabase={supabase}
-          leagueId={leagueId}
           tournament={tournament}
           setTournament={setTournament}
           sel={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:13,fontFamily:"Outfit"}}

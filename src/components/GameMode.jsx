@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { A, BG, CD, BD, TX, MT, DG, GD, PU } from '../theme';
+import { useLeague } from '../LeagueContext';
 import { AmericanoMode } from './AmericanoMode';
 import { SingleElimination } from './SingleElimination';
 import { DoubleElimination } from './DoubleElimination';
@@ -8,7 +9,8 @@ import { RoundRobin } from './RoundRobin';
 // ══════════════════════════════════════
 // MAIN COMPONENT — Orchestrator
 // ══════════════════════════════════════
-export function GameMode({ players, getName, supabase, leagueId, tournament, setTournament, sel }) {
+export function GameMode({ tournament, setTournament, sel }) {
+  const { supabase, players, getName, leagueId } = useLeague();
   const [topTab, setTopTab] = useState("casual"); // "casual" | "competitive"
   const [screen, setScreen] = useState("selector"); // selector | se-setup/active | de-setup/active | rr-setup/active
 
