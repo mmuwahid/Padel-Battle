@@ -697,10 +697,10 @@ function AppContent({leagueId,user,onSwitchLeague}){
   }
 
   // A-04: React Context — shared data available to all children without prop drilling
-  const leagueCtx = useMemo(() => ({
+  const leagueCtx = {
     supabase, user, leagueId, league, players, matches, elo, seasons, isAdmin,
     getName, showToast, sendPushNotification, loadLeagueData,
-  }), [supabase, user, leagueId, league, players, matches, elo, seasons, isAdmin]);
+  };
 
   return (
     <LeagueContext.Provider value={leagueCtx}>
