@@ -1,11 +1,55 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, BL, PU } from '../theme';
 import { win, formatDate } from '../utils/helpers';
 
-export function MatchHistory({matches,pm,players,onEdit,supabase,isAdmin,getName,shareMatch,sel,onMatchDeleted,showToast}){
+const REACTIONS = [
+  { key: "fire", emoji: "\uD83D\uDD25" },
+  { key: "trophy", emoji: "\uD83C\uDFC6" },
+  { key: "clap", emoji: "\uD83D\uDC4F" },
+  { key: "laugh", emoji: "\uD83D\uDE02" },
+  { key: "shock", emoji: "\uD83D\uDE31" },
+];
+
+export function MatchHistory({matches,pm,players,onEdit,supabase,isAdmin,getName,shareMatch,sel,onMatchDeleted,showToast,user}){
   const [fp,setFp]=useState("");
   const [cd,setCd]=useState(null);
   const [deleting,setDeleting]=useState(false);
+  const [reactions,setReactions]=useState({});// {matchId: [{user_id,reaction},...]}
+  const [myReactions,setMyReactions]=useState({});// {matchId: "fire"|null}
+
+  useEffect(()=>{
+    if(!matches.length||!supabase)return;
+    const matchIds=matches.map(m=>m.id);
+    supabase.from("match_reactions").select("match_id,user_id,reaction").in("match_id",matchIds).then(({data})=>{
+      if(!data)return;
+      const grouped={};const mine={};
+      data.forEach(r=>{
+        if(!grouped[r.match_id])grouped[r.match_id]=[];
+        grouped[r.match_id].push(r);
+        if(user&&r.user_id===user.id)mine[r.match_id]=r.reaction;
+      });
+      setReactions(grouped);setMyReactions(mine);
+    });
+  },[matches,supabase,user]);
+
+  async function toggleReaction(matchId,reactionKey){
+    if(!user)return;
+    const current=myReactions[matchId];
+    if(current===reactionKey){
+      // Remove reaction
+      await supabase.from("match_reactions").delete().eq("match_id",matchId).eq("user_id",user.id);
+      setMyReactions(prev=>({...prev,[matchId]:undefined}));
+      setReactions(prev=>({...prev,[matchId]:(prev[matchId]||[]).filter(r=>r.user_id!==user.id)}));
+    }else{
+      // Upsert reaction
+      await supabase.from("match_reactions").upsert({match_id:matchId,user_id:user.id,reaction:reactionKey},{onConflict:"match_id,user_id"});
+      setMyReactions(prev=>({...prev,[matchId]:reactionKey}));
+      setReactions(prev=>{
+        const existing=(prev[matchId]||[]).filter(r=>r.user_id!==user.id);
+        return {...prev,[matchId]:[...existing,{user_id:user.id,reaction:reactionKey}]};
+      });
+    }
+  }
   const f=fp?matches.filter(m=>m.team_a.includes(fp)||m.team_b.includes(fp)):matches;
   const s=[...f].sort((a,b)=>new Date(b.date)-new Date(a.date));
 
@@ -66,6 +110,15 @@ export function MatchHistory({matches,pm,players,onEdit,supabase,isAdmin,getName
               <div style={{fontSize:13,fontWeight:700,color:w==="B"?A:DG}}>{getName(m.team_b[1])}</div>
               {w==="B"?<div style={{fontSize:10,color:A,fontWeight:700,marginTop:3}}>WIN</div>:<div style={{fontSize:10,color:DG,fontWeight:700,marginTop:3}}>LOSS</div>}
             </div>
+          </div>
+          {/* Reaction bar */}
+          <div style={{display:"flex",gap:2,marginTop:8,paddingTop:8,borderTop:`1px solid ${BD}30`,justifyContent:"center"}}>
+            {REACTIONS.map(r=>{const count=(reactions[m.id]||[]).filter(x=>x.reaction===r.key).length;const mine=myReactions[m.id]===r.key;return(
+              <button key={r.key} onClick={()=>toggleReaction(m.id,r.key)} style={{display:"flex",alignItems:"center",gap:2,padding:"3px 8px",borderRadius:20,border:`1px solid ${mine?A+"60":"transparent"}`,background:mine?`${A}15`:"transparent",cursor:"pointer",fontSize:14,transition:"all 0.15s"}}>
+                <span>{r.emoji}</span>
+                {count>0&&<span style={{fontSize:10,fontWeight:700,color:mine?A:MT,fontFamily:"'JetBrains Mono'"}}>{count}</span>}
+              </button>
+            );})}
           </div>
         </div>);
       })}

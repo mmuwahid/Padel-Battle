@@ -54,6 +54,11 @@ export function LeagueGate({user,children,showToast}){
       const {error:addErr} = await supabase
         .from("league_members").insert({league_id:leagueData.id,user_id:user.id,role:"member"});
       if (addErr) throw addErr;
+      // Notify league about new member
+      const dn = user.user_metadata?.display_name || user.email?.split("@")[0] || "Someone";
+      supabase.functions.invoke("push-notify", {
+        body: { league_id: leagueData.id, type: "members", title: "New Member Joined!", body: `${dn} joined the league`, exclude_user_id: user.id },
+      }).catch(() => {});
       await loadUserLeagues();
       setSelectedLeagueId(leagueData.id);
       setInviteCode("");
@@ -164,6 +169,12 @@ export function LeagueGate({user,children,showToast}){
         .insert({league_id:leagueId,user_id:user.id,role:"member"});
 
       if (addErr) throw addErr;
+
+      // Notify league members about new member
+      const displayName = user.user_metadata?.display_name || user.email?.split("@")[0] || "Someone";
+      supabase.functions.invoke("push-notify", {
+        body: { league_id: leagueId, type: "members", title: "New Member Joined!", body: `${displayName} joined the league`, exclude_user_id: user.id },
+      }).catch(() => {});
 
       // Refresh and select
       await loadUserLeagues();

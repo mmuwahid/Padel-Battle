@@ -60,6 +60,7 @@ export function LogMatch({players,matches,supabase,leagueId,pm,em,setEm,goBack,s
         const tANames=[tA[0],tA[1]].map(id=>getName?getName(id):id).join(" x ");
         const tBNames=[tB[0],tB[1]].map(id=>getName?getName(id):id).join(" x ");
         sendPushNotification("match","New Match Logged",`${tANames} vs ${tBNames}`);
+        sendPushNotification("ranking","Rankings Updated",`New match affects ELO ratings — check the leaderboard!`);
       }
     }catch(err){
       if(showToast)showToast("Failed to save match","error");

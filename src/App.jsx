@@ -11,6 +11,7 @@ import { Sidebar } from './components/Sidebar';
 import { ProfileView } from './components/ProfileView';
 import { AdminDashboard } from './components/AdminDashboard';
 import { SettingsView } from './components/SettingsView';
+import { NotificationCenter } from './components/NotificationCenter';
 import { VAPID_PUBLIC_KEY } from './vapidPublicKey';
 
 // Convert VAPID public key from base64 URL to Uint8Array (required by pushManager.subscribe)
@@ -129,6 +130,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
       }catch(e){/* push check — non-critical */}
     })();
   },[]);
+  const [unreadNotifCount,setUnreadNotifCount]=useState(0);
   // Admin Management state
   const [leagueMembers,setLeagueMembers]=useState([]);
   const [memberProfiles,setMemberProfiles]=useState({});
@@ -243,6 +245,12 @@ function AppContent({leagueId,user,onSwitchLeague}){
       if (tournamentsErr) throw tournamentsErr;
       setTournaments(tournamentsData || []);
       setChallenges(challengesData||[]);
+
+      // Fetch unread notification count
+      supabase.from("notifications").select("id",{count:"exact",head:true}).eq("league_id",leagueId).eq("user_id",user.id).eq("read",false).then(({count})=>setUnreadNotifCount(count||0));
+
+      // Auto-expire stale challenges (48h) — lightweight, runs on each load
+      supabase.rpc("expire_stale_challenges").then(()=>{});
 
       const claimed = (playersData||[]).find(p => p.user_id === user.id);
       setClaimedPlayer(claimed || null);
@@ -699,7 +707,9 @@ function AppContent({leagueId,user,onSwitchLeague}){
         </div>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
         {/* GN-04: Refresh button */}
-        <button onClick={()=>{loadLeagueData();showToast("Refreshed!");}} style={{width:32,height:32,borderRadius:"50%",background:"transparent",border:`1px solid ${BD}`,color:MT,fontSize:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>↻</button>
+        <button onClick={()=>{loadLeagueData();showToast("Refreshed!");}} style={{width:32,height:32,borderRadius:"50%",background:"transparent",border:`1px solid ${BD}`,color:MT,fontSize:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>{"\u21BB"}</button>
+        {/* Notification bell */}
+        <button onClick={()=>{setSidebarView(sidebarView==="notifications"?null:"notifications");setSidebarOpen(false);}} style={{width:32,height:32,borderRadius:"50%",background:sidebarView==="notifications"?`${A}20`:"transparent",border:`1px solid ${sidebarView==="notifications"?A+"40":BD}`,color:sidebarView==="notifications"?A:MT,fontSize:15,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,position:"relative"}}>{"\uD83D\uDD14"}{unreadNotifCount>0&&<span style={{position:"absolute",top:-4,right:-4,width:16,height:16,borderRadius:"50%",background:DG,color:"#fff",fontSize:9,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center",border:`2px solid ${BG}`}}>{unreadNotifCount>9?"9+":unreadNotifCount}</span>}</button>
         {/* User avatar — opens sidebar */}
         <button
           onClick={()=>{setSidebarOpen(!sidebarOpen);setSidebarView(null);}}
@@ -733,6 +743,9 @@ function AppContent({leagueId,user,onSwitchLeague}){
           )}
           {sidebarView==="settings" && (
             <SettingsView user={user} claimedPlayer={claimedPlayer} isAdmin={isAdmin} league={league} leagueMembers={leagueMembers} memberProfiles={memberProfiles} pushSubscribed={pushSubscribed} subscribeToPush={subscribeToPush} unsubscribeFromPush={unsubscribeFromPush} notifNewMatch={notifNewMatch} notifChallenges={notifChallenges} toggleNotification={toggleNotification} updateMemberRole={updateMemberRole} onSwitchLeague={onSwitchLeague} setSidebarView={setSidebarView} showToast={showToast} loadLeagueData={loadLeagueData}/>
+          )}
+          {sidebarView==="notifications" && (
+            <NotificationCenter supabase={supabase} user={user} leagueId={leagueId} onClose={()=>{setSidebarView(null);loadLeagueData();}}/>
           )}
         </div>
       )}
@@ -916,6 +929,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
               sel={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:13,fontFamily:"Outfit"}}
               onMatchDeleted={loadLeagueData}
               showToast={showToast}
+              user={user}
             />
           </div>
           <div style={{display:matchSubTab==="schedule"?"block":"none"}}>
