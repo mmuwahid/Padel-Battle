@@ -219,8 +219,8 @@ function AppContent({leagueId,user,onSwitchLeague}){
       ] = await Promise.all([
         supabase.from("leagues").select("id,name,invite_code,created_by").eq("id",leagueId).single(),
         supabase.from("league_members").select("role").eq("league_id",leagueId).eq("user_id",user.id).single(),
-        supabase.from("league_members").select("user_id,role,profiles(id,email,user_metadata)").eq("league_id",leagueId),
-        supabase.from("players").select("id,name,nickname,user_id,active").eq("league_id",leagueId).order("name"),
+        supabase.from("league_members").select("user_id,role,profiles(id,email,display_name,avatar_url)").eq("league_id",leagueId),
+        supabase.from("players").select("id,name,nickname,user_id,created_by,created_at").eq("league_id",leagueId).order("name"),
         supabase.from("matches").select("id,team_a,team_b,sets,motm,date,season_id,league_id").eq("league_id",leagueId).order("date",{ascending:false}),
         supabase.from("seasons").select("id,name,active").eq("league_id",leagueId).order("start_date"),
         supabase.from("tournaments").select("id,mode,players,schedule,scores,status,name,date,courts,pts_per_round,league_id").eq("league_id",leagueId).order("created_at"),
