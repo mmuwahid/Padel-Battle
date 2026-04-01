@@ -110,8 +110,16 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
 
   async function cancelChallenge(id){
     setActionLoading(id+"-cancel");
+    const ch=challenges.find(c=>c.id===id);
     const {error}=await supabase.from("challenges").update({status:"cancelled"}).eq("id",id);
-    if(error){showToast("Failed to cancel","error");}else{showToast("Match cancelled");if(onUpdate)onUpdate();}
+    if(error){showToast("Failed to cancel","error");}else{
+      showToast("Match cancelled");
+      if(ch&&sendPushNotification){
+        const allNames=[...(ch.team_a||[]),...(ch.team_b||[])].map(id2=>getName(id2)).join(", ");
+        sendPushNotification("challenges","Match Cancelled",`The match on ${formatDate(ch.date)} was cancelled — ${allNames}`);
+      }
+      if(onUpdate)onUpdate();
+    }
     setActionLoading(null);
   }
 
@@ -126,7 +134,12 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
       if(me)throw me;
       const {error:ue}=await supabase.from("challenges").update({status:"played",match_id:md.id}).eq("id",ch.id);
       if(ue)throw ue;
-      showToast("Match logged!");setLoggingMatch(null);if(onUpdate)onUpdate();
+      showToast("Match logged!");setLoggingMatch(null);
+      if(sendPushNotification){
+        const allNames=[...(ch.team_a||[]),...(ch.team_b||[])].map(id=>getName(id)).join(", ");
+        sendPushNotification("match","Match Played!",`Result logged for ${formatDate(ch.date)} — ${allNames}`);
+      }
+      if(onUpdate)onUpdate();
     }catch(err){showToast(err.message||"Failed to log match","error");}
     setLogSaving(false);
   }

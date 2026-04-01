@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, PU } from '../theme';
+import { useLeague } from '../LeagueContext';
 
 const TYPE_ICONS = {
   match: "\uD83C\uDFBE",
@@ -10,7 +11,8 @@ const TYPE_ICONS = {
   system: "\uD83D\uDD14",
 };
 
-export function NotificationCenter({ supabase, user, leagueId, onClose }) {
+export function NotificationCenter({ onClose }) {
+  const { supabase, user, leagueId } = useLeague();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
 

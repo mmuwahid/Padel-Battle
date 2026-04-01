@@ -3,7 +3,7 @@ import { supabase } from '../supabase';
 import { A, CD, CD2, BD, TX, MT, DG } from '../theme';
 import { ErrorBoundary } from './ErrorBoundary';
 
-export function SettingsView({ user, claimedPlayer, isAdmin, league, leagueMembers, memberProfiles, pushSubscribed, subscribeToPush, unsubscribeFromPush, notifNewMatch, notifChallenges, toggleNotification, updateMemberRole, onSwitchLeague, setSidebarView, showToast, loadLeagueData }) {
+export function SettingsView({ user, claimedPlayer, isAdmin, league, leagueMembers, memberProfiles, pushSubscribed, subscribeToPush, unsubscribeFromPush, notifNewMatch, notifRankingChange, notifNewMembers, notifChallenges, toggleNotification, updateMemberRole, onSwitchLeague, setSidebarView, showToast, loadLeagueData }) {
   // State moved from AppContent — settings-only
   const [editDisplayName, setEditDisplayName] = useState(user.user_metadata?.display_name || user.email?.split("@")[0] || "");
   const [profileSaving, setProfileSaving] = useState(false);
@@ -70,10 +70,24 @@ export function SettingsView({ user, claimedPlayer, isAdmin, league, leagueMembe
           </button>
         </div>
 
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 12px",background:CD2,borderRadius:8}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 12px",background:CD2,borderRadius:8,marginBottom:8}}>
           <label style={{fontSize:12,fontWeight:600,color:TX}}>Match Challenges</label>
           <button onClick={()=>toggleNotification("challenges",!notifChallenges)} style={{width:48,height:28,borderRadius:14,background:notifChallenges?A:BD,border:"none",cursor:"pointer",position:"relative",transition:"background 0.2s",padding:0}}>
             <div style={{width:24,height:24,background:CD,borderRadius:"50%",position:"absolute",top:2,left:notifChallenges?22:2,transition:"left 0.2s"}}/>
+          </button>
+        </div>
+
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 12px",background:CD2,borderRadius:8,marginBottom:8}}>
+          <label style={{fontSize:12,fontWeight:600,color:TX}}>Ranking Changes</label>
+          <button onClick={()=>toggleNotification("ranking",!notifRankingChange)} style={{width:48,height:28,borderRadius:14,background:notifRankingChange?A:BD,border:"none",cursor:"pointer",position:"relative",transition:"background 0.2s",padding:0}}>
+            <div style={{width:24,height:24,background:CD,borderRadius:"50%",position:"absolute",top:2,left:notifRankingChange?22:2,transition:"left 0.2s"}}/>
+          </button>
+        </div>
+
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 12px",background:CD2,borderRadius:8}}>
+          <label style={{fontSize:12,fontWeight:600,color:TX}}>New Members</label>
+          <button onClick={()=>toggleNotification("members",!notifNewMembers)} style={{width:48,height:28,borderRadius:14,background:notifNewMembers?A:BD,border:"none",cursor:"pointer",position:"relative",transition:"background 0.2s",padding:0}}>
+            <div style={{width:24,height:24,background:CD,borderRadius:"50%",position:"absolute",top:2,left:notifNewMembers?22:2,transition:"left 0.2s"}}/>
           </button>
         </div>
       </div>

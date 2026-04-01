@@ -12,6 +12,7 @@ import { ProfileView } from './components/ProfileView';
 import { AdminDashboard } from './components/AdminDashboard';
 import { SettingsView } from './components/SettingsView';
 import { NotificationCenter } from './components/NotificationCenter';
+import { LeagueContext } from './LeagueContext';
 import { VAPID_PUBLIC_KEY } from './vapidPublicKey';
 
 // Convert VAPID public key from base64 URL to Uint8Array (required by pushManager.subscribe)
@@ -695,7 +696,14 @@ function AppContent({leagueId,user,onSwitchLeague}){
     );
   }
 
+  // A-04: React Context — shared data available to all children without prop drilling
+  const leagueCtx = useMemo(() => ({
+    supabase, user, leagueId, league, players, matches, elo, seasons, isAdmin,
+    getName, showToast, sendPushNotification, loadLeagueData,
+  }), [supabase, user, leagueId, league, players, matches, elo, seasons, isAdmin]);
+
   return (
+    <LeagueContext.Provider value={leagueCtx}>
     <div style={{background:BG,minHeight:"100vh",paddingBottom:"calc(80px + env(safe-area-inset-bottom, 0px))",fontFamily:"'Outfit',sans-serif",color:TX}}>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}} @keyframes fadeIn{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}} input:focus,select:focus,textarea:focus{border-color:${A} !important;box-shadow:0 0 0 2px ${A}30 !important;}`}</style>
       {/* HEADER — Line 1: PadelHub branding, Line 2: League | Season */}
@@ -748,10 +756,10 @@ function AppContent({leagueId,user,onSwitchLeague}){
             <AdminDashboard players={players} memberProfiles={memberProfiles} league={league} leagueId={leagueId} showToast={showToast} loadLeagueData={loadLeagueData} setSidebarView={setSidebarView} getName={getName} matches={matches}/>
           )}
           {sidebarView==="settings" && (
-            <SettingsView user={user} claimedPlayer={claimedPlayer} isAdmin={isAdmin} league={league} leagueMembers={leagueMembers} memberProfiles={memberProfiles} pushSubscribed={pushSubscribed} subscribeToPush={subscribeToPush} unsubscribeFromPush={unsubscribeFromPush} notifNewMatch={notifNewMatch} notifChallenges={notifChallenges} toggleNotification={toggleNotification} updateMemberRole={updateMemberRole} onSwitchLeague={onSwitchLeague} setSidebarView={setSidebarView} showToast={showToast} loadLeagueData={loadLeagueData}/>
+            <SettingsView user={user} claimedPlayer={claimedPlayer} isAdmin={isAdmin} league={league} leagueMembers={leagueMembers} memberProfiles={memberProfiles} pushSubscribed={pushSubscribed} subscribeToPush={subscribeToPush} unsubscribeFromPush={unsubscribeFromPush} notifNewMatch={notifNewMatch} notifRankingChange={notifRankingChange} notifNewMembers={notifNewMembers} notifChallenges={notifChallenges} toggleNotification={toggleNotification} updateMemberRole={updateMemberRole} onSwitchLeague={onSwitchLeague} setSidebarView={setSidebarView} showToast={showToast} loadLeagueData={loadLeagueData}/>
           )}
           {sidebarView==="notifications" && (
-            <NotificationCenter supabase={supabase} user={user} leagueId={leagueId} onClose={()=>{setSidebarView(null);loadLeagueData();}}/>
+            <NotificationCenter onClose={()=>{setSidebarView(null);loadLeagueData();}}/>
           )}
         </div>
       )}
@@ -1074,6 +1082,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
       </div>
 
     </div>
+    </LeagueContext.Provider>
   );
 }
 
