@@ -12,8 +12,8 @@ export function calcElo(pl,ma){
     const aB=((r[m.team_b[0]]||ES)+(r[m.team_b[1]]||ES))/2;
     const eA=1/(1+Math.pow(10,(aB-aA)/400));
     const sA=w==="A"?1:0;
-    m.team_a.forEach(p=>{if(r[p]!==undefined)r[p]+=Math.round(K*(sA-eA));});
-    m.team_b.forEach(p=>{if(r[p]!==undefined)r[p]+=Math.round(K*((1-sA)-(1-eA)));});
+    m.team_a.forEach(p=>{if(r[p]!==undefined)r[p]=Math.max(0,r[p]+Math.round(K*(sA-eA)));});
+    m.team_b.forEach(p=>{if(r[p]!==undefined)r[p]=Math.max(0,r[p]+Math.round(K*((1-sA)-(1-eA))));});
   });
   return r;
 }

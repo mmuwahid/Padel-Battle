@@ -52,51 +52,45 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
     setSaving(false);
   }
 
+  // S026: Atomic challenge response via server-side RPC (prevents read-modify-write race)
   async function respondToChallenge(ch,response){
     if(!claimedP){showToast("Claim a player first","error");return;}
     const pid=claimedP.id;
-    const newResponses={...(ch.responses||{}), [pid]:response};
-    const allPlayerIds=[...ch.team_a,...ch.team_b];
-    const allAccepted=allPlayerIds.every(p=>newResponses[p]==="accepted");
-    const newStatus=allAccepted?"confirmed":ch.status;
     try{
-      const {error}=await supabase.from("challenges").update({responses:newResponses,status:newStatus}).eq("id",ch.id);
+      const {data,error}=await supabase.rpc("respond_to_challenge",{p_challenge_id:ch.id,p_player_id:pid,p_response:response});
       if(error)throw error;
       if(response==="accepted") showToast("You accepted the match!");
       else showToast("You declined the match");
+      const newStatus=data?.status;
       if(newStatus==="confirmed"&&sendPushNotification){
-        const allNames=allPlayerIds.map(id=>getName(id)).join(", ");
+        const allNames=[...ch.team_a,...ch.team_b].map(id=>getName(id)).join(", ");
         sendPushNotification("challenges","Match Confirmed!",`All players confirmed for ${formatDate(ch.date)} — ${allNames}`);
       }
       if(response==="declined"&&sendPushNotification){
         sendPushNotification("challenges","Player Declined",`${getName(pid)} declined the match on ${formatDate(ch.date)}`);
       }
       if(onUpdate)onUpdate();
-    }catch(err){showToast("Failed to respond","error");}
+    }catch(err){showToast(err.message||"Failed to respond","error");}
   }
 
+  // S026: Atomic challenge join via server-side RPC (prevents concurrent overfill)
   async function joinChallenge(ch,team){
     if(!claimedP){showToast("Claim a player first","error");return;}
     const pid=claimedP.id;
-    const updated=team==="a"?{team_a:[...ch.team_a,pid]}:{team_b:[...ch.team_b,pid]};
-    const newA=updated.team_a||ch.team_a;const newB=updated.team_b||ch.team_b;
-    const newResponses={...(ch.responses||{}), [pid]:"accepted"};
-    const allPlayerIds=[...newA,...newB];
-    const hasFour=newA.length>=2&&newB.length>=2;
-    const allAccepted=hasFour&&allPlayerIds.every(p=>newResponses[p]==="accepted");
-    const status=allAccepted?"confirmed":hasFour?"pending":"open";
-    const {error}=await supabase.from("challenges").update({...updated,status,responses:newResponses}).eq("id",ch.id);
-    if(error){showToast("Failed to join","error");}else{
+    try{
+      const {data,error}=await supabase.rpc("join_challenge",{p_challenge_id:ch.id,p_player_id:pid,p_team:team});
+      if(error)throw error;
       showToast("Joined!");
-      if(status==="confirmed"&&sendPushNotification){
-        const allNames=allPlayerIds.map(id=>getName(id)).join(", ");
+      const newStatus=data?.status;
+      if(newStatus==="confirmed"&&sendPushNotification){
+        const allNames=[...(data?.team_a||ch.team_a),...(data?.team_b||ch.team_b)].map(id=>getName(id)).join(", ");
         sendPushNotification("challenges","Match Confirmed!",`All players confirmed for ${formatDate(ch.date)} — ${allNames}`);
-      } else if(hasFour&&sendPushNotification){
-        const allNames=allPlayerIds.map(id=>getName(id)).join(", ");
+      } else if(newStatus==="pending"&&sendPushNotification){
+        const allNames=[...(data?.team_a||ch.team_a),...(data?.team_b||ch.team_b)].map(id=>getName(id)).join(", ");
         sendPushNotification("challenges","Match Invitation",`You've been invited to a match on ${formatDate(ch.date)} — ${allNames}. Tap to accept or decline.`);
       }
       if(onUpdate)onUpdate();
-    }
+    }catch(err){showToast(err.message||"Failed to join","error");}
   }
 
   async function leaveChallenge(ch){
@@ -130,10 +124,19 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
     if(!sd.length){showToast("Enter at least one set score","error");return;}
     setLogSaving(true);
     try{
-      const {data:md,error:me}=await supabase.from("matches").insert({league_id:leagueId,season_id:seasonId||null,date:ch.date,team_a:[...ch.team_a],team_b:[...ch.team_b],sets:sd,motm:logMotm||null,logged_by:user.id}).select().single();
-      if(me)throw me;
-      const {error:ue}=await supabase.from("challenges").update({status:"played",match_id:md.id}).eq("id",ch.id);
-      if(ue)throw ue;
+      // S026: Transactional match creation via RPC (atomic insert+update)
+      const {data:matchId,error:rpcErr}=await supabase.rpc("play_challenge",{
+        p_challenge_id:ch.id,
+        p_league_id:leagueId,
+        p_season_id:seasonId||null,
+        p_date:ch.date,
+        p_team_a:JSON.stringify(ch.team_a),
+        p_team_b:JSON.stringify(ch.team_b),
+        p_sets:JSON.stringify(sd),
+        p_motm:logMotm||null,
+        p_logged_by:user.id
+      });
+      if(rpcErr)throw rpcErr;
       showToast("Match logged!");setLoggingMatch(null);
       if(sendPushNotification){
         const allNames=[...(ch.team_a||[]),...(ch.team_b||[])].map(id=>getName(id)).join(", ");

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef, Suspense, lazy } from "react";
+import React, { useState, useMemo, useEffect, useRef, useCallback, Suspense, lazy } from "react";
 import { supabase } from './supabase';
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, BL, PU, TL, TR } from './theme';
 import { formatTeam, win, formatDate, gid } from './utils/helpers';
@@ -12,6 +12,7 @@ import { ProfileView } from './components/ProfileView';
 import { AdminDashboard } from './components/AdminDashboard';
 import { SettingsView } from './components/SettingsView';
 import { NotificationCenter } from './components/NotificationCenter';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { LeagueContext } from './LeagueContext';
 import { VAPID_PUBLIC_KEY } from './vapidPublicKey';
 
@@ -180,25 +181,33 @@ function AppContent({leagueId,user,onSwitchLeague}){
     return ()=>window.removeEventListener("popstate",onPop);
   },[]);
 
+  // S026: Debounced reload — prevents thundering herd from rapid realtime events
+  const reloadTimerRef = useRef(null);
+  const debouncedReload = useCallback(() => {
+    if (reloadTimerRef.current) clearTimeout(reloadTimerRef.current);
+    reloadTimerRef.current = setTimeout(() => { loadLeagueData(); }, 500);
+  }, []);
+
   // Load league data from Supabase
   useEffect(()=>{
     loadLeagueData();
 
     // S1-05: Supabase Realtime — subscribe to changes for live cross-device sync
     // P-12: Targeted Realtime subscriptions (per-table with league filter)
+    // S026: Debounced to prevent rapid successive reloads
     const channel = supabase.channel(`league-${leagueId}`)
-      .on("postgres_changes",{event:"*",schema:"public",table:"matches",filter:`league_id=eq.${leagueId}`},()=>loadLeagueData())
-      .on("postgres_changes",{event:"*",schema:"public",table:"players",filter:`league_id=eq.${leagueId}`},()=>loadLeagueData())
-      .on("postgres_changes",{event:"*",schema:"public",table:"seasons",filter:`league_id=eq.${leagueId}`},()=>loadLeagueData())
-      .on("postgres_changes",{event:"*",schema:"public",table:"league_members",filter:`league_id=eq.${leagueId}`},()=>loadLeagueData())
-      .on("postgres_changes",{event:"*",schema:"public",table:"tournaments",filter:`league_id=eq.${leagueId}`},()=>loadLeagueData())
-      .on("postgres_changes",{event:"*",schema:"public",table:"challenges",filter:`league_id=eq.${leagueId}`},()=>loadLeagueData())
+      .on("postgres_changes",{event:"*",schema:"public",table:"matches",filter:`league_id=eq.${leagueId}`},()=>debouncedReload())
+      .on("postgres_changes",{event:"*",schema:"public",table:"players",filter:`league_id=eq.${leagueId}`},()=>debouncedReload())
+      .on("postgres_changes",{event:"*",schema:"public",table:"seasons",filter:`league_id=eq.${leagueId}`},()=>debouncedReload())
+      .on("postgres_changes",{event:"*",schema:"public",table:"league_members",filter:`league_id=eq.${leagueId}`},()=>debouncedReload())
+      .on("postgres_changes",{event:"*",schema:"public",table:"tournaments",filter:`league_id=eq.${leagueId}`},()=>debouncedReload())
+      .on("postgres_changes",{event:"*",schema:"public",table:"challenges",filter:`league_id=eq.${leagueId}`},()=>debouncedReload())
       .on("postgres_changes",{event:"*",schema:"public",table:"notifications",filter:`user_id=eq.${user.id}`},()=>{
         supabase.from("notifications").select("id",{count:"exact",head:true}).eq("league_id",leagueId).eq("user_id",user.id).eq("read",false).then(({count})=>setUnreadNotifCount(count||0));
       })
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => { if(reloadTimerRef.current) clearTimeout(reloadTimerRef.current); supabase.removeChannel(channel); };
   },[leagueId,user.id]);
 
   const loadLeagueData = async () => {
@@ -221,7 +230,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
         supabase.from("league_members").select("role").eq("league_id",leagueId).eq("user_id",user.id).single(),
         supabase.from("league_members").select("user_id,role,profiles(id,email,display_name,avatar_url)").eq("league_id",leagueId),
         supabase.from("players").select("id,name,nickname,user_id,created_by,created_at").eq("league_id",leagueId).order("name"),
-        supabase.from("matches").select("id,team_a,team_b,sets,motm,date,season_id,league_id").eq("league_id",leagueId).order("date",{ascending:false}),
+        supabase.from("matches").select("id,team_a,team_b,sets,motm,date,season_id,league_id").eq("league_id",leagueId).order("date",{ascending:false}).limit(500),
         supabase.from("seasons").select("id,name,active").eq("league_id",leagueId).order("start_date"),
         supabase.from("tournaments").select("id,mode,players,schedule,scores,status,name,date,courts,pts_per_round,league_id").eq("league_id",leagueId).order("created_at"),
         supabase.from("challenges").select("id,team_a,team_b,status,date,time,location,notes,created_by,match_id,responses,duration,league_id").eq("league_id",leagueId).in("status",["open","pending","confirmed","played"]).order("date",{ascending:true})
@@ -264,6 +273,8 @@ function AppContent({leagueId,user,onSwitchLeague}){
 
       setLoading(false);
     } catch (err) {
+      // S026: Clear state on error so user sees empty state, not stale data
+      setLeague(null); setPlayers([]); setMatches([]); setSeasons([]); setTournaments([]); setChallenges([]);
       setLoading(false);
       showToast("Failed to load data — tap refresh to retry", "error");
     }
@@ -698,6 +709,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
   }
 
   // A-04: React Context — shared data available to all children without prop drilling
+  // S022/S026: Plain object — NOT useMemo. Early returns above this line make useMemo violate Rules of Hooks.
   const leagueCtx = {
     supabase, user, leagueId, league, players, matches, elo, seasons, isAdmin,
     getName, showToast, sendPushNotification, loadLeagueData,
@@ -962,18 +974,18 @@ function AppContent({leagueId,user,onSwitchLeague}){
 
       {/* COMBOS TAB */}
       {!sidebarView && tab==="combos"&&(
-        <Suspense fallback={<LazyFallback/>}><CombosView
+        <ErrorBoundary><Suspense fallback={<LazyFallback/>}><CombosView
           combos={combos}
           players={players}
           matches={matches}
           pm={Object.fromEntries(players.map(p=>[p.id,p]))}
           getName={getName}
-        /></Suspense>
+        /></Suspense></ErrorBoundary>
       )}
 
       {/* PLAYERS TAB */}
       {!sidebarView && tab==="stats"&&(
-        <Suspense fallback={<LazyFallback/>}><PlayerStats
+        <ErrorBoundary><Suspense fallback={<LazyFallback/>}><PlayerStats
           players={players}
           ps={Object.fromEntries(ps.map(p=>[p.id,p]))}
           pm={Object.fromEntries(players.map(p=>[p.id,p]))}
@@ -990,16 +1002,16 @@ function AppContent({leagueId,user,onSwitchLeague}){
           getName={getName}
           sel={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:13,fontFamily:"Outfit"}}
           onPlayersChange={loadLeagueData}
-        /></Suspense>
+        /></Suspense></ErrorBoundary>
       )}
 
       {/* GAMEMODE TAB */}
       {!sidebarView && tab==="gamemode"&&(
-        <Suspense fallback={<LazyFallback/>}><GameMode
+        <ErrorBoundary><Suspense fallback={<LazyFallback/>}><GameMode
           tournament={tournament}
           setTournament={setTournament}
           sel={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:13,fontFamily:"Outfit"}}
-        /></Suspense>
+        /></Suspense></ErrorBoundary>
       )}
 
       {/* RULES TAB */}
