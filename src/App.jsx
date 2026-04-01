@@ -184,12 +184,17 @@ function AppContent({leagueId,user,onSwitchLeague}){
     loadLeagueData();
 
     // S1-05: Supabase Realtime — subscribe to changes for live cross-device sync
+    // P-12: Targeted Realtime subscriptions (per-table with league filter)
     const channel = supabase.channel(`league-${leagueId}`)
       .on("postgres_changes",{event:"*",schema:"public",table:"matches",filter:`league_id=eq.${leagueId}`},()=>loadLeagueData())
       .on("postgres_changes",{event:"*",schema:"public",table:"players",filter:`league_id=eq.${leagueId}`},()=>loadLeagueData())
       .on("postgres_changes",{event:"*",schema:"public",table:"seasons",filter:`league_id=eq.${leagueId}`},()=>loadLeagueData())
       .on("postgres_changes",{event:"*",schema:"public",table:"league_members",filter:`league_id=eq.${leagueId}`},()=>loadLeagueData())
       .on("postgres_changes",{event:"*",schema:"public",table:"tournaments",filter:`league_id=eq.${leagueId}`},()=>loadLeagueData())
+      .on("postgres_changes",{event:"*",schema:"public",table:"challenges",filter:`league_id=eq.${leagueId}`},()=>loadLeagueData())
+      .on("postgres_changes",{event:"*",schema:"public",table:"notifications",filter:`user_id=eq.${user.id}`},()=>{
+        supabase.from("notifications").select("id",{count:"exact",head:true}).eq("league_id",leagueId).eq("user_id",user.id).eq("read",false).then(({count})=>setUnreadNotifCount(count||0));
+      })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
@@ -200,6 +205,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
       setLoading(true);
 
       // PA-04: Parallelize all independent queries
+      // A-09: Specific column selects instead of SELECT *
       const [
         {data:leagueData,error:leagueErr},
         {data:memberData},
@@ -210,14 +216,14 @@ function AppContent({leagueId,user,onSwitchLeague}){
         {data:tournamentsData,error:tournamentsErr},
         {data:challengesData}
       ] = await Promise.all([
-        supabase.from("leagues").select("*").eq("id",leagueId).single(),
+        supabase.from("leagues").select("id,name,invite_code,created_by").eq("id",leagueId).single(),
         supabase.from("league_members").select("role").eq("league_id",leagueId).eq("user_id",user.id).single(),
         supabase.from("league_members").select("user_id,role,profiles(id,email,user_metadata)").eq("league_id",leagueId),
-        supabase.from("players").select("*").eq("league_id",leagueId).order("name"),
-        supabase.from("matches").select("*").eq("league_id",leagueId).order("date",{ascending:false}),
-        supabase.from("seasons").select("*").eq("league_id",leagueId).order("start_date"),
-        supabase.from("tournaments").select("*").eq("league_id",leagueId).order("created_at"),
-        supabase.from("challenges").select("*").eq("league_id",leagueId).in("status",["open","pending","confirmed","played"]).order("date",{ascending:true})
+        supabase.from("players").select("id,name,nickname,user_id,active").eq("league_id",leagueId).order("name"),
+        supabase.from("matches").select("id,team_a,team_b,sets,motm,date,season_id,league_id").eq("league_id",leagueId).order("date",{ascending:false}),
+        supabase.from("seasons").select("id,name,active").eq("league_id",leagueId).order("start_date"),
+        supabase.from("tournaments").select("id,mode,players,schedule,scores,status,name,date,courts,pts_per_round,league_id").eq("league_id",leagueId).order("created_at"),
+        supabase.from("challenges").select("id,team_a,team_b,status,date,time,location,notes,created_by,match_id,responses,duration,league_id").eq("league_id",leagueId).in("status",["open","pending","confirmed","played"]).order("date",{ascending:true})
       ]);
 
       if (leagueErr) throw leagueErr;

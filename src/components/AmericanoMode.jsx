@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, PU } from '../theme';
 import { generateAmericanoSchedule, generateMexicanoRound } from '../utils/tournaments';
 
-export function AmericanoMode({ players, getName, supabase, leagueId, tournament, setTournament, sel, endTournament, resetTournament }) {
+export function AmericanoMode({ players, getName, supabase, leagueId, tournament, setTournament, sel, endTournament, resetTournament, deleteTournament }) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
   // ── State ──
   const [selPlayers, setSelP] = useState([]);
   const [courts, setCourts] = useState(2);
@@ -99,7 +100,10 @@ export function AmericanoMode({ players, getName, supabase, leagueId, tournament
       <div style={{ padding: "20px 16px", maxWidth: "600px", margin: "0 auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
           <div><h2 style={{ fontSize: 18, fontWeight: 800 }}>{isMex ? "\uD83C\uDF2E Mexicano" : "\uD83C\uDFAF Americano"}</h2><p style={{ fontSize: 11, color: MT }}>{scored}/{totalMatches} scored · Round {allRounds.length} · {tournament.players.length} players</p></div>
-          <button onClick={() => { if (confirm("End tournament?")) endTournament(); }} style={{ padding: "6px 14px", borderRadius: 8, border: `1px solid ${DG}40`, color: DG, background: "transparent", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>End</button>
+          <div style={{ display: "flex", gap: 4 }}>
+            <button onClick={() => { if (confirm("End tournament?")) endTournament(); }} style={{ padding: "6px 14px", borderRadius: 8, border: `1px solid ${DG}40`, color: DG, background: "transparent", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>End</button>
+            {confirmDelete ? <><button onClick={() => { deleteTournament(); setConfirmDelete(false); }} style={{ padding: "6px 10px", borderRadius: 8, background: DG, border: "none", color: "#fff", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>Confirm</button><button onClick={() => setConfirmDelete(false)} style={{ padding: "6px 10px", borderRadius: 8, border: `1px solid ${BD}`, background: "transparent", color: MT, fontSize: 11, cursor: "pointer" }}>No</button></> : <button onClick={() => setConfirmDelete(true)} style={{ padding: "6px 14px", borderRadius: 8, border: `1px solid ${DG}20`, color: MT, background: "transparent", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>Delete</button>}
+          </div>
         </div>
 
         <div style={{ background: CD, borderRadius: 14, border: `1px solid ${PU}30`, padding: 14, marginBottom: 12 }}>

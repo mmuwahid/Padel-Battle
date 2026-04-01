@@ -4,7 +4,8 @@ import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, PU } from '../theme';
 const TEAM_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const getTeamLabel = (idx) => TEAM_LETTERS[idx] ? `Team ${TEAM_LETTERS[idx]}` : `Team ${idx + 1}`;
 
-export function RoundRobin({ players, getName, supabase, leagueId, tournament, setTournament, sel, endTournament, resetTournament, setScreen }) {
+export function RoundRobin({ players, getName, supabase, leagueId, tournament, setTournament, sel, endTournament, resetTournament, deleteTournament, setScreen }) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
   // ── State ──
   const [rrTeams, setRrTeams] = useState([
     { name: "Team A", p1: "", p2: "" },
@@ -271,7 +272,10 @@ export function RoundRobin({ players, getName, supabase, leagueId, tournament, s
         <p style={{ fontSize: 11, color: MT, lineHeight: 1.6 }}>Win = 3 pts, Draw = 1 pt, Loss = 0 pts. Ties broken by goal difference, then goals scored.</p>
       </div>
 
-      <button onClick={()=>{if(confirm("End tournament?"))endTournament();}} style={{ width:"100%", padding:12, borderRadius:12, border:"1px solid "+DG+"40", background:"transparent", color:DG, fontSize:13, fontWeight:600, cursor:"pointer" }}>End Tournament</button>
+      <div style={{ display: "flex", gap: 8 }}>
+        <button onClick={()=>{if(confirm("End tournament?"))endTournament();}} style={{ flex:1, padding:12, borderRadius:12, border:"1px solid "+DG+"40", background:"transparent", color:DG, fontSize:13, fontWeight:600, cursor:"pointer" }}>End Tournament</button>
+        {confirmDelete ? <div style={{ display:"flex", gap:4, flex:1 }}><button onClick={()=>{deleteTournament();setConfirmDelete(false);}} style={{ flex:1, padding:12, borderRadius:12, background:DG, border:"none", color:"#fff", fontSize:13, fontWeight:600, cursor:"pointer" }}>Confirm Delete</button><button onClick={()=>setConfirmDelete(false)} style={{ flex:1, padding:12, borderRadius:12, border:"1px solid "+BD, background:"transparent", color:MT, fontSize:13, cursor:"pointer" }}>Cancel</button></div> : <button onClick={()=>setConfirmDelete(true)} style={{ flex:1, padding:12, borderRadius:12, border:"1px solid "+DG+"20", background:"transparent", color:MT, fontSize:13, fontWeight:600, cursor:"pointer" }}>Delete</button>}
+      </div>
     </div>
   );
 }

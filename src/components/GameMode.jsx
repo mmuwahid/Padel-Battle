@@ -26,8 +26,18 @@ export function GameMode({ players, getName, supabase, leagueId, tournament, set
     setScreen("selector");
   }
 
+  async function deleteTournament() {
+    if (!tournament) return;
+    try {
+      const { error } = await supabase.from("tournaments").delete().eq("id", tournament.id);
+      if (error) throw error;
+      setTournament(null);
+      setScreen("selector");
+    } catch (err) { }
+  }
+
   // ── Shared props for all tournament components ──
-  const sharedProps = { players, getName, supabase, leagueId, tournament, setTournament, sel, endTournament, resetTournament, setScreen };
+  const sharedProps = { players, getName, supabase, leagueId, tournament, setTournament, sel, endTournament, resetTournament, deleteTournament, setScreen };
 
   // ════════════════════════════════════
   // ROUTE: Active Americano / Mexicano
