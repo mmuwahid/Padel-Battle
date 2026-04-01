@@ -16,6 +16,9 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
   const [showAddPlayer,setShowAddPlayer]=useState(false);
   const [newName,setNewName]=useState("");
   const [newNick,setNewNick]=useState("");
+  const [analyticsSection,setAnalyticsSection]=useState("league");
+  const [h2hP1,setH2hP1]=useState(null);
+  const [h2hP2,setH2hP2]=useState(null);
 
   const h2h=useMemo(()=>{
     if(!sp)return[];
@@ -78,6 +81,54 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
     setEditNick(p.nickname||"");
   }
 
+  // FT-04: Analytics computed data (moved above early return to respect Rules of Hooks)
+  const analyticsData=useMemo(()=>{
+    if(matches.length===0)return null;
+    const totalMatches=matches.length;
+    const totalSets=matches.reduce((t,m)=>t+m.sets.length,0);
+    const wr={};players.forEach(p=>{wr[p.id]={w:0,l:0,gw:0,gl:0};});
+    matches.forEach(m=>{const w=win(m.sets);const gA=m.sets.reduce((s,x)=>s+x[0],0);const gB=m.sets.reduce((s,x)=>s+x[1],0);
+      m.team_a.forEach(pid=>{if(wr[pid]){if(w==="A")wr[pid].w++;else wr[pid].l++;wr[pid].gw+=gA;wr[pid].gl+=gB;}});
+      m.team_b.forEach(pid=>{if(wr[pid]){if(w==="B")wr[pid].w++;else wr[pid].l++;wr[pid].gw+=gB;wr[pid].gl+=gA;}});
+    });
+    const activity={};players.forEach(p=>{activity[p.id]=0;});
+    matches.forEach(m=>{[...m.team_a,...m.team_b].forEach(pid=>{if(activity[pid]!==undefined)activity[pid]++;});});
+    const mostActive=Object.entries(activity).filter(([,g])=>g>0).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([pid,games])=>({pid,games}));
+    const topWinRate=Object.entries(wr).filter(([,x])=>x.w+x.l>=3).map(([pid,x])=>({pid,pct:x.w/(x.w+x.l)*100,w:x.w,l:x.l,games:x.w+x.l})).sort((a,b)=>b.pct-a.pct).slice(0,5);
+    const closeMatches=matches.filter(m=>m.sets.some(s=>Math.abs(s[0]-s[1])<=1&&(s[0]+s[1])>0)).length;
+    const motmCount={};matches.forEach(m=>{if(m.motm){motmCount[m.motm]=(motmCount[m.motm]||0)+1;}});
+    const topMotm=Object.entries(motmCount).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([pid,count])=>({pid,count}));
+    const monthly={};matches.forEach(m=>{const key=m.date?.substring(0,7);if(key)monthly[key]=(monthly[key]||0)+1;});
+    const monthlyArr=Object.entries(monthly).sort().slice(-6);
+    const partnerStats={};
+    matches.forEach(m=>{const w=win(m.sets);
+      [[m.team_a,w==="A"],[m.team_b,w==="B"]].forEach(([team,won])=>{
+        if(team.length===2){const [a,b]=team.sort();const k=`${a}|${b}`;
+          if(!partnerStats[k])partnerStats[k]={a,b,w:0,l:0};
+          if(won)partnerStats[k].w++;else partnerStats[k].l++;}
+      });
+    });
+    const partnerships=Object.values(partnerStats).filter(p=>p.w+p.l>=1).sort((a,b)=>(b.w/(b.w+b.l))-(a.w/(a.w+a.l)));
+    const bestPartnership=partnerships[0]||null;
+    const worstPartnership=partnerships.length>1?partnerships[partnerships.length-1]:null;
+    const h2hAll={};
+    matches.forEach(m=>{const w=win(m.sets);
+      const process=(myTeam,oppTeam,won)=>{myTeam.forEach(me=>{oppTeam.forEach(opp=>{
+        if(!h2hAll[me])h2hAll[me]={};if(!h2hAll[me][opp])h2hAll[me][opp]={w:0,l:0};
+        if(won)h2hAll[me][opp].w++;else h2hAll[me][opp].l++;
+      });});};
+      process(m.team_a,m.team_b,w==="A");process(m.team_b,m.team_a,w==="B");
+    });
+    const matchups=[];
+    const seen=new Set();
+    Object.entries(h2hAll).forEach(([pid,opps])=>{Object.entries(opps).forEach(([opp,r])=>{
+      const k=[pid,opp].sort().join("|");if(!seen.has(k)&&r.w+r.l>=2){seen.add(k);const total=r.w+r.l;const pct=Math.min(r.w,r.l)/total*100;matchups.push({p1:pid,p2:opp,...r,games:total,balance:pct});}
+    });});
+    matchups.sort((a,b)=>b.balance-a.balance);
+    const biggestWins=[...matches].map(m=>{const gA=m.sets.reduce((s,x)=>s+x[0],0);const gB=m.sets.reduce((s,x)=>s+x[1],0);return{...m,diff:Math.abs(gA-gB),winner:win(m.sets)};}).sort((a,b)=>b.diff-a.diff).slice(0,3);
+    return {totalMatches,totalSets,mostActive,topWinRate,closeMatches,topMotm,monthlyArr,wr,partnerships,bestPartnership,worstPartnership,h2hAll,matchups:matchups.slice(0,5),biggestWins};
+  },[matches,players]);
+
   if(sp&&player&&stats){
     const wp=stats.games>0?(stats.wins/stats.games*100):0;
     const e=elo[sp]||1500;
@@ -121,66 +172,6 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
       </div>
     );
   }
-
-  // FT-04: Analytics computed data (mockup-aligned: 5 sections)
-  const [analyticsSection,setAnalyticsSection]=useState("league");
-  const [h2hP1,setH2hP1]=useState(null);
-  const [h2hP2,setH2hP2]=useState(null);
-  const analyticsData=useMemo(()=>{
-    if(matches.length===0)return null;
-    const totalMatches=matches.length;
-    const totalSets=matches.reduce((t,m)=>t+m.sets.length,0);
-    // Per-player stats
-    const wr={};players.forEach(p=>{wr[p.id]={w:0,l:0,gw:0,gl:0};});
-    matches.forEach(m=>{const w=win(m.sets);const gA=m.sets.reduce((s,x)=>s+x[0],0);const gB=m.sets.reduce((s,x)=>s+x[1],0);
-      m.team_a.forEach(pid=>{if(wr[pid]){if(w==="A")wr[pid].w++;else wr[pid].l++;wr[pid].gw+=gA;wr[pid].gl+=gB;}});
-      m.team_b.forEach(pid=>{if(wr[pid]){if(w==="B")wr[pid].w++;else wr[pid].l++;wr[pid].gw+=gB;wr[pid].gl+=gA;}});
-    });
-    // Activity
-    const activity={};players.forEach(p=>{activity[p.id]=0;});
-    matches.forEach(m=>{[...m.team_a,...m.team_b].forEach(pid=>{if(activity[pid]!==undefined)activity[pid]++;});});
-    const mostActive=Object.entries(activity).filter(([,g])=>g>0).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([pid,games])=>({pid,games}));
-    const topWinRate=Object.entries(wr).filter(([,x])=>x.w+x.l>=3).map(([pid,x])=>({pid,pct:x.w/(x.w+x.l)*100,w:x.w,l:x.l,games:x.w+x.l})).sort((a,b)=>b.pct-a.pct).slice(0,5);
-    // Close matches
-    const closeMatches=matches.filter(m=>m.sets.some(s=>Math.abs(s[0]-s[1])<=1&&(s[0]+s[1])>0)).length;
-    // MOTM
-    const motmCount={};matches.forEach(m=>{if(m.motm){motmCount[m.motm]=(motmCount[m.motm]||0)+1;}});
-    const topMotm=Object.entries(motmCount).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([pid,count])=>({pid,count}));
-    // Monthly
-    const monthly={};matches.forEach(m=>{const key=m.date?.substring(0,7);if(key)monthly[key]=(monthly[key]||0)+1;});
-    const monthlyArr=Object.entries(monthly).sort().slice(-6);
-    // Partnership stats
-    const partnerStats={};
-    matches.forEach(m=>{const w=win(m.sets);
-      [[m.team_a,w==="A"],[m.team_b,w==="B"]].forEach(([team,won])=>{
-        if(team.length===2){const [a,b]=team.sort();const k=`${a}|${b}`;
-          if(!partnerStats[k])partnerStats[k]={a,b,w:0,l:0};
-          if(won)partnerStats[k].w++;else partnerStats[k].l++;}
-      });
-    });
-    const partnerships=Object.values(partnerStats).filter(p=>p.w+p.l>=1).sort((a,b)=>(b.w/(b.w+b.l))-(a.w/(a.w+a.l)));
-    const bestPartnership=partnerships[0]||null;
-    const worstPartnership=partnerships.length>1?partnerships[partnerships.length-1]:null;
-    // H2H opponent analysis per player
-    const h2hAll={};
-    matches.forEach(m=>{const w=win(m.sets);
-      const process=(myTeam,oppTeam,won)=>{myTeam.forEach(me=>{oppTeam.forEach(opp=>{
-        if(!h2hAll[me])h2hAll[me]={};if(!h2hAll[me][opp])h2hAll[me][opp]={w:0,l:0};
-        if(won)h2hAll[me][opp].w++;else h2hAll[me][opp].l++;
-      });});};
-      process(m.team_a,m.team_b,w==="A");process(m.team_b,m.team_a,w==="B");
-    });
-    // Most competitive matchups
-    const matchups=[];
-    const seen=new Set();
-    Object.entries(h2hAll).forEach(([pid,opps])=>{Object.entries(opps).forEach(([opp,r])=>{
-      const k=[pid,opp].sort().join("|");if(!seen.has(k)&&r.w+r.l>=2){seen.add(k);const total=r.w+r.l;const pct=Math.min(r.w,r.l)/total*100;matchups.push({p1:pid,p2:opp,...r,games:total,balance:pct});}
-    });});
-    matchups.sort((a,b)=>b.balance-a.balance);
-    // Biggest wins (largest set differential)
-    const biggestWins=[...matches].map(m=>{const gA=m.sets.reduce((s,x)=>s+x[0],0);const gB=m.sets.reduce((s,x)=>s+x[1],0);return{...m,diff:Math.abs(gA-gB),winner:win(m.sets)};}).sort((a,b)=>b.diff-a.diff).slice(0,3);
-    return {totalMatches,totalSets,mostActive,topWinRate,closeMatches,topMotm,monthlyArr,wr,partnerships,bestPartnership,worstPartnership,h2hAll,matchups:matchups.slice(0,5),biggestWins};
-  },[matches,players]);
 
   return (
     <div style={{padding:"20px 16px",maxWidth:"600px",margin:"0 auto"}}>
