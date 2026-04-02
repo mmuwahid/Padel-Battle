@@ -55,7 +55,7 @@ export function AuthGate({children}){
     if (!email.trim()) { setError("Enter your email above, then tap 'Forgot password?'"); return; }
     try {
       const {error:err} = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: window.location.origin + window.location.pathname
+        redirectTo: window.location.origin + window.location.pathname + window.location.search
       });
       if (err) throw err;
       setSuccessMsg("Password reset link sent! Check your email.");
@@ -72,7 +72,7 @@ export function AuthGate({children}){
       const {data,error:err} = await supabase.auth.signUp({
         email: email.trim(),
         password,
-        options: { data: { display_name: displayName.trim() || email.trim().split("@")[0] } }
+        options: { data: { display_name: displayName.trim() || email.trim().split("@")[0] }, emailRedirectTo: window.location.origin + window.location.pathname + window.location.search }
       });
       if (err) throw err;
       if (data?.user?.identities?.length === 0) {
@@ -102,7 +102,7 @@ export function AuthGate({children}){
     try {
       const {error:err} = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo: window.location.origin + window.location.pathname, queryParams: { prompt: "select_account" } }
+        options: { redirectTo: window.location.origin + window.location.pathname + window.location.search, queryParams: { prompt: "select_account" } }
       });
       if (err) throw err;
     } catch (err) { setError(err.message || "Google sign-in failed"); }
