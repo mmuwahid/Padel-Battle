@@ -206,11 +206,6 @@ serve(async (req) => {
       });
     }
 
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
-
     // Notification type filter
     const typeFilter = type === "match" ? "notif_new_match"
       : type === "ranking" ? "notif_ranking"
@@ -218,17 +213,9 @@ serve(async (req) => {
       : type === "challenge" ? "notif_challenges"
       : null;
 
-    // Fetch push subscriptions for this league
-    let query = supabaseAdmin
-      .from("push_subscriptions")
-      .select("*")
-      .eq("league_id", league_id);
-
-    if (exclude_user_id) {
-      query = query.neq("user_id", exclude_user_id);
-    }
-
-    const { data: subscriptions, error: fetchError } = await query;
+    // Fetch push subscriptions via SECURITY DEFINER RPC (bypasses RLS)
+    const { data: subscriptions, error: fetchError } = await supabaseUser
+      .rpc("get_league_push_subs", { p_league_id: league_id });
     if (fetchError) throw fetchError;
     if (!subscriptions || subscriptions.length === 0) {
       return new Response(JSON.stringify({ sent: 0, message: "No subscriptions found" }), {
@@ -236,10 +223,13 @@ serve(async (req) => {
       });
     }
 
-    // Filter by notification preference
-    const filtered = typeFilter
-      ? subscriptions.filter((s: any) => s[typeFilter] === true)
+    // Filter by exclude_user_id and notification preference
+    let filtered = exclude_user_id
+      ? subscriptions.filter((s: any) => s.user_id !== exclude_user_id)
       : subscriptions;
+    filtered = typeFilter
+      ? filtered.filter((s: any) => s[typeFilter] === true)
+      : filtered;
 
     // VAPID keys from Supabase secrets
     const vapidPrivateKey = Deno.env.get("VAPID_PRIVATE_KEY") ?? "";
@@ -298,12 +288,10 @@ serve(async (req) => {
       }
     }
 
-    // Clean up expired subscriptions
+    // Clean up expired subscriptions via SECURITY DEFINER RPC
     if (staleEndpoints.length > 0) {
-      await supabaseAdmin
-        .from("push_subscriptions")
-        .delete()
-        .in("endpoint", staleEndpoints);
+      await supabaseUser
+        .rpc("delete_stale_push_endpoints", { p_endpoints: JSON.stringify(staleEndpoints) });
     }
 
     return new Response(
