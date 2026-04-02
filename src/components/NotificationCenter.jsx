@@ -6,7 +6,7 @@ const TYPE_ICONS = {
   match: "\uD83C\uDFBE",
   ranking: "\uD83D\uDCC8",
   members: "\uD83D\uDC65",
-  challenges: "\u2694\uFE0F",
+  challenge: "\u2694\uFE0F",
   tournament: "\uD83C\uDFC6",
   system: "\uD83D\uDD14",
 };

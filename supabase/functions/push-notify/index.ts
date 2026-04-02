@@ -206,6 +206,23 @@ serve(async (req) => {
       });
     }
 
+    // C-3: Verify caller is a member of this league
+    const { data: members, error: memberErr } = await supabaseUser
+      .rpc("get_league_member_ids", { p_league_id: league_id });
+    if (memberErr) throw memberErr;
+    const memberIds = (members || []).map((m: any) => m.user_id);
+    if (!memberIds.includes(user.id)) {
+      return new Response(JSON.stringify({ error: "Not a member of this league" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // H-1: Validate target_user_ids against actual league members
+    const validTargetIds = target_user_ids && target_user_ids.length > 0
+      ? target_user_ids.filter((uid: string) => memberIds.includes(uid))
+      : null;
+
     // Notification type filter
     const typeFilter = type === "match" ? "notif_new_match"
       : type === "ranking" ? "notif_ranking"
@@ -223,9 +240,9 @@ serve(async (req) => {
       });
     }
 
-    // Filter by target_user_ids (if provided), exclude_user_id, and notification preference
-    let filtered = target_user_ids && target_user_ids.length > 0
-      ? subscriptions.filter((s: any) => target_user_ids.includes(s.user_id))
+    // Filter by target users (if provided), exclude sender, and notification preference
+    let filtered = validTargetIds
+      ? subscriptions.filter((s: any) => validTargetIds.includes(s.user_id))
       : subscriptions;
     filtered = exclude_user_id
       ? filtered.filter((s: any) => s.user_id !== exclude_user_id)
@@ -239,8 +256,10 @@ serve(async (req) => {
     const vapidPublicKey = Deno.env.get("VAPID_PUBLIC_KEY") ?? "";
     const vapidSubject = Deno.env.get("VAPID_SUBJECT") ?? "mailto:m.muwahid@gmail.com";
 
-    // Deep link: challenges go to schedule tab, others to home
-    const pushUrl = type === "challenge" ? "/#schedule" : "/";
+    // Deep link: challenges → schedule tab, matches → history tab, others → home
+    const pushUrl = type === "challenge" ? "/#schedule"
+      : type === "match" ? "/#history"
+      : "/";
     const payloadJson = JSON.stringify({
       title: title || "PadelHub",
       body,
@@ -251,16 +270,8 @@ serve(async (req) => {
 
     // Insert in-app notifications (targeted to specific users if provided, else all league members)
     try {
-      let notifUserIds: string[] = [];
-      if (target_user_ids && target_user_ids.length > 0) {
-        notifUserIds = target_user_ids.filter((uid: string) => uid !== exclude_user_id);
-      } else {
-        const { data: members } = await supabaseUser
-          .rpc("get_league_member_ids", { p_league_id: league_id });
-        if (members) notifUserIds = members
-          .map((m: any) => m.user_id)
-          .filter((uid: string) => uid !== exclude_user_id);
-      }
+      const notifUserIds = (validTargetIds || memberIds)
+        .filter((uid: string) => uid !== exclude_user_id);
       if (notifUserIds.length > 0) {
         const notifRows = notifUserIds.map((uid: string) => ({
           league_id,

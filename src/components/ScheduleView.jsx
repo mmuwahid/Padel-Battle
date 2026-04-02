@@ -151,10 +151,8 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
       if(rpcErr)throw rpcErr;
       showToast("Match logged!");setLoggingMatch(null);
       if(sendPushNotification){
-        const playedPlayerIds=[...(ch.team_a||[]),...(ch.team_b||[])];
-        const playedTargetUids=getPlayerUserIds(playedPlayerIds);
-        const allNames=playedPlayerIds.map(id=>getName(id)).join(", ");
-        sendPushNotification("match","Match Played!",`Result logged for ${formatDate(ch.date)} — ${allNames}`,playedTargetUids);
+        const allNames=[...(ch.team_a||[]),...(ch.team_b||[])].map(id=>getName(id)).join(", ");
+        sendPushNotification("match","Match Result",`${allNames} — tap to see the score`);
       }
       if(onUpdate)onUpdate();
     }catch(err){showToast(err.message||"Failed to log match","error");}

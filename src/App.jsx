@@ -46,7 +46,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
   const [matches,setMatches]=useState([]);
   const [seasons,setSeasons]=useState([]);
   const [tournaments,setTournaments]=useState([]);
-  const [tab,setTab]=useState(()=>{const h=window.location.hash.replace("#","");if(h==="schedule")return "history";return "board";});
+  const [tab,setTab]=useState(()=>{const h=window.location.hash.replace("#","");if(h==="schedule"||h==="history")return "history";return "board";});
   const [loading,setLoading]=useState(true);
   const [isAdmin,setIsAdmin]=useState(false);
   const [selectedLeagueId,setSelectedLeagueId]=useState(leagueId);

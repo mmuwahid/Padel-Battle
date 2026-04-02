@@ -1,4 +1,4 @@
-const CACHE_NAME = 'padelhub-v25';
+const CACHE_NAME = 'padelhub-v26';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -86,14 +86,17 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const url = event.notification.data?.url || '/';
+  const fullUrl = new URL(url, self.location.origin).href;
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       for (const client of clientList) {
         if (client.url.includes(self.location.origin) && 'focus' in client) {
+          // Navigate to the deep link URL, then focus
+          client.navigate(fullUrl);
           return client.focus();
         }
       }
-      return clients.openWindow(url);
+      return clients.openWindow(fullUrl);
     })
   );
 });
