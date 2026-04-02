@@ -46,7 +46,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
   const [matches,setMatches]=useState([]);
   const [seasons,setSeasons]=useState([]);
   const [tournaments,setTournaments]=useState([]);
-  const [tab,setTab]=useState("board");
+  const [tab,setTab]=useState(()=>{const h=window.location.hash.replace("#","");if(h==="schedule")return "history";return "board";});
   const [loading,setLoading]=useState(true);
   const [isAdmin,setIsAdmin]=useState(false);
   const [selectedLeagueId,setSelectedLeagueId]=useState(leagueId);
@@ -56,7 +56,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
   const [tournament,setTournament]=useState(null);
   // FT-05: Challenges/Scheduling
   const [challenges,setChallenges]=useState([]);
-  const [matchSubTab,setMatchSubTab]=useState("history"); // history | schedule
+  const [matchSubTab,setMatchSubTab]=useState(()=>{const h=window.location.hash.replace("#","");return h==="schedule"?"schedule":"history";}); // history | schedule
   const [claimedPlayer,setClaimedPlayer]=useState(undefined); // undefined=loading, null=unclaimed, object=claimed
   const [newPlayerName,setNewPlayerName]=useState("");
   const [newPlayerNick,setNewPlayerNick]=useState("");
@@ -494,12 +494,12 @@ function AppContent({leagueId,user,onSwitchLeague}){
     if (success) showToast("Notifications enabled!");
   };
 
-  // Send push notification to league members via Edge Function
-  const sendPushNotification = async (type, title, body) => {
+  // Send push notification via Edge Function. target_user_ids = array of user IDs to notify (optional — defaults to all league members)
+  const sendPushNotification = async (type, title, body, target_user_ids) => {
     try {
-      const { data, error } = await supabase.functions.invoke("push-notify", {
-        body: { league_id: leagueId, type, title, body, exclude_user_id: user.id },
-      });
+      const payload = { league_id: leagueId, type, title, body, exclude_user_id: user.id };
+      if (target_user_ids) payload.target_user_ids = target_user_ids;
+      const { data, error } = await supabase.functions.invoke("push-notify", { body: payload });
       if (error) { /* push notify error — non-critical */ }
     } catch (err) {
     }

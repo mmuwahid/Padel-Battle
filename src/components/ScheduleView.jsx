@@ -25,6 +25,8 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
   const inp={background:CD2,color:TX,border:`1px solid ${BD}`,borderRadius:8,padding:"10px 12px",fontSize:13,width:"100%",outline:"none",fontFamily:"'Outfit',sans-serif"};
   const getEloBadge=(pid)=>{const gp=(matches||[]).filter(m=>(m.team_a||[]).includes(pid)||(m.team_b||[]).includes(pid)).length;if(gp<5)return null;const e=elo?.[pid]||1500;if(e>=1600)return{label:"Pro",color:DG};if(e>=1400)return{label:"Advanced",color:GD};if(e>=1200)return{label:"Intermediate",color:PU};return{label:"Beginner",color:BL};};
   const claimedP=players.find(p=>p.user_id===user.id);
+  // Map player IDs to user IDs for targeted notifications
+  const getPlayerUserIds=(playerIds)=>playerIds.map(pid=>{const p=players.find(x=>x.id===pid);return p?.user_id;}).filter(Boolean);
 
   async function createChallenge(){
     const teamA=tA.filter(Boolean);const teamB=tB.filter(Boolean);
@@ -44,7 +46,8 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
       showToast("Match scheduled — waiting for players to confirm!");
       if(sendPushNotification){
         const allNames=allPlayerIds.map(id=>getName(id)).join(", ");
-        sendPushNotification("challenges","Match Invitation",`You've been invited to a match on ${formatDate(date)} — ${allNames}. Tap to accept or decline.`);
+        const targetUids=getPlayerUserIds(allPlayerIds);
+        sendPushNotification("challenge","Match Invitation",`You've been invited to a match on ${formatDate(date)} — ${allNames}. Tap to accept or decline.`,targetUids);
       }
       setShowForm(false);setStep(1);setTA(["",""]);setTB(["",""]);setNotes("");setLocation("");
       if(onUpdate)onUpdate();
@@ -62,12 +65,17 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
       if(response==="accepted") showToast("You accepted the match!");
       else showToast("You declined the match");
       const newStatus=data?.status;
+      const matchPlayerIds=[...ch.team_a,...ch.team_b];
+      const targetUids=getPlayerUserIds(matchPlayerIds);
       if(newStatus==="confirmed"&&sendPushNotification){
-        const allNames=[...ch.team_a,...ch.team_b].map(id=>getName(id)).join(", ");
-        sendPushNotification("challenges","Match Confirmed!",`All players confirmed for ${formatDate(ch.date)} — ${allNames}`);
+        const allNames=matchPlayerIds.map(id=>getName(id)).join(", ");
+        sendPushNotification("challenge","Match Confirmed!",`All players confirmed for ${formatDate(ch.date)} — ${allNames}`,targetUids);
+      }
+      if(response==="accepted"&&newStatus!=="confirmed"&&sendPushNotification){
+        sendPushNotification("challenge","Player Accepted",`${getName(pid)} accepted the match on ${formatDate(ch.date)}`,targetUids);
       }
       if(response==="declined"&&sendPushNotification){
-        sendPushNotification("challenges","Player Declined",`${getName(pid)} declined the match on ${formatDate(ch.date)}`);
+        sendPushNotification("challenge","Player Declined",`${getName(pid)} declined the match on ${formatDate(ch.date)}`,targetUids);
       }
       if(onUpdate)onUpdate();
     }catch(err){showToast(err.message||"Failed to respond","error");}
@@ -82,12 +90,14 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
       if(error)throw error;
       showToast("Joined!");
       const newStatus=data?.status;
+      const joinPlayerIds=[...(data?.team_a||ch.team_a),...(data?.team_b||ch.team_b)];
+      const joinTargetUids=getPlayerUserIds(joinPlayerIds);
       if(newStatus==="confirmed"&&sendPushNotification){
-        const allNames=[...(data?.team_a||ch.team_a),...(data?.team_b||ch.team_b)].map(id=>getName(id)).join(", ");
-        sendPushNotification("challenges","Match Confirmed!",`All players confirmed for ${formatDate(ch.date)} — ${allNames}`);
+        const allNames=joinPlayerIds.map(id=>getName(id)).join(", ");
+        sendPushNotification("challenge","Match Confirmed!",`All players confirmed for ${formatDate(ch.date)} — ${allNames}`,joinTargetUids);
       } else if(newStatus==="pending"&&sendPushNotification){
-        const allNames=[...(data?.team_a||ch.team_a),...(data?.team_b||ch.team_b)].map(id=>getName(id)).join(", ");
-        sendPushNotification("challenges","Match Invitation",`You've been invited to a match on ${formatDate(ch.date)} — ${allNames}. Tap to accept or decline.`);
+        const allNames=joinPlayerIds.map(id=>getName(id)).join(", ");
+        sendPushNotification("challenge","Match Invitation",`You've been invited to a match on ${formatDate(ch.date)} — ${allNames}. Tap to accept or decline.`,joinTargetUids);
       }
       if(onUpdate)onUpdate();
     }catch(err){showToast(err.message||"Failed to join","error");}
@@ -109,8 +119,10 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
     if(error){showToast("Failed to cancel","error");}else{
       showToast("Match cancelled");
       if(ch&&sendPushNotification){
-        const allNames=[...(ch.team_a||[]),...(ch.team_b||[])].map(id2=>getName(id2)).join(", ");
-        sendPushNotification("challenges","Match Cancelled",`The match on ${formatDate(ch.date)} was cancelled — ${allNames}`);
+        const cancelPlayerIds=[...(ch.team_a||[]),...(ch.team_b||[])];
+        const cancelTargetUids=getPlayerUserIds(cancelPlayerIds);
+        const allNames=cancelPlayerIds.map(id2=>getName(id2)).join(", ");
+        sendPushNotification("challenge","Match Cancelled",`The match on ${formatDate(ch.date)} was cancelled — ${allNames}`,cancelTargetUids);
       }
       if(onUpdate)onUpdate();
     }
@@ -139,8 +151,10 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
       if(rpcErr)throw rpcErr;
       showToast("Match logged!");setLoggingMatch(null);
       if(sendPushNotification){
-        const allNames=[...(ch.team_a||[]),...(ch.team_b||[])].map(id=>getName(id)).join(", ");
-        sendPushNotification("match","Match Played!",`Result logged for ${formatDate(ch.date)} — ${allNames}`);
+        const playedPlayerIds=[...(ch.team_a||[]),...(ch.team_b||[])];
+        const playedTargetUids=getPlayerUserIds(playedPlayerIds);
+        const allNames=playedPlayerIds.map(id=>getName(id)).join(", ");
+        sendPushNotification("match","Match Played!",`Result logged for ${formatDate(ch.date)} — ${allNames}`,playedTargetUids);
       }
       if(onUpdate)onUpdate();
     }catch(err){showToast(err.message||"Failed to log match","error");}

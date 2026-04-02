@@ -197,7 +197,7 @@ serve(async (req) => {
     }
     // --- END JWT VERIFICATION ---
 
-    const { league_id, title, body, type, exclude_user_id } = await req.json();
+    const { league_id, title, body, type, exclude_user_id, target_user_ids } = await req.json();
 
     if (!league_id || !body) {
       return new Response(JSON.stringify({ error: "league_id and body required" }), {
@@ -223,10 +223,13 @@ serve(async (req) => {
       });
     }
 
-    // Filter by exclude_user_id and notification preference
-    let filtered = exclude_user_id
-      ? subscriptions.filter((s: any) => s.user_id !== exclude_user_id)
+    // Filter by target_user_ids (if provided), exclude_user_id, and notification preference
+    let filtered = target_user_ids && target_user_ids.length > 0
+      ? subscriptions.filter((s: any) => target_user_ids.includes(s.user_id))
       : subscriptions;
+    filtered = exclude_user_id
+      ? filtered.filter((s: any) => s.user_id !== exclude_user_id)
+      : filtered;
     filtered = typeFilter
       ? filtered.filter((s: any) => s[typeFilter] === true)
       : filtered;
@@ -236,13 +239,42 @@ serve(async (req) => {
     const vapidPublicKey = Deno.env.get("VAPID_PUBLIC_KEY") ?? "";
     const vapidSubject = Deno.env.get("VAPID_SUBJECT") ?? "mailto:m.muwahid@gmail.com";
 
+    // Deep link: challenges go to schedule tab, others to home
+    const pushUrl = type === "challenge" ? "/#schedule" : "/";
     const payloadJson = JSON.stringify({
       title: title || "PadelHub",
       body,
-      url: "/",
+      url: pushUrl,
       tag: `padelhub-${type || "general"}`,
     });
     const payloadBytes = new TextEncoder().encode(payloadJson);
+
+    // Insert in-app notifications (targeted to specific users if provided, else all league members)
+    try {
+      let notifUserIds: string[] = [];
+      if (target_user_ids && target_user_ids.length > 0) {
+        notifUserIds = target_user_ids.filter((uid: string) => uid !== exclude_user_id);
+      } else {
+        const { data: members } = await supabaseUser
+          .rpc("get_league_member_ids", { p_league_id: league_id });
+        if (members) notifUserIds = members
+          .map((m: any) => m.user_id)
+          .filter((uid: string) => uid !== exclude_user_id);
+      }
+      if (notifUserIds.length > 0) {
+        const notifRows = notifUserIds.map((uid: string) => ({
+          league_id,
+          user_id: uid,
+          type: type || "general",
+          title: title || "PadelHub",
+          body,
+        }));
+        await supabaseUser
+          .rpc("insert_notifications", { p_rows: JSON.stringify(notifRows) });
+      }
+    } catch (notifErr) {
+      console.error("In-app notification insert error:", notifErr);
+    }
 
     let sent = 0;
     let failed = 0;
