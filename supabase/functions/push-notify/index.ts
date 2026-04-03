@@ -163,9 +163,30 @@ async function encryptPushPayload(
 
 // ===== Main Handler =====
 
+// M-3: Simple in-memory rate limiter (per-user, per-minute)
+const rateLimitMap = new Map<string, { count: number; reset: number }>();
+const RATE_LIMIT = 30; // max requests per window
+const RATE_WINDOW = 60_000; // 1 minute
+
+function checkRateLimit(userId: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(userId);
+  if (!entry || now > entry.reset) {
+    rateLimitMap.set(userId, { count: 1, reset: now + RATE_WINDOW });
+    return true;
+  }
+  if (entry.count >= RATE_LIMIT) return false;
+  entry.count++;
+  return true;
+}
+
 serve(async (req) => {
+  // H-2: Restrict CORS to production domain (+ localhost for dev)
+  const origin = req.headers.get("Origin") || "";
+  const allowedOrigins = ["https://padel-battle.vercel.app", "http://localhost:5173"];
+  const corsOrigin = allowedOrigins.includes(origin) ? origin : "https://padel-battle.vercel.app";
   const corsHeaders = {
-    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Origin": corsOrigin,
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   };
 
@@ -287,46 +308,47 @@ serve(async (req) => {
       console.error("In-app notification insert error:", notifErr);
     }
 
-    let sent = 0;
-    let failed = 0;
+    // L-4: Parallel push sends via Promise.allSettled
     const staleEndpoints: string[] = [];
 
-    for (const sub of filtered) {
-      try {
-        // Sign VAPID JWT for this endpoint
-        const jwt = await signVapidJwt(
-          sub.endpoint, vapidPrivateKey, vapidPublicKey, vapidSubject
-        );
+    const sendOne = async (sub: any) => {
+      const jwt = await signVapidJwt(
+        sub.endpoint, vapidPrivateKey, vapidPublicKey, vapidSubject
+      );
+      const encrypted = await encryptPushPayload(
+        payloadBytes, sub.p256dh, sub.auth
+      );
+      const response = await fetch(sub.endpoint, {
+        method: "POST",
+        headers: {
+          "Authorization": `vapid t=${jwt}, k=${vapidPublicKey}`,
+          "Content-Encoding": "aes128gcm",
+          "Content-Type": "application/octet-stream",
+          "TTL": "86400",
+        },
+        body: encrypted,
+      });
+      return { sub, status: response.status, response };
+    };
 
-        // Encrypt payload per RFC 8291
-        const encrypted = await encryptPushPayload(
-          payloadBytes, sub.p256dh, sub.auth
-        );
-
-        // Send Web Push request
-        const response = await fetch(sub.endpoint, {
-          method: "POST",
-          headers: {
-            "Authorization": `vapid t=${jwt}, k=${vapidPublicKey}`,
-            "Content-Encoding": "aes128gcm",
-            "Content-Type": "application/octet-stream",
-            "TTL": "86400",
-          },
-          body: encrypted,
-        });
-
-        if (response.status === 201 || response.status === 200) {
+    const results = await Promise.allSettled(filtered.map((sub: any) => sendOne(sub)));
+    let sent = 0;
+    let failed = 0;
+    for (const r of results) {
+      if (r.status === "fulfilled") {
+        const { sub, status } = r.value;
+        if (status === 200 || status === 201) {
           sent++;
-        } else if (response.status === 404 || response.status === 410) {
+        } else if (status === 404 || status === 410) {
           staleEndpoints.push(sub.endpoint);
           failed++;
         } else {
-          const errText = await response.text();
-          console.error(`Push failed ${sub.endpoint}: ${response.status} ${errText}`);
+          const errText = await r.value.response.text();
+          console.error(`Push failed ${sub.endpoint}: ${status} ${errText}`);
           failed++;
         }
-      } catch (err) {
-        console.error(`Push error ${sub.endpoint}:`, err);
+      } else {
+        console.error("Push error:", r.reason);
         failed++;
       }
     }

@@ -105,11 +105,8 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
 
   async function leaveChallenge(ch){
     if(!claimedP)return;
-    const pid=claimedP.id;
-    const newA=ch.team_a.filter(id=>id!==pid);
-    const newB=ch.team_b.filter(id=>id!==pid);
-    const {error}=await supabase.from("challenges").update({team_a:newA,team_b:newB,status:"open"}).eq("id",ch.id);
-    if(error){showToast("Failed to leave","error");}else{showToast("Left match");if(onUpdate)onUpdate();}
+    const {data,error}=await supabase.rpc("leave_challenge",{p_challenge_id:ch.id,p_player_id:claimedP.id});
+    if(error||(data&&data.error)){showToast(data?.error||"Failed to leave","error");}else{showToast("Left match");if(onUpdate)onUpdate();}
   }
 
   async function cancelChallenge(id){
