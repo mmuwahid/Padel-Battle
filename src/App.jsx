@@ -591,17 +591,19 @@ function AppContent({leagueId,user,onSwitchLeague}){
     });
   },[players,matches]);
 
-  // Leaderboard — S1-01: Only show players with 1+ games played (hide 0-game players entirely)
-  const lb = useMemo(()=>{
-    return [...ps].filter(p=>p.games>0).sort((a,b)=>{
-      if(b.wins!==a.wins)return b.wins-a.wins;
-      if(b.winRate!==a.winRate)return b.winRate-a.winRate;
-      return a.name.localeCompare(b.name);
-    });
-  },[ps]);
-
   // ELO ratings
   const elo = useMemo(()=>calcElo(players,matches),[players,matches]);
+
+  // Leaderboard — Ranked by Win Rate > ELO > Games Played
+  const lb = useMemo(()=>{
+    return [...ps].filter(p=>p.games>0).sort((a,b)=>{
+      if(b.winRate!==a.winRate)return b.winRate-a.winRate;
+      const eloA=elo[a.id]||1500, eloB=elo[b.id]||1500;
+      if(eloB!==eloA)return eloB-eloA;
+      if(b.games!==a.games)return b.games-a.games;
+      return a.name.localeCompare(b.name);
+    });
+  },[ps,elo]);
 
   // Combos (most common team-ups)
   const combos = useMemo(()=>{
@@ -786,8 +788,9 @@ function AppContent({leagueId,user,onSwitchLeague}){
         <div style={{padding:"20px 16px"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
             <h2 style={{fontSize:"18px",fontWeight:"bold",margin:0}}>Leaderboard</h2>
-            <div style={{fontSize:"12px",color:MT}}>
-              {lb.length} player{lb.length!==1?"s":""}
+            <div style={{fontSize:"12px",color:MT,textAlign:"right"}}>
+              <div>{lb.length} player{lb.length!==1?"s":""}</div>
+              <div style={{fontSize:"10px",opacity:0.7}}>Ranked by Win Rate</div>
             </div>
           </div>
 
