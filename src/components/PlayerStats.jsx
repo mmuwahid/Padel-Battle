@@ -66,7 +66,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
     if(!isAdmin)return;
     try{
       // Delete related matches
-      const {error:matchErr}=await supabase.from("matches").delete().or(`team_a.cs.{"${pid}"},team_b.cs.{"${pid}"}`);
+      const {error:matchErr}=await supabase.from("matches").delete().eq("league_id",leagueId).or(`team_a.cs.{"${pid}"},team_b.cs.{"${pid}"}`);
       // Delete player
       const {error:playerErr}=await supabase.from("players").delete().eq("id",pid);
       if(playerErr)throw playerErr;

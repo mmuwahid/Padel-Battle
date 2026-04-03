@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { A, BG, CD, BD, TX, MT, DG, GD, PU } from '../theme';
 
-export function LogMatch({players,matches,supabase,leagueId,pm,em,setEm,goBack,sel,lbl,getName,seasonId,seasons,setCurSeason,onSave,showToast,sendPushNotification}){
+export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goBack,sel,lbl,getName,seasonId,seasons,setCurSeason,onSave,showToast,sendPushNotification}){
   const isE=!!em;
   const [tA,setTA]=useState(["",""]);
   const [tB,setTB]=useState(["",""]);
@@ -47,7 +47,7 @@ export function LogMatch({players,matches,supabase,leagueId,pm,em,setEm,goBack,s
         // INSERT new match
         const {error}=await supabase
           .from("matches")
-          .insert({league_id:leagueId,season_id:seasonId,date,team_a:[...tA],team_b:[...tB],sets:as,motm:motm||null,logged_by:null});
+          .insert({league_id:leagueId,season_id:seasonId,date,team_a:[...tA],team_b:[...tB],sets:as,motm:motm||null,logged_by:user.id});
         if(error)throw error;
       }
       reset();

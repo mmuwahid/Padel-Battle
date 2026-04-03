@@ -218,6 +218,14 @@ serve(async (req) => {
     }
     // --- END JWT VERIFICATION ---
 
+    // M-3: Rate limit check
+    if (!checkRateLimit(user.id)) {
+      return new Response(JSON.stringify({ error: "Rate limit exceeded. Try again shortly." }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { league_id, title, body, type, exclude_user_id, target_user_ids } = await req.json();
 
     if (!league_id || !body) {

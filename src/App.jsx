@@ -855,7 +855,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
             <div style={{marginBottom:"24px",background:CD,padding:"16px",borderRadius:"8px",border:`1px solid ${BD}`}}>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px",alignItems:"flex-end"}}>
                 {/* 2nd place */}
-                <div style={{textAlign:"center",padding:"12px",background:CD2,borderRadius:"6px",borderTop:`3px solid ${SV}`}}>
+                <div onClick={()=>{setSelectedPlayer(lb[1].id);setTab("stats");}} style={{textAlign:"center",padding:"12px",background:CD2,borderRadius:"6px",borderTop:`3px solid ${SV}`,cursor:"pointer"}}>
                   <div style={{fontSize:"20px",marginBottom:"4px"}}>🥈</div>
                   <div style={{fontSize:"13px",fontWeight:"bold",marginBottom:"4px"}}>{lb[1].nickname||lb[1].name}</div>
                   <div style={{fontSize:"11px"}}><span style={{color:A}}>{lb[1].wins}W</span> <span style={{color:lb[1].losses>0?DG:TX}}>{lb[1].losses}L</span></div>
@@ -863,7 +863,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
                 </div>
 
                 {/* 1st place */}
-                <div style={{textAlign:"center",padding:"16px",background:CD2,borderRadius:"6px",borderTop:`3px solid ${GD}`,transform:"scale(1.05)"}}>
+                <div onClick={()=>{setSelectedPlayer(lb[0].id);setTab("stats");}} style={{textAlign:"center",padding:"16px",background:CD2,borderRadius:"6px",borderTop:`3px solid ${GD}`,transform:"scale(1.05)",cursor:"pointer"}}>
                   <div style={{fontSize:"28px",marginBottom:"6px"}}>🥇</div>
                   <div style={{fontSize:"14px",fontWeight:"bold",marginBottom:"6px"}}>{lb[0].nickname||lb[0].name}</div>
                   <div style={{fontSize:"12px"}}><span style={{color:A}}>{lb[0].wins}W</span> <span style={{color:lb[0].losses>0?DG:TX}}>{lb[0].losses}L</span></div>
@@ -871,7 +871,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
                 </div>
 
                 {/* 3rd place */}
-                <div style={{textAlign:"center",padding:"12px",background:CD2,borderRadius:"6px",borderTop:`3px solid ${BZ}`}}>
+                <div onClick={()=>{setSelectedPlayer(lb[2].id);setTab("stats");}} style={{textAlign:"center",padding:"12px",background:CD2,borderRadius:"6px",borderTop:`3px solid ${BZ}`,cursor:"pointer"}}>
                   <div style={{fontSize:"20px",marginBottom:"4px"}}>🥉</div>
                   <div style={{fontSize:"13px",fontWeight:"bold",marginBottom:"4px"}}>{lb[2].nickname||lb[2].name}</div>
                   <div style={{fontSize:"11px"}}><span style={{color:A}}>{lb[2].wins}W</span> <span style={{color:lb[2].losses>0?DG:TX}}>{lb[2].losses}L</span></div>
@@ -884,7 +884,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
           {/* Full leaderboard table */}
           <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
             {lb.map((p,idx)=>(
-              <div key={p.id} style={{display:"flex",alignItems:"center",padding:"12px",background:CD,borderRadius:"6px",border:`1px solid ${BD}`,justifyContent:"space-between"}}>
+              <div key={p.id} onClick={()=>{setSelectedPlayer(p.id);setTab("stats");}} style={{display:"flex",alignItems:"center",padding:"12px",background:CD,borderRadius:"6px",border:`1px solid ${BD}`,justifyContent:"space-between",cursor:"pointer"}}>
                 <div style={{display:"flex",alignItems:"center",gap:"12px",flex:1}}>
                   <div style={{width:"32px",height:"32px",background:CD2,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"13px",fontWeight:"bold",color:A}}>
                     #{idx+1}
@@ -921,6 +921,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
           matches={matches}
           supabase={supabase}
           leagueId={leagueId}
+          user={user}
           pm={Object.fromEntries(players.map(p=>[p.id,p]))}
           em={editingMatch}
           setEm={setEditingMatch}

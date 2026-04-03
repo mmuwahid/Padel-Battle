@@ -104,7 +104,7 @@ export function SettingsView({ user, claimedPlayer, isAdmin, league, leagueMembe
               return (
                 <div key={member.user_id} style={{padding:"10px 12px",background:CD2,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                   <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:12,fontWeight:600,color:TX,overflow:"hidden",textOverflow:"ellipsis"}}>{profile?.user_metadata?.display_name || profile?.email?.split("@")[0] || "User"}</div>
+                    <div style={{fontSize:12,fontWeight:600,color:TX,overflow:"hidden",textOverflow:"ellipsis"}}>{profile?.display_name || profile?.email?.split("@")[0] || "User"}</div>
                     <div style={{fontSize:10,color:MT}}>{profile?.email || ""}</div>
                   </div>
                   <div style={{marginLeft:12}}>
