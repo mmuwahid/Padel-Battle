@@ -1,29 +1,72 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { supabase } from '../supabase';
 import { A, BG, CD, CD2, BD, TX, MT, DG } from '../theme';
 import { PadelLogo, PadelLogoSmall } from './icons';
 
+// Map raw Supabase error messages to user-friendly ones
+function friendlyAuthError(msg) {
+  if (!msg) return "Something went wrong. Please try again.";
+  const m = msg.toLowerCase();
+  if (m.includes("email rate limit exceeded") || m.includes("rate limit"))
+    return "Too many attempts. Please wait a few minutes before trying again.";
+  if (m.includes("invalid login credentials"))
+    return "Incorrect email or password. Please try again, or tap 'Forgot password?' to reset.";
+  if (m.includes("email not confirmed"))
+    return "Your email hasn't been confirmed yet. Check your inbox for the confirmation link, or tap 'Resend confirmation' below.";
+  if (m.includes("user already registered") || m.includes("already exists"))
+    return "An account with this email already exists. Try signing in instead.";
+  if (m.includes("signup is not allowed") || m.includes("signups not allowed"))
+    return "New signups are currently disabled. Please contact the admin.";
+  if (m.includes("password") && m.includes("at least"))
+    return msg; // Already descriptive
+  return msg;
+}
+
 export function AuthGate({children}){
   const [user,setUser]=useState(null);
   const [loading,setLoading]=useState(true);
-  // authMode: "signin" | "signup"
+  // authMode: "signin" | "signup" | "recovery"
   const [authMode,setAuthMode]=useState("signin");
   const [email,setEmail]=useState("");
   const [password,setPassword]=useState("");
+  const [confirmPassword,setConfirmPassword]=useState("");
   const [displayName,setDisplayName]=useState("");
   const [error,setError]=useState("");
   const [successMsg,setSuccessMsg]=useState("");
+  const [recoveryUser,setRecoveryUser]=useState(null);
+  const [resetLoading,setResetLoading]=useState(false);
+  const isRecoveryRef = useRef(false); // Ref to avoid stale closure in onAuthStateChange
 
   useEffect(()=>{
-    // Handle auth callback (magic link / OAuth redirect)
-    const handleAuthCallback = async () => {
-      const hash = window.location.hash;
-      const params = new URLSearchParams(window.location.search);
-      if (hash && hash.includes("access_token")) {
-        // Supabase will auto-handle this via onAuthStateChange
-        // Clean the URL
+    // Listen for auth changes — set up FIRST to catch PASSWORD_RECOVERY
+    const {data:{subscription}} = supabase.auth.onAuthStateChange((evt,session)=>{
+      if (evt === "PASSWORD_RECOVERY") {
+        // User clicked password reset link — show reset form instead of logging in
+        isRecoveryRef.current = true;
+        setRecoveryUser(session?.user || null);
+        setAuthMode("recovery");
+        setError("");
+        setSuccessMsg("Set your new password below.");
+        setLoading(false);
+        // Clean the URL hash (contains access_token)
         window.history.replaceState(null, "", window.location.pathname + window.location.search);
+        return; // Don't set user — keep on auth screen
       }
+      if (evt === "SIGNED_OUT") {
+        isRecoveryRef.current = false;
+        setUser(null);
+        setRecoveryUser(null);
+      } else {
+        // Only set user (proceed to app) if NOT in recovery mode
+        if (!isRecoveryRef.current) {
+          setUser(session?.user || null);
+        }
+      }
+    });
+
+    // Handle auth callback (OAuth code exchange)
+    const handleAuthCallback = async () => {
+      const params = new URLSearchParams(window.location.search);
       if (params.get("code")) {
         // OAuth code exchange — Supabase handles this automatically
         const cleanUrl = window.location.pathname + (params.get("invite") ? `?invite=${params.get("invite")}` : "");
@@ -35,15 +78,17 @@ export function AuthGate({children}){
     // Check current auth state
     const checkAuth = async () => {
       const {data:{session}} = await supabase.auth.getSession();
+      // Don't auto-login if the URL hash contains type=recovery (Supabase will fire PASSWORD_RECOVERY event)
+      const hash = window.location.hash;
+      if (hash && hash.includes("type=recovery")) {
+        // Wait for onAuthStateChange PASSWORD_RECOVERY event to handle this
+        return;
+      }
       setUser(session?.user || null);
       setLoading(false);
     };
     checkAuth();
 
-    // Listen for auth changes
-    const {data:{subscription}} = supabase.auth.onAuthStateChange((evt,session)=>{
-      setUser(session?.user || null);
-    });
     return ()=>subscription?.unsubscribe();
   },[]);
 
@@ -58,8 +103,42 @@ export function AuthGate({children}){
         redirectTo: window.location.origin + window.location.pathname + window.location.search
       });
       if (err) throw err;
-      setSuccessMsg("Password reset link sent! Check your email.");
-    } catch (err) { setError(err.message || "Failed to send reset link"); }
+      setSuccessMsg("Password reset link sent! Check your email. The link expires in 1 hour.");
+    } catch (err) { setError(friendlyAuthError(err.message)); }
+  };
+
+  // Set New Password (from recovery link)
+  const handleSetNewPassword = async (e) => {
+    e.preventDefault();
+    clearForm();
+    if (!password || password.length < 6) { setError("Password must be at least 6 characters"); return; }
+    if (password !== confirmPassword) { setError("Passwords don't match"); return; }
+    setResetLoading(true);
+    try {
+      const {error:err} = await supabase.auth.updateUser({ password });
+      if (err) throw err;
+      // Sign out so they can log in fresh with new password
+      isRecoveryRef.current = false;
+      await supabase.auth.signOut();
+      setRecoveryUser(null);
+      setAuthMode("signin");
+      setPassword("");
+      setConfirmPassword("");
+      setSuccessMsg("Password updated! Sign in with your new password.");
+    } catch (err) {
+      setError(friendlyAuthError(err.message));
+    } finally { setResetLoading(false); }
+  };
+
+  // Resend confirmation email
+  const handleResendConfirmation = async () => {
+    clearForm();
+    if (!email.trim()) { setError("Enter your email above first"); return; }
+    try {
+      const {error:err} = await supabase.auth.resend({ type: "signup", email: email.trim() });
+      if (err) throw err;
+      setSuccessMsg("Confirmation email resent! Check your inbox.");
+    } catch (err) { setError(friendlyAuthError(err.message)); }
   };
 
   // Email/Password Sign Up
@@ -76,12 +155,12 @@ export function AuthGate({children}){
       });
       if (err) throw err;
       if (data?.user?.identities?.length === 0) {
-        setError("An account with this email already exists. Try signing in.");
+        setError("An account with this email already exists. Try signing in, or use 'Forgot password?' to reset.");
       } else {
-        setSuccessMsg("Account created! Check your email to confirm, or sign in directly.");
+        setSuccessMsg("Account created! You can sign in now.");
         setPassword("");
       }
-    } catch (err) { setError(err.message || "Failed to create account"); }
+    } catch (err) { setError(friendlyAuthError(err.message)); }
   };
 
   // Email/Password Sign In
@@ -93,7 +172,7 @@ export function AuthGate({children}){
     try {
       const {error:err} = await supabase.auth.signInWithPassword({email:email.trim(),password});
       if (err) throw err;
-    } catch (err) { setError(err.message || "Failed to sign in"); }
+    } catch (err) { setError(friendlyAuthError(err.message)); }
   };
 
   // Google OAuth (ready for when configured)
@@ -105,10 +184,62 @@ export function AuthGate({children}){
         options: { redirectTo: window.location.origin + window.location.pathname + window.location.search, queryParams: { prompt: "select_account" } }
       });
       if (err) throw err;
-    } catch (err) { setError(err.message || "Google sign-in failed"); }
+    } catch (err) { setError(friendlyAuthError(err.message)); }
   };
 
   if (loading) return <div style={{background:BG,width:"100vw",height:"100vh",display:"flex",alignItems:"center",justifyContent:"center",color:TX}}>Loading...</div>;
+
+  // Show recovery form if user clicked a password reset link (even though they're technically authenticated)
+  if (authMode === "recovery" || recoveryUser) {
+    const inputStyle = {
+      width:"100%",padding:"12px 14px",background:CD,border:`1px solid ${BD}`,borderRadius:10,
+      color:TX,fontSize:14,fontFamily:"'Outfit',sans-serif",boxSizing:"border-box",outline:"none",
+    };
+    const labelStyle = {display:"block",color:MT,fontSize:11,fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:6};
+    const btnPrimary = {
+      padding:"14px",background:`linear-gradient(135deg,${A},${A}cc)`,border:"none",borderRadius:12,
+      color:"#000",fontWeight:800,fontSize:15,cursor:"pointer",fontFamily:"'Outfit',sans-serif",
+      textTransform:"uppercase",letterSpacing:1,width:"100%",opacity:resetLoading?0.6:1,
+    };
+    const linkStyle = {background:"none",border:"none",color:A,fontSize:12,cursor:"pointer",fontFamily:"'Outfit',sans-serif",textDecoration:"underline"};
+
+    return (
+      <div style={{background:BG,minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:"20px",fontFamily:"'Outfit',sans-serif"}}>
+        <div style={{maxWidth:"380px",width:"100%"}}>
+          <div style={{textAlign:"center",marginBottom:"28px"}}>
+            <div style={{display:"flex",justifyContent:"center"}}><PadelLogo/></div>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:"8px",marginTop:"16px"}}>
+              <PadelLogoSmall/>
+              <h1 style={{fontSize:22,fontWeight:900,letterSpacing:2,color:TX,fontFamily:"'Outfit',sans-serif"}}><span style={{color:TX}}>Padel</span><span style={{color:A}}>Hub</span></h1>
+            </div>
+          </div>
+
+          <div style={{textAlign:"center",marginBottom:20}}>
+            <div style={{fontSize:16,fontWeight:700,color:TX,marginBottom:4}}>Set New Password</div>
+            <div style={{fontSize:12,color:MT}}>Choose a new password for your account</div>
+          </div>
+
+          {error && <div style={{color:DG,fontSize:12,padding:"10px 14px",background:`${DG}15`,borderRadius:10,border:`1px solid ${DG}30`,marginBottom:12}}>{error}</div>}
+          {successMsg && <div style={{color:A,fontSize:12,padding:"10px 14px",background:`${A}15`,borderRadius:10,border:`1px solid ${A}30`,marginBottom:12}}>{successMsg}</div>}
+
+          <form onSubmit={handleSetNewPassword} style={{display:"flex",flexDirection:"column",gap:"12px"}}>
+            <div>
+              <label style={labelStyle}>New Password</label>
+              <input type="password" value={password} onChange={(e)=>setPassword(e.target.value)} placeholder="Min 6 characters" style={inputStyle} autoFocus/>
+            </div>
+            <div>
+              <label style={labelStyle}>Confirm Password</label>
+              <input type="password" value={confirmPassword} onChange={(e)=>setConfirmPassword(e.target.value)} placeholder="Re-enter password" style={inputStyle}/>
+            </div>
+            <button type="submit" disabled={resetLoading} style={btnPrimary}>{resetLoading ? "Updating..." : "Update Password"}</button>
+            <div style={{textAlign:"center",marginTop:4}}>
+              <button type="button" onClick={async()=>{isRecoveryRef.current=false;await supabase.auth.signOut();setRecoveryUser(null);setAuthMode("signin");clearForm();}} style={linkStyle}>Cancel — back to Sign In</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   if (!user) {
     const inputStyle = {
@@ -155,8 +286,9 @@ export function AuthGate({children}){
                 <input type="password" value={password} onChange={(e)=>setPassword(e.target.value)} placeholder="Your password" style={inputStyle}/>
               </div>
               <button type="submit" style={btnPrimary}>Sign In</button>
-              <div style={{textAlign:"center",marginTop:4}}>
+              <div style={{textAlign:"center",marginTop:4,display:"flex",justifyContent:"center",gap:16}}>
                 <button type="button" onClick={handleForgotPassword} style={linkStyle}>Forgot password?</button>
+                <button type="button" onClick={handleResendConfirmation} style={linkStyle}>Resend confirmation</button>
               </div>
               <div style={{textAlign:"center",marginTop:2}}>
                 <span style={{color:MT,fontSize:12}}>Don't have an account? </span>
