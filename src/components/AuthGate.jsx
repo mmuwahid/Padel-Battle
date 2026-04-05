@@ -75,16 +75,22 @@ export function AuthGate({children}){
     };
     handleAuthCallback();
 
-    // Check current auth state
+    // Check current auth state with timeout
     const checkAuth = async () => {
-      const {data:{session}} = await supabase.auth.getSession();
-      // Don't auto-login if the URL hash contains type=recovery (Supabase will fire PASSWORD_RECOVERY event)
-      const hash = window.location.hash;
-      if (hash && hash.includes("type=recovery")) {
-        // Wait for onAuthStateChange PASSWORD_RECOVERY event to handle this
-        return;
+      try {
+        // Race getSession against a 5-second timeout
+        const result = await Promise.race([
+          supabase.auth.getSession(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+        ]);
+        // Don't auto-login if the URL hash contains type=recovery
+        const hash = window.location.hash;
+        if (hash && hash.includes("type=recovery")) return;
+        setUser(result.data?.session?.user || null);
+      } catch {
+        // Timeout or error — show login screen instead of blank
+        setUser(null);
       }
-      setUser(session?.user || null);
       setLoading(false);
     };
     checkAuth();
@@ -187,7 +193,16 @@ export function AuthGate({children}){
     } catch (err) { setError(friendlyAuthError(err.message)); }
   };
 
-  if (loading) return <div style={{background:BG,width:"100vw",height:"100vh",display:"flex",alignItems:"center",justifyContent:"center",color:TX}}>Loading...</div>;
+  // Hide HTML splash screen once auth is resolved
+  useEffect(() => {
+    if (!loading) {
+      const splash = document.getElementById('splash');
+      if (splash) splash.style.display = 'none';
+    }
+  }, [loading]);
+
+  // While loading, the HTML splash screen (in index.html) is already visible — return null
+  if (loading) return null;
 
   // Show recovery form if user clicked a password reset link (even though they're technically authenticated)
   if (authMode === "recovery" || recoveryUser) {

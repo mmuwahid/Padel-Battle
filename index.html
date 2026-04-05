@@ -30,14 +30,71 @@
     <meta name="twitter:image" content="https://padel-battle.vercel.app/icons/icon-512.png" />
   </head>
   <body>
+    <!-- Splash screen: visible instantly before React loads. Hidden by main.jsx after mount. -->
+    <div id="splash" style="position:fixed;inset:0;z-index:9999;background:#0a0a0f;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Outfit',system-ui,sans-serif;padding-top:env(safe-area-inset-top,0px)">
+      <svg width="64" height="64" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="45" stroke="#4ADE80" stroke-width="3" fill="none" opacity="0.3"/>
+        <circle cx="50" cy="50" r="6" fill="#4ADE80"/>
+        <circle cx="50" cy="22" r="4" fill="#4ADE80" opacity="0.7"/>
+        <circle cx="74" cy="38" r="4" fill="#4ADE80" opacity="0.7"/>
+        <circle cx="74" cy="62" r="4" fill="#4ADE80" opacity="0.7"/>
+        <circle cx="50" cy="78" r="4" fill="#4ADE80" opacity="0.7"/>
+        <circle cx="26" cy="62" r="4" fill="#4ADE80" opacity="0.7"/>
+        <circle cx="26" cy="38" r="4" fill="#4ADE80" opacity="0.7"/>
+        <line x1="50" y1="50" x2="50" y2="22" stroke="#4ADE80" stroke-width="1.5" opacity="0.4"/>
+        <line x1="50" y1="50" x2="74" y2="38" stroke="#4ADE80" stroke-width="1.5" opacity="0.4"/>
+        <line x1="50" y1="50" x2="74" y2="62" stroke="#4ADE80" stroke-width="1.5" opacity="0.4"/>
+        <line x1="50" y1="50" x2="50" y2="78" stroke="#4ADE80" stroke-width="1.5" opacity="0.4"/>
+        <line x1="50" y1="50" x2="26" y2="62" stroke="#4ADE80" stroke-width="1.5" opacity="0.4"/>
+        <line x1="50" y1="50" x2="26" y2="38" stroke="#4ADE80" stroke-width="1.5" opacity="0.4"/>
+      </svg>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:16px">
+        <span style="font-size:22px;font-weight:900;letter-spacing:2px;color:#e4e4ef">Padel</span><span style="font-size:22px;font-weight:900;letter-spacing:2px;color:#4ADE80">Hub</span>
+      </div>
+      <div id="splash-status" style="margin-top:20px;color:#9090a4;font-size:12px">Loading...</div>
+      <style>
+        @keyframes splash-pulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
+        #splash-status { animation: splash-pulse 1.5s ease-in-out infinite; }
+      </style>
+    </div>
+
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
     <script>
+      // Service worker registration + update detection
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').catch(() => {});
+          navigator.serviceWorker.register('/sw.js').then((reg) => {
+            // Check for updates periodically (every 30 minutes)
+            setInterval(() => reg.update(), 30 * 60 * 1000);
+          }).catch(() => {});
+        });
+        // Listen for SW_UPDATED message — auto-reload to get new version
+        navigator.serviceWorker.addEventListener('message', (event) => {
+          if (event.data?.type === 'SW_UPDATED') {
+            window.location.reload();
+          }
         });
       }
+      // Offline detection — update splash status
+      window.addEventListener('offline', () => {
+        const s = document.getElementById('splash-status');
+        if (s) s.textContent = "You're offline. Connect to the internet to continue.";
+      });
+      // Timeout: if app hasn't loaded after 10s, show error in splash
+      setTimeout(() => {
+        const splash = document.getElementById('splash');
+        if (splash && splash.style.display !== 'none') {
+          const s = document.getElementById('splash-status');
+          if (s) {
+            s.style.animation = 'none';
+            s.textContent = 'Taking too long? Tap to reload.';
+            s.style.cursor = 'pointer';
+            s.style.textDecoration = 'underline';
+            s.onclick = () => window.location.reload();
+          }
+        }
+      }, 10000);
     </script>
   </body>
 </html>

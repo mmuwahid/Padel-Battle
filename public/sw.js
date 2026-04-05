@@ -1,10 +1,10 @@
-const CACHE_NAME = 'padelhub-v30';
+const CACHE_NAME = 'padelhub-v31';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
 ];
 
-// Install — cache static assets
+// Install — cache static assets, skip waiting to activate immediately
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
@@ -12,12 +12,17 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// Activate — clean old caches
+// Activate — clean old caches + notify clients about update
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    )
+    ).then(() => {
+      // Tell all open tabs a new version is active — they should reload
+      self.clients.matchAll({ type: 'window' }).then((clients) => {
+        clients.forEach((client) => client.postMessage({ type: 'SW_UPDATED' }));
+      });
+    })
   );
   self.clients.claim();
 });
@@ -30,19 +35,37 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(event.request.url);
 
-  // PA-09: Hashed assets (contain hash in filename) — cache-first (immutable)
-  if (url.pathname.match(/\/assets\/.*-[a-f0-9]{8}\./)) {
+  // HTML navigation requests — network-first, ALWAYS
+  // This ensures the app shell references the correct JS bundle after redeployment
+  if (event.request.mode === 'navigate' || url.pathname === '/' || url.pathname.endsWith('.html')) {
     event.respondWith(
-      caches.match(event.request).then((cached) => {
-        if (cached) return cached;
-        return fetch(event.request).then((response) => {
+      fetch(event.request)
+        .then((response) => {
           if (response.ok) {
             const clone = response.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
           }
           return response;
-        });
-      })
+        })
+        .catch(() => caches.match(event.request).then((cached) => cached || caches.match('/')))
+    );
+    return;
+  }
+
+  // Hashed assets (e.g., index-DdI_Nc05.js) — network-first with cache fallback
+  // CHANGED from cache-first: after redeployment, old hashes 404 on Vercel.
+  // Network-first ensures we always try the live file first.
+  if (url.pathname.startsWith('/assets/')) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(event.request))
     );
     return;
   }
@@ -91,7 +114,6 @@ self.addEventListener('notificationclick', (event) => {
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       for (const client of clientList) {
         if (client.url.includes(self.location.origin) && 'focus' in client) {
-          // Navigate to the deep link URL, then focus
           client.navigate(fullUrl);
           return client.focus();
         }
