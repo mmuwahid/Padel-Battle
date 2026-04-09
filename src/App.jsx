@@ -594,10 +594,12 @@ function AppContent({leagueId,user,onSwitchLeague}){
   // ELO ratings
   const elo = useMemo(()=>calcElo(players,matches),[players,matches]);
 
-  // Leaderboard — Ranked by Win Rate > ELO > Games Played
+  // Leaderboard — Ranked by Total Wins > Win Rate > ELO > Games Played
   const lb = useMemo(()=>{
     return [...ps].filter(p=>p.games>0).sort((a,b)=>{
-      if(b.winRate!==a.winRate)return b.winRate-a.winRate;
+      if(b.wins!==a.wins)return b.wins-a.wins;
+      const wrA=Math.round(a.winRate*1000), wrB=Math.round(b.winRate*1000);
+      if(wrB!==wrA)return wrB-wrA;
       const eloA=elo[a.id]||1500, eloB=elo[b.id]||1500;
       if(eloB!==eloA)return eloB-eloA;
       if(b.games!==a.games)return b.games-a.games;
@@ -790,7 +792,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
             <h2 style={{fontSize:"18px",fontWeight:"bold",margin:0}}>Leaderboard</h2>
             <div style={{fontSize:"12px",color:MT,textAlign:"right"}}>
               <div>{lb.length} player{lb.length!==1?"s":""}</div>
-              <div style={{fontSize:"10px",opacity:0.7}}>Ranked by Win Rate</div>
+              <div style={{fontSize:"10px",opacity:0.7}}>Ranked by Total Wins</div>
             </div>
           </div>
 
@@ -862,7 +864,8 @@ function AppContent({leagueId,user,onSwitchLeague}){
                   <div style={{fontSize:"20px",marginBottom:"4px"}}>🥈</div>
                   <div style={{fontSize:"13px",fontWeight:"bold",marginBottom:"4px"}}>{lb[1].nickname||lb[1].name}</div>
                   <div style={{fontSize:"11px"}}><span style={{color:A}}>{lb[1].wins}W</span> <span style={{color:lb[1].losses>0?DG:TX}}>{lb[1].losses}L</span></div>
-                  <div style={{fontSize:"12px",color:A,fontWeight:"bold",marginTop:"4px"}}>{Math.round(elo[lb[1].id]||1500)}</div>
+                  <div style={{fontSize:"12px",color:SV,fontWeight:"bold",marginTop:"4px"}}>{(lb[1].winRate*100).toFixed(0)}%</div>
+                  <div style={{fontSize:"10px",color:MT,marginTop:"2px"}}>{Math.round(elo[lb[1].id]||1500)} ELO</div>
                 </div>
 
                 {/* 1st place */}
@@ -870,7 +873,8 @@ function AppContent({leagueId,user,onSwitchLeague}){
                   <div style={{fontSize:"28px",marginBottom:"6px"}}>🥇</div>
                   <div style={{fontSize:"14px",fontWeight:"bold",marginBottom:"6px"}}>{lb[0].nickname||lb[0].name}</div>
                   <div style={{fontSize:"12px"}}><span style={{color:A}}>{lb[0].wins}W</span> <span style={{color:lb[0].losses>0?DG:TX}}>{lb[0].losses}L</span></div>
-                  <div style={{fontSize:"13px",color:GD,fontWeight:"bold",marginTop:"6px"}}>{Math.round(elo[lb[0].id]||1500)}</div>
+                  <div style={{fontSize:"13px",color:GD,fontWeight:"bold",marginTop:"6px"}}>{(lb[0].winRate*100).toFixed(0)}%</div>
+                  <div style={{fontSize:"10px",color:MT,marginTop:"2px"}}>{Math.round(elo[lb[0].id]||1500)} ELO</div>
                 </div>
 
                 {/* 3rd place */}
@@ -878,7 +882,8 @@ function AppContent({leagueId,user,onSwitchLeague}){
                   <div style={{fontSize:"20px",marginBottom:"4px"}}>🥉</div>
                   <div style={{fontSize:"13px",fontWeight:"bold",marginBottom:"4px"}}>{lb[2].nickname||lb[2].name}</div>
                   <div style={{fontSize:"11px"}}><span style={{color:A}}>{lb[2].wins}W</span> <span style={{color:lb[2].losses>0?DG:TX}}>{lb[2].losses}L</span></div>
-                  <div style={{fontSize:"12px",color:BZ,fontWeight:"bold",marginTop:"4px"}}>{Math.round(elo[lb[2].id]||1500)}</div>
+                  <div style={{fontSize:"12px",color:BZ,fontWeight:"bold",marginTop:"4px"}}>{(lb[2].winRate*100).toFixed(0)}%</div>
+                  <div style={{fontSize:"10px",color:MT,marginTop:"2px"}}>{Math.round(elo[lb[2].id]||1500)} ELO</div>
                 </div>
               </div>
             </div>
@@ -898,17 +903,17 @@ function AppContent({leagueId,user,onSwitchLeague}){
                   </div>
                 </div>
                 <div style={{display:"flex",gap:"16px",alignItems:"center"}}>
-                  <div style={{textAlign:"right"}}>
-                    <div style={{fontSize:"13px",fontWeight:"bold",color:A}}>{Math.round(elo[p.id]||1500)}</div>
-                    <div style={{fontSize:"10px",color:MT}}>ELO</div>
+                  <div style={{textAlign:"right",minWidth:"40px"}}>
+                    <div style={{fontSize:"13px",fontWeight:"bold",color:(p.winRate>0.5?A:DG)}}>{(p.winRate*100).toFixed(0)}%</div>
+                    <div style={{fontSize:"10px",color:MT}}>WR</div>
                   </div>
                   <div style={{textAlign:"right",minWidth:"50px"}}>
                     <div style={{fontSize:"13px",fontWeight:"bold"}}>{p.wins}W</div>
                     <div style={{fontSize:"10px",color:p.losses>0?DG:TX}}>{p.losses}L</div>
                   </div>
-                  <div style={{textAlign:"right",minWidth:"40px"}}>
-                    <div style={{fontSize:"13px",fontWeight:"bold",color:(p.winRate>0.5?A:DG)}}>{(p.winRate*100).toFixed(0)}%</div>
-                    <div style={{fontSize:"10px",color:MT}}>WR</div>
+                  <div style={{textAlign:"right"}}>
+                    <div style={{fontSize:"12px",color:MT}}>{Math.round(elo[p.id]||1500)}</div>
+                    <div style={{fontSize:"10px",color:MT}}>ELO</div>
                   </div>
                 </div>
               </div>
