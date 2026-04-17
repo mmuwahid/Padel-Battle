@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { A, BG, CD, BD, TX, MT, DG, GD, PU } from '../theme';
+import { A, BG, CD, CD2, BD, TX, MT, DG, GD, PU } from '../theme';
+import { TeamShuffler } from './TeamShuffler';
 
 export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goBack,sel,lbl,getName,seasonId,seasons,setCurSeason,onSave,showToast,sendPushNotification}){
   const isE=!!em;
@@ -11,6 +12,9 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
   const [date,setDate]=useState(new Date().toISOString().split("T")[0]);
   const [saving,setSaving]=useState(false);
   const [saved,setSaved]=useState(false);
+  // FT-08 RNG state
+  const [showShuffler,setShowShuffler]=useState(false);
+  const [queue,setQueue]=useState([]); // remaining {team_a, team_b} to log after the current one
 
   useEffect(()=>{
     if(em){
@@ -50,11 +54,23 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
           .insert({league_id:leagueId,season_id:seasonId,date,team_a:[...tA],team_b:[...tB],sets:as,motm:motm||null,logged_by:user.id});
         if(error)throw error;
       }
-      reset();
+      // FT-08: if queue has remaining matches, pop the next one into the form instead of fully resetting
+      const hasNext=!isE && queue.length>0;
+      if(hasNext){
+        const next=queue[0];
+        setTA([...next.team_a]);
+        setTB([...next.team_b]);
+        setSets([[0,0],[0,0],[0,0]]);
+        setMotm("");
+        setNs(2);
+        setQueue(queue.slice(1));
+      } else {
+        reset();
+      }
       setSaved(true);
       setTimeout(()=>setSaved(false),2000);
       if(onSave)onSave();
-      if(showToast)showToast(em?"Match updated":"Match saved!");
+      if(showToast)showToast(em?"Match updated":(hasNext?`Match saved! Next up — ${queue.length} remaining`:"Match saved!"));
       // Send push notification for new matches (not edits)
       if(!isE&&sendPushNotification){
         const tANames=[tA[0],tA[1]].map(id=>getName?getName(id):id).join(" x ");
@@ -105,6 +121,34 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
           {seasons.filter(s=>s.active||s.id===seasonId).length>3&&<div style={{position:"absolute",right:0,top:0,bottom:0,width:24,background:`linear-gradient(to right,transparent,${BG})`,pointerEvents:"none"}}/>}
         </div>
       </div>}
+
+      {/* FT-08: Shuffle Teams entry point — hidden during edit and while shuffler is active */}
+      {!isE && !showShuffler && (
+        <div style={{marginBottom:12}}>
+          <button onClick={()=>setShowShuffler(true)} style={{width:"100%",padding:"10px",borderRadius:10,border:`1px dashed ${A}`,background:`${A}10`,color:A,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>🎲 Shuffle Teams</button>
+          {queue.length>0 && <div style={{marginTop:6,fontSize:11,color:MT,textAlign:"center"}}>{queue.length} queued match{queue.length===1?"":"es"} waiting — save this one to continue.</div>}
+        </div>
+      )}
+
+      {!isE && showShuffler && (
+        <TeamShuffler
+          players={players}
+          getName={getName}
+          onAccept={({matches})=>{
+            if(matches.length===0){setShowShuffler(false);return;}
+            const first=matches[0];
+            setTA([...first.team_a]);
+            setTB([...first.team_b]);
+            setSets([[0,0],[0,0],[0,0]]);
+            setMotm("");
+            setNs(2);
+            setQueue(matches.slice(1));
+            setShowShuffler(false);
+            if(showToast)showToast(matches.length>1?`Locked in! ${matches.length-1} more match${matches.length-1===1?"":"es"} queued.`:"Teams locked in — enter the score.");
+          }}
+          onCancel={()=>setShowShuffler(false)}
+        />
+      )}
 
       <div style={{marginBottom:16}}>
         <div style={lbl}>Date</div>

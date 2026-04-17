@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, BL, PU } from '../theme';
 import { formatDate, win } from '../utils/helpers';
+import { TeamShuffler } from './TeamShuffler';
 
 export function ScheduleView({challenges,players,matches,supabase,leagueId,user,getName,isAdmin,onUpdate,showToast,sendPushNotification,sel,elo,seasonId}){
   const [showForm,setShowForm]=useState(false);
   const [step,setStep]=useState(1); // 1=teams, 2=date/venue
+  const [showShuffler,setShowShuffler]=useState(false); // FT-08
   const [date,setDate]=useState(new Date().toISOString().split("T")[0]);
   const [time,setTime]=useState("18:00");
   const [duration,setDuration]=useState(90);
@@ -182,6 +184,29 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
             <span style={{fontSize:16}}>🎾</span>
             <span style={{fontSize:12,fontWeight:600,color:TX}}>Select Players</span>
           </div>
+
+          {/* FT-08: Shuffle entry point for scheduling */}
+          {!showShuffler && (
+            <button onClick={()=>setShowShuffler(true)} style={{width:"100%",padding:"10px",borderRadius:10,border:`1px dashed ${A}`,background:`${A}10`,color:A,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif",marginBottom:12}}>🎲 Shuffle Teams</button>
+          )}
+          {showShuffler && (
+            <TeamShuffler
+              players={players}
+              getName={getName}
+              singleMatchMode={true}
+              onAccept={({matches})=>{
+                if(matches.length>0){
+                  const first=matches[0];
+                  setTA([...first.team_a]);
+                  setTB([...first.team_b]);
+                  if(showToast)showToast("Teams locked in — pick a date next.");
+                }
+                setShowShuffler(false);
+              }}
+              onCancel={()=>setShowShuffler(false)}
+            />
+          )}
+
           <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:8,textTransform:"uppercase",letterSpacing:0.5}}>Team 1</div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}}>
             {[0,1].map(i=>{const allSel=[tA[0],tA[1],tB[0],tB[1]].filter(Boolean);const others=allSel.filter(v=>v!==tA[i]);const badge=tA[i]?getEloBadge(tA[i]):null;return(
