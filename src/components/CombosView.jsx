@@ -128,9 +128,9 @@ export function CombosView({combos,players,matches,pm,getName}){
             const partners=Object.entries(matrix[selPlayer]||{})
               .filter(([,v])=>v.games>0)
               .map(([pid,v])=>({pid,...v,pct:v.games>0?(v.w/v.games*100):0}))
-              .sort((a,b)=>b.pct-a.pct);
+              .sort((a,b)=>b.pct-a.pct||b.games-a.games);
             const best=partners[0];
-            const worst=partners[partners.length-1];
+            const worst=[...partners].sort((a,b)=>a.pct-b.pct||b.games-a.games)[0];
             if(!partners.length) return (<p style={{fontSize:13,color:MT}}>No partnerships recorded for {getName(selPlayer)}</p>);
             return (<div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
@@ -142,7 +142,7 @@ export function CombosView({combos,players,matches,pm,getName}){
                   <div style={{fontSize:22,fontWeight:900,color:A,fontFamily:"'JetBrains Mono'",marginTop:4}}>{best.pct.toFixed(0)}%</div>
                   <div style={{fontSize:11,color:MT}}>{best.w}W {best.l}L · {best.games} GP</div>
                 </div>
-                {worst&&worst.pid!==best.pid&&<div style={{background:CD,borderRadius:12,border:`1px solid ${DG}30`,padding:14,textAlign:"center"}}>
+                {worst&&worst.pid!==best.pid&&worst.pct<best.pct&&<div style={{background:CD,borderRadius:12,border:`1px solid ${DG}30`,padding:14,textAlign:"center"}}>
                   <div style={{fontSize:10,color:DG,fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>Worst Partner</div>
                   <div style={{fontSize:20}}>💔</div>
                   <div style={{fontSize:15,fontWeight:700,marginTop:4}}>{getName(worst.pid)}</div>
