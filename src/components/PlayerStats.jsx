@@ -243,7 +243,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                 {analyticsData.monthlyArr.map(([month,count])=>{
                   const max=Math.max(...analyticsData.monthlyArr.map(a=>a[1]));
                   const h=max>0?(count/max)*60+10:10;
-                  return <div key={month} style={{flex:1,textAlign:"center"}}><div style={{height:h,background:`linear-gradient(180deg,${A},${A}60)`,borderRadius:4,marginBottom:4}}/><div style={{fontSize:8,color:MT}}>{month.slice(5)}</div><div style={{fontSize:10,fontWeight:700,color:TX}}>{count}</div></div>;
+                  return <div key={month} style={{flex:1,textAlign:"center"}}><div style={{height:h,background:`linear-gradient(180deg,${A},${A}60)`,borderRadius:4,marginBottom:4}}/><div style={{fontSize:8,color:MT}}>{new Date(month+"-01").toLocaleString("en",{month:"short"})}</div><div style={{fontSize:10,fontWeight:700,color:TX}}>{count}</div></div>;
                 })}
               </div>
             </div>}
