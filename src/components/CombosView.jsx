@@ -135,7 +135,8 @@ export function CombosView({combos,players,matches,pm,getName}){
             return (<div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
                 <div style={{background:CD,borderRadius:12,border:`1px solid ${A}30`,padding:14,textAlign:"center"}}>
-                  <div style={{fontSize:10,color:A,fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>Best Partner</div>
+                  {partners.length>1&&best.pct>0&&<div style={{fontSize:10,color:A,fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>Best Partner</div>}
+                  {(partners.length===1||best.pct===0)&&<div style={{fontSize:10,color:MT,fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>{partners.length===1?"Only Partner":"Partner"}</div>}
                   <div style={{fontSize:20}}>🤝</div>
                   <div style={{fontSize:15,fontWeight:700,marginTop:4}}>{getName(best.pid)}</div>
                   <div style={{fontSize:22,fontWeight:900,color:A,fontFamily:"'JetBrains Mono'",marginTop:4}}>{best.pct.toFixed(0)}%</div>
