@@ -4,7 +4,7 @@ import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, PU } from '../theme';
 const TEAM_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const getTeamLabel = (idx) => TEAM_LETTERS[idx] ? `Team ${TEAM_LETTERS[idx]}` : `Team ${idx + 1}`;
 
-export function RoundRobin({ players, getName, supabase, leagueId, tournament, setTournament, sel, endTournament, resetTournament, deleteTournament, setScreen }) {
+export function RoundRobin({ players, getName, supabase, leagueId, tournament, setTournament, sel, endTournament, resetTournament, deleteTournament, setScreen, showToast }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   // ── State ──
   const [rrTeams, setRrTeams] = useState([
@@ -66,7 +66,7 @@ export function RoundRobin({ players, getName, supabase, leagueId, tournament, s
       }).select().single();
       if (error) throw error;
       setTournament(data); setScreen("rr-active");
-    } catch (err) { }
+    } catch (err) { if (showToast) showToast(err.message || "Failed to create tournament", "error"); }
   }
 
   async function recordRRScore(roundIdx, matchIdx, scoreA, scoreB) {
@@ -75,7 +75,7 @@ export function RoundRobin({ players, getName, supabase, leagueId, tournament, s
       const { error } = await supabase.from("tournaments").update({ scores: newScores }).eq("id", tournament.id);
       if (error) throw error;
       setTournament({ ...tournament, scores: newScores });
-    } catch (err) { }
+    } catch (err) { if (showToast) showToast(err.message || "Failed to save score", "error"); }
   }
 
   function getRRStandings() {

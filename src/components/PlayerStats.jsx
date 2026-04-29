@@ -4,7 +4,7 @@ import { ACHS } from '../data/achievements';
 import { FD } from './FormDots';
 import { formatTeam, win, formatDate, setTotals } from '../utils/helpers';
 
-export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matches,supabase,leagueId,isAdmin,getName,sel,onPlayersChange}){
+export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matches,supabase,leagueId,isAdmin,getName,sel,onPlayersChange,showToast}){
   const player=sp?pm[sp]:null;
   const stats=sp?ps[sp]:null;
   const [subTab,setSubTab]=useState("roster"); // roster | analytics
@@ -49,6 +49,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
       setShowAddPlayer(false);
       if(onPlayersChange)onPlayersChange();
     }catch(err){
+      if(showToast)showToast(err.message||"Failed to add player","error");
     }
   }
 
@@ -59,19 +60,21 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
       setEditPid(null);
       if(onPlayersChange)onPlayersChange();
     }catch(err){
+      if(showToast)showToast(err.message||"Failed to update player","error");
     }
   }
 
   async function deletePlayer(pid){
     if(!isAdmin)return;
     try{
-      // Delete related matches
+      // Delete related matches first; if it fails, abort to avoid an orphaned player row.
       const {error:matchErr}=await supabase.from("matches").delete().eq("league_id",leagueId).or(`team_a.cs.{"${pid}"},team_b.cs.{"${pid}"}`);
-      // Delete player
+      if(matchErr)throw matchErr;
       const {error:playerErr}=await supabase.from("players").delete().eq("id",pid);
       if(playerErr)throw playerErr;
       if(onPlayersChange)onPlayersChange();
     }catch(err){
+      if(showToast)showToast(err.message||"Failed to delete player","error");
     }
   }
 

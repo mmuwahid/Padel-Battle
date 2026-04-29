@@ -457,6 +457,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
       }
       setPushSubscribed(false);
     } catch (err) {
+      showToast("Failed to disable notifications","error");
     }
   };
 
@@ -1054,6 +1055,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
           getName={getName}
           sel={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:13,fontFamily:"Outfit"}}
           onPlayersChange={loadLeagueData}
+          showToast={showToast}
         /></Suspense></ErrorBoundary>
       )}
 

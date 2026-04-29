@@ -5,7 +5,7 @@ import { BracketSVG } from './BracketSVG';
 const TEAM_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const getTeamLabel = (idx) => TEAM_LETTERS[idx] ? `Team ${TEAM_LETTERS[idx]}` : `Team ${idx + 1}`;
 
-export function DoubleElimination({ players, getName, supabase, leagueId, tournament, setTournament, sel, endTournament, resetTournament, deleteTournament, setScreen }) {
+export function DoubleElimination({ players, getName, supabase, leagueId, tournament, setTournament, sel, endTournament, resetTournament, deleteTournament, setScreen, showToast }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   // ── State ──
   const [deTeams, setDeTeams] = useState([
@@ -70,7 +70,7 @@ export function DoubleElimination({ players, getName, supabase, leagueId, tourna
       if (error) throw error;
       setTournament(data);
       setScreen("de-active");
-    } catch (err) { }
+    } catch (err) { if (showToast) showToast(err.message || "Failed to create tournament", "error"); }
   }
 
   async function recordDEScore(bracket, roundIdx, matchIdx, scoreA, scoreB) {
@@ -115,7 +115,7 @@ export function DoubleElimination({ players, getName, supabase, leagueId, tourna
       const { error } = await supabase.from("tournaments").update({ scores: newScores, schedule: newSchedule }).eq("id", tournament.id);
       if (error) throw error;
       setTournament({ ...tournament, scores: newScores, schedule: newSchedule });
-    } catch (err) { }
+    } catch (err) { if (showToast) showToast(err.message || "Failed to save score", "error"); }
   }
 
   function getDEStandings() {

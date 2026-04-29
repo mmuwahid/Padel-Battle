@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, PU } from '../theme';
 import { generateAmericanoSchedule, generateMexicanoRound } from '../utils/tournaments';
 
-export function AmericanoMode({ players, getName, supabase, leagueId, tournament, setTournament, sel, endTournament, resetTournament, deleteTournament }) {
+export function AmericanoMode({ players, getName, supabase, leagueId, tournament, setTournament, sel, endTournament, resetTournament, deleteTournament, showToast }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   // ── State ──
   const [selPlayers, setSelP] = useState([]);
@@ -34,7 +34,8 @@ export function AmericanoMode({ players, getName, supabase, leagueId, tournament
       if (error) throw error;
       setTournament(data);
     } catch (err) {
-      }
+      if (showToast) showToast(err.message || "Failed to start tournament", "error");
+    }
   }
 
   async function recordScore(roundIdx, matchIdx, scoreA, scoreB) {
@@ -44,7 +45,8 @@ export function AmericanoMode({ players, getName, supabase, leagueId, tournament
       if (error) throw error;
       setTournament({ ...tournament, scores: newScores });
     } catch (err) {
-      }
+      if (showToast) showToast(err.message || "Failed to save score", "error");
+    }
   }
 
   function getPoints() {
@@ -82,7 +84,8 @@ export function AmericanoMode({ players, getName, supabase, leagueId, tournament
       if (error) throw error;
       setTournament({ ...tournament, schedule: newSchedule });
     } catch (err) {
-      }
+      if (showToast) showToast(err.message || "Failed to start next round", "error");
+    }
   }
 
   // ════════════════════════════════════

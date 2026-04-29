@@ -12,7 +12,7 @@ const TYPE_ICONS = {
 };
 
 export function NotificationCenter({ onClose }) {
-  const { supabase, user, leagueId } = useLeague();
+  const { supabase, user, leagueId, showToast } = useLeague();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -33,7 +33,7 @@ export function NotificationCenter({ onClose }) {
         .limit(50);
       if (error) throw error;
       setNotifications(data || []);
-    } catch (err) { }
+    } catch (err) { if (showToast) showToast(err.message || "Failed to load notifications", "error"); }
     setLoading(false);
   }
 

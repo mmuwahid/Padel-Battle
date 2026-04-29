@@ -10,7 +10,7 @@ import { RoundRobin } from './RoundRobin';
 // MAIN COMPONENT — Orchestrator
 // ══════════════════════════════════════
 export function GameMode({ tournament, setTournament, sel }) {
-  const { supabase, players, getName, leagueId } = useLeague();
+  const { supabase, players, getName, leagueId, showToast } = useLeague();
   const [topTab, setTopTab] = useState("casual"); // "casual" | "competitive"
   const [screen, setScreen] = useState("selector"); // selector | se-setup/active | de-setup/active | rr-setup/active
 
@@ -20,7 +20,7 @@ export function GameMode({ tournament, setTournament, sel }) {
       const { error } = await supabase.from("tournaments").update({ status: "complete" }).eq("id", tournament.id);
       if (error) throw error;
       setTournament({ ...tournament, status: "complete" });
-    } catch (err) { }
+    } catch (err) { if (showToast) showToast(err.message || "Failed to end tournament", "error"); }
   }
 
   function resetTournament() {
@@ -35,11 +35,11 @@ export function GameMode({ tournament, setTournament, sel }) {
       if (error) throw error;
       setTournament(null);
       setScreen("selector");
-    } catch (err) { }
+    } catch (err) { if (showToast) showToast(err.message || "Failed to delete tournament", "error"); }
   }
 
   // ── Shared props for all tournament components ──
-  const sharedProps = { players, getName, supabase, leagueId, tournament, setTournament, sel, endTournament, resetTournament, deleteTournament, setScreen };
+  const sharedProps = { players, getName, supabase, leagueId, tournament, setTournament, sel, endTournament, resetTournament, deleteTournament, setScreen, showToast };
 
   // ════════════════════════════════════
   // ROUTE: Active Americano / Mexicano
