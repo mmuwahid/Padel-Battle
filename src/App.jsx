@@ -549,15 +549,8 @@ function AppContent({leagueId,user,onSwitchLeague}){
       const losses = pMatches.length - wins;
       const winRate = pMatches.length>0?wins/pMatches.length:0;
 
-      // Calculate gamesWon and gamesLost
-      let gamesWon=0,gamesLost=0;
-      pMatches.forEach(m=>{
-        const isTeamA=m.team_a.includes(p.id);
-        m.sets.forEach(([a,b])=>{
-          if(isTeamA){gamesWon+=a;gamesLost+=b;}
-          else{gamesWon+=b;gamesLost+=a;}
-        });
-      });
+      // Match diff: matches won minus matches lost (drives "Match Diff" tile + Iron Wall achievement)
+      const gamesWon=wins,gamesLost=losses;
 
       // Win streak
       let streak=[];

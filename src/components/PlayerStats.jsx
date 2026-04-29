@@ -165,8 +165,8 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
           {[["Streak",getStreak(sp),TX],["⭐ MOTM",stats.motm,GD]].map(([l,v,c])=><div key={l} style={{background:CD,borderRadius:10,border:`1px solid ${BD}`,padding:"12px 8px",textAlign:"center"}}><div style={{fontSize:26,fontWeight:800,color:c,fontFamily:"'JetBrains Mono'"}}>{v}</div><div style={{fontSize:10,color:MT,fontWeight:600,marginTop:4}}>{l}</div></div>)}
           <div style={{background:CD,borderRadius:10,border:`1px solid ${BD}`,padding:"12px 8px",textAlign:"center"}}>
             <div style={{fontSize:26,fontWeight:800,color:gd>=0?A:DG,fontFamily:"'JetBrains Mono'"}}>{gd>0?"+":""}{gd}</div>
-            <div style={{fontSize:10,color:MT,fontWeight:600,marginTop:4}}>Games Diff</div>
-            <div style={{fontSize:8,color:MT,marginTop:2,lineHeight:1.3}}>Total games won minus games lost</div>
+            <div style={{fontSize:10,color:MT,fontWeight:600,marginTop:4}}>Match Diff</div>
+            <div style={{fontSize:8,color:MT,marginTop:2,lineHeight:1.3}}>Matches won minus matches lost</div>
           </div>
         </div>
         <div style={{background:CD,borderRadius:14,border:`1px solid ${BD}`,padding:14,marginBottom:12}}>
