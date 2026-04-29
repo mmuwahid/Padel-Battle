@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, BL, PU } from '../theme';
-import { win, formatDate } from '../utils/helpers';
+import { win, formatDate, setTotals } from '../utils/helpers';
 import { useLeague } from '../LeagueContext';
 
 const REACTIONS = [
@@ -84,7 +84,7 @@ export function MatchHistory({onEdit,shareMatch,sel,onMatchDeleted}){
           <div style={{fontSize:12,color:MT,lineHeight:1.5}}>Tap the + button to log your first match.</div>
         </div>
       )}
-      {s.map(m=>{const w=win(m.sets);const tA=m.sets.reduce((s,x)=>s+x[0],0);const tB=m.sets.reduce((s,x)=>s+x[1],0);
+      {s.map(m=>{const w=win(m.sets);const [tA,tB]=setTotals(m.sets);
         return (<div key={m.id} style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:8}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
             <span style={{fontSize:11,color:MT,fontWeight:400}}>{formatDate(m.date)}</span>

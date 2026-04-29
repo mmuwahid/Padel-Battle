@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, BL, PU } from '../theme';
-import { formatDate, win } from '../utils/helpers';
+import { formatDate, win, setTotals } from '../utils/helpers';
 import { TeamShuffler } from './TeamShuffler';
 
 export function ScheduleView({challenges,players,matches,supabase,leagueId,user,getName,isAdmin,onUpdate,showToast,sendPushNotification,sel,elo,seasonId}){
@@ -379,8 +379,7 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
           {past.map(ch=>{
             const lm=ch.match_id?(matches||[]).find(m=>m.id===ch.match_id):null;
             const w=lm?win(lm.sets):null;
-            const tA=lm?lm.sets.reduce((t,x)=>t+x[0],0):0;
-            const tB=lm?lm.sets.reduce((t,x)=>t+x[1],0):0;
+            const [tA,tB]=lm?setTotals(lm.sets):[0,0];
             return (
             <div key={ch.id} style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:8}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>

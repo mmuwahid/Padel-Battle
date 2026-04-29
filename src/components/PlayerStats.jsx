@@ -2,7 +2,7 @@ import React, { useState, useMemo } from "react";
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, BL, PU } from '../theme';
 import { ACHS } from '../data/achievements';
 import { FD } from './FormDots';
-import { formatTeam, win, formatDate } from '../utils/helpers';
+import { formatTeam, win, formatDate, setTotals } from '../utils/helpers';
 
 export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matches,supabase,leagueId,isAdmin,getName,sel,onPlayersChange}){
   const player=sp?pm[sp]:null;
@@ -87,7 +87,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
     const totalMatches=matches.length;
     const totalSets=matches.reduce((t,m)=>t+m.sets.length,0);
     const wr={};players.forEach(p=>{wr[p.id]={w:0,l:0,gw:0,gl:0};});
-    matches.forEach(m=>{const w=win(m.sets);const gA=m.sets.reduce((s,x)=>s+x[0],0);const gB=m.sets.reduce((s,x)=>s+x[1],0);
+    matches.forEach(m=>{const w=win(m.sets);const [gA,gB]=setTotals(m.sets);
       m.team_a.forEach(pid=>{if(wr[pid]){if(w==="A")wr[pid].w++;else wr[pid].l++;wr[pid].gw+=gA;wr[pid].gl+=gB;}});
       m.team_b.forEach(pid=>{if(wr[pid]){if(w==="B")wr[pid].w++;else wr[pid].l++;wr[pid].gw+=gB;wr[pid].gl+=gA;}});
     });
@@ -136,7 +136,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
       const k=[pid,opp].sort().join("|");if(!seen.has(k)&&r.w+r.l>=2){seen.add(k);const total=r.w+r.l;const pct=Math.min(r.w,r.l)/total*100;matchups.push({p1:pid,p2:opp,...r,games:total,balance:pct});}
     });});
     matchups.sort((a,b)=>b.balance-a.balance);
-    const biggestWins=[...matches].map(m=>{const gA=m.sets.reduce((s,x)=>s+x[0],0);const gB=m.sets.reduce((s,x)=>s+x[1],0);return{...m,diff:Math.abs(gA-gB),winner:win(m.sets)};}).sort((a,b)=>b.diff-a.diff).slice(0,3);
+    const biggestWins=[...matches].map(m=>{const [gA,gB]=setTotals(m.sets);return{...m,diff:Math.abs(gA-gB),winner:win(m.sets)};}).sort((a,b)=>b.diff-a.diff).slice(0,3);
     return {totalMatches,totalSets,mostActive,topWinRate,closeMatches,topMotm,monthlyArr,wr,partnerships,bestPartnership,worstPartnership,h2hAll,matchups:matchups.slice(0,5),biggestWins};
   },[matches,players]);
 

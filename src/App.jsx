@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback, Suspense, lazy } from "react";
 import { supabase } from './supabase';
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, BL, PU, TL, TR } from './theme';
-import { formatTeam, win, formatDate, gid } from './utils/helpers';
+import { formatTeam, win, formatDate, gid, setTotals } from './utils/helpers';
 import { calcElo } from './utils/elo';
 import { generateAmericanoSchedule, generateMexicanoRound } from './utils/tournaments';
 import { RULES, ARGUED } from './data/rules';
@@ -569,8 +569,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
     const tA=formatTeam(getName(m.team_a[0]),getName(m.team_a[1]));
     const tB=formatTeam(getName(m.team_b[0]),getName(m.team_b[1]));
     const w=win(m.sets);
-    const gA=m.sets.reduce((s,x)=>s+x[0],0);
-    const gB=m.sets.reduce((s,x)=>s+x[1],0);
+    const [gA,gB]=setTotals(m.sets);
     const winner=w==="A"?tA:tB;
     const loser=w==="A"?tB:tA;
     const mvp=m.motm?getName(m.motm):"—";
