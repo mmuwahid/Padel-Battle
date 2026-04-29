@@ -554,8 +554,8 @@ function AppContent({leagueId,user,onSwitchLeague}){
       pMatches.forEach(m=>{
         const isTeamA=m.team_a.includes(p.id);
         m.sets.forEach(([a,b])=>{
-          if(isTeamA){if(a>b)gamesWon++;else gamesLost++;}
-          else{if(b>a)gamesWon++;else gamesLost++;}
+          if(isTeamA){gamesWon+=a;gamesLost+=b;}
+          else{gamesWon+=b;gamesLost+=a;}
         });
       });
 

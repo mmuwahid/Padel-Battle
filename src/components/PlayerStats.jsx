@@ -108,9 +108,20 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
           if(won)partnerStats[k].w++;else partnerStats[k].l++;}
       });
     });
-    const partnerships=Object.values(partnerStats).filter(p=>p.w+p.l>=1).sort((a,b)=>(b.w/(b.w+b.l))-(a.w/(a.w+a.l)));
+    const partnershipsRaw=Object.values(partnerStats).filter(p=>p.w+p.l>=1);
+    const partnerships=[...partnershipsRaw].sort((a,b)=>{
+      const pA=a.w/(a.w+a.l), pB=b.w/(b.w+b.l);
+      if(pB!==pA)return pB-pA;
+      return (b.w+b.l)-(a.w+a.l);
+    });
     const bestPartnership=partnerships[0]||null;
-    const worstPartnership=partnerships.length>1?partnerships[partnerships.length-1]:null;
+    const bestKey=bestPartnership?[bestPartnership.a,bestPartnership.b].slice().sort().join('|'):null;
+    const worstSorted=[...partnershipsRaw].filter(p=>[p.a,p.b].slice().sort().join('|')!==bestKey).sort((a,b)=>{
+      const pA=a.w/(a.w+a.l), pB=b.w/(b.w+b.l);
+      if(pA!==pB)return pA-pB;
+      return (b.w+b.l)-(a.w+a.l);
+    });
+    const worstPartnership=partnerships.length>=6?(worstSorted[0]||null):null;
     const h2hAll={};
     matches.forEach(m=>{const w=win(m.sets);
       const process=(myTeam,oppTeam,won)=>{myTeam.forEach(me=>{oppTeam.forEach(opp=>{
@@ -239,13 +250,35 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
             {/* Monthly Trend */}
             {analyticsData.monthlyArr.length>1&&<div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:12}}>
               <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:12,textTransform:"uppercase",letterSpacing:0.5}}>League Activity</div>
-              <div style={{display:"flex",alignItems:"flex-end",gap:6,height:80}}>
-                {analyticsData.monthlyArr.map(([month,count])=>{
-                  const max=Math.max(...analyticsData.monthlyArr.map(a=>a[1]));
-                  const h=max>0?(count/max)*60+10:10;
-                  return <div key={month} style={{flex:1,textAlign:"center"}}><div style={{height:h,background:`linear-gradient(180deg,${A},${A}60)`,borderRadius:4,marginBottom:4}}/><div style={{fontSize:8,color:MT}}>{new Date(month+"-01").toLocaleString("en",{month:"short"})}</div><div style={{fontSize:10,fontWeight:700,color:TX}}>{count}</div></div>;
-                })}
-              </div>
+              {(() => {
+                const max=Math.max(...analyticsData.monthlyArr.map(a=>a[1]),1);
+                const niceMax=Math.max(2,Math.ceil(max/2)*2);
+                const ticks=[niceMax,Math.round(niceMax/2),0];
+                const chartH=120;
+                return (<>
+                  <div style={{display:"flex",gap:8,alignItems:"stretch"}}>
+                    <div style={{display:"flex",flexDirection:"column",justifyContent:"space-between",height:chartH,fontSize:9,color:MT,fontFamily:"'JetBrains Mono'",textAlign:"right",minWidth:18}}>
+                      {ticks.map(t=><div key={t} style={{lineHeight:1}}>{t}</div>)}
+                    </div>
+                    <div style={{flex:1,position:"relative",height:chartH,borderLeft:`1px solid ${BD}`,borderBottom:`1px solid ${BD}`}}>
+                      {ticks.slice(0,-1).map((t,i)=>(
+                        <div key={t} style={{position:"absolute",left:0,right:0,top:`${(i/(ticks.length-1))*100}%`,borderTop:`1px dashed ${BD}40`}}/>
+                      ))}
+                      <div style={{position:"absolute",inset:0,display:"flex",alignItems:"flex-end",gap:6,padding:"0 4px"}}>
+                        {analyticsData.monthlyArr.map(([month,count])=>{
+                          const h=(count/niceMax)*chartH;
+                          return <div key={month} title={`${count} matches`} style={{flex:1,height:h,background:`linear-gradient(180deg,${A},${A}60)`,borderRadius:"4px 4px 0 0",minHeight:count>0?2:0}}/>;
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{display:"flex",gap:6,paddingLeft:26,marginTop:6}}>
+                    {analyticsData.monthlyArr.map(([month])=>(
+                      <div key={month} style={{flex:1,textAlign:"center",fontSize:10,color:MT,fontWeight:600}}>{new Date(month+"-01").toLocaleString("en",{month:"short"})}</div>
+                    ))}
+                  </div>
+                </>);
+              })()}
             </div>}
           </div>}
 
@@ -339,11 +372,11 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
                   <div style={{background:CD2,padding:12,borderRadius:8}}>
                     <div style={{fontSize:11,color:MT,fontWeight:600,marginBottom:8}}>As Partners</div>
-                    {partM.length>0?<div style={{fontSize:13,fontWeight:700}}><span style={{color:A}}>{pW}W</span><span style={{color:MT}}> - </span><span style={{color:pL>0?DG:TX}}>{pL}L</span></div>:<div style={{fontSize:12,color:MT}}>No matches</div>}
+                    {partM.length>0?(<div><div style={{fontSize:10,color:MT,marginBottom:4}}>{partM.length} match{partM.length===1?"":"es"} together</div><div style={{fontSize:13,fontWeight:700}}><span style={{color:A}}>{pW}W</span><span style={{color:MT}}> - </span><span style={{color:pL>0?DG:TX}}>{pL}L</span></div></div>):<div style={{fontSize:12,color:MT}}>No matches</div>}
                   </div>
                   <div style={{background:CD2,padding:12,borderRadius:8}}>
                     <div style={{fontSize:11,color:MT,fontWeight:600,marginBottom:8}}>As Opponents</div>
-                    {oppM.length>0?<div style={{fontSize:13,fontWeight:700}}><span style={{color:A}}>{p1W}W</span><span style={{color:MT}}> - </span><span style={{color:p2W>0?DG:TX}}>{p2W}L</span></div>:<div style={{fontSize:12,color:MT}}>No matches</div>}
+                    {oppM.length>0?(<div><div style={{fontSize:10,color:MT,marginBottom:4}}>{oppM.length} match{oppM.length===1?"":"es"} against</div><div style={{fontSize:12,fontWeight:700,lineHeight:1.4}}><div><span style={{color:A}}>{getName(h2hP1)}</span> won <span style={{color:A,fontFamily:"'JetBrains Mono'"}}>{p1W}</span></div><div><span style={{color:p2W>0?A:MT}}>{getName(h2hP2)}</span> won <span style={{color:p2W>0?A:MT,fontFamily:"'JetBrains Mono'"}}>{p2W}</span></div></div></div>):<div style={{fontSize:12,color:MT}}>No matches</div>}
                   </div>
                 </div>
 
@@ -397,10 +430,22 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
             {/* Biggest Wins */}
             {analyticsData.biggestWins.length>0&&<div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14}}>
               <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:12,textTransform:"uppercase",letterSpacing:0.5}}>Biggest Wins</div>
-              {analyticsData.biggestWins.map((m,i)=>{const gA=m.sets.reduce((s,x)=>s+x[0],0);const gB=m.sets.reduce((s,x)=>s+x[1],0);return(
-                <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:i<analyticsData.biggestWins.length-1?`1px solid ${BD}`:undefined}}>
-                  <div><div style={{fontSize:12,color:TX,fontWeight:600}}>{formatTeam(getName(m.team_a[0]),getName(m.team_a[1]))}</div><div style={{fontSize:10,color:MT}}>{formatDate(m.date)}</div></div>
-                  <span style={{fontSize:12,fontWeight:700,fontFamily:"'JetBrains Mono'"}}>{m.sets.map((s,si)=><span key={si}>{si>0&&<span style={{color:MT}}>, </span>}<span style={{color:s[0]>s[1]?A:s[0]<s[1]?DG:MT}}>{s[0]}-{s[1]}</span></span>)}</span>
+              {analyticsData.biggestWins.map((m,i)=>{
+                const winnerTeam=m.winner==="A"?m.team_a:m.winner==="B"?m.team_b:m.team_a;
+                const loserTeam=m.winner==="A"?m.team_b:m.winner==="B"?m.team_a:m.team_b;
+                return (
+                <div key={i} style={{padding:"10px 0",borderBottom:i<analyticsData.biggestWins.length-1?`1px solid ${BD}`:undefined}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8,marginBottom:4}}>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:12,fontWeight:700,color:A,lineHeight:1.3}}>{formatTeam(getName(winnerTeam[0]),getName(winnerTeam[1]))}</div>
+                      <div style={{fontSize:10,color:MT,margin:"2px 0"}}>vs</div>
+                      <div style={{fontSize:12,fontWeight:600,color:DG,lineHeight:1.3}}>{formatTeam(getName(loserTeam[0]),getName(loserTeam[1]))}</div>
+                    </div>
+                    <div style={{textAlign:"right",flexShrink:0}}>
+                      <div style={{fontSize:12,fontWeight:700,fontFamily:"'JetBrains Mono'"}}>{m.sets.map((set,si)=>{const winnerScore=m.winner==="A"?set[0]:set[1];const loserScore=m.winner==="A"?set[1]:set[0];return (<span key={si}>{si>0&&<span style={{color:MT}}>, </span>}<span style={{color:A}}>{winnerScore}</span><span style={{color:MT}}>-</span><span style={{color:DG}}>{loserScore}</span></span>);})}</div>
+                      <div style={{fontSize:10,color:MT,marginTop:4}}>{formatDate(m.date)}</div>
+                    </div>
+                  </div>
                 </div>
               );})}
             </div>}
