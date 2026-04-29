@@ -1,6 +1,6 @@
 // FT-08 RNG Team Selector — pure shuffle helpers
-// Fisher-Yates shuffle (unbiased)
-export function fisherYates(arr){
+// Fisher-Yates shuffle (unbiased) — internal helper for shuffleIntoMatches
+function fisherYates(arr){
   const a=[...arr];
   for(let i=a.length-1;i>0;i--){
     const j=Math.floor(Math.random()*(i+1));

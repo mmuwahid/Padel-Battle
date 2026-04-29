@@ -18,7 +18,6 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
   const [viewTab,setViewTab]=useState("upcoming");
   const [loggingMatch,setLoggingMatch]=useState(null);
   const [cancelConfirmId,setCancelConfirmId]=useState(null);
-  const [actionLoading,setActionLoading]=useState(null);
   const [logSets,setLogSets]=useState([[0,0],[0,0],[0,0]]);
   const [logNs,setLogNs]=useState(2);
   const [logMotm,setLogMotm]=useState("");
@@ -112,7 +111,6 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
   }
 
   async function cancelChallenge(id){
-    setActionLoading(id+"-cancel");
     const ch=challenges.find(c=>c.id===id);
     const {error}=await supabase.from("challenges").update({status:"cancelled"}).eq("id",id);
     if(error){showToast("Failed to cancel","error");}else{
@@ -125,7 +123,6 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
       }
       if(onUpdate)onUpdate();
     }
-    setActionLoading(null);
   }
 
   function openLogMatch(ch){setLoggingMatch(ch.id);setLogSets([[0,0],[0,0],[0,0]]);setLogNs(2);setLogMotm("");}
@@ -136,7 +133,7 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
     setLogSaving(true);
     try{
       // S026: Transactional match creation via RPC (atomic insert+update)
-      const {data:matchId,error:rpcErr}=await supabase.rpc("play_challenge",{
+      const {error:rpcErr}=await supabase.rpc("play_challenge",{
         p_challenge_id:ch.id,
         p_league_id:leagueId,
         p_season_id:seasonId||null,

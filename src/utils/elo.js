@@ -1,7 +1,6 @@
 import { win } from './helpers';
 
 const K=40,ES=1500;
-export { ES };
 
 export function calcElo(pl,ma){
   const r={};
