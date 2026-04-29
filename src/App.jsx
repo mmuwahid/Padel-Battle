@@ -1,9 +1,8 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback, Suspense, lazy } from "react";
 import { supabase } from './supabase';
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, BL, PU, TL, TR } from './theme';
-import { formatTeam, win, formatDate, gid, setTotals } from './utils/helpers';
+import { formatTeam, win, formatDate, setTotals } from './utils/helpers';
 import { calcElo } from './utils/elo';
-import { generateAmericanoSchedule, generateMexicanoRound } from './utils/tournaments';
 import { RULES, ARGUED } from './data/rules';
 import { CourtIcon, PadelLogo, PadelLogoSmall } from './components/icons';
 import { FD } from './components/FormDots';
@@ -488,20 +487,6 @@ function AppContent({leagueId,user,onSwitchLeague}){
     }
   };
 
-  // Request notification permission + subscribe
-  const requestNotificationPermission = async () => {
-    if (!("Notification" in window)) {
-      showToast("Browser doesn't support notifications","error");
-      return;
-    }
-    if (Notification.permission === "granted" && pushSubscribed) {
-      showToast("Notifications already enabled");
-      return;
-    }
-    const success = await subscribeToPush();
-    if (success) showToast("Notifications enabled!");
-  };
-
   // Send push notification via Edge Function. target_user_ids = array of user IDs to notify (optional — defaults to all league members)
   const sendPushNotification = async (type, title, body, body_text, target_user_ids) => {
     // Allow legacy 4-arg call: sendPushNotification(type, title, body, target_user_ids)
@@ -543,7 +528,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
         return;
       }
       console.log("[test-push] response:", data);
-      const sent = data?.sent || 0, failed = data?.failed || 0, total = data?.total || 0;
+      const sent = data?.sent || 0, total = data?.total || 0;
       if (sent > 0) showToast(`Test sent (${sent}/${total}) — check your home screen`);
       else if (total === 0) showToast("No subscriptions found — re-subscribe?", "error");
       else showToast(`Test failed: 0/${total} delivered`, "error");
@@ -699,7 +684,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
     if(!newPlayerName.trim()) { setClaimError("Name required"); return; }
     try {
       setClaimError("");
-      const {data,error:err} = await supabase.from("players").insert({league_id:leagueId,name:newPlayerName.trim(),nickname:newPlayerNick.trim()||null,user_id:user.id}).select().single();
+      const {error:err} = await supabase.from("players").insert({league_id:leagueId,name:newPlayerName.trim(),nickname:newPlayerNick.trim()||null,user_id:user.id});
       if(err) throw err;
       setNewPlayerName("");setNewPlayerNick("");
       await loadLeagueData();
