@@ -853,7 +853,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
             <div style={{marginBottom:"24px",background:CD,padding:"16px",borderRadius:"8px",border:`1px solid ${BD}`}}>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px",alignItems:"flex-end"}}>
                 {/* 2nd place */}
-                <div onClick={()=>{setSelectedPlayer(lb[1].id);setTab("stats");}} style={{textAlign:"center",padding:"12px",background:CD2,borderRadius:"6px",borderTop:`3px solid ${SV}`,cursor:"pointer"}}>
+                <div onClick={()=>{setSelectedPlayer(lb[1].id);setTab("stats");}} style={{textAlign:"center",padding:"14px 12px",background:CD2,borderRadius:"6px",borderTop:`3px solid ${SV}`,cursor:"pointer"}}>
                   <div style={{fontSize:"20px",marginBottom:"4px"}}>🥈</div>
                   <div style={{fontSize:"13px",fontWeight:"bold",marginBottom:"4px"}}>{lb[1].nickname||lb[1].name}</div>
                   <div style={{fontSize:"11px"}}><span style={{color:lb[1].wins>0?A:MT}}>{lb[1].wins}W</span> <span style={{color:lb[1].losses>0?DG:TX}}>{lb[1].losses}L</span></div>
@@ -871,7 +871,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
                 </div>
 
                 {/* 3rd place */}
-                <div onClick={()=>{setSelectedPlayer(lb[2].id);setTab("stats");}} style={{textAlign:"center",padding:"12px",background:CD2,borderRadius:"6px",borderTop:`3px solid ${BZ}`,cursor:"pointer"}}>
+                <div onClick={()=>{setSelectedPlayer(lb[2].id);setTab("stats");}} style={{textAlign:"center",padding:"8px 12px",background:CD2,borderRadius:"6px",borderTop:`3px solid ${BZ}`,cursor:"pointer"}}>
                   <div style={{fontSize:"20px",marginBottom:"4px"}}>🥉</div>
                   <div style={{fontSize:"13px",fontWeight:"bold",marginBottom:"4px"}}>{lb[2].nickname||lb[2].name}</div>
                   <div style={{fontSize:"11px"}}><span style={{color:lb[2].wins>0?A:MT}}>{lb[2].wins}W</span> <span style={{color:lb[2].losses>0?DG:TX}}>{lb[2].losses}L</span></div>
