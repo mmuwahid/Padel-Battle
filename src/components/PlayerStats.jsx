@@ -308,7 +308,8 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
               {analyticsData.partnerships.slice(0,10).map((p,i)=>{const pct=Math.round(p.w/(p.w+p.l)*100);return(
                 <div key={i} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0",borderBottom:i<Math.min(analyticsData.partnerships.length,10)-1?`1px solid ${BD}`:undefined}}>
                   <span style={{fontSize:12,color:TX}}>{getName(p.a)} x {getName(p.b)}</span>
-                  <div style={{display:"flex",alignItems:"center",gap:6}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                    <span style={{fontSize:11,color:MT,fontFamily:"'JetBrains Mono'",whiteSpace:"nowrap"}}>{p.w+p.l} GP</span>
                     <div style={{width:50,height:6,background:BD,borderRadius:3,overflow:"hidden"}}><div style={{width:`${pct}%`,height:"100%",background:pct>=60?A:pct>=40?BL:DG,borderRadius:3}}/></div>
                     <span style={{fontSize:12,fontWeight:700,color:pct>=60?A:pct>=40?TX:DG,fontFamily:"'JetBrains Mono'",width:35,textAlign:"right"}}>{pct}%</span>
                   </div>
