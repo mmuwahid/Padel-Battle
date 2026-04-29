@@ -297,10 +297,21 @@ serve(async (req) => {
     });
     const payloadBytes = new TextEncoder().encode(payloadJson);
 
-    // Insert in-app notifications (targeted to specific users if provided, else all league members)
+    // Insert in-app notifications — must respect user's notification preferences
+    // (Bug #1 fix S038: previously ignored prefs and spammed bell for all members)
+    // Use 'filtered' which has type-preference applied; fall back to membership for users without subscriptions.
     try {
-      const notifUserIds = (validTargetIds || memberIds)
+      // Subscribed users who have this notification type enabled
+      const subscribedAllowedIds = new Set(filtered.map((s: any) => s.user_id));
+      // Users who have NOT subscribed to push at all → still get in-app bell unless they're the sender
+      // (we can't read their pref without a subscription row; default to allow)
+      const subscribedAnyIds = new Set(subscriptions.map((s: any) => s.user_id));
+      const candidatePool = (validTargetIds || memberIds)
         .filter((uid: string) => uid !== exclude_user_id);
+      const notifUserIds = candidatePool.filter((uid: string) =>
+        // Allow if (subscribed AND pref-enabled) OR (not subscribed at all → no pref recorded yet)
+        subscribedAllowedIds.has(uid) || !subscribedAnyIds.has(uid)
+      );
       if (notifUserIds.length > 0) {
         const notifRows = notifUserIds.map((uid: string) => ({
           league_id,
@@ -362,9 +373,15 @@ serve(async (req) => {
     }
 
     // Clean up expired subscriptions via SECURITY DEFINER RPC
+    // Bug #3 fix S038: pass Postgres array, not JSON string. PostgREST converts JS arrays directly.
     if (staleEndpoints.length > 0) {
-      await supabaseUser
-        .rpc("delete_stale_push_endpoints", { p_endpoints: JSON.stringify(staleEndpoints) });
+      try {
+        const { error: cleanupErr } = await supabaseUser
+          .rpc("delete_stale_push_endpoints", { p_endpoints: staleEndpoints });
+        if (cleanupErr) console.error("Stale endpoint cleanup error:", cleanupErr);
+      } catch (cleanupCatch) {
+        console.error("Stale endpoint cleanup threw:", cleanupCatch);
+      }
     }
 
     return new Response(

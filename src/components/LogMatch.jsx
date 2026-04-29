@@ -72,11 +72,18 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
       if(onSave)onSave();
       if(showToast)showToast(em?"Match updated":(hasNext?`Match saved! Next up — ${queue.length} remaining`:"Match saved!"));
       // Send push notification for new matches (not edits)
+      // Bug #2 fix S038: ONE notification per match with winner + score; ranking trigger dropped.
       if(!isE&&sendPushNotification){
-        const tANames=[tA[0],tA[1]].map(id=>getName?getName(id):id).join(" x ");
-        const tBNames=[tB[0],tB[1]].map(id=>getName?getName(id):id).join(" x ");
-        sendPushNotification("match","New Match Logged",`${tANames} vs ${tBNames}`);
-        sendPushNotification("ranking","Rankings Updated",`New match affects ELO ratings — check the leaderboard!`);
+        const tANames=[tA[0],tA[1]].map(id=>getName?getName(id):id).join(" & ");
+        const tBNames=[tB[0],tB[1]].map(id=>getName?getName(id):id).join(" & ");
+        // Determine winner by sets won (padel: best-of-3 sets)
+        let setsA=0, setsB=0;
+        as.forEach(([a,b])=>{ if(a>b) setsA++; else if(b>a) setsB++; });
+        const winnerNames = setsA>setsB ? tANames : tBNames;
+        const loserNames  = setsA>setsB ? tBNames : tANames;
+        const setSummary  = as.map(([a,b])=>setsA>setsB?`${a}-${b}`:`${b}-${a}`).join(", ");
+        const body = `${winnerNames} beat ${loserNames} (${setSummary}) — leaderboard updated`;
+        sendPushNotification("match","New Match Result", body);
       }
     }catch(err){
       if(showToast)showToast("Failed to save match","error");

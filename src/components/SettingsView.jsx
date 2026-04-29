@@ -3,7 +3,7 @@ import { supabase } from '../supabase';
 import { A, CD, CD2, BD, TX, MT, DG } from '../theme';
 import { ErrorBoundary } from './ErrorBoundary';
 
-export function SettingsView({ user, claimedPlayer, isAdmin, league, leagueMembers, memberProfiles, pushSubscribed, subscribeToPush, unsubscribeFromPush, notifNewMatch, notifRankingChange, notifNewMembers, notifChallenges, toggleNotification, updateMemberRole, onSwitchLeague, setSidebarView, showToast, loadLeagueData }) {
+export function SettingsView({ user, claimedPlayer, isAdmin, league, leagueMembers, memberProfiles, pushSubscribed, subscribeToPush, unsubscribeFromPush, notifNewMatch, notifRankingChange, notifNewMembers, notifChallenges, toggleNotification, updateMemberRole, onSwitchLeague, setSidebarView, showToast, loadLeagueData, testPushNotification }) {
   // State moved from AppContent — settings-only
   const [editDisplayName, setEditDisplayName] = useState(user.user_metadata?.display_name || user.email?.split("@")[0] || "");
   const [profileSaving, setProfileSaving] = useState(false);
@@ -61,6 +61,13 @@ export function SettingsView({ user, claimedPlayer, isAdmin, league, leagueMembe
           <div style={{padding:"8px 12px",background:`${DG}15`,border:`1px solid ${DG}30`,borderRadius:8,marginBottom:8,fontSize:11,color:DG}}>
             Notifications blocked. Enable in your browser settings.
           </div>
+        )}
+
+        {/* Fix D S038: Test push button for diagnostics */}
+        {pushSubscribed && testPushNotification && (
+          <button onClick={testPushNotification} style={{width:"100%",padding:"10px 12px",background:CD2,border:`1px solid ${A}40`,borderRadius:8,color:A,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif",marginBottom:8}}>
+            🔔 Send Test Notification
+          </button>
         )}
 
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 12px",background:CD2,borderRadius:8,marginBottom:8}}>

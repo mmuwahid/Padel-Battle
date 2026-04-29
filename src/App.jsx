@@ -418,6 +418,13 @@ function AppContent({leagueId,user,onSwitchLeague}){
       }
       // Save to Supabase
       const subJson = sub.toJSON();
+      // Bug #6 fix S038: delete this user's OTHER endpoints in this league before upserting
+      // (assume single device; prevents stale endpoint accumulation across permission resets)
+      await supabase.from("push_subscriptions")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("league_id", leagueId)
+        .neq("endpoint", subJson.endpoint);
       const { error } = await supabase.from("push_subscriptions").upsert({
         user_id: user.id,
         league_id: leagueId,
@@ -495,17 +502,57 @@ function AppContent({leagueId,user,onSwitchLeague}){
   };
 
   // Send push notification via Edge Function. target_user_ids = array of user IDs to notify (optional — defaults to all league members)
-  const sendPushNotification = async (type, title, body, target_user_ids) => {
+  const sendPushNotification = async (type, title, body, body_text, target_user_ids) => {
+    // Allow legacy 4-arg call: sendPushNotification(type, title, body, target_user_ids)
+    // when arg 4 is array, treat it as target_user_ids and arg 3 as body
+    if (Array.isArray(body_text)) { target_user_ids = body_text; body_text = undefined; }
     try {
       const payload = { league_id: leagueId, type, title, body, exclude_user_id: user.id };
       if (target_user_ids) payload.target_user_ids = target_user_ids;
       const { data, error } = await supabase.functions.invoke("push-notify", { body: payload });
-      if (error) { /* push notify error — non-critical */ }
+      // Bug #4 fix S038: surface push send results in console for diagnostics
+      if (error) console.warn("[push-notify] error:", error);
+      else if (data) console.log("[push-notify]", type, "→", data);
+      return { data, error };
     } catch (err) {
+      console.warn("[push-notify] threw:", err);
+      return { error: err };
     }
   };
 
-  const getStreak = (pid) => {
+  // Fix D S038: send a self-targeted test push for diagnostics
+  const testPushNotification = async () => {
+    if (!pushSubscribed) {
+      showToast("Enable push notifications first", "error");
+      return;
+    }
+    try {
+      const payload = {
+        league_id: leagueId,
+        type: "system",
+        title: "PadelHub Test Push",
+        body: "If you can see this, push notifications are working!",
+        target_user_ids: [user.id],
+        // intentionally NO exclude_user_id so sender receives their own test
+      };
+      const { data, error } = await supabase.functions.invoke("push-notify", { body: payload });
+      if (error) {
+        console.warn("[test-push] error:", error);
+        showToast("Test failed: " + (error.message || "unknown"), "error");
+        return;
+      }
+      console.log("[test-push] response:", data);
+      const sent = data?.sent || 0, failed = data?.failed || 0, total = data?.total || 0;
+      if (sent > 0) showToast(`Test sent (${sent}/${total}) — check your home screen`);
+      else if (total === 0) showToast("No subscriptions found — re-subscribe?", "error");
+      else showToast(`Test failed: 0/${total} delivered`, "error");
+    } catch (err) {
+      console.warn("[test-push] threw:", err);
+      showToast("Test push threw: " + (err.message || "unknown"), "error");
+    }
+  };
+
+    const getStreak = (pid) => {
     const pMatches = matches.filter(m => m.team_a.includes(pid) || m.team_b.includes(pid));
     const sorted = [...pMatches].sort((a,b) => new Date(b.date) - new Date(a.date));
     let streak = 0;
@@ -767,7 +814,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
             <AdminDashboard memberProfiles={memberProfiles} setSidebarView={setSidebarView}/>
           )}
           {sidebarView==="settings" && (
-            <SettingsView user={user} claimedPlayer={claimedPlayer} isAdmin={isAdmin} league={league} leagueMembers={leagueMembers} memberProfiles={memberProfiles} pushSubscribed={pushSubscribed} subscribeToPush={subscribeToPush} unsubscribeFromPush={unsubscribeFromPush} notifNewMatch={notifNewMatch} notifRankingChange={notifRankingChange} notifNewMembers={notifNewMembers} notifChallenges={notifChallenges} toggleNotification={toggleNotification} updateMemberRole={updateMemberRole} onSwitchLeague={onSwitchLeague} setSidebarView={setSidebarView} showToast={showToast} loadLeagueData={loadLeagueData}/>
+            <SettingsView user={user} claimedPlayer={claimedPlayer} isAdmin={isAdmin} league={league} leagueMembers={leagueMembers} memberProfiles={memberProfiles} pushSubscribed={pushSubscribed} subscribeToPush={subscribeToPush} unsubscribeFromPush={unsubscribeFromPush} notifNewMatch={notifNewMatch} notifRankingChange={notifRankingChange} notifNewMembers={notifNewMembers} notifChallenges={notifChallenges} toggleNotification={toggleNotification} updateMemberRole={updateMemberRole} onSwitchLeague={onSwitchLeague} setSidebarView={setSidebarView} showToast={showToast} loadLeagueData={loadLeagueData} testPushNotification={testPushNotification}/>
           )}
           {sidebarView==="platform" && (
             <PlatformAdmin onClose={()=>setSidebarView(null)} showToast={showToast}/>
