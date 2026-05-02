@@ -294,8 +294,8 @@ export function DoubleElimination({ players, getName, supabase, leagueId, tourna
                   </div>
                   {!sc && m.team_a && m.team_b && (
                     <div style={{ display:"flex", alignItems:"center", gap:6, justifyContent:"center" }}>
-                      <input type="number" inputMode="numeric" pattern="[0-9]*" min="0" placeholder="0" id={"de-la-"+ri+"-"+mi} style={{ width:44, padding:"4px", borderRadius:6, border:"1px solid "+BD, background:CD2, color:TX, textAlign:"center", fontSize:13, fontFamily:"JetBrains Mono" }} />
-                      <input type="number" inputMode="numeric" pattern="[0-9]*" min="0" placeholder="0" id={"de-lb-"+ri+"-"+mi} style={{ width:44, padding:"4px", borderRadius:6, border:"1px solid "+BD, background:CD2, color:TX, textAlign:"center", fontSize:13, fontFamily:"JetBrains Mono" }} />
+                      <input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="0" id={"de-la-"+ri+"-"+mi} style={{ width:44, padding:"4px", borderRadius:6, border:"1px solid "+BD, background:CD2, color:TX, textAlign:"center", fontSize:13, fontFamily:"JetBrains Mono" }} />
+                      <input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="0" id={"de-lb-"+ri+"-"+mi} style={{ width:44, padding:"4px", borderRadius:6, border:"1px solid "+BD, background:CD2, color:TX, textAlign:"center", fontSize:13, fontFamily:"JetBrains Mono" }} />
                       <button onClick={()=>{const a=parseInt(document.getElementById("de-la-"+ri+"-"+mi).value)||0;const b=parseInt(document.getElementById("de-lb-"+ri+"-"+mi).value)||0;if(a===b)return;recordDEScore("losers",ri,mi,a,b);}} style={{ padding:"4px 10px", borderRadius:6, border:"none", background:A, color:BG, fontSize:9, fontWeight:700, cursor:"pointer" }}>Save</button>
                     </div>
                   )}
@@ -317,9 +317,9 @@ export function DoubleElimination({ players, getName, supabase, leagueId, tourna
           </div>
           {!gfScore && gf.team_a && gf.team_b && (
             <div style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
-              <input type="number" inputMode="numeric" pattern="[0-9]*" min="0" placeholder="0" id="de-gf-a" style={{ width:50, padding:"6px", borderRadius:8, border:"1px solid "+GD+"40", background:CD2, color:TX, textAlign:"center", fontSize:16, fontWeight:700, fontFamily:"JetBrains Mono" }} />
+              <input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="0" id="de-gf-a" style={{ width:50, padding:"6px", borderRadius:8, border:"1px solid "+GD+"40", background:CD2, color:TX, textAlign:"center", fontSize:16, fontWeight:700, fontFamily:"JetBrains Mono" }} />
               <span style={{ color: MT, fontWeight: 700 }}>-</span>
-              <input type="number" inputMode="numeric" pattern="[0-9]*" min="0" placeholder="0" id="de-gf-b" style={{ width:50, padding:"6px", borderRadius:8, border:"1px solid "+GD+"40", background:CD2, color:TX, textAlign:"center", fontSize:16, fontWeight:700, fontFamily:"JetBrains Mono" }} />
+              <input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="0" id="de-gf-b" style={{ width:50, padding:"6px", borderRadius:8, border:"1px solid "+GD+"40", background:CD2, color:TX, textAlign:"center", fontSize:16, fontWeight:700, fontFamily:"JetBrains Mono" }} />
               <button onClick={()=>{const a=parseInt(document.getElementById("de-gf-a").value)||0;const b=parseInt(document.getElementById("de-gf-b").value)||0;if(a===b)return;recordDEScore("grand_final",0,0,a,b);}} style={{ padding:"6px 14px", borderRadius:8, border:"none", background:GD, color:BG, fontSize:11, fontWeight:700, cursor:"pointer" }}>Save</button>
             </div>
           )}

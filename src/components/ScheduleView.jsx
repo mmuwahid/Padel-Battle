@@ -332,9 +332,9 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
                   </div>
                   {logSets.slice(0,logNs).map((s,i)=>(<div key={i} style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
                     <span style={{fontSize:10,color:MT,width:32,fontWeight:600}}>Set {i+1}</span>
-                    <input type="number" inputMode="numeric" pattern="[0-9]*" min="0" max="7" value={s[0]} onFocus={e=>e.target.select()} onChange={e=>{const n=logSets.map(x=>[...x]);n[i]=[+e.target.value,n[i][1]];setLogSets(n);}} style={{width:48,padding:"6px",borderRadius:6,border:`1px solid ${A}40`,background:CD,color:TX,textAlign:"center",fontSize:14,fontFamily:"JetBrains Mono",fontWeight:700}}/>
+                    <input type="text" inputMode="numeric" pattern="[0-9]*" value={s[0]===0?"":String(s[0])} placeholder="0" onChange={e=>{const r=e.target.value.replace(/[^0-9]/g,"");const n=logSets.map(x=>[...x]);n[i]=[r===""?0:Math.min(7,parseInt(r,10)),n[i][1]];setLogSets(n);}} style={{width:48,padding:"6px",borderRadius:6,border:`1px solid ${A}40`,background:CD,color:TX,textAlign:"center",fontSize:14,fontFamily:"JetBrains Mono",fontWeight:700}}/>
                     <span style={{color:MT,fontWeight:700}}>-</span>
-                    <input type="number" inputMode="numeric" pattern="[0-9]*" min="0" max="7" value={s[1]} onFocus={e=>e.target.select()} onChange={e=>{const n=logSets.map(x=>[...x]);n[i]=[n[i][0],+e.target.value];setLogSets(n);}} style={{width:48,padding:"6px",borderRadius:6,border:`1px solid ${DG}40`,background:CD,color:TX,textAlign:"center",fontSize:14,fontFamily:"JetBrains Mono",fontWeight:700}}/>
+                    <input type="text" inputMode="numeric" pattern="[0-9]*" value={s[1]===0?"":String(s[1])} placeholder="0" onChange={e=>{const r=e.target.value.replace(/[^0-9]/g,"");const n=logSets.map(x=>[...x]);n[i]=[n[i][0],r===""?0:Math.min(7,parseInt(r,10))];setLogSets(n);}} style={{width:48,padding:"6px",borderRadius:6,border:`1px solid ${DG}40`,background:CD,color:TX,textAlign:"center",fontSize:14,fontFamily:"JetBrains Mono",fontWeight:700}}/>
                   </div>))}
                   <div style={{marginTop:8,marginBottom:10}}>
                     <div style={{fontSize:10,color:MT,fontWeight:600,marginBottom:4}}>⭐ Man of the Match</div>

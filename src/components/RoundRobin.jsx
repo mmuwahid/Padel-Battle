@@ -252,12 +252,12 @@ export function RoundRobin({ players, getName, supabase, leagueId, tournament, s
                     <span style={{ flex:1, fontSize:13, fontWeight:600, color: sc?(sc.b>sc.a?A:TX):TX }}>{m.team_b_name}</span>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
-                    <input type="number" inputMode="numeric" pattern="[0-9]*" min="0" value={sc?.a??""} placeholder="0" onFocus={e=>e.target.select()}
-                      onChange={e=>{const v=parseInt(e.target.value)||0;recordRRScore(ri,mi,v,sc?.b||0);}}
+                    <input type="text" inputMode="numeric" pattern="[0-9]*" value={sc?.a??""} placeholder="0"
+                      onChange={e=>{const r=e.target.value.replace(/[^0-9]/g,"");recordRRScore(ri,mi,r===""?0:parseInt(r,10),sc?.b||0);}}
                       style={{ width:50, textAlign:"center", background:CD2, color:TX, border:"1px solid "+A+"30", borderRadius:8, padding:"6px", fontSize:16, fontWeight:700, fontFamily:"JetBrains Mono", outline:"none" }} />
                     <span style={{ color:MT, fontWeight:700, fontSize:12 }}>-</span>
-                    <input type="number" inputMode="numeric" pattern="[0-9]*" min="0" value={sc?.b??""} placeholder="0" onFocus={e=>e.target.select()}
-                      onChange={e=>{const v=parseInt(e.target.value)||0;recordRRScore(ri,mi,sc?.a||0,v);}}
+                    <input type="text" inputMode="numeric" pattern="[0-9]*" value={sc?.b??""} placeholder="0"
+                      onChange={e=>{const r=e.target.value.replace(/[^0-9]/g,"");recordRRScore(ri,mi,sc?.a||0,r===""?0:parseInt(r,10));}}
                       style={{ width:50, textAlign:"center", background:CD2, color:TX, border:"1px solid "+DG+"30", borderRadius:8, padding:"6px", fontSize:16, fontWeight:700, fontFamily:"JetBrains Mono", outline:"none" }} />
                   </div>
                 </div>

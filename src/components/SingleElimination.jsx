@@ -293,8 +293,8 @@ export function SingleElimination({ players, getName, supabase, leagueId, tourna
                     <div style={{ fontSize: 13, fontWeight: 600, marginTop: 4 }}>{m.team_b_name || m.team_b?.filter(Boolean).map(pid => getName(pid)).join(" x ") || "TBD"}</div>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 2, alignItems: "center" }}>
-                    <input type="number" inputMode="numeric" pattern="[0-9]*" min="0" placeholder="0" id={`se-a-${ri}-${mi}`} style={{ width: 44, padding: "4px", borderRadius: 6, border: `1px solid ${BD}`, background: CD2, color: TX, textAlign: "center", fontSize: 13, fontFamily: "'JetBrains Mono'" }} />
-                    <input type="number" inputMode="numeric" pattern="[0-9]*" min="0" placeholder="0" id={`se-b-${ri}-${mi}`} style={{ width: 44, padding: "4px", borderRadius: 6, border: `1px solid ${BD}`, background: CD2, color: TX, textAlign: "center", fontSize: 13, fontFamily: "'JetBrains Mono'" }} />
+                    <input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="0" id={`se-a-${ri}-${mi}`} style={{ width: 44, padding: "4px", borderRadius: 6, border: `1px solid ${BD}`, background: CD2, color: TX, textAlign: "center", fontSize: 13, fontFamily: "'JetBrains Mono'" }} />
+                    <input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="0" id={`se-b-${ri}-${mi}`} style={{ width: 44, padding: "4px", borderRadius: 6, border: `1px solid ${BD}`, background: CD2, color: TX, textAlign: "center", fontSize: 13, fontFamily: "'JetBrains Mono'" }} />
                     <button onClick={() => {
                       const a = parseInt(document.getElementById(`se-a-${ri}-${mi}`).value) || 0;
                       const b = parseInt(document.getElementById(`se-b-${ri}-${mi}`).value) || 0;

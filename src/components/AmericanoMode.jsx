@@ -143,14 +143,12 @@ export function AmericanoMode({ players, getName, supabase, leagueId, tournament
                       <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: sc ? (sc.b > sc.a ? A : TX) : TX }}>{tB.map(p => getName(p)).join(" x ")}</span>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
-                      <input type="number" inputMode="numeric" pattern="[0-9]*" min="0" max={ptsPerRound} value={sc?.a || ""} placeholder="0"
-                        onFocus={e => e.target.select()}
-                        onChange={e => { const v = Math.min(+e.target.value || 0, ptsPerRound); recordScore(ri, mi, v, ptsPerRound - v); }}
+                      <input type="text" inputMode="numeric" pattern="[0-9]*" value={sc?.a || ""} placeholder="0"
+                        onChange={e => { const r=e.target.value.replace(/[^0-9]/g,""); const v=r===""?0:Math.min(parseInt(r,10),ptsPerRound); recordScore(ri, mi, v, ptsPerRound - v); }}
                         style={{ width: 50, textAlign: "center", background: CD2, color: TX, border: `1px solid ${A}30`, borderRadius: 8, padding: "6px", fontSize: 16, fontWeight: 700, fontFamily: "'JetBrains Mono'", outline: "none" }} />
                       <span style={{ color: MT, fontWeight: 700, fontSize: 12 }}>-</span>
-                      <input type="number" inputMode="numeric" pattern="[0-9]*" min="0" max={ptsPerRound} value={sc?.b || ""} placeholder="0"
-                        onFocus={e => e.target.select()}
-                        onChange={e => { const v = Math.min(+e.target.value || 0, ptsPerRound); recordScore(ri, mi, ptsPerRound - v, v); }}
+                      <input type="text" inputMode="numeric" pattern="[0-9]*" value={sc?.b || ""} placeholder="0"
+                        onChange={e => { const r=e.target.value.replace(/[^0-9]/g,""); const v=r===""?0:Math.min(parseInt(r,10),ptsPerRound); recordScore(ri, mi, ptsPerRound - v, v); }}
                         style={{ width: 50, textAlign: "center", background: CD2, color: TX, border: `1px solid ${DG}30`, borderRadius: 8, padding: "6px", fontSize: 16, fontWeight: 700, fontFamily: "'JetBrains Mono'", outline: "none" }} />
                       {match.court && <span style={{ fontSize: 9, color: MT, marginLeft: 4 }}>Court {match.court}</span>}
                     </div>

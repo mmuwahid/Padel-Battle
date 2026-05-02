@@ -196,9 +196,9 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
         {sets.slice(0,ns).map((s,i)=>(
           <div key={i} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
             <span style={{fontSize:11,color:MT,width:36,fontWeight:600}}>Set {i+1}</span>
-            <input type="number" inputMode="numeric" pattern="[0-9]*" min="0" max="7" value={s[0]} onFocus={e=>e.target.select()} onChange={e=>{const n=sets.map(x=>[...x]);n[i]=[+e.target.value,n[i][1]];setSets(n);}} style={{...sel,width:60,textAlign:"center",fontFamily:"'JetBrains Mono'",fontWeight:700,fontSize:18,borderColor:`${A}40`}}/>
+            <input type="text" inputMode="numeric" pattern="[0-9]*" value={s[0]===0?"":String(s[0])} placeholder="0" onChange={e=>{const r=e.target.value.replace(/[^0-9]/g,"");const n=sets.map(x=>[...x]);n[i]=[r===""?0:Math.min(7,parseInt(r,10)),n[i][1]];setSets(n);}} style={{...sel,width:60,textAlign:"center",fontFamily:"'JetBrains Mono'",fontWeight:700,fontSize:18,borderColor:`${A}40`}}/>
             <span style={{color:MT,fontWeight:700}}>-</span>
-            <input type="number" inputMode="numeric" pattern="[0-9]*" min="0" max="7" value={s[1]} onFocus={e=>e.target.select()} onChange={e=>{const n=sets.map(x=>[...x]);n[i]=[n[i][0],+e.target.value];setSets(n);}} style={{...sel,width:60,textAlign:"center",fontFamily:"'JetBrains Mono'",fontWeight:700,fontSize:18,borderColor:`${DG}40`}}/>
+            <input type="text" inputMode="numeric" pattern="[0-9]*" value={s[1]===0?"":String(s[1])} placeholder="0" onChange={e=>{const r=e.target.value.replace(/[^0-9]/g,"");const n=sets.map(x=>[...x]);n[i]=[n[i][0],r===""?0:Math.min(7,parseInt(r,10))];setSets(n);}} style={{...sel,width:60,textAlign:"center",fontFamily:"'JetBrains Mono'",fontWeight:700,fontSize:18,borderColor:`${DG}40`}}/>
           </div>
         ))}
       </div>
