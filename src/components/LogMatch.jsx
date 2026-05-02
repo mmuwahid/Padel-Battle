@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { A, BG, CD, CD2, BD, TX, MT, DG, GD, PU } from '../theme';
+import { A, BG, CD2, BD, TX, MT, DG, GD, PU } from '../theme';
 import { TeamShuffler } from './TeamShuffler';
+import { createInitialLiveState, scorePoint, undoPoint, getLiveDisplay, liveToSets } from '../utils/scoringEngine';
 
 export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goBack,sel,lbl,getName,seasonId,seasons,setCurSeason,onSave,showToast,sendPushNotification}){
   const isE=!!em;
@@ -14,7 +15,10 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
   const [saved,setSaved]=useState(false);
   // FT-08 RNG state
   const [showShuffler,setShowShuffler]=useState(false);
-  const [queue,setQueue]=useState([]); // remaining {team_a, team_b} to log after the current one
+  const [queue,setQueue]=useState([]);
+  // LIVE scoring mode
+  const [mode,setMode]=useState('manual');
+  const [liveState,setLiveState]=useState(createInitialLiveState);
 
   useEffect(()=>{
     if(em){
@@ -29,33 +33,58 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
     }
   },[em]);
 
+  // Derived live display values
+  const {ptA,ptB,gA,gB,isDeuce,inTiebreak}=getLiveDisplay(liveState);
+  const {sA,sB,completedSets,matchOver,history:liveHistory}=liveState;
+
+  // Team name helpers
+  const teamName=(ids)=>ids.filter(Boolean).map(id=>getName?getName(id):id).join(' & ')||'Team';
+
+  function handleModeChange(m){
+    if(m===mode)return;
+    if(m==='manual'){
+      // Sync completed live sets into the manual form
+      const ls=liveToSets(liveState);
+      if(ls.length>0){
+        const padded=[...ls];
+        while(padded.length<3)padded.push([0,0]);
+        setSets(padded);
+        setNs(ls.length);
+      }
+    } else {
+      // Reset live state on entry to LIVE mode
+      setLiveState(createInitialLiveState());
+    }
+    setMode(m);
+  }
+
   const all=[...tA,...tB].filter(Boolean);
   const avail=c=>players.filter(p=>!all.includes(p.id)||p.id===c);
 
   async function submit(){
     if(tA.some(x=>!x)||tB.some(x=>!x))return;
     if(date>new Date().toISOString().split("T")[0]){if(showToast)showToast("Cannot log a match for a future date","error");return;}
-    const as=sets.slice(0,ns).filter(([a,b])=>a>0||b>0);
-    if(!as.length)return;
+
+    const as=mode==='live'
+      ? liveToSets(liveState).filter(([a,b])=>a>0||b>0)
+      : sets.slice(0,ns).filter(([a,b])=>a>0||b>0);
+    if(!as.length){if(showToast&&mode==='live')showToast("Score at least one set to save","error");return;}
 
     setSaving(true);
     try{
       if(isE){
-        // UPDATE match
         const {error}=await supabase
           .from("matches")
           .update({date,team_a:[...tA],team_b:[...tB],sets:as,motm:motm||null})
           .eq("id",em.id);
         if(error)throw error;
       }else{
-        // INSERT new match
         const {error}=await supabase
           .from("matches")
           .insert({league_id:leagueId,season_id:seasonId,date,team_a:[...tA],team_b:[...tB],sets:as,motm:motm||null,logged_by:user.id});
         if(error)throw error;
       }
-      // FT-08: if queue has remaining matches, pop the next one into the form instead of fully resetting
-      const hasNext=!isE && queue.length>0;
+      const hasNext=!isE&&queue.length>0;
       if(hasNext){
         const next=queue[0];
         setTA([...next.team_a]);
@@ -64,6 +93,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
         setMotm("");
         setNs(2);
         setQueue(queue.slice(1));
+        setLiveState(createInitialLiveState());
       } else {
         reset();
       }
@@ -71,19 +101,15 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
       setTimeout(()=>setSaved(false),2000);
       if(onSave)onSave();
       if(showToast)showToast(em?"Match updated":(hasNext?`Match saved! Next up — ${queue.length} remaining`:"Match saved!"));
-      // Send push notification for new matches (not edits)
-      // Bug #2 fix S038: ONE notification per match with winner + score; ranking trigger dropped.
       if(!isE&&sendPushNotification){
-        const tANames=[tA[0],tA[1]].map(id=>getName?getName(id):id).join(" & ");
-        const tBNames=[tB[0],tB[1]].map(id=>getName?getName(id):id).join(" & ");
-        // Determine winner by sets won (padel: best-of-3 sets)
-        let setsA=0, setsB=0;
-        as.forEach(([a,b])=>{ if(a>b) setsA++; else if(b>a) setsB++; });
-        const winnerNames = setsA>setsB ? tANames : tBNames;
-        const loserNames  = setsA>setsB ? tBNames : tANames;
-        const setSummary  = as.map(([a,b])=>setsA>setsB?`${a}-${b}`:`${b}-${a}`).join(", ");
-        const body = `${winnerNames} beat ${loserNames} (${setSummary}) — leaderboard updated`;
-        sendPushNotification("match","New Match Result", body);
+        const tANames=tA.map(id=>getName?getName(id):id).join(" & ");
+        const tBNames=tB.map(id=>getName?getName(id):id).join(" & ");
+        let setsA=0,setsB=0;
+        as.forEach(([a,b])=>{if(a>b)setsA++;else if(b>a)setsB++;});
+        const winnerNames=setsA>setsB?tANames:tBNames;
+        const loserNames=setsA>setsB?tBNames:tANames;
+        const setSummary=as.map(([a,b])=>setsA>setsB?`${a}-${b}`:`${b}-${a}`).join(", ");
+        sendPushNotification("match","New Match Result",`${winnerNames} beat ${loserNames} (${setSummary}) — leaderboard updated`);
       }
     }catch(err){
       if(showToast)showToast("Failed to save match","error");
@@ -100,6 +126,8 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
     setDate(new Date().toISOString().split("T")[0]);
     setNs(2);
     setEm(null);
+    setLiveState(createInitialLiveState());
+    setMode('manual');
   }
 
   function cancel(){
@@ -107,12 +135,23 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
     goBack();
   }
 
-  const curSeasonName=seasons.find(s=>s.id===seasonId)?.name||"Unknown";
+  const canSave=mode==='live'?liveToSets(liveState).some(([a,b])=>a>0||b>0):true;
 
   return (
     <div style={{padding:"20px 16px",maxWidth:"600px",margin:"0 auto"}}>
       {isE&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}><div style={{display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:14,fontWeight:700,color:GD}}>✏️ Editing</span></div><button onClick={cancel} style={{background:"none",border:`1px solid ${DG}40`,color:DG,padding:"4px 12px",borderRadius:8,fontSize:11,fontWeight:600,cursor:"pointer"}}>Cancel</button></div>}
       {saved&&<div style={{background:`${A}20`,border:`1px solid ${A}40`,borderRadius:12,padding:"12px 16px",marginBottom:12,display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:18}}>✅</span><span style={{color:A,fontWeight:600,fontSize:14}}>{isE?"Updated!":"Saved!"}</span></div>}
+
+      {/* Mode toggle — hidden in edit mode */}
+      {!isE&&(
+        <div style={{display:"flex",gap:4,background:CD2,borderRadius:12,padding:4,marginBottom:16,border:`1px solid ${BD}`}}>
+          {[{id:'manual',label:'✏️ Manual'},{id:'live',label:'⚡ LIVE'}].map(({id,label})=>(
+            <button key={id} onClick={()=>handleModeChange(id)} style={{flex:1,padding:"9px 0",border:"none",borderRadius:9,background:mode===id?`${id==='live'?A:A}20`:"transparent",color:mode===id?A:MT,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"'Outfit',sans-serif",transition:"all 0.15s"}}>
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Season tag */}
       {!isE&&<div style={{marginBottom:12}}>
@@ -125,19 +164,19 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
               </button>
             ))}
           </div>
-          {seasons.filter(s=>s.active||s.id===seasonId).length>3&&<div style={{position:"absolute",right:0,top:0,bottom:0,width:24,background:`linear-gradient(to right,transparent,${BG})`,pointerEvents:"none"}}/>}
+          {seasons.filter(s=>s.active||s.id===seasonId).length>3&&<div style={{position:"absolute",right:0,top:0,bottom:0,width:24,background:`linear-gradient(to right,transparent,#0a0a0f)`,pointerEvents:"none"}}/>}
         </div>
       </div>}
 
-      {/* FT-08: Shuffle Teams entry point — hidden during edit and while shuffler is active */}
-      {!isE && !showShuffler && (
+      {/* FT-08: Shuffle Teams */}
+      {!isE&&!showShuffler&&(
         <div style={{marginBottom:12}}>
           <button onClick={()=>setShowShuffler(true)} style={{width:"100%",padding:"10px",borderRadius:10,border:`1px dashed ${A}`,background:`${A}10`,color:A,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>🎲 Shuffle Teams</button>
-          {queue.length>0 && <div style={{marginTop:6,fontSize:11,color:MT,textAlign:"center"}}>{queue.length} queued match{queue.length===1?"":"es"} waiting — save this one to continue.</div>}
+          {queue.length>0&&<div style={{marginTop:6,fontSize:11,color:MT,textAlign:"center"}}>{queue.length} queued match{queue.length===1?"":"es"} waiting — save this one to continue.</div>}
         </div>
       )}
 
-      {!isE && showShuffler && (
+      {!isE&&showShuffler&&(
         <TeamShuffler
           players={players}
           getName={getName}
@@ -150,6 +189,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
             setMotm("");
             setNs(2);
             setQueue(matches.slice(1));
+            setLiveState(createInitialLiveState());
             setShowShuffler(false);
             if(showToast)showToast(matches.length>1?`Locked in! ${matches.length-1} more match${matches.length-1===1?"":"es"} queued.`:"Teams locked in — enter the score.");
           }}
@@ -184,24 +224,122 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
         </div>
       </div>
 
-      <div style={{marginBottom:16}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-          <div style={lbl}>Sets</div>
-          <div style={{display:"flex",gap:4}}>
-            {[2,3].map(n=>(
-              <button key={n} onClick={()=>setNs(n)} style={{padding:"4px 10px",borderRadius:6,border:`1px solid ${ns===n?A:BD}`,background:ns===n?`${A}15`:"transparent",color:ns===n?A:MT,fontSize:11,fontWeight:600,cursor:"pointer"}}>{n}</button>
-            ))}
+      {/* ── LIVE scoring panel ── */}
+      {mode==='live'&&!showShuffler&&(
+        <div style={{marginBottom:16}}>
+
+          {/* Scoreboard */}
+          <div style={{background:CD2,borderRadius:14,padding:"16px 20px",marginBottom:12,border:`1px solid ${BD}`}}>
+            {/* Team label row */}
+            <div style={{display:"grid",gridTemplateColumns:"1fr 60px 1fr",gap:8,marginBottom:10}}>
+              <div style={{color:A,fontWeight:700,fontSize:11,textTransform:"uppercase",letterSpacing:1,textAlign:"center",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{teamName(tA)}</div>
+              <div/>
+              <div style={{color:DG,fontWeight:700,fontSize:11,textTransform:"uppercase",letterSpacing:1,textAlign:"center",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{teamName(tB)}</div>
+            </div>
+
+            {/* Sets row */}
+            <div style={{display:"grid",gridTemplateColumns:"1fr 60px 1fr",gap:8,marginBottom:8,alignItems:"center"}}>
+              <div style={{fontSize:42,fontWeight:900,fontFamily:"'JetBrains Mono',monospace",color:TX,textAlign:"center",lineHeight:1}}>{sA}</div>
+              <div style={{fontSize:10,color:MT,textAlign:"center",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>SETS</div>
+              <div style={{fontSize:42,fontWeight:900,fontFamily:"'JetBrains Mono',monospace",color:TX,textAlign:"center",lineHeight:1}}>{sB}</div>
+            </div>
+
+            {/* Games row */}
+            <div style={{display:"grid",gridTemplateColumns:"1fr 60px 1fr",gap:8,marginBottom:8,alignItems:"center"}}>
+              <div style={{fontSize:22,fontWeight:700,fontFamily:"'JetBrains Mono',monospace",color:MT,textAlign:"center"}}>{inTiebreak?tbA:gA}</div>
+              <div style={{fontSize:10,color:MT,textAlign:"center",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{inTiebreak?"TB":"GAMES"}</div>
+              <div style={{fontSize:22,fontWeight:700,fontFamily:"'JetBrains Mono',monospace",color:MT,textAlign:"center"}}>{inTiebreak?liveState.tbB:gB}</div>
+            </div>
+
+            {/* Points row */}
+            {!matchOver&&(
+              <div style={{display:"grid",gridTemplateColumns:"1fr 60px 1fr",gap:8,alignItems:"center"}}>
+                <div style={{fontSize:28,fontWeight:800,fontFamily:"'JetBrains Mono',monospace",textAlign:"center",color:isDeuce?GD:ptA==='Ad'?A:TX}}>{isDeuce?'—':ptA}</div>
+                <div style={{fontSize:10,color:isDeuce?GD:MT,textAlign:"center",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{isDeuce?'DEUCE':'PTS'}</div>
+                <div style={{fontSize:28,fontWeight:800,fontFamily:"'JetBrains Mono',monospace",textAlign:"center",color:isDeuce?GD:ptB==='Ad'?DG:TX}}>{isDeuce?'—':ptB}</div>
+              </div>
+            )}
+
+            {/* Completed sets chips */}
+            {completedSets.length>0&&(
+              <div style={{marginTop:12,display:"flex",gap:6,justifyContent:"center",flexWrap:"wrap"}}>
+                {completedSets.map(({a,b},i)=>(
+                  <span key={i} style={{fontSize:12,color:MT,background:`${BD}60`,padding:"3px 10px",borderRadius:8,fontFamily:"'JetBrains Mono',monospace",fontWeight:700}}>{a}–{b}</span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Match-over banner */}
+          {matchOver&&(
+            <div style={{background:`${A}18`,border:`1px solid ${A}50`,borderRadius:12,padding:"14px 16px",marginBottom:12,textAlign:"center"}}>
+              <div style={{fontSize:24,marginBottom:4}}>🎉</div>
+              <div style={{color:A,fontWeight:800,fontSize:15,marginBottom:4}}>
+                {sA>sB?teamName(tA):teamName(tB)} wins!
+              </div>
+              <div style={{color:MT,fontSize:12}}>{sA}–{sB} · {completedSets.map(({a,b})=>`${a}-${b}`).join(', ')}</div>
+            </div>
+          )}
+
+          {/* Scoring tap buttons */}
+          {!matchOver&&(
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
+              <button
+                onClick={()=>setLiveState(s=>scorePoint(s,'A'))}
+                style={{padding:"28px 12px",borderRadius:14,border:`2px solid ${A}50`,background:`${A}18`,color:A,fontSize:16,fontWeight:900,cursor:"pointer",fontFamily:"'Outfit',sans-serif",lineHeight:1.4,touchAction:"manipulation"}}
+              >
+                +1<br/>
+                <span style={{fontSize:11,fontWeight:500,color:`${A}99`,display:"block",marginTop:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{teamName(tA)}</span>
+              </button>
+              <button
+                onClick={()=>setLiveState(s=>scorePoint(s,'B'))}
+                style={{padding:"28px 12px",borderRadius:14,border:`2px solid ${DG}50`,background:`${DG}18`,color:DG,fontSize:16,fontWeight:900,cursor:"pointer",fontFamily:"'Outfit',sans-serif",lineHeight:1.4,touchAction:"manipulation"}}
+              >
+                +1<br/>
+                <span style={{fontSize:11,fontWeight:500,color:`${DG}99`,display:"block",marginTop:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{teamName(tB)}</span>
+              </button>
+            </div>
+          )}
+
+          {/* Undo + Reset row */}
+          <div style={{display:"flex",gap:8}}>
+            {liveHistory.length>0&&(
+              <button
+                onClick={()=>setLiveState(undoPoint)}
+                style={{flex:1,padding:"10px",borderRadius:10,border:`1px solid ${BD}`,background:"transparent",color:MT,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}
+              >↩ Undo</button>
+            )}
+            {(liveHistory.length>0||matchOver)&&(
+              <button
+                onClick={()=>setLiveState(createInitialLiveState())}
+                style={{padding:"10px 14px",borderRadius:10,border:`1px solid ${BD}`,background:"transparent",color:MT,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}
+              >↺ Reset</button>
+            )}
           </div>
         </div>
-        {sets.slice(0,ns).map((s,i)=>(
-          <div key={i} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
-            <span style={{fontSize:11,color:MT,width:36,fontWeight:600}}>Set {i+1}</span>
-            <input type="text" inputMode="numeric" pattern="[0-9]*" value={s[0]===0?"":String(s[0])} placeholder="0" onChange={e=>{const r=e.target.value.replace(/[^0-9]/g,"");const n=sets.map(x=>[...x]);n[i]=[r===""?0:Math.min(7,parseInt(r,10)),n[i][1]];setSets(n);}} style={{...sel,width:60,textAlign:"center",fontFamily:"'JetBrains Mono'",fontWeight:700,fontSize:18,borderColor:`${A}40`}}/>
-            <span style={{color:MT,fontWeight:700}}>-</span>
-            <input type="text" inputMode="numeric" pattern="[0-9]*" value={s[1]===0?"":String(s[1])} placeholder="0" onChange={e=>{const r=e.target.value.replace(/[^0-9]/g,"");const n=sets.map(x=>[...x]);n[i]=[n[i][0],r===""?0:Math.min(7,parseInt(r,10))];setSets(n);}} style={{...sel,width:60,textAlign:"center",fontFamily:"'JetBrains Mono'",fontWeight:700,fontSize:18,borderColor:`${DG}40`}}/>
+      )}
+
+      {/* ── Manual sets entry (hidden in LIVE mode) ── */}
+      {mode==='manual'&&(
+        <div style={{marginBottom:16}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+            <div style={lbl}>Sets</div>
+            <div style={{display:"flex",gap:4}}>
+              {[2,3].map(n=>(
+                <button key={n} onClick={()=>setNs(n)} style={{padding:"4px 10px",borderRadius:6,border:`1px solid ${ns===n?A:BD}`,background:ns===n?`${A}15`:"transparent",color:ns===n?A:MT,fontSize:11,fontWeight:600,cursor:"pointer"}}>{n}</button>
+              ))}
+            </div>
           </div>
-        ))}
-      </div>
+          {sets.slice(0,ns).map((s,i)=>(
+            <div key={i} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+              <span style={{fontSize:11,color:MT,width:36,fontWeight:600}}>Set {i+1}</span>
+              <input type="text" inputMode="numeric" pattern="[0-9]*" value={s[0]===0?"":String(s[0])} placeholder="0" onChange={e=>{const r=e.target.value.replace(/[^0-9]/g,"");const n=sets.map(x=>[...x]);n[i]=[r===""?0:Math.min(7,parseInt(r,10)),n[i][1]];setSets(n);}} style={{...sel,width:60,textAlign:"center",fontFamily:"'JetBrains Mono'",fontWeight:700,fontSize:18,borderColor:`${A}40`}}/>
+              <span style={{color:MT,fontWeight:700}}>-</span>
+              <input type="text" inputMode="numeric" pattern="[0-9]*" value={s[1]===0?"":String(s[1])} placeholder="0" onChange={e=>{const r=e.target.value.replace(/[^0-9]/g,"");const n=sets.map(x=>[...x]);n[i]=[n[i][0],r===""?0:Math.min(7,parseInt(r,10))];setSets(n);}} style={{...sel,width:60,textAlign:"center",fontFamily:"'JetBrains Mono'",fontWeight:700,fontSize:18,borderColor:`${DG}40`}}/>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div style={{marginBottom:20}}>
         <div style={lbl}>⭐ Man of the Match</div>
@@ -213,7 +351,9 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
         </select>
       </div>
 
-      <button onClick={submit} disabled={saving} style={{width:"100%",padding:"14px",borderRadius:12,border:"none",background:saving?BD:isE?`linear-gradient(135deg,${GD},${GD}cc)`:`linear-gradient(135deg,${A},${A}cc)`,color:BG,fontSize:15,fontWeight:800,cursor:saving?"not-allowed":"pointer",textTransform:"uppercase",opacity:saving?0.6:1}}>{saving?"Saving...":isE?"Update Match":"Save Match"}</button>
+      <button onClick={submit} disabled={saving||!canSave} style={{width:"100%",padding:"14px",borderRadius:12,border:"none",background:saving||!canSave?BD:isE?`linear-gradient(135deg,${GD},${GD}cc)`:`linear-gradient(135deg,${A},${A}cc)`,color:saving||!canSave?MT:BG,fontSize:15,fontWeight:800,cursor:saving||!canSave?"not-allowed":"pointer",textTransform:"uppercase",opacity:saving?0.6:1}}>
+        {saving?"Saving...":isE?"Update Match":"Save Match"}
+      </button>
     </div>
   );
 }
