@@ -19,6 +19,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
   // LIVE scoring mode
   const [mode,setMode]=useState('manual');
   const [liveState,setLiveState]=useState(createInitialLiveState);
+  const [liveNs,setLiveNs]=useState(3);
 
   useEffect(()=>{
     if(em){
@@ -36,6 +37,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
   // Derived live display values
   const {ptA,ptB,gA,gB,isDeuce,inTiebreak}=getLiveDisplay(liveState);
   const {sA,sB,completedSets,matchOver,history:liveHistory}=liveState;
+  const isMatchOver=matchOver||(liveNs===2&&completedSets.length>=2);
 
   // Team name helpers
   const teamName=(ids)=>ids.filter(Boolean).map(id=>getName?getName(id):id).join(' & ')||'Team';
@@ -127,6 +129,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
     setNs(2);
     setEm(null);
     setLiveState(createInitialLiveState());
+    setLiveNs(3);
     setMode('manual');
   }
 
@@ -228,6 +231,16 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
       {mode==='live'&&!showShuffler&&(
         <div style={{marginBottom:16}}>
 
+          {/* Sets count toggle */}
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+            <div style={{fontSize:11,color:MT,fontWeight:600,textTransform:"uppercase",letterSpacing:1}}>Sets</div>
+            <div style={{display:"flex",gap:4}}>
+              {[2,3].map(n=>(
+                <button key={n} onClick={()=>setLiveNs(n)} style={{padding:"4px 10px",borderRadius:6,border:`1px solid ${liveNs===n?A:BD}`,background:liveNs===n?`${A}15`:"transparent",color:liveNs===n?A:MT,fontSize:11,fontWeight:600,cursor:"pointer"}}>{n}</button>
+              ))}
+            </div>
+          </div>
+
           {/* Scoreboard */}
           <div style={{background:CD2,borderRadius:14,padding:"16px 20px",marginBottom:12,border:`1px solid ${BD}`}}>
             {/* Team label row */}
@@ -252,7 +265,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
             </div>
 
             {/* Points row */}
-            {!matchOver&&(
+            {!isMatchOver&&(
               <div style={{display:"grid",gridTemplateColumns:"1fr 60px 1fr",gap:8,alignItems:"center"}}>
                 <div style={{fontSize:28,fontWeight:800,fontFamily:"'JetBrains Mono',monospace",textAlign:"center",color:isDeuce?GD:ptA==='Ad'?A:TX}}>{isDeuce?'—':ptA}</div>
                 <div style={{fontSize:10,color:isDeuce?GD:MT,textAlign:"center",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{isDeuce?'DEUCE':'PTS'}</div>
@@ -271,7 +284,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
           </div>
 
           {/* Match-over banner */}
-          {matchOver&&(
+          {isMatchOver&&(
             <div style={{background:`${A}18`,border:`1px solid ${A}50`,borderRadius:12,padding:"14px 16px",marginBottom:12,textAlign:"center"}}>
               <div style={{fontSize:24,marginBottom:4}}>🎉</div>
               <div style={{color:A,fontWeight:800,fontSize:15,marginBottom:4}}>
@@ -282,7 +295,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
           )}
 
           {/* Scoring tap buttons */}
-          {!matchOver&&(
+          {!isMatchOver&&(
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
               <button
                 onClick={()=>setLiveState(s=>scorePoint(s,'A'))}
@@ -309,7 +322,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
                 style={{flex:1,padding:"10px",borderRadius:10,border:`1px solid ${BD}`,background:"transparent",color:MT,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}
               >↩ Undo</button>
             )}
-            {(liveHistory.length>0||matchOver)&&(
+            {(liveHistory.length>0||isMatchOver)&&(
               <button
                 onClick={()=>setLiveState(createInitialLiveState())}
                 style={{padding:"10px 14px",borderRadius:10,border:`1px solid ${BD}`,background:"transparent",color:MT,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}
