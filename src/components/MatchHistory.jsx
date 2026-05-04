@@ -63,7 +63,7 @@ export function MatchHistory({onEdit,shareMatch,sel,onMatchDeleted}){
       setCd(null);
       if(onMatchDeleted)onMatchDeleted();
       if(showToast)showToast("Match deleted");
-    }catch(err){
+    }catch(_err){
       if(showToast)showToast("Failed to delete match","error");
     }
   }

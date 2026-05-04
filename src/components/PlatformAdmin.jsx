@@ -27,7 +27,7 @@ export function PlatformAdmin({ onClose, showToast }) {
       if (statsRes.data) setStats(statsRes.data);
       if (leaguesRes.data) setLeagues(leaguesRes.data);
       if (usersRes.data) setUsers(usersRes.data);
-    } catch (err) {
+    } catch (_err) {
       if (showToast) showToast("Failed to load platform data", "error");
     }
     setLoading(false);

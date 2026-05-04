@@ -19,7 +19,7 @@ export function AdminDashboard({ memberProfiles, setSidebarView }) {
       const {error:err} = await supabase.from("players").update({name: newName}).eq("id", playerId);
       if (err) throw err;
       await loadLeagueData();
-    } catch (err) {
+    } catch (_err) {
       showToast("Failed to update player name","error");
     }
     setAdminLoading(null);
@@ -33,7 +33,7 @@ export function AdminDashboard({ memberProfiles, setSidebarView }) {
       if (err) throw err;
       showToast("Player removed from league");
       await loadLeagueData();
-    } catch (err) {
+    } catch (_err) {
       showToast("Failed to remove player — they may have match history","error");
     }
     setAdminLoading(null);
@@ -78,7 +78,7 @@ export function AdminDashboard({ memberProfiles, setSidebarView }) {
       const {error:err} = await supabase.from("leagues").update({invite_code: newCode}).eq("id", leagueId);
       if (err) throw err;
       await loadLeagueData();
-    } catch (err) {
+    } catch (_err) {
       showToast("Failed to regenerate invite code","error");
     }
   };

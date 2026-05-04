@@ -63,7 +63,7 @@ export function LeagueGate({user,children,showToast}){
       setSelectedLeagueId(leagueData.id);
       setInviteCode("");
       setJoinMsg(`Welcome to ${leagueData.name}!`);
-    } catch (err) {
+    } catch (_err) {
       // Don't block — user can still manually join
     }
   };
@@ -79,7 +79,7 @@ export function LeagueGate({user,children,showToast}){
       const userLeagues = data?.map(m=>({...m.leagues,_userRole:m.role})).filter(Boolean) || [];
       setLeagues(userLeagues);
       setLoading(false);
-    } catch (err) {
+    } catch (_err) {
       setLoading(false);
     }
   };

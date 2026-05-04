@@ -44,7 +44,6 @@ function AppContent({leagueId,user,onSwitchLeague}){
   const [players,setPlayers]=useState([]);
   const [matches,setMatches]=useState([]);
   const [seasons,setSeasons]=useState([]);
-  const [tournaments,setTournaments]=useState([]);
   const [tab,setTab]=useState(()=>{const h=window.location.hash.replace("#","");if(h==="schedule"||h==="history")return "history";return "board";});
   const [loading,setLoading]=useState(true);
   const [isAdmin,setIsAdmin]=useState(false);
@@ -98,7 +97,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
       await supabase.from("profiles").update({avatar_url:url}).eq("id",user.id);
       setAvatarUrl(url);
       showToast("Photo updated!");
-    }catch(err){
+    }catch(_err){
       showToast("Failed to upload photo","error");
     }
     setAvatarUploading(false);
@@ -110,7 +109,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
       await supabase.from("profiles").update({avatar_url:null}).eq("id",user.id);
       setAvatarUrl(null);
       showToast("Photo removed");
-    }catch(err){showToast("Failed to remove photo","error");}
+    }catch(_err){showToast("Failed to remove photo","error");}
   };
 
   // Notifications toggle state
@@ -222,7 +221,6 @@ function AppContent({leagueId,user,onSwitchLeague}){
         {data:playersData,error:playersErr},
         {data:matchesData,error:matchesErr},
         {data:seasonsData,error:seasonsErr},
-        {data:tournamentsData,error:tournamentsErr},
         {data:challengesData}
       ] = await Promise.all([
         supabase.from("leagues").select("id,name,invite_code,created_by").eq("id",leagueId).single(),
@@ -231,7 +229,6 @@ function AppContent({leagueId,user,onSwitchLeague}){
         supabase.from("players").select("id,name,nickname,user_id,created_by,created_at").eq("league_id",leagueId).order("name"),
         supabase.from("matches").select("id,team_a,team_b,sets,motm,date,season_id,league_id").eq("league_id",leagueId).order("date",{ascending:false}).limit(500),
         supabase.from("seasons").select("id,name,active").eq("league_id",leagueId).order("start_date"),
-        supabase.from("tournaments").select("id,mode,players,schedule,scores,status,name,date,courts,pts_per_round,league_id").eq("league_id",leagueId).order("created_at"),
         supabase.from("challenges").select("id,team_a,team_b,status,date,time,location,notes,created_by,match_id,responses,duration,league_id").eq("league_id",leagueId).in("status",["open","pending","confirmed","played"]).order("date",{ascending:true})
       ]);
 
@@ -257,8 +254,6 @@ function AppContent({leagueId,user,onSwitchLeague}){
       if (seasonsErr) throw seasonsErr;
       setSeasons(seasonsData || []);
 
-      if (tournamentsErr) throw tournamentsErr;
-      setTournaments(tournamentsData || []);
       setChallenges(challengesData||[]);
 
       // Fetch unread notification count
@@ -271,9 +266,9 @@ function AppContent({leagueId,user,onSwitchLeague}){
       setClaimedPlayer(claimed || null);
 
       setLoading(false);
-    } catch (err) {
+    } catch (_err) {
       // S026: Clear state on error so user sees empty state, not stale data
-      setLeague(null); setPlayers([]); setMatches([]); setSeasons([]); setTournaments([]); setChallenges([]);
+      setLeague(null); setPlayers([]); setMatches([]); setSeasons([]); setChallenges([]);
       setLoading(false);
       showToast("Failed to load data — tap refresh to retry", "error");
     }
@@ -385,7 +380,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
         .eq("user_id", userId);
       if (err) throw err;
       await loadLeagueData();
-    } catch (err) {
+    } catch (_err) {
       showToast("Failed to update member role","error");
     }
   };
@@ -437,7 +432,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
       if (error) throw error;
       setPushSubscribed(true);
       return true;
-    } catch (err) {
+    } catch (_err) {
       showToast("Failed to enable notifications","error");
       return false;
     }
@@ -454,7 +449,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
         await supabase.from("push_subscriptions").delete().eq("user_id", user.id).eq("endpoint", endpoint);
       }
       setPushSubscribed(false);
-    } catch (err) {
+    } catch (_err) {
       showToast("Failed to disable notifications","error");
     }
   };
@@ -495,12 +490,14 @@ function AppContent({leagueId,user,onSwitchLeague}){
       const payload = { league_id: leagueId, type, title, body, exclude_user_id: user.id };
       if (target_user_ids) payload.target_user_ids = target_user_ids;
       const { data, error } = await supabase.functions.invoke("push-notify", { body: payload });
-      // Bug #4 fix S038: surface push send results in console for diagnostics
-      if (error) console.warn("[push-notify] error:", error);
-      else if (data) console.log("[push-notify]", type, "→", data);
+      // Bug #4 fix S038: surface push send results in console for diagnostics (DEV-only since S042)
+      if (import.meta.env.DEV) {
+        if (error) console.warn("[push-notify] error:", error);
+        else if (data) console.log("[push-notify]", type, "→", data);
+      }
       return { data, error };
     } catch (err) {
-      console.warn("[push-notify] threw:", err);
+      if (import.meta.env.DEV) console.warn("[push-notify] threw:", err);
       return { error: err };
     }
   };
@@ -522,17 +519,17 @@ function AppContent({leagueId,user,onSwitchLeague}){
       };
       const { data, error } = await supabase.functions.invoke("push-notify", { body: payload });
       if (error) {
-        console.warn("[test-push] error:", error);
+        if (import.meta.env.DEV) console.warn("[test-push] error:", error);
         showToast("Test failed: " + (error.message || "unknown"), "error");
         return;
       }
-      console.log("[test-push] response:", data);
+      if (import.meta.env.DEV) console.log("[test-push] response:", data);
       const sent = data?.sent || 0, total = data?.total || 0;
       if (sent > 0) showToast(`Test sent (${sent}/${total}) — check your home screen`);
       else if (total === 0) showToast("No subscriptions found — re-subscribe?", "error");
       else showToast(`Test failed: 0/${total} delivered`, "error");
     } catch (err) {
-      console.warn("[test-push] threw:", err);
+      if (import.meta.env.DEV) console.warn("[test-push] threw:", err);
       showToast("Test push threw: " + (err.message || "unknown"), "error");
     }
   };

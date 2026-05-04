@@ -118,7 +118,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
         const setSummary=as.map(([a,b])=>setsA>setsB?`${a}-${b}`:`${b}-${a}`).join(", ");
         sendPushNotification("match","New Match Result",`${winnerNames} beat ${loserNames} (${setSummary}) — leaderboard updated`);
       }
-    }catch(err){
+    }catch(_err){
       if(showToast)showToast("Failed to save match","error");
     }finally{
       setSaving(false);
