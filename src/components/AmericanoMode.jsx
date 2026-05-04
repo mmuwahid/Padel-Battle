@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, PU } from '../theme';
 import { generateAmericanoSchedule, generateMexicanoRound } from '../utils/tournaments';
+import { ScoreStepper } from './ScoreStepper';
 
 export function AmericanoMode({ players, getName, supabase, leagueId, tournament, setTournament, sel, endTournament, resetTournament, deleteTournament, showToast }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -143,13 +144,9 @@ export function AmericanoMode({ players, getName, supabase, leagueId, tournament
                       <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: sc ? (sc.b > sc.a ? A : TX) : TX }}>{tB.map(p => getName(p)).join(" x ")}</span>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
-                      <input type="text" inputMode="numeric" pattern="[0-9]*" value={sc?.a || ""} placeholder="0"
-                        onChange={e => { const r=e.target.value.replace(/[^0-9]/g,""); const v=r===""?0:Math.min(parseInt(r,10),ptsPerRound); recordScore(ri, mi, v, ptsPerRound - v); }}
-                        style={{ width: 50, textAlign: "center", background: CD2, color: TX, border: `1px solid ${A}30`, borderRadius: 8, padding: "6px", fontSize: 16, fontWeight: 700, fontFamily: "'JetBrains Mono'", outline: "none" }} />
+                      <ScoreStepper value={sc?.a||0} max={ptsPerRound} aColor={A} ariaLabel="Team A points" onChange={(n)=>recordScore(ri,mi,n,ptsPerRound-n)}/>
                       <span style={{ color: MT, fontWeight: 700, fontSize: 12 }}>-</span>
-                      <input type="text" inputMode="numeric" pattern="[0-9]*" value={sc?.b || ""} placeholder="0"
-                        onChange={e => { const r=e.target.value.replace(/[^0-9]/g,""); const v=r===""?0:Math.min(parseInt(r,10),ptsPerRound); recordScore(ri, mi, ptsPerRound - v, v); }}
-                        style={{ width: 50, textAlign: "center", background: CD2, color: TX, border: `1px solid ${DG}30`, borderRadius: 8, padding: "6px", fontSize: 16, fontWeight: 700, fontFamily: "'JetBrains Mono'", outline: "none" }} />
+                      <ScoreStepper value={sc?.b||0} max={ptsPerRound} aColor={DG} ariaLabel="Team B points" onChange={(n)=>recordScore(ri,mi,ptsPerRound-n,n)}/>
                       {match.court && <span style={{ fontSize: 9, color: MT, marginLeft: 4 }}>Court {match.court}</span>}
                     </div>
                   </div>
