@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { A, BG, CD2, BD, TX, MT, DG, GD, PU } from '../theme';
+import { A, BG, CD2, BD, TX, MT, DG, GD, PU, BL } from '../theme';
 import { TeamShuffler } from './TeamShuffler';
 import { createInitialLiveState, scorePoint, undoPoint, getLiveDisplay, liveToSets } from '../utils/scoringEngine';
 import { formatTeam } from '../utils/helpers';
@@ -213,9 +213,9 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
 
       <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",gap:8,marginBottom:16}}>
         <div>
-          <div style={{...lbl,color:A}}>Team A</div>
+          <div style={{...lbl,color:BL}}>Team A</div>
           {tA.map((pid,i)=>(
-            <select key={i} value={pid} onChange={e=>{const t=[...tA];t[i]=e.target.value;setTA(t);}} style={{...sel,marginBottom:6,borderColor:`${A}40`}}>
+            <select key={i} value={pid} onChange={e=>{const t=[...tA];t[i]=e.target.value;setTA(t);}} style={{...sel,marginBottom:6,borderColor:`${BL}40`}}>
               <option value="">Player {i+1}</option>
               {avail(pid).map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}
             </select>
@@ -223,9 +223,9 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
         </div>
         <div style={{display:"flex",alignItems:"center",fontWeight:900,fontSize:18,color:MT,paddingTop:20}}>VS</div>
         <div>
-          <div style={{...lbl,color:DG}}>Team B</div>
+          <div style={{...lbl,color:GD}}>Team B</div>
           {tB.map((pid,i)=>(
-            <select key={i} value={pid} onChange={e=>{const t=[...tB];t[i]=e.target.value;setTB(t);}} style={{...sel,marginBottom:6,borderColor:`${DG}40`}}>
+            <select key={i} value={pid} onChange={e=>{const t=[...tB];t[i]=e.target.value;setTB(t);}} style={{...sel,marginBottom:6,borderColor:`${GD}40`}}>
               <option value="">Player {i+1}</option>
               {avail(pid).map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}
             </select>
@@ -370,9 +370,9 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
           {sets.slice(0,ns).map((s,i)=>(
             <div key={i} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
               <span style={{fontSize:11,color:MT,width:36,fontWeight:600}}>Set {i+1}</span>
-              <ScoreStepper value={s[0]} max={7} aColor={A} ariaLabel={`Set ${i+1} Team A`} onChange={(n)=>{const x=sets.map(y=>[...y]);x[i]=[n,x[i][1]];setSets(x);}}/>
+              <ScoreStepper value={s[0]} max={7} aColor={BL} ariaLabel={`Set ${i+1} Team A`} onChange={(n)=>{const x=sets.map(y=>[...y]);x[i]=[n,x[i][1]];setSets(x);}}/>
               <span style={{color:MT,fontWeight:700}}>-</span>
-              <ScoreStepper value={s[1]} max={7} aColor={DG} ariaLabel={`Set ${i+1} Team B`} onChange={(n)=>{const x=sets.map(y=>[...y]);x[i]=[x[i][0],n];setSets(x);}}/>
+              <ScoreStepper value={s[1]} max={7} aColor={GD} ariaLabel={`Set ${i+1} Team B`} onChange={(n)=>{const x=sets.map(y=>[...y]);x[i]=[x[i][0],n];setSets(x);}}/>
             </div>
           ))}
         </div>
