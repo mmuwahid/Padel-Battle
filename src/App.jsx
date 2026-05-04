@@ -48,7 +48,6 @@ function AppContent({leagueId,user,onSwitchLeague}){
   const [tab,setTab]=useState(()=>{const h=window.location.hash.replace("#","");if(h==="schedule"||h==="history")return "history";return "board";});
   const [loading,setLoading]=useState(true);
   const [isAdmin,setIsAdmin]=useState(false);
-  const [selectedLeagueId,setSelectedLeagueId]=useState(leagueId);
   const [editingMatch,setEditingMatch]=useState(null);
   const [selectedPlayer,setSelectedPlayer]=useState(null);
   const [selectedSeason,setSelectedSeason]=useState(null);
@@ -732,7 +731,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
 
           {claimError && <div style={{marginTop:14,color:DG,fontSize:12,padding:"10px 14px",background:`${DG}15`,borderRadius:10,border:`1px solid ${DG}30`}}>{claimError}</div>}
 
-          <button onClick={()=>setSelectedLeagueId(null)} style={{marginTop:16,width:"100%",padding:"10px",background:"transparent",border:`1px solid ${BD}`,borderRadius:10,color:MT,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>← Back to Leagues</button>
+          <button onClick={onSwitchLeague} style={{marginTop:16,width:"100%",padding:"10px",background:"transparent",border:`1px solid ${BD}`,borderRadius:10,color:MT,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>← Back to Leagues</button>
         </div>
       </div>
     );

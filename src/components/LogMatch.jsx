@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { A, BG, CD2, BD, TX, MT, DG, GD, PU } from '../theme';
 import { TeamShuffler } from './TeamShuffler';
 import { createInitialLiveState, scorePoint, undoPoint, getLiveDisplay, liveToSets } from '../utils/scoringEngine';
+import { formatTeam } from '../utils/helpers';
 
 export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goBack,sel,lbl,getName,seasonId,seasons,setCurSeason,onSave,showToast,sendPushNotification}){
   const isE=!!em;
@@ -37,10 +38,14 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
   // Derived live display values
   const {ptA,ptB,gA,gB,isDeuce,inTiebreak}=getLiveDisplay(liveState);
   const {sA,sB,completedSets,matchOver,history:liveHistory}=liveState;
-  const isMatchOver=matchOver||(liveNs===2&&completedSets.length>=2);
 
-  // Team name helpers
-  const teamName=(ids)=>ids.filter(Boolean).map(id=>getName?getName(id):id).join(' & ')||'Team';
+  // Team name helpers — use formatTeam for canonical " x " separator
+  const teamName=(ids)=>{
+    const names=ids.filter(Boolean).map(id=>getName?getName(id):id);
+    if(names.length===0)return 'Team';
+    if(names.length===1)return names[0];
+    return formatTeam(names[0],names[1]);
+  };
 
   function handleModeChange(m){
     if(m===mode)return;
@@ -104,8 +109,8 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
       if(onSave)onSave();
       if(showToast)showToast(em?"Match updated":(hasNext?`Match saved! Next up — ${queue.length} remaining`:"Match saved!"));
       if(!isE&&sendPushNotification){
-        const tANames=tA.map(id=>getName?getName(id):id).join(" & ");
-        const tBNames=tB.map(id=>getName?getName(id):id).join(" & ");
+        const tANames=formatTeam(getName?getName(tA[0]):tA[0],getName?getName(tA[1]):tA[1]);
+        const tBNames=formatTeam(getName?getName(tB[0]):tB[0],getName?getName(tB[1]):tB[1]);
         let setsA=0,setsB=0;
         as.forEach(([a,b])=>{if(a>b)setsA++;else if(b>a)setsB++;});
         const winnerNames=setsA>setsB?tANames:tBNames;
@@ -265,7 +270,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
             </div>
 
             {/* Points row */}
-            {!isMatchOver&&(
+            {!matchOver&&(
               <div style={{display:"grid",gridTemplateColumns:"1fr 60px 1fr",gap:8,alignItems:"center"}}>
                 <div style={{fontSize:28,fontWeight:800,fontFamily:"'JetBrains Mono',monospace",textAlign:"center",color:isDeuce?GD:ptA==='Ad'?A:TX}}>{isDeuce?'—':ptA}</div>
                 <div style={{fontSize:10,color:isDeuce?GD:MT,textAlign:"center",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{isDeuce?'DEUCE':'PTS'}</div>
@@ -284,28 +289,46 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
           </div>
 
           {/* Match-over banner */}
-          {isMatchOver&&(
-            <div style={{background:`${A}18`,border:`1px solid ${A}50`,borderRadius:12,padding:"14px 16px",marginBottom:12,textAlign:"center"}}>
-              <div style={{fontSize:24,marginBottom:4}}>🎉</div>
-              <div style={{color:A,fontWeight:800,fontSize:15,marginBottom:4}}>
-                {sA>sB?teamName(tA):teamName(tB)} wins!
+          {matchOver&&(()=>{
+            const tied=sA===sB;
+            const winnerIsA=sA>sB;
+            const winSets=tied?sA:(winnerIsA?sA:sB);
+            const loseSets=tied?sB:(winnerIsA?sB:sA);
+            const winnerLabel=tied?`${teamName(tA)} vs ${teamName(tB)}`:`${winnerIsA?teamName(tA):teamName(tB)} — Winners`;
+            return (
+              <div style={{background:`${A}18`,border:`1px solid ${A}50`,borderRadius:12,padding:"14px 16px",marginBottom:12,textAlign:"center"}}>
+                <div style={{fontSize:24,marginBottom:6}}>{tied?'🤝':'🎉'}</div>
+                <div style={{color:A,fontWeight:800,fontSize:15,marginBottom:8,lineHeight:1.3}}>{winnerLabel}</div>
+                <div style={{fontFamily:"'JetBrains Mono',monospace",fontWeight:800,fontSize:20,color:TX,marginBottom:8}}>
+                  {tied?`${sA} – ${sB}`:`${winSets} – ${loseSets}`}
+                </div>
+                <div style={{display:"flex",flexDirection:"column",gap:3,alignItems:"center"}}>
+                  {completedSets.map(({a,b},i)=>{
+                    const winnerScore=tied?a:(winnerIsA?a:b);
+                    const loserScore=tied?b:(winnerIsA?b:a);
+                    return (
+                      <div key={i} style={{fontSize:12,color:MT,fontFamily:"'JetBrains Mono',monospace",fontWeight:700}}>
+                        Set {i+1}: <span style={{color:TX}}>{winnerScore} – {loserScore}</span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-              <div style={{color:MT,fontSize:12}}>{sA}–{sB} · {completedSets.map(({a,b})=>`${a}-${b}`).join(', ')}</div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* Scoring tap buttons */}
-          {!isMatchOver&&(
+          {!matchOver&&(
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
               <button
-                onClick={()=>setLiveState(s=>scorePoint(s,'A'))}
+                onClick={()=>setLiveState(s=>scorePoint(s,'A',liveNs))}
                 style={{padding:"28px 12px",borderRadius:14,border:`2px solid ${A}50`,background:`${A}18`,color:A,fontSize:16,fontWeight:900,cursor:"pointer",fontFamily:"'Outfit',sans-serif",lineHeight:1.4,touchAction:"manipulation"}}
               >
                 +1<br/>
                 <span style={{fontSize:11,fontWeight:500,color:`${A}99`,display:"block",marginTop:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{teamName(tA)}</span>
               </button>
               <button
-                onClick={()=>setLiveState(s=>scorePoint(s,'B'))}
+                onClick={()=>setLiveState(s=>scorePoint(s,'B',liveNs))}
                 style={{padding:"28px 12px",borderRadius:14,border:`2px solid ${DG}50`,background:`${DG}18`,color:DG,fontSize:16,fontWeight:900,cursor:"pointer",fontFamily:"'Outfit',sans-serif",lineHeight:1.4,touchAction:"manipulation"}}
               >
                 +1<br/>
@@ -322,7 +345,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
                 style={{flex:1,padding:"10px",borderRadius:10,border:`1px solid ${BD}`,background:"transparent",color:MT,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}
               >↩ Undo</button>
             )}
-            {(liveHistory.length>0||isMatchOver)&&(
+            {(liveHistory.length>0||matchOver)&&(
               <button
                 onClick={()=>setLiveState(createInitialLiveState())}
                 style={{padding:"10px 14px",borderRadius:10,border:`1px solid ${BD}`,background:"transparent",color:MT,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}
