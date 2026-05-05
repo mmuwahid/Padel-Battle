@@ -17,7 +17,7 @@ export const PadelLogo = () => (<svg width="48" height="48" viewBox="0 0 80 80" 
   <line x1="38" y1="52" x2="42" y2="52" stroke="#888" strokeWidth="1"/><line x1="38" y1="55" x2="42" y2="55" stroke="#888" strokeWidth="1"/><line x1="38" y1="58" x2="42" y2="58" stroke="#888" strokeWidth="1"/>
 </svg>);
 
-export const PadelLogoSmall = () => (<svg width="32" height="32" viewBox="0 0 80 80" fill="none">
+export const PadelLogoSmall = () => (<svg width="26" height="26" viewBox="0 0 80 80" fill="none">
   <ellipse cx="40" cy="28" rx="16" ry="20" stroke="#666" strokeWidth="4" fill="none"/>
   <circle cx="40" cy="28" r="5" fill={A}/>
   <circle cx="33" cy="20" r="2.8" fill={A}/><circle cx="47" cy="20" r="2.8" fill={A}/>

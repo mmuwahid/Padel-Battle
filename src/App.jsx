@@ -668,7 +668,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
   if (loading) return (<div style={{background:BG,width:"100vw",height:"100vh",fontFamily:"'Outfit',sans-serif"}}>
     <style>{`@keyframes shimmer{0%{background-position:-200px 0}100%{background-position:200px 0}} .skel{background:linear-gradient(90deg,${CD} 25%,${CD2} 50%,${CD} 75%);background-size:400px 100%;animation:shimmer 1.5s infinite;border-radius:6px;}`}</style>
     {/* Skeleton header */}
-    <div style={{background:CD,borderBottom:`1px solid ${BD}`,padding:"8px 16px",paddingTop:"calc(env(safe-area-inset-top, 0px) + 0px)",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+    <div style={{background:CD,borderBottom:`1px solid ${BD}`,padding:"4px 16px",paddingTop:"calc(env(safe-area-inset-top, 0px) + 0px)",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
       <div style={{display:"flex",alignItems:"center",gap:10}}>
         <div className="skel" style={{width:32,height:32,borderRadius:"50%"}}/>
         <div><div className="skel" style={{width:80,height:14,marginBottom:4}}/><div className="skel" style={{width:140,height:10}}/></div>
@@ -767,14 +767,14 @@ function AppContent({leagueId,user,onSwitchLeague}){
     <div style={{background:BG,minHeight:"100vh",paddingBottom:"calc(80px + env(safe-area-inset-bottom, 0px))",fontFamily:"'Outfit',sans-serif",color:TX}}>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}} @keyframes fadeIn{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}} input:focus,select:focus,textarea:focus{border-color:${A} !important;box-shadow:0 0 0 2px ${A}30 !important;}`}</style>
       {/* HEADER — Line 1: PadelHub branding, Line 2: League | Season */}
-      <div style={{background:CD,borderBottom:`1px solid ${BD}`,padding:"8px 16px",paddingTop:"calc(env(safe-area-inset-top, 0px) + 0px)",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:10}}>
+      <div style={{background:CD,borderBottom:`1px solid ${BD}`,padding:"4px 16px",paddingTop:"calc(env(safe-area-inset-top, 0px) + 0px)",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:10}}>
         <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
           <PadelLogoSmall/>
           <div>
             <div style={{display:"flex",alignItems:"center",gap:"6px"}}>
-              <h1 style={{fontSize:"16px",fontWeight:900,margin:0,letterSpacing:1,fontFamily:"'Outfit',sans-serif"}}><span style={{color:TX}}>Padel</span><span style={{color:A}}>Hub</span></h1>
+              <h1 style={{fontSize:"14px",fontWeight:900,margin:0,letterSpacing:1,fontFamily:"'Outfit',sans-serif"}}><span style={{color:TX}}>Padel</span><span style={{color:A}}>Hub</span></h1>
             </div>
-            <p style={{fontSize:"10px",color:MT,margin:"2px 0 0 0",fontWeight:400}}>
+            <p style={{fontSize:"9px",color:MT,margin:"1px 0 0 0",fontWeight:400}}>
               {league?.name||"League"}{seasons.find(s=>s.active) ? ` | ${seasons.find(s=>s.active).name}` : ""}
             </p>
           </div>
