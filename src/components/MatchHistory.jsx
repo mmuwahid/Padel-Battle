@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, BL, PU } from '../theme';
 import { win, formatDate, setTotals } from '../utils/helpers';
 import { useLeague } from '../LeagueContext';
+import { MatchApprovalsQueue } from './MatchApprovalsQueue';
 
 const REACTIONS = [
   { key: "fire", emoji: "\uD83D\uDD25" },
@@ -74,6 +75,9 @@ export function MatchHistory({onEdit,shareMatch,sel,onMatchDeleted}){
 
   return (
     <div>
+      {/* FT-09: Admin Approvals Queue — visible only to admins/owners with non-empty queue */}
+      <MatchApprovalsQueue />
+
       {/* FT-09: My Pending Submissions — shown only when current user has pending matches they submitted */}
       {myPendingMatches.length > 0 && (
         <div style={{ marginBottom: 14 }}>

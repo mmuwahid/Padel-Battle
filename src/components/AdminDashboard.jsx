@@ -1,14 +1,13 @@
 import React, { useState, useMemo } from "react";
-import { A, CD, CD2, BD, TX, MT, DG, GD, BL, PU } from '../theme';
-import { formatTeam, win, formatDate, setTotals } from '../utils/helpers';
+import { A, CD, CD2, BD, TX, MT, DG, GD, PU } from '../theme';
+import { formatTeam, win } from '../utils/helpers';
 import { useLeague } from '../LeagueContext';
-import { EditMatchModal } from './EditMatchModal';
 
 export function AdminDashboard({ memberProfiles, setSidebarView }) {
   const {
-    supabase, user, players, league, leagueId,
+    supabase, user, league, leagueId, players,
     showToast, loadLeagueData, getName,
-    matches, pendingMatches, leagueMembers,
+    matches, leagueMembers,
     isOwner,
   } = useLeague();
 
@@ -18,11 +17,6 @@ export function AdminDashboard({ memberProfiles, setSidebarView }) {
   const [confirmDeactivate, setConfirmDeactivate] = useState(null);
   const [confirmRegenCode, setConfirmRegenCode] = useState(false);
   const [adminLoading, setAdminLoading] = useState(null);
-
-  // FT-09: pending-match action state
-  const [confirmReject, setConfirmReject] = useState(null);
-  const [editingMatch, setEditingMatch] = useState(null);
-  const [actionBusy, setActionBusy] = useState(null);
 
   // FT-09: role-promotion state
   const [confirmRole, setConfirmRole] = useState(null); // { memberId, newRole }
@@ -66,38 +60,6 @@ export function AdminDashboard({ memberProfiles, setSidebarView }) {
       showToast("Failed to remove player — they may have match history","error");
     }
     setAdminLoading(null);
-  };
-
-  // ────────────────────────────────────────
-  // FT-09: Pending match actions
-  // ────────────────────────────────────────
-  const approveMatch = async (matchId) => {
-    setActionBusy(matchId+"-approve");
-    try {
-      const { error } = await supabase.rpc("approve_match", { p_match_id: matchId });
-      if (error) throw error;
-      showToast("Match approved");
-      await loadLeagueData();
-    } catch (err) {
-      console.error("approve_match failed", err);
-      showToast(err.message || "Failed to approve", "error");
-    }
-    setActionBusy(null);
-  };
-
-  const rejectMatch = async (matchId) => {
-    setActionBusy(matchId+"-reject");
-    try {
-      const { error } = await supabase.rpc("reject_match", { p_match_id: matchId });
-      if (error) throw error;
-      showToast("Match rejected");
-      await loadLeagueData();
-    } catch (err) {
-      console.error("reject_match failed", err);
-      showToast(err.message || "Failed to reject", "error");
-    }
-    setActionBusy(null);
-    setConfirmReject(null);
   };
 
   // ────────────────────────────────────────
@@ -167,76 +129,12 @@ export function AdminDashboard({ memberProfiles, setSidebarView }) {
     }
   };
 
-  // ────────────────────────────────────────
-  // Render helpers
-  // ────────────────────────────────────────
-  const PendingRow = ({ m }) => {
-    const submitterName = m.logged_by ? getName(m.logged_by) : "Unknown";
-    const w = win(m.sets || []);
-    return (
-      <div style={{ background: CD2, border: `1px solid ${BD}`, borderLeft: `3px solid ${GD}`, borderRadius: 10, padding: 12, marginBottom: 8 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-          <span style={{ fontSize: 11, color: MT }}>Submitted by <strong style={{ color: TX, fontWeight: 600 }}>{submitterName}</strong></span>
-          <span style={{ fontSize: 10, color: MT, fontFamily: "'JetBrains Mono',monospace" }}>{formatDate(m.date)}</span>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 8, alignItems: "center", marginBottom: 8 }}>
-          <div style={{ textAlign: "center", color: BL, fontSize: 12, fontWeight: 600 }}>{formatTeam(getName(m.team_a?.[0]), getName(m.team_a?.[1]))}</div>
-          <div style={{ fontSize: 10, color: MT, fontWeight: 700 }}>vs</div>
-          <div style={{ textAlign: "center", color: GD, fontSize: 12, fontWeight: 600 }}>{formatTeam(getName(m.team_b?.[0]), getName(m.team_b?.[1]))}</div>
-        </div>
-        <div style={{ display: "flex", justifyContent: "center", gap: 8, background: CD, borderRadius: 8, padding: 6, marginBottom: 10 }}>
-          {(m.sets || []).map((s, i) => {
-            const wn = (s[0] > s[1]) ? "A" : (s[1] > s[0] ? "B" : null);
-            const col = wn === "A" ? BL : (wn === "B" ? GD : TX);
-            return <span key={i} style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 13, fontWeight: 700, color: col, letterSpacing: 1 }}>{s[0]}–{s[1]}</span>;
-          })}
-        </div>
-        {m.motm && <div style={{ textAlign: "center", fontSize: 10, color: MT, marginBottom: 8 }}>⭐ MOTM: <strong style={{ color: GD }}>{getName(m.motm)}</strong></div>}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
-          {confirmReject === m.id ? (
-            <>
-              <div style={{ gridColumn: "1 / -1", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-                <span style={{ fontSize: 11, color: DG }}>Reject permanently?</span>
-                <button onClick={() => rejectMatch(m.id)} disabled={actionBusy === m.id+"-reject"} style={{ background: DG, color: "#fff", border: 0, borderRadius: 6, padding: "6px 10px", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "'Outfit',sans-serif", opacity: actionBusy === m.id+"-reject" ? 0.5 : 1 }}>{actionBusy === m.id+"-reject" ? "..." : "Yes"}</button>
-                <button onClick={() => setConfirmReject(null)} style={{ background: "none", border: `1px solid ${BD}`, color: MT, borderRadius: 6, padding: "6px 10px", fontSize: 11, cursor: "pointer", fontFamily: "'Outfit',sans-serif" }}>No</button>
-              </div>
-            </>
-          ) : (
-            <>
-              <button onClick={() => approveMatch(m.id)} disabled={actionBusy === m.id+"-approve"} style={{ background: A, color: "#000", border: 0, borderRadius: 8, padding: "10px 0", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "'Outfit',sans-serif", height: 38, opacity: actionBusy === m.id+"-approve" ? 0.6 : 1 }}>{actionBusy === m.id+"-approve" ? "..." : "✓ Approve"}</button>
-              <button onClick={() => setEditingMatch(m)} style={{ background: CD, color: TX, border: `1px solid ${BD}`, borderRadius: 8, padding: "10px 0", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "'Outfit',sans-serif", height: 38 }}>✎ Edit</button>
-              <button onClick={() => setConfirmReject(m.id)} style={{ background: CD, color: DG, border: `1px solid ${DG}40`, borderRadius: 8, padding: "10px 0", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "'Outfit',sans-serif", height: 38 }}>✕ Reject</button>
-            </>
-          )}
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div style={{padding:"20px 16px",paddingBottom:"calc(80px + env(safe-area-inset-bottom, 0px))"}}>
       <button onClick={()=>setSidebarView(null)} style={{marginBottom:20,background:"none",border:"none",color:A,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>← Back</button>
 
-      <h2 style={{fontSize:18,fontWeight:700,marginBottom:20,color:TX}}>Admin Dashboard</h2>
-
-      {/* ────── FT-09: Match Approvals queue ────── */}
-      <div style={{marginBottom:28}}>
-        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
-          <h3 style={{fontSize:13,fontWeight:700,color:A,margin:0,display:"flex",alignItems:"center",gap:8}}>
-            <span>⏳ Match Approvals</span>
-            <span style={{ background: pendingMatches.length > 0 ? GD : CD2, color: pendingMatches.length > 0 ? "#000" : MT, fontSize: 10, fontWeight: 800, padding: "2px 7px", borderRadius: 8, letterSpacing: 0.5 }}>{pendingMatches.length}</span>
-          </h3>
-        </div>
-        {pendingMatches.length === 0 ? (
-          <div style={{textAlign:"center",padding:"24px 12px",background:CD2,borderRadius:10,color:MT}}>
-            <div style={{fontSize:24,marginBottom:6,opacity:0.4}}>✓</div>
-            <div style={{fontSize:13,fontWeight:600,color:TX,marginBottom:2}}>All caught up</div>
-            <div style={{fontSize:11,color:MT}}>No matches awaiting approval.</div>
-          </div>
-        ) : (
-          pendingMatches.map(m => <PendingRow key={m.id} m={m} />)
-        )}
-      </div>
+      <h2 style={{fontSize:18,fontWeight:700,marginBottom:8,color:TX}}>Admin Dashboard</h2>
+      <div style={{fontSize:11,color:MT,marginBottom:20,lineHeight:1.5}}>Pending match approvals appear inline at the top of the <strong style={{color:TX}}>Matches</strong> tab.</div>
 
       {/* ────── Player Management (with FT-09 promote/demote) ────── */}
       <div style={{marginBottom:28}}>
@@ -363,14 +261,6 @@ export function AdminDashboard({ memberProfiles, setSidebarView }) {
         </button>
       </div>
 
-      {/* ────── FT-09 Edit Match Modal ────── */}
-      {editingMatch && (
-        <EditMatchModal
-          match={editingMatch}
-          onClose={() => setEditingMatch(null)}
-          onSaved={loadLeagueData}
-        />
-      )}
     </div>
   );
 }

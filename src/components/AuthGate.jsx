@@ -3,6 +3,44 @@ import { supabase } from '../supabase';
 import { A, BG, CD, CD2, BD, TX, MT, DG } from '../theme';
 import { PadelLogo, PadelLogoSmall } from './icons';
 
+// S044 hotfix: password input with show/hide eye toggle.
+// `inputStyle` is reused so the eye button doesn't disturb the form's inputStyle theme.
+function PasswordField({ value, onChange, placeholder, inputStyle, autoFocus, show, setShow }) {
+  return (
+    <div style={{ position: "relative" }}>
+      <input
+        type={show ? "text" : "password"}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        autoFocus={autoFocus}
+        style={{ ...inputStyle, paddingRight: 44 }}
+      />
+      <button
+        type="button"
+        onClick={() => setShow(s => !s)}
+        aria-label={show ? "Hide password" : "Show password"}
+        style={{
+          position: "absolute",
+          top: "50%",
+          right: 8,
+          transform: "translateY(-50%)",
+          background: "transparent",
+          border: 0,
+          color: MT,
+          fontSize: 16,
+          cursor: "pointer",
+          padding: "4px 8px",
+          fontFamily: "inherit",
+          lineHeight: 1,
+        }}
+      >
+        {show ? "🙈" : "👁"}
+      </button>
+    </div>
+  );
+}
+
 // Map raw Supabase error messages to user-friendly ones
 function friendlyAuthError(msg) {
   if (!msg) return "Something went wrong. Please try again.";
@@ -30,6 +68,9 @@ export function AuthGate({children}){
   const [email,setEmail]=useState("");
   const [password,setPassword]=useState("");
   const [confirmPassword,setConfirmPassword]=useState("");
+  // S044 hotfix: show/hide password toggle (login + signup + recovery flows)
+  const [showPassword,setShowPassword]=useState(false);
+  const [showConfirmPassword,setShowConfirmPassword]=useState(false);
   const [displayName,setDisplayName]=useState("");
   const [error,setError]=useState("");
   const [successMsg,setSuccessMsg]=useState("");
@@ -240,11 +281,11 @@ export function AuthGate({children}){
           <form onSubmit={handleSetNewPassword} style={{display:"flex",flexDirection:"column",gap:"12px"}}>
             <div>
               <label style={labelStyle}>New Password</label>
-              <input type="password" value={password} onChange={(e)=>setPassword(e.target.value)} placeholder="Min 6 characters" style={inputStyle} autoFocus/>
+              <PasswordField value={password} onChange={(e)=>setPassword(e.target.value)} placeholder="Min 6 characters" inputStyle={inputStyle} autoFocus show={showPassword} setShow={setShowPassword}/>
             </div>
             <div>
               <label style={labelStyle}>Confirm Password</label>
-              <input type="password" value={confirmPassword} onChange={(e)=>setConfirmPassword(e.target.value)} placeholder="Re-enter password" style={inputStyle}/>
+              <PasswordField value={confirmPassword} onChange={(e)=>setConfirmPassword(e.target.value)} placeholder="Re-enter password" inputStyle={inputStyle} show={showConfirmPassword} setShow={setShowConfirmPassword}/>
             </div>
             <button type="submit" disabled={resetLoading} style={btnPrimary}>{resetLoading ? "Updating..." : "Update Password"}</button>
             <div style={{textAlign:"center",marginTop:4}}>
@@ -298,7 +339,7 @@ export function AuthGate({children}){
               </div>
               <div>
                 <label style={labelStyle}>Password</label>
-                <input type="password" value={password} onChange={(e)=>setPassword(e.target.value)} placeholder="Your password" style={inputStyle}/>
+                <PasswordField value={password} onChange={(e)=>setPassword(e.target.value)} placeholder="Your password" inputStyle={inputStyle} show={showPassword} setShow={setShowPassword}/>
               </div>
               <button type="submit" style={btnPrimary}>Sign In</button>
               <div style={{textAlign:"center",marginTop:4,display:"flex",justifyContent:"center",gap:16}}>
@@ -325,7 +366,7 @@ export function AuthGate({children}){
               </div>
               <div>
                 <label style={labelStyle}>Password</label>
-                <input type="password" value={password} onChange={(e)=>setPassword(e.target.value)} placeholder="Min 6 characters" style={inputStyle}/>
+                <PasswordField value={password} onChange={(e)=>setPassword(e.target.value)} placeholder="Min 6 characters" inputStyle={inputStyle} show={showPassword} setShow={setShowPassword}/>
               </div>
               <button type="submit" style={btnPrimary}>Create Account</button>
               <div style={{textAlign:"center",marginTop:4}}>
