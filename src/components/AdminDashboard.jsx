@@ -54,7 +54,7 @@ export function AdminDashboard({ memberProfiles, setSidebarView }) {
     try {
       const {error:err} = await supabase.from("players").delete().eq("id", playerId);
       if (err) throw err;
-      showToast("Player removed from league");
+      showToast("Player deleted");
       await loadLeagueData();
     } catch (_err) {
       showToast("Failed to remove player — they may have match history","error");
@@ -199,12 +199,12 @@ export function AdminDashboard({ memberProfiles, setSidebarView }) {
                   {/* Remove */}
                   {confirmDeactivate===p.id ? (
                     <div style={{display:"flex",gap:4,alignItems:"center"}}>
-                      <span style={{fontSize:10,color:DG}}>Remove?</span>
+                      <span style={{fontSize:10,color:DG}}>Delete?</span>
                       <button onClick={()=>{deactivatePlayer(p.id);setConfirmDeactivate(null);}} disabled={adminLoading===p.id+"-deactivate"} style={{padding:"4px 8px",background:DG,border:"none",borderRadius:6,color:"#fff",fontSize:10,fontWeight:700,cursor:"pointer",opacity:adminLoading===p.id+"-deactivate"?0.5:1}}>{adminLoading===p.id+"-deactivate"?"..":"Yes"}</button>
                       <button onClick={()=>setConfirmDeactivate(null)} style={{padding:"4px 6px",background:"none",border:"1px solid "+BD,borderRadius:6,color:MT,fontSize:10,cursor:"pointer"}}>No</button>
                     </div>
                   ) : (
-                    <button onClick={()=>setConfirmDeactivate(p.id)} style={{padding:"6px 10px",background:DG,border:"none",borderRadius:6,color:"#fff",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>Remove</button>
+                    <button onClick={()=>setConfirmDeactivate(p.id)} style={{padding:"6px 10px",background:DG,border:"none",borderRadius:6,color:"#fff",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>Delete</button>
                   )}
                 </div>
 
