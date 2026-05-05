@@ -20,7 +20,7 @@ function ft09Variant(n) {
     case "approved": return { char: "\u2713", color: "#4ADE80" };
     case "edited":   return { char: "\u270E", color: "#4da6ff" };
     case "rejected": return { char: "\u2715", color: "#f87171" };
-    case "role_change": return { char: "\u26A1", color: "#a78bfa" };
+    case "role_change": return { char: "\u26A1", color: "#FFD700" };
     default: return null;
   }
 }

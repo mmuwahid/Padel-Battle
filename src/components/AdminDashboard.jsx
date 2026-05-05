@@ -1,12 +1,12 @@
 import React, { useState, useMemo } from "react";
-import { A, CD, CD2, BD, TX, MT, DG, GD, PU } from '../theme';
+import { A, CD, CD2, BD, TX, MT, DG, GD } from '../theme';
 import { formatTeam, win } from '../utils/helpers';
 import { useLeague } from '../LeagueContext';
 
 export function AdminDashboard({ memberProfiles, setSidebarView }) {
   const {
     supabase, user, league, leagueId, players,
-    showToast, loadLeagueData, getName,
+    showToast, loadLeagueData, getName, sendPushNotification,
     matches, leagueMembers,
     isOwner,
   } = useLeague();
@@ -65,7 +65,7 @@ export function AdminDashboard({ memberProfiles, setSidebarView }) {
   // ────────────────────────────────────────
   // FT-09: Role promotion (owner-only)
   // ────────────────────────────────────────
-  const setRole = async (memberId, newRole) => {
+  const setRole = async (memberId, newRole, targetUserId, targetName) => {
     setRoleBusy(memberId);
     try {
       const { error } = await supabase.rpc("set_member_role", {
@@ -74,6 +74,15 @@ export function AdminDashboard({ memberProfiles, setSidebarView }) {
       });
       if (error) throw error;
       showToast(newRole === "admin" ? "Promoted to admin" : "Demoted to member");
+      // S044: in-app notification is inserted by the RPC; fire push so the target sees it on their device too.
+      if (sendPushNotification && targetUserId && targetUserId !== user?.id) {
+        const isPromote = newRole === "admin";
+        const title = isPromote ? "You're now an admin" : "Admin access removed";
+        const body = isPromote
+          ? `You were made an admin of ${league?.name || "the league"}. You can now approve, edit, and reject match submissions.`
+          : `Your admin role in ${league?.name || "the league"} was removed.`;
+        sendPushNotification("members", title, body, [targetUserId]);
+      }
       await loadLeagueData();
     } catch (err) {
       console.error("set_member_role failed", err);
@@ -158,7 +167,7 @@ export function AdminDashboard({ memberProfiles, setSidebarView }) {
                     <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
                       <span style={{fontSize:13,fontWeight:600,color:TX}}>{p.nickname||p.name}</span>
                       {isLeagueOwner && <span style={{fontSize:9,fontWeight:800,letterSpacing:0.8,padding:"2px 6px",borderRadius:4,textTransform:"uppercase",background:`${GD}2e`,color:GD,border:`1px solid ${GD}59`}}>★ Owner</span>}
-                      {!isLeagueOwner && playerIsAdmin && <span style={{fontSize:9,fontWeight:800,letterSpacing:0.8,padding:"2px 6px",borderRadius:4,textTransform:"uppercase",background:`${PU}2e`,color:PU,border:`1px solid ${PU}59`}}>⚡ Admin</span>}
+                      {!isLeagueOwner && playerIsAdmin && <span style={{fontSize:9,fontWeight:800,letterSpacing:0.8,padding:"2px 6px",borderRadius:4,textTransform:"uppercase",background:`${GD}2e`,color:GD,border:`1px solid ${GD}59`}}>⚡ Admin</span>}
                       {isMe && <span style={{fontSize:9,fontWeight:800,letterSpacing:0.8,padding:"2px 6px",borderRadius:4,textTransform:"uppercase",background:`${A}24`,color:A,border:`1px solid ${A}59`}}>You</span>}
                     </div>
                     <div style={{fontSize:10,color:claimed?MT:`${MT}80`}}>{claimed?(profile?.email||"Linked account"):"Not yet joined"}</div>
@@ -181,9 +190,9 @@ export function AdminDashboard({ memberProfiles, setSidebarView }) {
                   {/* Promote / Demote — owner only, claimed players only, not the league owner themselves */}
                   {showRoleControls && (
                     role === "admin" ? (
-                      <button onClick={() => setConfirmRole({ memberId, newRole: "member", name: p.nickname || p.name })} disabled={roleBusy === memberId} style={{ padding: "6px 10px", background: "transparent", color: MT, border: `1px solid ${BD}`, borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "'Outfit',sans-serif", opacity: roleBusy === memberId ? 0.5 : 1 }}>Demote</button>
+                      <button onClick={() => setConfirmRole({ memberId, newRole: "member", name: p.nickname || p.name, userId: p.user_id })} disabled={roleBusy === memberId} style={{ padding: "6px 10px", background: "transparent", color: MT, border: `1px solid ${BD}`, borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "'Outfit',sans-serif", opacity: roleBusy === memberId ? 0.5 : 1 }}>Demote</button>
                     ) : (
-                      <button onClick={() => setConfirmRole({ memberId, newRole: "admin", name: p.nickname || p.name })} disabled={roleBusy === memberId} style={{ padding: "6px 10px", background: "transparent", color: PU, border: `1px solid ${PU}80`, borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "'Outfit',sans-serif", opacity: roleBusy === memberId ? 0.5 : 1 }}>Promote</button>
+                      <button onClick={() => setConfirmRole({ memberId, newRole: "admin", name: p.nickname || p.name, userId: p.user_id })} disabled={roleBusy === memberId} style={{ padding: "6px 10px", background: "transparent", color: GD, border: `1px solid ${GD}80`, borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "'Outfit',sans-serif", opacity: roleBusy === memberId ? 0.5 : 1 }}>Promote</button>
                     )
                   )}
 
@@ -201,12 +210,12 @@ export function AdminDashboard({ memberProfiles, setSidebarView }) {
 
                 {/* Role change confirm strip */}
                 {confirmRole && confirmRole.memberId === memberId && (
-                  <div style={{ marginTop: 10, padding: "10px 12px", background: CD, border: `1px solid ${PU}50`, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                  <div style={{ marginTop: 10, padding: "10px 12px", background: CD, border: `1px solid ${GD}50`, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
                     <div style={{ fontSize: 11, color: TX, lineHeight: 1.4 }}>
-                      {confirmRole.newRole === "admin" ? <>Promote <strong style={{ color: PU, fontWeight: 700 }}>{confirmRole.name}</strong> to admin? They'll be able to approve, edit, and reject matches.</> : <>Demote <strong style={{ color: PU, fontWeight: 700 }}>{confirmRole.name}</strong> to member? They'll lose admin powers.</>}
+                      {confirmRole.newRole === "admin" ? <>Promote <strong style={{ color: GD, fontWeight: 700 }}>{confirmRole.name}</strong> to admin? They'll be able to approve, edit, and reject matches.</> : <>Demote <strong style={{ color: GD, fontWeight: 700 }}>{confirmRole.name}</strong> to member? They'll lose admin powers.</>}
                     </div>
                     <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-                      <button onClick={() => setRole(confirmRole.memberId, confirmRole.newRole)} disabled={roleBusy === confirmRole.memberId} style={{ background: PU, color: "#fff", border: 0, borderRadius: 6, padding: "0 10px", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "'Outfit',sans-serif", height: 28, opacity: roleBusy === confirmRole.memberId ? 0.6 : 1 }}>{roleBusy === confirmRole.memberId ? "..." : "Confirm"}</button>
+                      <button onClick={() => setRole(confirmRole.memberId, confirmRole.newRole, confirmRole.userId, confirmRole.name)} disabled={roleBusy === confirmRole.memberId} style={{ background: GD, color: "#000", border: 0, borderRadius: 6, padding: "0 10px", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "'Outfit',sans-serif", height: 28, opacity: roleBusy === confirmRole.memberId ? 0.6 : 1 }}>{roleBusy === confirmRole.memberId ? "..." : "Confirm"}</button>
                       <button onClick={() => setConfirmRole(null)} style={{ background: "transparent", border: `1px solid ${BD}`, color: MT, borderRadius: 6, padding: "0 10px", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "'Outfit',sans-serif", height: 28 }}>Cancel</button>
                     </div>
                   </div>
