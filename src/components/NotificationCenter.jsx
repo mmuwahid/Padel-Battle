@@ -11,6 +11,20 @@ const TYPE_ICONS = {
   system: "\uD83D\uDD14",
 };
 
+// FT-09 / S044: match-approval variants are distinguished by data.kind.
+// Returns icon character + color, or null if not a kind we want to override.
+function ft09Variant(n) {
+  const kind = n?.data?.kind;
+  if (!kind) return null;
+  switch (kind) {
+    case "approved": return { char: "\u2713", color: "#4ADE80" };
+    case "edited":   return { char: "\u270E", color: "#4da6ff" };
+    case "rejected": return { char: "\u2715", color: "#f87171" };
+    case "role_change": return { char: "\u26A1", color: "#a78bfa" };
+    default: return null;
+  }
+}
+
 export function NotificationCenter({ onClose }) {
   const { supabase, user, leagueId, showToast } = useLeague();
   const [notifications, setNotifications] = useState([]);
@@ -113,33 +127,64 @@ export function NotificationCenter({ onClose }) {
       )}
 
       {/* Notification List */}
-      {notifications.map(n => (
-        <div
-          key={n.id}
-          onClick={() => !n.read && markRead(n.id)}
-          style={{
-            background: n.read ? "transparent" : `${A}08`,
-            border: `1px solid ${n.read ? BD : A + "30"}`,
-            borderRadius: 12,
-            padding: "12px 14px",
-            marginBottom: 6,
-            cursor: n.read ? "default" : "pointer",
-            transition: "all 0.15s",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-            <span style={{ fontSize: 18, marginTop: 1 }}>{TYPE_ICONS[n.type] || "\uD83D\uDD14"}</span>
-            <div style={{ flex: 1 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 2 }}>
-                <span style={{ fontSize: 13, fontWeight: n.read ? 400 : 700, color: n.read ? MT : TX }}>{n.title}</span>
-                <span style={{ fontSize: 10, color: MT, whiteSpace: "nowrap", marginLeft: 8 }}>{timeAgo(n.created_at)}</span>
+      {notifications.map(n => {
+        const variant = ft09Variant(n);
+        const diff = Array.isArray(n?.data?.diff) ? n.data.diff : null;
+        return (
+          <div
+            key={n.id}
+            onClick={() => !n.read && markRead(n.id)}
+            style={{
+              background: n.read ? "transparent" : `${A}08`,
+              border: `1px solid ${n.read ? BD : A + "30"}`,
+              borderRadius: 12,
+              padding: "12px 14px",
+              marginBottom: 6,
+              cursor: n.read ? "default" : "pointer",
+              transition: "all 0.15s",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+              {variant ? (
+                <div style={{ width: 28, height: 28, borderRadius: 8, background: `${variant.color}2e`, color: variant.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0, fontWeight: 700 }}>{variant.char}</div>
+              ) : (
+                <span style={{ fontSize: 18, marginTop: 1 }}>{TYPE_ICONS[n.type] || "\uD83D\uDD14"}</span>
+              )}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 2 }}>
+                  <span style={{ fontSize: 13, fontWeight: n.read ? 400 : 700, color: n.read ? MT : TX }}>{n.title}</span>
+                  <span style={{ fontSize: 10, color: MT, whiteSpace: "nowrap", marginLeft: 8 }}>{timeAgo(n.created_at)}</span>
+                </div>
+                <p style={{ fontSize: 12, color: MT, lineHeight: 1.4, margin: 0 }}>{n.body}</p>
+
+                {/* FT-09: edited-and-approved diff inset */}
+                {diff && diff.length > 0 && (
+                  <div style={{ marginTop: 6, padding: "6px 10px", background: CD2, borderRadius: 6, fontSize: 11, color: MT, lineHeight: 1.5 }}>
+                    {diff.map((d, i) => {
+                      // d.field is one of team_a/team_b/sets/date/motm; format compactly
+                      const label = ({ team_a: "Team A", team_b: "Team B", sets: "Sets", date: "Date", motm: "MOTM" }[d.field]) || d.field;
+                      const renderVal = (v) => {
+                        if (Array.isArray(v)) return v.join(", ");
+                        if (v && typeof v === "object") return JSON.stringify(v);
+                        return String(v);
+                      };
+                      return (
+                        <div key={i}>
+                          <span style={{ color: TX, fontWeight: 500 }}>{label}:</span>{" "}
+                          <span style={{ color: DG, textDecoration: "line-through", opacity: 0.7 }}>{renderVal(d.old)}</span>
+                          <span style={{ color: MT, margin: "0 4px" }}>{"\u2192"}</span>
+                          <span style={{ color: A, fontWeight: 600 }}>{renderVal(d.new)}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-              <p style={{ fontSize: 12, color: MT, lineHeight: 1.4, margin: 0 }}>{n.body}</p>
+              {!n.read && <div style={{ width: 8, height: 8, borderRadius: "50%", background: A, marginTop: 6, flexShrink: 0 }} />}
             </div>
-            {!n.read && <div style={{ width: 8, height: 8, borderRadius: "50%", background: A, marginTop: 6, flexShrink: 0 }} />}
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

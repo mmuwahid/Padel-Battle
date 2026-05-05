@@ -79,6 +79,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
     if(!as.length){if(showToast&&mode==='live')showToast("Score at least one set to save","error");return;}
 
     setSaving(true);
+    let insertedStatus = "approved"; // FT-09: tracks status of new INSERT (set by trigger)
     try{
       if(isE){
         const {error}=await supabase
@@ -87,10 +88,14 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
           .eq("id",em.id);
         if(error)throw error;
       }else{
-        const {error}=await supabase
+        // FT-09 / S044: trigger sets status server-side. Read it back to drive the toast + push gating.
+        const {data:inserted,error}=await supabase
           .from("matches")
-          .insert({league_id:leagueId,season_id:seasonId,date,team_a:[...tA],team_b:[...tB],sets:as,motm:motm||null,logged_by:user.id});
+          .insert({league_id:leagueId,season_id:seasonId,date,team_a:[...tA],team_b:[...tB],sets:as,motm:motm||null,logged_by:user.id})
+          .select("status")
+          .single();
         if(error)throw error;
+        insertedStatus = inserted?.status || "approved";
       }
       const hasNext=!isE&&queue.length>0;
       if(hasNext){
@@ -108,8 +113,14 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
       setSaved(true);
       setTimeout(()=>setSaved(false),2000);
       if(onSave)onSave();
-      if(showToast)showToast(em?"Match updated":(hasNext?`Match saved! Next up — ${queue.length} remaining`:"Match saved!"));
-      if(!isE&&sendPushNotification){
+      // FT-09: pending submissions get a different toast and skip the broadcast push (server handles admin notification).
+      const isPending = !isE && insertedStatus === "pending";
+      if(showToast){
+        if(isE) showToast("Match updated");
+        else if(isPending) showToast(hasNext?`Submitted for approval — ${queue.length} remaining`:"Submitted — waiting for admin approval");
+        else showToast(hasNext?`Match saved! Next up — ${queue.length} remaining`:"Match saved!");
+      }
+      if(!isE && !isPending && sendPushNotification){
         const tANames=formatTeam(getName?getName(tA[0]):tA[0],getName?getName(tA[1]):tA[1]);
         const tBNames=formatTeam(getName?getName(tB[0]):tB[0],getName?getName(tB[1]):tB[1]);
         let setsA=0,setsB=0;

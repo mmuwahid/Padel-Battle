@@ -12,7 +12,11 @@ const REACTIONS = [
 ];
 
 export function MatchHistory({onEdit,shareMatch,sel,onMatchDeleted}){
-  const { supabase, user, players, matches, isAdmin, getName, showToast } = useLeague();
+  const { supabase, user, players, approvedMatches, pendingMatches, isAdmin, getName, showToast } = useLeague();
+  // FT-09: existing list reads approved-only. My-pending section reads pending submitted by current user.
+  const matches = approvedMatches;
+  const myPendingMatches = (pendingMatches || []).filter(m => m.logged_by === user?.id);
+  const [pendingExpanded, setPendingExpanded] = useState(true);
   const [fp,setFp]=useState("");
   const [cd,setCd]=useState(null);
   const [deleting,setDeleting]=useState(false);
@@ -70,6 +74,45 @@ export function MatchHistory({onEdit,shareMatch,sel,onMatchDeleted}){
 
   return (
     <div>
+      {/* FT-09: My Pending Submissions — shown only when current user has pending matches they submitted */}
+      {myPendingMatches.length > 0 && (
+        <div style={{ marginBottom: 14 }}>
+          <div onClick={() => setPendingExpanded(v => !v)} style={{ background: CD, border: `1px solid ${GD}4d`, borderRadius: pendingExpanded ? "12px 12px 0 0" : 12, padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", userSelect: "none" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 14 }}>⏳</span>
+              <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: 0.5, color: GD, textTransform: "uppercase" }}>My Pending</span>
+              <span style={{ background: GD, color: "#000", fontSize: 10, fontWeight: 800, padding: "1px 6px", borderRadius: 6, marginLeft: 4 }}>{myPendingMatches.length}</span>
+            </div>
+            <span style={{ color: MT, fontSize: 14, transform: pendingExpanded ? "rotate(90deg)" : "none", transition: "transform 0.18s" }}>›</span>
+          </div>
+          {pendingExpanded && (
+            <div style={{ background: CD, border: `1px solid ${GD}4d`, borderTop: 0, borderRadius: "0 0 12px 12px", padding: 8 }}>
+              {myPendingMatches.map(m => (
+                <div key={m.id} style={{ background: CD2, border: `1px solid ${BD}`, borderLeft: `3px solid ${GD}`, borderRadius: 10, padding: 12, marginBottom: 6, opacity: 0.92 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                    <span style={{ fontSize: 11, color: MT, fontFamily: "'JetBrains Mono',monospace" }}>{formatDate(m.date)}</span>
+                    <span style={{ background: `${GD}2e`, color: GD, border: `1px solid ${GD}4d`, fontSize: 9, fontWeight: 700, letterSpacing: 0.8, padding: "2px 6px", borderRadius: 4, textTransform: "uppercase" }}>⏳ Awaiting approval</span>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 8, alignItems: "center", marginBottom: 8 }}>
+                    <div style={{ textAlign: "center", color: BL, fontSize: 12, fontWeight: 600 }}>{getName(m.team_a?.[0])} & {getName(m.team_a?.[1])}</div>
+                    <div style={{ fontSize: 10, color: MT, fontWeight: 700 }}>vs</div>
+                    <div style={{ textAlign: "center", color: GD, fontSize: 12, fontWeight: 600 }}>{getName(m.team_b?.[0])} & {getName(m.team_b?.[1])}</div>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "center", gap: 8, background: BG, borderRadius: 8, padding: 6, marginBottom: 6, fontFamily: "'JetBrains Mono',monospace", fontSize: 13, fontWeight: 700, color: TX, letterSpacing: 1 }}>
+                    {(m.sets || []).map((s, i) => {
+                      const wn = s[0] > s[1] ? "A" : (s[1] > s[0] ? "B" : null);
+                      const col = wn === "A" ? BL : (wn === "B" ? GD : TX);
+                      return <span key={i} style={{ color: col }}>{s[0]}–{s[1]}</span>;
+                    })}
+                  </div>
+                  <div style={{ textAlign: "center", fontSize: 10, color: MT }}>Won't count until an admin approves.</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       <div style={{display:"flex",gap:8,marginBottom:12}}>
         <select value={fp} onChange={e=>setFp(e.target.value)} style={{...sel,flex:1}}>
           <option value="">All Players</option>

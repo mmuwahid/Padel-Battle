@@ -47,6 +47,8 @@ function AppContent({leagueId,user,onSwitchLeague}){
   const [tab,setTab]=useState(()=>{const h=window.location.hash.replace("#","");if(h==="schedule"||h==="history")return "history";return "board";});
   const [loading,setLoading]=useState(true);
   const [isAdmin,setIsAdmin]=useState(false);
+  const [isOwner,setIsOwner]=useState(false);
+  const [myMemberId,setMyMemberId]=useState(null);
   const [editingMatch,setEditingMatch]=useState(null);
   const [selectedPlayer,setSelectedPlayer]=useState(null);
   const [selectedSeason,setSelectedSeason]=useState(null);
@@ -224,17 +226,22 @@ function AppContent({leagueId,user,onSwitchLeague}){
         {data:challengesData}
       ] = await Promise.all([
         supabase.from("leagues").select("id,name,invite_code,created_by").eq("id",leagueId).single(),
-        supabase.from("league_members").select("role").eq("league_id",leagueId).eq("user_id",user.id).single(),
+        supabase.from("league_members").select("id,role").eq("league_id",leagueId).eq("user_id",user.id).single(),
         supabase.from("league_members").select("user_id,role,profiles(id,email,display_name,avatar_url)").eq("league_id",leagueId),
         supabase.from("players").select("id,name,nickname,user_id,created_by,created_at").eq("league_id",leagueId).order("name"),
-        supabase.from("matches").select("id,team_a,team_b,sets,motm,date,season_id,league_id").eq("league_id",leagueId).order("date",{ascending:false}).limit(500),
+        supabase.from("matches").select("id,team_a,team_b,sets,motm,date,season_id,league_id,status,logged_by,created_at").eq("league_id",leagueId).order("date",{ascending:false}).limit(500),
         supabase.from("seasons").select("id,name,active").eq("league_id",leagueId).order("start_date"),
         supabase.from("challenges").select("id,team_a,team_b,status,date,time,location,notes,created_by,match_id,responses,duration,league_id").eq("league_id",leagueId).in("status",["open","pending","confirmed","played"]).order("date",{ascending:true})
       ]);
 
       if (leagueErr) throw leagueErr;
       setLeague(leagueData);
-      setIsAdmin(memberData?.role==="admin" || leagueData?.created_by === user.id);
+      // S044/FT-09: Split owner vs admin. Owner = league creator (cannot be demoted).
+      // Admin = owner OR league_members.role='admin' (can be promoted/demoted by owner).
+      const owner = leagueData?.created_by === user.id;
+      setIsOwner(owner);
+      setIsAdmin(owner || memberData?.role==="admin");
+      setMyMemberId(memberData?.id || null);
 
       if(membersData){
         setLeagueMembers(membersData);
@@ -280,9 +287,22 @@ function AppContent({leagueId,user,onSwitchLeague}){
     return p ? (p.nickname || p.name) : "?";
   };
 
+  // S044/FT-09: Selector — approvedMatches drives all leaderboard/ELO/stats/H2H/awards.
+  // Pre-migration matches don't have a status field → treat absent status as approved
+  // so this is a no-op until the DB migration ships. Post-migration: pending matches
+  // are filtered out for everyone (admin sees them ONLY in AdminDashboard's queue + MatchHistory's "My Pending" section, both of which read raw `matches`).
+  const approvedMatches = useMemo(
+    () => matches.filter(m => !m.status || m.status === 'approved'),
+    [matches]
+  );
+  const pendingMatches = useMemo(
+    () => matches.filter(m => m.status === 'pending'),
+    [matches]
+  );
+
   // Calculate season awards
   const calculateSeasonAwards = (seasonId) => {
-    const seasonMatches = matches.filter(m => m.season_id === seasonId);
+    const seasonMatches = approvedMatches.filter(m => m.season_id === seasonId);
     const awards = {};
 
     if (seasonMatches.length === 0) return awards;
@@ -361,7 +381,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
   };
 
   const getForm = (pid) => {
-    const pMatches = matches.filter(m => m.team_a.includes(pid) || m.team_b.includes(pid));
+    const pMatches = approvedMatches.filter(m => m.team_a.includes(pid) || m.team_b.includes(pid));
     const sorted = [...pMatches].sort((a,b) => new Date(b.date) - new Date(a.date));
     return sorted.slice(0, 5).map(m => {
       const w = win(m.sets);
@@ -535,7 +555,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
   };
 
     const getStreak = (pid) => {
-    const pMatches = matches.filter(m => m.team_a.includes(pid) || m.team_b.includes(pid));
+    const pMatches = approvedMatches.filter(m => m.team_a.includes(pid) || m.team_b.includes(pid));
     const sorted = [...pMatches].sort((a,b) => new Date(b.date) - new Date(a.date));
     let streak = 0;
     for(let m of sorted){
@@ -572,7 +592,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
   // Compute stats for each player
   const ps = useMemo(()=>{
     return players.map(p=>{
-      const pMatches = matches.filter(m=>m.team_a.includes(p.id)||m.team_b.includes(p.id));
+      const pMatches = approvedMatches.filter(m=>m.team_a.includes(p.id)||m.team_b.includes(p.id));
       const wins = pMatches.filter(m=>win(m.sets)===(m.team_a.includes(p.id)?"A":"B")).length;
       const losses = pMatches.length - wins;
       const winRate = pMatches.length>0?wins/pMatches.length:0;
@@ -601,7 +621,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
 
       // MOTM count
       let motm=0;
-      matches.forEach(m=>{
+      approvedMatches.forEach(m=>{
         if(m.motm===p.id)motm++;
       });
 
@@ -610,10 +630,10 @@ function AppContent({leagueId,user,onSwitchLeague}){
         wins,losses,winRate,games:pMatches.length,gamesWon,gamesLost,streak,comebacks,motm,
       };
     });
-  },[players,matches]);
+  },[players,approvedMatches]);
 
-  // ELO ratings
-  const elo = useMemo(()=>calcElo(players,matches),[players,matches]);
+  // ELO ratings — based on approved matches only (pending don't count)
+  const elo = useMemo(()=>calcElo(players,approvedMatches),[players,approvedMatches]);
 
   // Leaderboard — Ranked by Total Wins > Win Rate > ELO > Games Played
   const lb = useMemo(()=>{
@@ -737,7 +757,8 @@ function AppContent({leagueId,user,onSwitchLeague}){
   // A-04: React Context — shared data available to all children without prop drilling
   // S022/S026: Plain object — NOT useMemo. Early returns above this line make useMemo violate Rules of Hooks.
   const leagueCtx = {
-    supabase, user, leagueId, league, players, matches, elo, seasons, isAdmin,
+    supabase, user, leagueId, league, players, matches, approvedMatches, pendingMatches,
+    elo, seasons, isAdmin, isOwner, myMemberId, leagueMembers, memberProfiles,
     getName, showToast, sendPushNotification, loadLeagueData,
   };
 
@@ -789,13 +810,13 @@ function AppContent({leagueId,user,onSwitchLeague}){
       {sidebarView && (
         <div style={{padding:"0"}}>
           {sidebarView==="profile" && (
-            <ProfileView user={user} avatarUrl={avatarUrl} avatarUploading={avatarUploading} uploadAvatar={uploadAvatar} removeAvatar={removeAvatar} claimedPlayer={claimedPlayer} ps={ps} elo={elo} matches={matches} players={players} isAdmin={isAdmin} getName={getName} getStreak={getStreak} setSidebarView={setSidebarView} setTab={setTab} setSidebarOpen={setSidebarOpen}/>
+            <ProfileView user={user} avatarUrl={avatarUrl} avatarUploading={avatarUploading} uploadAvatar={uploadAvatar} removeAvatar={removeAvatar} claimedPlayer={claimedPlayer} ps={ps} elo={elo} matches={approvedMatches} players={players} isAdmin={isAdmin} getName={getName} getStreak={getStreak} setSidebarView={setSidebarView} setTab={setTab} setSidebarOpen={setSidebarOpen}/>
           )}
           {sidebarView==="admin" && (
             <AdminDashboard memberProfiles={memberProfiles} setSidebarView={setSidebarView}/>
           )}
           {sidebarView==="settings" && (
-            <SettingsView user={user} claimedPlayer={claimedPlayer} isAdmin={isAdmin} league={league} leagueMembers={leagueMembers} memberProfiles={memberProfiles} pushSubscribed={pushSubscribed} subscribeToPush={subscribeToPush} unsubscribeFromPush={unsubscribeFromPush} notifNewMatch={notifNewMatch} notifRankingChange={notifRankingChange} notifNewMembers={notifNewMembers} notifChallenges={notifChallenges} toggleNotification={toggleNotification} updateMemberRole={updateMemberRole} onSwitchLeague={onSwitchLeague} setSidebarView={setSidebarView} showToast={showToast} loadLeagueData={loadLeagueData} testPushNotification={testPushNotification}/>
+            <SettingsView user={user} claimedPlayer={claimedPlayer} isAdmin={isAdmin} isOwner={isOwner} league={league} leagueMembers={leagueMembers} memberProfiles={memberProfiles} pushSubscribed={pushSubscribed} subscribeToPush={subscribeToPush} unsubscribeFromPush={unsubscribeFromPush} notifNewMatch={notifNewMatch} notifRankingChange={notifRankingChange} notifNewMembers={notifNewMembers} notifChallenges={notifChallenges} toggleNotification={toggleNotification} updateMemberRole={updateMemberRole} onSwitchLeague={onSwitchLeague} setSidebarView={setSidebarView} showToast={showToast} loadLeagueData={loadLeagueData} testPushNotification={testPushNotification}/>
           )}
           {sidebarView==="platform" && (
             <PlatformAdmin onClose={()=>setSidebarView(null)} showToast={showToast}/>
@@ -947,7 +968,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
       {!sidebarView && tab==="log"&&selectedSeason&&(
         <LogMatch
           players={players}
-          matches={matches}
+          matches={approvedMatches}
           supabase={supabase}
           leagueId={leagueId}
           user={user}
@@ -989,7 +1010,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
             <ScheduleView
               challenges={challenges}
               players={players}
-              matches={matches}
+              matches={approvedMatches}
               supabase={supabase}
               leagueId={leagueId}
               user={user}
@@ -1011,7 +1032,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
         <ErrorBoundary><Suspense fallback={<LazyFallback/>}><CombosView
           combos={combos}
           players={players}
-          matches={matches}
+          matches={approvedMatches}
           pm={Object.fromEntries(players.map(p=>[p.id,p]))}
           getName={getName}
         /></Suspense></ErrorBoundary>
@@ -1029,7 +1050,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
               seasonId={selectedSeason}
           sp={selectedPlayer}
           setSp={setSelectedPlayer}
-          matches={matches}
+          matches={approvedMatches}
           supabase={supabase}
           leagueId={leagueId}
           isAdmin={isAdmin}

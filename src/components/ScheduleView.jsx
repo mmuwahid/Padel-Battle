@@ -134,7 +134,8 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
     setLogSaving(true);
     try{
       // S026: Transactional match creation via RPC (atomic insert+update)
-      const {error:rpcErr}=await supabase.rpc("play_challenge",{
+      // S044/FT-09: RPC now returns JSONB {id, status} so we know if it landed pending or approved.
+      const {data:result,error:rpcErr}=await supabase.rpc("play_challenge",{
         p_challenge_id:ch.id,
         p_league_id:leagueId,
         p_season_id:seasonId||null,
@@ -146,11 +147,19 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
         p_logged_by:user.id
       });
       if(rpcErr)throw rpcErr;
-      showToast("Match logged!");setLoggingMatch(null);
-      if(sendPushNotification){
-        const allNames=[...(ch.team_a||[]),...(ch.team_b||[])].map(id=>getName(id)).join(", ");
-        sendPushNotification("match","Match Result",`${allNames} — tap to see the score`);
+      // result may be {id, status} (post-migration) or just a uuid string (pre-migration legacy) — handle both.
+      const status = (result && typeof result === "object" && result.status) || "approved";
+      const isPending = status === "pending";
+      if(isPending){
+        showToast("Submitted — waiting for admin approval");
+      } else {
+        showToast("Match logged!");
+        if(sendPushNotification){
+          const allNames=[...(ch.team_a||[]),...(ch.team_b||[])].map(id=>getName(id)).join(", ");
+          sendPushNotification("match","Match Result",`${allNames} — tap to see the score`);
+        }
       }
+      setLoggingMatch(null);
       if(onUpdate)onUpdate();
     }catch(err){showToast(err.message||"Failed to log match","error");}
     setLogSaving(false);
