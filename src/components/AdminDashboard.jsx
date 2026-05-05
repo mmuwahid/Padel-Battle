@@ -134,18 +134,7 @@ export function AdminDashboard({ memberProfiles, setSidebarView }) {
       <button onClick={()=>setSidebarView(null)} style={{marginBottom:20,background:"none",border:"none",color:A,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>← Back</button>
 
       <h2 style={{fontSize:18,fontWeight:700,marginBottom:8,color:TX}}>Admin Dashboard</h2>
-      <div style={{fontSize:11,color:MT,marginBottom:12,lineHeight:1.5}}>Pending match approvals appear inline at the top of the <strong style={{color:TX}}>Matches</strong> tab.</div>
-
-      {/* TEMP S044 diagnostic — surfaces context state so we can see why Promote isn't showing.
-          Remove once verified. */}
-      <div style={{fontSize:10,color:MT,padding:"8px 10px",background:CD2,border:`1px dashed ${BD}`,borderRadius:6,marginBottom:16,fontFamily:"'JetBrains Mono',monospace",lineHeight:1.5}}>
-        <div>isOwner: <strong style={{color:isOwner?A:DG}}>{String(isOwner)}</strong></div>
-        <div>user.id: <span style={{color:TX}}>{user?.id || "(none)"}</span></div>
-        <div>league.created_by: <span style={{color:TX}}>{league?.created_by || "(none)"}</span></div>
-        <div>leagueMembers: <span style={{color:TX}}>{Array.isArray(leagueMembers) ? leagueMembers.length : "(not array)"}</span> rows</div>
-        <div>first lm has id: <span style={{color:TX}}>{leagueMembers?.[0]?.id ? "YES" : "NO"}</span></div>
-        <div>memberIdByUserId keys: <span style={{color:TX}}>{Object.keys(memberIdByUserId || {}).length}</span></div>
-      </div>
+      <div style={{fontSize:11,color:MT,marginBottom:20,lineHeight:1.5}}>Pending match approvals appear inline at the top of the <strong style={{color:TX}}>Matches</strong> tab.</div>
 
       {/* ────── Player Management (with FT-09 promote/demote) ────── */}
       <div style={{marginBottom:28}}>
