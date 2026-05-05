@@ -668,7 +668,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
   if (loading) return (<div style={{background:BG,width:"100vw",height:"100vh",fontFamily:"'Outfit',sans-serif"}}>
     <style>{`@keyframes shimmer{0%{background-position:-200px 0}100%{background-position:200px 0}} .skel{background:linear-gradient(90deg,${CD} 25%,${CD2} 50%,${CD} 75%);background-size:400px 100%;animation:shimmer 1.5s infinite;border-radius:6px;}`}</style>
     {/* Skeleton header */}
-    <div style={{background:CD,borderBottom:`1px solid ${BD}`,padding:"12px 16px",paddingTop:"calc(env(safe-area-inset-top, 0px) + 12px)",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+    <div style={{background:CD,borderBottom:`1px solid ${BD}`,padding:"12px 16px",paddingTop:"calc(env(safe-area-inset-top, 0px) + 4px)",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
       <div style={{display:"flex",alignItems:"center",gap:10}}>
         <div className="skel" style={{width:32,height:32,borderRadius:"50%"}}/>
         <div><div className="skel" style={{width:80,height:14,marginBottom:4}}/><div className="skel" style={{width:140,height:10}}/></div>
@@ -767,7 +767,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
     <div style={{background:BG,minHeight:"100vh",paddingBottom:"calc(80px + env(safe-area-inset-bottom, 0px))",fontFamily:"'Outfit',sans-serif",color:TX}}>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}} @keyframes fadeIn{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}} input:focus,select:focus,textarea:focus{border-color:${A} !important;box-shadow:0 0 0 2px ${A}30 !important;}`}</style>
       {/* HEADER — Line 1: PadelHub branding, Line 2: League | Season */}
-      <div style={{background:CD,borderBottom:`1px solid ${BD}`,padding:"12px 16px",paddingTop:"calc(env(safe-area-inset-top, 0px) + 12px)",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:10}}>
+      <div style={{background:CD,borderBottom:`1px solid ${BD}`,padding:"12px 16px",paddingTop:"calc(env(safe-area-inset-top, 0px) + 4px)",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:10}}>
         <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
           <PadelLogoSmall/>
           <div>
@@ -1076,8 +1076,18 @@ function AppContent({leagueId,user,onSwitchLeague}){
         <p style={{fontSize:11,color:MT,marginBottom:16}}>Official FIP rules summary</p>
         {RULES.map((r,i) => (
           <div key={i} style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:8}}>
-            <h3 style={{fontSize:14,fontWeight:700,color:A,marginBottom:6}}>{r.title}</h3>
-            <p style={{fontSize:13,color:TX,lineHeight:1.5}}>{r.content}</p>
+            <h3 style={{fontSize:14,fontWeight:700,color:A,marginBottom:r.intro?4:6}}>{r.title}</h3>
+            {r.intro && <p style={{fontSize:11,color:MT,marginBottom:10,fontStyle:"italic"}}>{r.intro}</p>}
+            {r.subRules ? (
+              r.subRules.map((sr,j) => (
+                <div key={j} style={{background:CD2,borderRadius:8,padding:"10px 12px",marginTop:j===0?0:6}}>
+                  <h4 style={{fontSize:12,fontWeight:700,color:GD,margin:"0 0 4px 0",letterSpacing:0.3}}>{sr.title}</h4>
+                  <p style={{fontSize:12,color:TX,lineHeight:1.5,margin:0}}>{sr.content}</p>
+                </div>
+              ))
+            ) : (
+              <p style={{fontSize:13,color:TX,lineHeight:1.5}}>{r.content}</p>
+            )}
           </div>
         ))}
         <h2 style={{fontSize:18,fontWeight:800,marginTop:20,marginBottom:4,color:"#f97316"}}>⚡ Most Argued Calls</h2>

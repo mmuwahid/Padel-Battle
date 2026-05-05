@@ -1,5 +1,29 @@
 export const RULES=[
-  {title:"Scoring",content:"Best of 3 sets. Tennis scoring: 15, 30, 40, deuce. Tiebreak at 6-6 (first to 7, win by 2). Agree on Golden Point vs Advantage before match."},
+  // GitHub issue #10 (S044): expanded Scoring entry with the 4 official FIP-aligned
+  // sub-rules used by this league. Display-only — scoringEngine.js has not been
+  // updated to enforce these (deferred to a later session).
+  {
+    title:"Scoring & Ranked Matches",
+    intro:"How matches count toward league rankings — FIP / Premier Padel standard.",
+    subRules:[
+      {
+        title:"Match Completion",
+        content:"A match counts toward league ranking ONLY when completed. Best-of-3 sets required — one pair must win 2 sets to close the match. Incomplete matches (e.g. time runs out at 1-1 in sets) are void and do not count. Sets in progress when time expires are not recorded."
+      },
+      {
+        title:"Deuce Rule (Game Tiebreaker)",
+        content:"At 40-40 (deuce) in any game, Advantage play applies — win 2 consecutive points to win the game. Applies to all sets and tie-breaks. No Golden Point cutoff. Games may extend indefinitely (Deuce 1, Deuce 2, Advantage, Deuce 2, Deuce 3, etc.)."
+      },
+      {
+        title:"Tie-Break Format (at 6-6 in a set)",
+        content:"When a set reaches 6-6 games, a standard tie-break is played. First pair to 7 points (with a 2-point margin) wins the set 7-6. Numeric scoring: \"zero, 1, 2, 3, … 7\" — not 15-30-40. Serving rotation: the player whose turn it is serves the first point only (right side); opponents serve the next 2 points (left, then right); thereafter every player serves 2 consecutive points in rotation. Players change ends every 6 points. Same format applies in sets 1, 2, and 3."
+      },
+      {
+        title:"Incomplete / Interrupted Sets",
+        content:"If a set is interrupted before completion (e.g. 4-1 at time limit, injury, light loss), the set is void and does not count toward ranking. Only complete sets count: a set must reach either 6 games with a 2-game minimum lead (e.g. 6-4, 7-5) OR a tie-break conclusion at 6-6 (first to 7 with 2-point margin). Abandoned sets restart from 0-0 next session."
+      },
+    ]
+  },
   {title:"The Serve",content:"Underhand, bounce first, struck at/below waist. Diagonally into opposite box. Two attempts. Ball may hit glass after bounce (rally continues), but fence = fault."},
   {title:"Return of Serve",content:"Must bounce first. You cannot volley the return — instant loss of point."},
   {title:"Walls & Fences",content:"During rallies, ball can bounce off glass walls. Must always bounce on ground before hitting a wall on your side."},
