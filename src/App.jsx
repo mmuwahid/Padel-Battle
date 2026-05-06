@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback, Suspense, lazy } from "react";
 import { supabase } from './supabase';
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, BL, PU, TL, TR } from './theme';
-import { formatTeam, win, formatDate, setTotals } from './utils/helpers';
+import { formatTeam, win, formatDate, setTotals, flagEmoji } from './utils/helpers';
 import { calcElo } from './utils/elo';
 import { RULES, ARGUED } from './data/rules';
 import { CourtIcon, PadelLogo, PadelLogoSmall } from './components/icons';
@@ -837,16 +837,19 @@ function AppContent({leagueId,user,onSwitchLeague}){
         </div>
       )}
 
-      {/* LEADERBOARD TAB - only show if no sidebar view is active */}
+      {/* RANKING TAB — Issue #11 redesign */}
       {!sidebarView && tab==="board"&&(
         <div style={{padding:"20px 16px"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
-            <h2 style={{fontSize:"18px",fontWeight:"bold",margin:0}}>Leaderboard</h2>
-            <div style={{fontSize:"12px",color:MT,textAlign:"right"}}>
-              <div>{lb.length} player{lb.length!==1?"s":""}</div>
-              <div style={{fontSize:"10px",opacity:0.7}}>Ranked by Total Wins</div>
-            </div>
+          {/* S047: Title + season selector row */}
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14,gap:10,flexWrap:"wrap"}}>
+            <h2 style={{fontSize:20,fontWeight:900,fontStyle:"italic",textTransform:"uppercase",letterSpacing:1,margin:0}}>Ranking</h2>
+            {seasons.length>0 && (
+              <select value={selectedSeason||""} onChange={e=>setSelectedSeason(e.target.value)} style={{background:CD2,color:TX,border:`1px solid ${BD}`,borderRadius:10,padding:"6px 10px",fontSize:12,fontWeight:700,fontFamily:"'Outfit',sans-serif",fontStyle:"italic",textTransform:"uppercase",letterSpacing:0.5,cursor:"pointer",outline:"none"}}>
+                {seasons.map(s=><option key={s.id} value={s.id}>{s.name}{s.active?" (active)":""}</option>)}
+              </select>
+            )}
           </div>
+          <div style={{fontSize:11,color:MT,marginBottom:18,letterSpacing:0.3}}>{lb.length} player{lb.length!==1?"s":""} · Ranked by Total Wins · Win Rate · ELO</div>
 
           {/* Season Awards Section — only shown for ended seasons */}
           {selectedSeason && !seasons.find(s=>s.id===selectedSeason)?.active && (() => {
@@ -903,7 +906,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
             <div style={{textAlign:"center",padding:"40px 20px",background:CD,borderRadius:12,border:`1px solid ${BD}`}}>
               <div style={{fontSize:40,marginBottom:12}}>🎾</div>
               <div style={{fontSize:15,fontWeight:600,color:TX,marginBottom:6}}>No rankings yet</div>
-              <div style={{fontSize:12,color:MT,lineHeight:1.5}}>Play your first match to appear on the leaderboard.</div>
+              <div style={{fontSize:12,color:MT,lineHeight:1.5}}>Play your first match to appear in the ranking.</div>
             </div>
           )}
 
@@ -941,36 +944,68 @@ function AppContent({leagueId,user,onSwitchLeague}){
             </div>
           )}
 
-          {/* Full leaderboard table */}
-          <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
-            {lb.map((p,idx)=>(
-              <div key={p.id} onClick={()=>{setSelectedPlayer(p.id);setTab("stats");}} style={{display:"flex",alignItems:"center",padding:"12px",background:CD,borderRadius:"6px",border:`1px solid ${BD}`,justifyContent:"space-between",cursor:"pointer"}}>
-                <div style={{display:"flex",alignItems:"center",gap:"12px",flex:1}}>
-                  <div style={{width:"32px",height:"32px",background:CD2,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"13px",fontWeight:"bold",color:A}}>
-                    #{idx+1}
-                  </div>
-                  <div style={{flex:1}}>
-                    <div style={{fontSize:"13px",fontWeight:"600"}}>{p.name}</div>
-                    <div style={{fontSize:"11px",color:MT}}>{p.games} game{p.games!==1?"s":""}</div>
-                  </div>
-                </div>
-                <div style={{display:"flex",gap:"16px",alignItems:"center"}}>
-                  <div style={{textAlign:"right",minWidth:"40px"}}>
-                    <div style={{fontSize:"13px",fontWeight:"bold",color:(p.winRate>0.5?A:DG)}}>{(p.winRate*100).toFixed(0)}%</div>
-                    <div style={{fontSize:"10px",color:MT}}>WR</div>
-                  </div>
-                  <div style={{textAlign:"right",minWidth:"50px"}}>
-                    <div style={{fontSize:"13px",fontWeight:"bold",color:p.wins>0?A:MT}}>{p.wins}W</div>
-                    <div style={{fontSize:"10px",color:p.losses>0?DG:TX}}>{p.losses}L</div>
-                  </div>
-                  <div style={{textAlign:"right"}}>
-                    <div style={{fontSize:"12px",color:MT}}>{Math.round(elo[p.id]||1500)}</div>
-                    <div style={{fontSize:"10px",color:MT}}>ELO</div>
-                  </div>
-                </div>
+          {/* S047: Full ranking table with column headers (Premier Padel format)
+              Columns: Rank · Player (avatar+name) · Country · MP · MW · ML · Cons.Wins · Effectiveness · Last 5 */}
+          {lb.length>0 && (
+            <div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,overflow:"hidden"}}>
+              {/* Header row */}
+              <div style={{display:"grid",gridTemplateColumns:"32px 1fr 36px 28px 28px 28px 30px 38px",gap:6,padding:"10px 8px",background:CD2,borderBottom:`1px solid ${BD}`,alignItems:"center"}}>
+                <div style={{fontSize:9,fontWeight:800,color:MT,letterSpacing:0.5,textAlign:"center",textTransform:"uppercase"}}>#</div>
+                <div style={{fontSize:9,fontWeight:800,color:MT,letterSpacing:0.5,textTransform:"uppercase",paddingLeft:6}}>Player</div>
+                <div style={{fontSize:9,fontWeight:800,color:MT,letterSpacing:0.5,textAlign:"center",textTransform:"uppercase"}}>Ctry</div>
+                <div style={{fontSize:9,fontWeight:800,color:MT,letterSpacing:0.5,textAlign:"center",textTransform:"uppercase"}} title="Match Played">MP</div>
+                <div style={{fontSize:9,fontWeight:800,color:MT,letterSpacing:0.5,textAlign:"center",textTransform:"uppercase"}} title="Match Won">MW</div>
+                <div style={{fontSize:9,fontWeight:800,color:MT,letterSpacing:0.5,textAlign:"center",textTransform:"uppercase"}} title="Match Lost">ML</div>
+                <div style={{fontSize:9,fontWeight:800,color:MT,letterSpacing:0.5,textAlign:"center",textTransform:"uppercase"}} title="Consecutive Wins">CW</div>
+                <div style={{fontSize:9,fontWeight:800,color:MT,letterSpacing:0.5,textAlign:"center",textTransform:"uppercase"}} title="Effectiveness (Match Won / Match Played)">Eff%</div>
               </div>
-            ))}
-          </div>
+              {/* Data rows */}
+              {lb.map((p,idx)=>{
+                const player = players.find(pp=>pp.id===p.id);
+                const flag = player?.country ? flagEmoji(player.country) : "";
+                const ctry = player?.country || "";
+                const eff = (p.winRate*100).toFixed(0);
+                const cw = getStreak(p.id);
+                return (
+                  <div key={p.id} onClick={()=>{setSelectedPlayer(p.id);setTab("stats");}} style={{display:"grid",gridTemplateColumns:"32px 1fr 36px 28px 28px 28px 30px 38px",gap:6,padding:"10px 8px",borderBottom:idx<lb.length-1?`1px solid ${BD}40`:"none",alignItems:"center",cursor:"pointer"}}>
+                    <div style={{textAlign:"center",fontSize:13,fontWeight:900,fontFamily:"'JetBrains Mono'",color:idx===0?GD:idx===1?SV:idx===2?BZ:MT}}>{idx+1}</div>
+                    <div style={{display:"flex",alignItems:"center",gap:8,minWidth:0}}>
+                      <div style={{width:30,height:30,borderRadius:"50%",overflow:"hidden",background:`linear-gradient(135deg,${A}25,${A}08)`,border:`1.5px solid ${A}30`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:800,color:A,flexShrink:0}}>
+                        {player?.avatar_url ? <img src={player.avatar_url} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/> : (p.name[0]||"?").toUpperCase()}
+                      </div>
+                      <div style={{fontSize:11,fontWeight:900,fontStyle:"italic",textTransform:"uppercase",letterSpacing:0.3,color:TX,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{p.nickname||p.name}</div>
+                    </div>
+                    <div style={{textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:1}}>
+                      {flag ? <>
+                        <span style={{fontSize:14,lineHeight:1}}>{flag}</span>
+                        <span style={{fontSize:8,color:MT,fontWeight:700,letterSpacing:0.3}}>{ctry}</span>
+                      </> : <span style={{fontSize:11,color:MT,opacity:0.4}}>—</span>}
+                    </div>
+                    <div style={{textAlign:"center",fontSize:12,fontWeight:700,fontFamily:"'JetBrains Mono'",color:TX}}>{p.games}</div>
+                    <div style={{textAlign:"center",fontSize:12,fontWeight:700,fontFamily:"'JetBrains Mono'",color:p.wins>0?A:MT}}>{p.wins}</div>
+                    <div style={{textAlign:"center",fontSize:12,fontWeight:700,fontFamily:"'JetBrains Mono'",color:p.losses>0?DG:MT}}>{p.losses}</div>
+                    <div style={{textAlign:"center",fontSize:12,fontWeight:700,fontFamily:"'JetBrains Mono'",color:cw>=3?GD:TX}}>{cw}</div>
+                    <div style={{textAlign:"center",fontSize:11,fontWeight:800,fontFamily:"'JetBrains Mono'",color:p.winRate>=0.5?A:DG}}>{eff}%</div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Last 5 form strip — moved here from Players list (Issue #12 → #11 handoff) */}
+          {lb.length>0 && (
+            <div style={{marginTop:18,background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14}}>
+              <div style={{fontSize:11,fontWeight:800,color:MT,marginBottom:10,letterSpacing:0.5,textTransform:"uppercase"}}>Last 5 Matches · Form</div>
+              <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                {lb.map(p=>(
+                  <div key={"f"+p.id} onClick={()=>{setSelectedPlayer(p.id);setTab("stats");}} style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,cursor:"pointer"}}>
+                    <span style={{fontSize:12,fontWeight:700,color:TX,fontStyle:"italic",textTransform:"uppercase",letterSpacing:0.3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",minWidth:0,flex:1}}>{p.nickname||p.name}</span>
+                    <FD f={getForm(p.id)}/>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
