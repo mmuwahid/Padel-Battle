@@ -215,9 +215,9 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
       {subTab==="analytics" && analyticsData ? (
         <div>
           {/* Analytics Section Tabs — matching mockup control panel */}
-          <div style={{display:"flex",gap:4,marginBottom:16,overflowX:"auto",paddingBottom:4}}>
+          <div style={{display:"flex",gap:4,marginBottom:16}}>
             {[["league","📈 League"],["partnership","🤝 Partners"],["opponent","⚔️ H2H"],["insights","💡 Insights"]].map(([k,l])=>(
-              <button key={k} onClick={()=>setAnalyticsSection(k)} style={{padding:"8px 12px",borderRadius:8,border:`1px solid ${analyticsSection===k?A:BD}`,background:analyticsSection===k?`${A}15`:"transparent",color:analyticsSection===k?A:MT,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif",whiteSpace:"nowrap"}}>{l}</button>
+              <button key={k} onClick={()=>setAnalyticsSection(k)} style={{flex:1,padding:"8px 4px",borderRadius:8,border:`1px solid ${analyticsSection===k?A:BD}`,background:analyticsSection===k?`${A}15`:"transparent",color:analyticsSection===k?A:MT,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif",textAlign:"center"}}>{l}</button>
             ))}
           </div>
 
@@ -239,7 +239,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
               {analyticsData.mostActive.map((x,i)=>(
                 <div key={x.pid} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderBottom:i<analyticsData.mostActive.length-1?`1px solid ${BD}`:undefined}}>
                   <div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:32,height:32,borderRadius:"50%",background:`${A}15`,border:`2px solid ${A}30`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:A,overflow:"hidden"}}>{getAvatar(x.pid)?<img src={getAvatar(x.pid)} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:getName(x.pid)[0]}</div><span style={{fontSize:12,color:TX}}>{getName(x.pid)}</span></div>
-                  <div style={{textAlign:"right"}}><span style={{fontSize:14,fontWeight:700,color:A,fontFamily:"'JetBrains Mono'"}}>{x.games}</span><span style={{fontSize:10,color:MT,marginLeft:4}}>GP</span></div>
+                  <div style={{textAlign:"right"}}><span style={{fontSize:14,fontWeight:700,color:A,fontFamily:"'JetBrains Mono'"}}>{x.games}</span><span style={{fontSize:10,color:MT,marginLeft:4}}>MP</span></div>
                 </div>
               ))}
             </div>
@@ -262,7 +262,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
               {analyticsData.matchups.map((x,i)=>(
                 <div key={i} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderBottom:i<analyticsData.matchups.length-1?`1px solid ${BD}`:undefined}}>
                   <span style={{fontSize:12,color:TX}}>{getName(x.p1)} vs {getName(x.p2)}</span>
-                  <div><span style={{fontSize:11,color:MT}}>{x.games} GP</span><span style={{fontSize:11,color:A,marginLeft:8}}>{Math.round(x.balance*2)}% balanced</span></div>
+                  <div><span style={{fontSize:11,color:MT}}>{x.games} MP</span><span style={{fontSize:11,color:A,marginLeft:8}}>{Math.round(x.balance*2)}% balanced</span></div>
                 </div>
               ))}
             </div>}
@@ -340,7 +340,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                 <div key={i} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0",borderBottom:i<Math.min(analyticsData.partnerships.length,10)-1?`1px solid ${BD}`:undefined}}>
                   <span style={{fontSize:12,color:TX}}>{getName(p.a)} x {getName(p.b)}</span>
                   <div style={{display:"flex",alignItems:"center",gap:8}}>
-                    <span style={{fontSize:11,color:MT,fontFamily:"'JetBrains Mono'",whiteSpace:"nowrap"}}>{p.w+p.l} GP</span>
+                    <span style={{fontSize:11,color:MT,fontFamily:"'JetBrains Mono'",whiteSpace:"nowrap"}}>{p.w+p.l} MP</span>
                     <div style={{width:50,height:6,background:BD,borderRadius:3,overflow:"hidden"}}><div style={{width:`${pct}%`,height:"100%",background:pct>=60?A:pct>=40?BL:DG,borderRadius:3}}/></div>
                     <span style={{fontSize:12,fontWeight:700,color:pct>=60?A:pct>=40?TX:DG,fontFamily:"'JetBrains Mono'",width:35,textAlign:"right"}}>{pct}%</span>
                   </div>

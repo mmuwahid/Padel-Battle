@@ -61,8 +61,7 @@ export function MatchHistory({onEdit,shareMatch,sel,onMatchDeleted}){
   }
   // Merge approved + incomplete for timeline display. Incomplete renders with grey styling + badge.
   const timeline = [...matches, ...incompleteList];
-  const f = fp ? timeline.filter(m => m.team_a.includes(fp) || m.team_b.includes(fp)) : timeline;
-  const s = [...f].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const s = [...timeline].sort((a,b)=>new Date(b.date)-new Date(a.date));
 
   async function deleteMatch(matchId){
     if(!isAdmin)return;
@@ -121,12 +120,7 @@ export function MatchHistory({onEdit,shareMatch,sel,onMatchDeleted}){
         </div>
       )}
 
-      <div style={{display:"flex",gap:8,marginBottom:12}}>
-        <select value={fp} onChange={e=>setFp(e.target.value)} style={{...sel,flex:1}}>
-          <option value="">All Players</option>
-          {players.map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}
-        </select>
-      </div>
+
       <div style={{fontSize:11,color:MT,marginBottom:8,fontWeight:400}}>{s.length} matches</div>
       {s.length===0&&(
         <div style={{textAlign:"center",padding:"40px 20px"}}>

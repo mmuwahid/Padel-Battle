@@ -83,7 +83,7 @@ export function AdminDashboard({ setSidebarView }) {
     <div style={{padding:"20px 16px",paddingBottom:"calc(96px + env(safe-area-inset-bottom, 0px))"}}>
       <button onClick={()=>setSidebarView(null)} style={{marginBottom:20,background:"none",border:"none",color:A,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>← Back</button>
 
-      <h2 style={{fontSize:20,fontWeight:900,fontStyle:"italic",textTransform:"uppercase",letterSpacing:1,marginBottom:8,color:TX}}>Admin Dashboard</h2>
+      <h2 style={{fontSize:20,fontWeight:900,textTransform:"uppercase",letterSpacing:1,marginBottom:8,color:TX}}>Admin Dashboard</h2>
       <div style={{fontSize:11,color:MT,marginBottom:20,lineHeight:1.5}}>Pending match approvals appear inline at the top of the <strong style={{color:TX}}>Matches</strong> tab.</div>
 
       {/* ────── Roster — Player Management button (Issue #17: subtitle removed) ────── */}
@@ -92,7 +92,7 @@ export function AdminDashboard({ setSidebarView }) {
         <button onClick={()=>setSidebarView("playerManagement")} style={{width:"100%",padding:"16px 14px",background:CD,border:`1px solid ${BD}`,borderRadius:12,color:TX,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
           <span style={{display:"flex",alignItems:"center",gap:10}}>
             <span style={{fontSize:18}}>👥</span>
-            <span style={{fontSize:14,fontWeight:900,fontStyle:"italic",textTransform:"uppercase",letterSpacing:0.5}}>Player Management</span>
+            <span style={{fontSize:14,fontWeight:900,textTransform:"uppercase",letterSpacing:0.5}}>Player Management</span>
           </span>
           <span style={{fontSize:18,color:MT}}>→</span>
         </button>
@@ -126,33 +126,29 @@ export function AdminDashboard({ setSidebarView }) {
           <div style={{fontSize:11,color:MT,fontWeight:600,marginBottom:4}}>Invite Code</div>
           <div style={{display:"flex",gap:8,alignItems:"center"}}>
             <code style={{flex:1,padding:"8px 10px",background:CD,borderRadius:6,color:A,fontSize:12,fontWeight:700,wordBreak:"break-all"}}>{league?.invite_code}</code>
+            {isOwner && (
+              confirmRegenCode ? (
+                <div style={{display:"flex",gap:4,alignItems:"center"}}>
+                  <span style={{fontSize:10,color:TX,whiteSpace:"nowrap"}}>Sure?</span>
+                  <button onClick={()=>{regenerateInviteCode();setConfirmRegenCode(false);}} style={{padding:"4px 8px",background:DG,border:"none",borderRadius:6,color:"#fff",fontSize:11,fontWeight:600,cursor:"pointer"}}>Yes</button>
+                  <button onClick={()=>setConfirmRegenCode(false)} style={{padding:"4px 8px",background:CD2,border:"1px solid "+BD,borderRadius:6,color:MT,fontSize:11,cursor:"pointer"}}>No</button>
+                </div>
+              ) : (
+                <button onClick={()=>setConfirmRegenCode(true)} title="Regenerate invite code" style={{width:32,height:32,flexShrink:0,background:"transparent",border:`1px solid ${BD}`,borderRadius:6,color:MT,fontSize:15,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>{"↻"}</button>
+              )
+            )}
             <button onClick={()=>{navigator.clipboard.writeText(`${window.location.origin}?invite=${league?.invite_code}`);showToast("Invite link copied!");}} style={{padding:"6px 10px",background:A,border:"none",borderRadius:6,color:"#000",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif",whiteSpace:"nowrap"}}>
               Copy Link
             </button>
           </div>
         </div>
 
-        {/* Regenerate Invite Code (owner-only) */}
-        {isOwner && (
-          confirmRegenCode ? (
-            <div style={{display:"flex",gap:8,alignItems:"center",justifyContent:"center",width:"100%",marginBottom:8}}>
-              <span style={{fontSize:11,color:TX}}>Old links stop working. Sure?</span>
-              <button onClick={()=>{regenerateInviteCode();setConfirmRegenCode(false);}} style={{padding:"6px 10px",background:DG,border:"none",borderRadius:6,color:"#fff",fontSize:11,fontWeight:600,cursor:"pointer"}}>Yes</button>
-              <button onClick={()=>setConfirmRegenCode(false)} style={{padding:"6px 10px",background:CD2,border:"1px solid "+BD,borderRadius:6,color:MT,fontSize:11,cursor:"pointer"}}>No</button>
-            </div>
-          ) : (
-            <button onClick={()=>setConfirmRegenCode(true)} style={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif",marginBottom:8}}>
-              Regenerate Code
-            </button>
-          )
-        )}
-
         {/* Season Management button — owner-only entry to FT-14 screen */}
         {isOwner && (
           <button onClick={()=>setSidebarView("seasonManagement")} style={{width:"100%",padding:"16px 14px",background:CD,border:`1px solid ${BD}`,borderRadius:12,color:TX,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
             <span style={{display:"flex",alignItems:"center",gap:10}}>
               <span style={{fontSize:18}}>📅</span>
-              <span style={{fontSize:14,fontWeight:900,fontStyle:"italic",textTransform:"uppercase",letterSpacing:0.5}}>Season Management</span>
+              <span style={{fontSize:14,fontWeight:900,textTransform:"uppercase",letterSpacing:0.5}}>Season Management</span>
             </span>
             <span style={{fontSize:18,color:MT}}>→</span>
           </button>

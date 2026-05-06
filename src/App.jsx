@@ -795,14 +795,12 @@ function AppContent({leagueId,user,onSwitchLeague}){
       {/* HEADER — FT-12: gradient blends under status bar / dynamic island, italic uppercase wordmark, tight S044 v3 padding restored */}
       <div style={{background:"linear-gradient(180deg,#0d0d14 0%,"+CD+" 100%)",padding:"4px 16px",paddingTop:"calc(env(safe-area-inset-top, 0px) + 0px)",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:10}}>
         <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
-          <PadelLogoSmall/>
+          <PadelLogoSmall size={36}/>
           <div>
             <div style={{display:"flex",alignItems:"center",gap:"6px"}}>
-              <h1 style={{fontSize:"14px",fontWeight:900,margin:0,letterSpacing:1,fontFamily:"'Outfit',sans-serif",fontStyle:"italic",textTransform:"uppercase"}}><span style={{color:TX}}>Padel</span><span style={{color:A}}>Hub</span></h1>
+              <h1 style={{fontSize:"14px",fontWeight:900,margin:0,letterSpacing:1,fontFamily:"'Outfit',sans-serif",textTransform:"uppercase"}}><span style={{color:TX}}>Padel</span><span style={{color:A}}>Hub</span></h1>
             </div>
-            <p style={{fontSize:"9px",color:MT,margin:"1px 0 0 0",fontWeight:400}}>
-              {league?.name||"League"}{seasons.find(s=>s.active) ? ` | ${seasons.find(s=>s.active).name}` : ""}
-            </p>
+
           </div>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -864,14 +862,14 @@ function AppContent({leagueId,user,onSwitchLeague}){
         <div style={{padding:"20px 16px"}}>
           {/* S047: Title + season selector row */}
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14,gap:10,flexWrap:"wrap"}}>
-            <h2 style={{fontSize:20,fontWeight:900,fontStyle:"italic",textTransform:"uppercase",letterSpacing:1,margin:0}}>Ranking</h2>
+            <h2 style={{fontSize:20,fontWeight:900,textTransform:"uppercase",letterSpacing:1,margin:0}}>Leaderboard</h2>
             {seasons.length>0 && (
-              <select value={selectedSeason||""} onChange={e=>setSelectedSeason(e.target.value)} style={{background:CD2,color:TX,border:`1px solid ${BD}`,borderRadius:10,padding:"6px 10px",fontSize:12,fontWeight:700,fontFamily:"'Outfit',sans-serif",fontStyle:"italic",textTransform:"uppercase",letterSpacing:0.5,cursor:"pointer",outline:"none"}}>
+              <select value={selectedSeason||""} onChange={e=>setSelectedSeason(e.target.value)} style={{background:CD2,color:TX,border:`1px solid ${BD}`,borderRadius:10,padding:"6px 10px",fontSize:12,fontWeight:700,fontFamily:"'Outfit',sans-serif",cursor:"pointer",outline:"none"}}>
                 {seasons.map(s=><option key={s.id} value={s.id}>{s.name}{s.active?" (active)":""}</option>)}
               </select>
             )}
           </div>
-          <div style={{fontSize:11,color:MT,marginBottom:18,letterSpacing:0.3}}>{lb.length} player{lb.length!==1?"s":""} · Ranked by Total Wins · Win Rate · ELO</div>
+
 
           {/* Season Awards Section — only shown for ended seasons */}
           {selectedSeason && !seasons.find(s=>s.id===selectedSeason)?.active && (() => {
@@ -990,7 +988,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
                 const cw = getStreak(p.id);
                 return (
                   <div key={p.id} onClick={()=>{setSelectedPlayer(p.id);setTab("stats");}} style={{display:"grid",gridTemplateColumns:"32px 1fr 36px 28px 28px 28px 30px 38px",gap:6,padding:"10px 8px",borderBottom:idx<lb.length-1?`1px solid ${BD}40`:"none",alignItems:"center",cursor:"pointer"}}>
-                    <div style={{textAlign:"center",fontSize:13,fontWeight:900,fontFamily:"'JetBrains Mono'",color:idx===0?GD:idx===1?SV:idx===2?BZ:MT}}>{idx+1}</div>
+                    <div style={{textAlign:"center",fontSize:13,fontWeight:900,fontFamily:"'JetBrains Mono'",color:idx===0?GD:idx===1?SV:idx===2?BZ:MT}}>{idx===0?"🥇":idx===1?"🥈":idx===2?"🥉":idx+1}</div>
                     <div style={{display:"flex",alignItems:"center",gap:8,minWidth:0}}>
                       <div style={{width:30,height:30,borderRadius:"50%",overflow:"hidden",background:`linear-gradient(135deg,${A}25,${A}08)`,border:`1.5px solid ${A}30`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:800,color:A,flexShrink:0}}>
                         {player?.avatar_url ? <img src={player.avatar_url} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/> : (p.name[0]||"?").toUpperCase()}

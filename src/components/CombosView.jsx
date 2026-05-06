@@ -75,7 +75,7 @@ export function CombosView({combos,players,matches,pm,getName}){
                 <div style={{display:"flex",gap:12,marginTop:6}}>
                   <span style={{fontSize:13,color:A,fontWeight:700,fontFamily:"'JetBrains Mono'"}}>{c.wins}W</span>
                   <span style={{fontSize:13,color:DG,fontWeight:700,fontFamily:"'JetBrains Mono'"}}>{c.losses}L</span>
-                  <span style={{fontSize:13,color:MT}}>{c.games} GP</span>
+                  <span style={{fontSize:13,color:MT}}>{c.games} MP</span>
                 </div>
               </div>
               <div style={{textAlign:"center"}}>
@@ -101,7 +101,7 @@ export function CombosView({combos,players,matches,pm,getName}){
                   <div style={{display:"flex",gap:12,marginTop:6}}>
                     <span style={{fontSize:13,color:A,fontWeight:700,fontFamily:"'JetBrains Mono'"}}>{c.wins}W</span>
                     <span style={{fontSize:13,color:DG,fontWeight:700,fontFamily:"'JetBrains Mono'"}}>{c.losses}L</span>
-                    <span style={{fontSize:13,color:MT}}>{c.games} GP</span>
+                    <span style={{fontSize:13,color:MT}}>{c.games} MP</span>
                   </div>
                 </div>
                 <div style={{textAlign:"center"}}>
@@ -140,14 +140,14 @@ export function CombosView({combos,players,matches,pm,getName}){
                   <div style={{fontSize:20}}>🤝</div>
                   <div style={{fontSize:15,fontWeight:700,marginTop:4}}>{getName(best.pid)}</div>
                   <div style={{fontSize:22,fontWeight:900,color:A,fontFamily:"'JetBrains Mono'",marginTop:4}}>{best.pct.toFixed(0)}%</div>
-                  <div style={{fontSize:11,color:MT}}>{best.w}W {best.l}L · {best.games} GP</div>
+                  <div style={{fontSize:11,color:MT}}>{best.w}W {best.l}L · {best.games} MP</div>
                 </div>
                 {worst&&worst.pid!==best.pid&&worst.pct<best.pct&&<div style={{background:CD,borderRadius:12,border:`1px solid ${DG}30`,padding:14,textAlign:"center"}}>
                   <div style={{fontSize:10,color:DG,fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>Worst Partner</div>
                   <div style={{fontSize:20}}>💔</div>
                   <div style={{fontSize:15,fontWeight:700,marginTop:4}}>{getName(worst.pid)}</div>
                   <div style={{fontSize:22,fontWeight:900,color:DG,fontFamily:"'JetBrains Mono'",marginTop:4}}>{worst.pct.toFixed(0)}%</div>
-                  <div style={{fontSize:11,color:MT}}>{worst.w}W {worst.l}L · {worst.games} GP</div>
+                  <div style={{fontSize:11,color:MT}}>{worst.w}W {worst.l}L · {worst.games} MP</div>
                 </div>}
               </div>
               {partners.map((p,i)=>{
@@ -156,7 +156,7 @@ export function CombosView({combos,players,matches,pm,getName}){
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
                     <span style={{fontSize:13,fontWeight:600}}>{getName(p.pid)}</span>
                     <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                      <span style={{fontSize:11,color:MT}}>{p.games} GP</span>
+                      <span style={{fontSize:11,color:MT}}>{p.games} MP</span>
                       <span style={{fontSize:14,fontWeight:800,color:pctColor(p.pct,p.games),fontFamily:"'JetBrains Mono'",width:42,textAlign:"right"}}>{p.pct.toFixed(0)}%</span>
                     </div>
                   </div>
@@ -172,7 +172,7 @@ export function CombosView({combos,players,matches,pm,getName}){
 
       {view==="matrix"&&<div>
         <h2 style={{fontSize:16,fontWeight:700,marginBottom:6}}>Chemistry Matrix</h2>
-        <p style={{fontSize:12,color:MT,marginBottom:14}}>Win % when paired. GP = Games Played.</p>
+        <p style={{fontSize:12,color:MT,marginBottom:14}}>Win % when paired. MP = Match Played.</p>
         {activePlayers.length<2?<p style={{fontSize:13,color:MT}}>Need at least 2 active players</p>:
         <div style={{position:"relative"}}>
         <div style={{overflowX:"auto",paddingBottom:8}}>
@@ -194,7 +194,7 @@ export function CombosView({combos,players,matches,pm,getName}){
                   const bg=games===0?`${BD}40`:pct>=60?`${A}25`:pct>=40?`${BL}20`:`${DG}25`;
                   const tc=games===0?MT:pct>=60?A:pct>=40?TX:DG;
                   return (<div key={q.id} style={{background:bg,borderRadius:4,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:4,minHeight:40}}>
-                    {games>0?<><span style={{fontSize:12,fontWeight:800,color:tc,fontFamily:"'JetBrains Mono'"}}>{pct.toFixed(0)}%</span><span style={{fontSize:7,color:MT}}>{games} GP</span></>:<span style={{fontSize:9,color:MT}}>-</span>}
+                    {games>0?<><span style={{fontSize:12,fontWeight:800,color:tc,fontFamily:"'JetBrains Mono'"}}>{pct.toFixed(0)}%</span><span style={{fontSize:7,color:MT}}>{games} MP</span></>:<span style={{fontSize:9,color:MT}}>-</span>}
                   </div>);
                 })}
               </React.Fragment>
