@@ -1,0 +1,175 @@
+# PadelHub — Project Context
+
+> **Last updated:** 2026-05-06 | **Current phase:** Post-P7 (S057 deployed) | **S057 summary:** Issues #36 + #40 shipped in 2 commits, #35 closed without code change. **#36 (f0b3969, SW v74):** new `src/components/NavIcons.jsx` (~75 lines) exports `TrophyIcon` (emoji-style silhouette: cup body + horizontal lip + curved side handles + stem + small disk + trapezoidal base), `RacketIcon` (padel teardrop with 6 perforation dots + short grip with two parallel lines + cross-base), `PlayersIcon` (trio silhouette small-large-small), `CrossedRacketsIcon` (Game Mode, ±30° rotated ellipses with stems crossing) plus `<NavIcon name=… active=… size=…/>` dispatcher; `theme.js` TL/TR icon strings emoji→SVG keys (`trophy`/`racket`/`players`/`crossed`); App.jsx bottom-nav block: `<NavIcon>` replaces emoji `<span>`, active state upgraded from 8px-radius rectangle (`A+"15"` 15% alpha) to 22px-radius full-tab oval capsule (`A+"33"` 20% alpha) + `fontWeight: tab===t.key?700:500` + 200ms `transition`. Mockup-first cadence: 3 mockup iterations at `padelhub/public/mockup-issue36.html` before any source touched. **#40 (523225c, SW v75):** `LeagueContext` now exposes `selectedSeason` + `setSelectedSeason` so Ranking screen and Matches screen season pickers stay synced. `MatchHistory.jsx` destructures both from `useLeague()`; new `seasonFilter = (m) => !selectedSeason || m.season_id === selectedSeason` applied to all 3 list sources (`approvedMatches`, `pendingMatches.filter(logged_by===user.id)`, `incompleteMatches`). New `<select>` rendered top-right of MatchHistory only when `seasons.length > 0`, same styling as Ranking selector. **#35 closed** without code change after side-by-side mockup vs WhatsApp `#25D366` — user kept current `#4ADE80`. Open issues: #41 (login bug, newly filed), #25 (pairs leaderboard, needs plan). | **S056 summary:** 3 issues fixed in 2 commits. #37 (869087c): SeasonManagement edit date row overflow fixed — `minWidth:0,overflow:hidden` on flex children; create sheet `overflow:hidden`. #38 (869087c): ProfileView "Wins"→"Match Won", "Losses"→"Match Lost". #39 (f1628f6): Season Awards — Top Pair "??" root cause was `join('-')` separator colliding with UUID hyphens, fixed to `join('|')`; Top Pair layout redesigned to centered avatar+name per player; "Cons. Wins" streak label+color corrected (red→green); italic removed from all player name elements (awards cards, ranking table, form strip). SW v72→v73. Open issues: #40, #35, #36, #25. | **S055 summary:** Issue #28 closed. Season data isolation: `selectedSeasonMatches`/`seasonElo`/`seasonLb`/`getSeasonForm`/`getSeasonStreak` added as parallel memos in App.jsx — ranking tab now scoped to selected season. Awards redesign: `calculateSeasonAwards` rewritten with Champion/RunnerUp/TopPair/MostActive/MostMOTM/BestStreak (result-based, replaces ELO-based MVP+MostImproved). `SeasonManagement.jsx` full rewrite: full-screen detail pattern (conditional render replaces list, no modal/overlay), location field in create + edit, delete season via `delete_season` RPC (ended seasons only, confirmDelete guard). `AdminDashboard.jsx` rewritten as navigation hub: "Players" rename, NavButton helper, all league management moved to new `LeagueManagement.jsx`. New `LeagueManagement.jsx` (~110 lines): league name edit via `update_league_name` RPC, invite code display + copy + regenerate, Season Management nav (owner only). SW v70→v71. Commit 8788712 (5 files). **Open GitHub issues: #25 (new pairs leaderboard feature, needs plan).**
+
+> **S052 prior:** Post-P7 (S052 deployed) | **Status:** Live on Vercel, feature-complete + Platform Admin + Web Push + RNG Team Shuffler + LIVE scoring + ScoreStepper + Match Approval (FT-09) + FIP Scoring Enforcement (FT-09b) + Premier Padel UI polish (Issue #12) + Ranking format + terminology renames (Issue #11) + Admin Dashboard consolidation (Issue #13) + Nav + Header polish (Issue #15) + Admin Dashboard rework + **Season Management (FT-14 phase 1)** + **My Profile self-edit** + **Searchable CountrySelect (full UN list, Israel excluded)** + **Flag emoji font stack fix** + **Partners-screen 'Pairs' renames (Issue #19)** + **Dynamic-island gap fix at scrollY=0 (Issue #18)** + **Photo upload reliability + propagation (Issue #20)** + **Sidebar profile entry consolidation (Issue #21)**. **All open GitHub issues closed as of S052.** S052 (2 commits + follow-up): #20 (e439b0a) — TWO bugs. (a) iOS Safari PWA "Failed to load on first attempt": new `decodeImageFile(file)` helper at utils/helpers.js prefers createImageBitmap (native HEIC decode on iOS 17+) with Image+objectURL fallback, replacing fragile FileReader→dataURL→Image() chain in App.jsx uploadAvatar + EditPlayerModal uploadPhoto. (b) Photo not propagating to player avatar slots: App.jsx uploadAvatar/removeAvatar now write-through to `players.avatar_url` for the user's claimed player + triggers loadLeagueData(), so My Profile photos appear immediately in ranking, partners, H2H, Insights, etc. PlayerStats.jsx gained `getAvatar(pid)` helper + 7 avatar slots updated. #21 (e439b0a): removed standalone "👤 My Profile" sidebar button; top user info block (avatar+name+email) wrapped in button → opens My Profile, with `›` chevron hint. Follow-up 3b9ef98: MOTM Ranking inside Insights gained 8th avatar slot (28×28 gold-tinted circle) — caught by iPhone smoke after first push missed it (Lesson #47 added: anchor multi-site avatar sweeps on `getName(` not existing avatar markup). SW v63→v64→v65. Both deploys READY. iPhone-confirmed all features end-to-end. New lessons: #47 anchor-on-Y for sweeps, #48 createImageBitmap > FileReader+Image, #49 write-through over read-time merge for user/entity dual-state, #50 prefer making existing element clickable over adding new menu entry. S051 (2 commits): #19 (a310946) renamed CombosView Best Duos→Best Pairs + Top/Worst Partnerships→Top/Worst Pairs + PlayerStats Best/Worst Partnerships→Best/Worst Pairs (5 strings); SW v61→v62. #18 (ea7da90) — root cause: S049 CSS injection patched bg+overscroll on html/body but never reset margin/padding; iOS PWA black-translucent left implicit body offset that sticky `top:0` masked when scrolled but exposed at scrollY=0 (~56px gap). Fix: extended injection at App.jsx:779 to `html,body{margin:0;padding:0;...}` + `#root{margin:0;padding:0}`; index.html theme-color #0a0a0f→#0d0d14 to match body bg/header gradient start. SW v62→v63. iPhone-confirmed working. Lesson #44 added: `position:sticky` + `padding-top:env(safe-area-inset-top)` + missing body reset = "tight when scrolled, gap at top" signature; audit body/html FIRST before touching the header. S050 was a 4-commit multi-feature push (~1000 net lines added, 3 new components + 4 DB migrations). **DB:** 3 staged season-management migrations to prod (`season_players` join table with RLS keyed on `get_user_league_ids`, idempotent backfill — 15 rows, 6 owner-gated SECURITY DEFINER RPCs via new `_assert_league_owner` helper: `create_season` with clone-from + single-active enforcement, `end_season`, `reactivate_season` (clears end_date + auto-deactivates other actives), `update_season`, `set_season_roster` atomic full-replace with league-membership validation, `update_league_name`). Plus new RLS policy `players_update_self` (claimed user updates own row, blocks `user_id`/`league_id` changes). **Frontend:** new `SeasonManagement.jsx` (~280 lines, list + new modal with clone-from-previous + edit bottom-sheet with rename/dates/per-player roster toggle/end/reactivate); new `EditMyProfile.jsx` slim bottom-sheet (name/nickname/country/position) wired into ProfileView via "✎ Edit Profile" button; new `CountrySelect.jsx` searchable combobox with auto-focused search input + scrollable filtered list + per-word startsWith filter ("p" → Pakistan/Palau/Palestine/...; "south" → all 3 South-x; "korea" → both Koreas) — replaces native `<select>` in EditPlayerModal + EditMyProfile. AdminDashboard restructured: Roster → **League Management** (editable name + invite + season mgmt button) → Data Export → Platform Admin. Scroll-to-top fires on `sidebarView` change. Platform Admin "Close" → "← Back". PlayerManagement "hand" → "side". COUNTRIES expanded 42 → 195 entries (all UN states + Palestine + Taiwan + Vatican, sorted alphabetically by NAME, **Israel intentionally excluded**); `helpers.js` ISO3_TO_ISO2 map expanded to match. New `.flag` global CSS class with emoji-priority font stack (Apple Color Emoji / Segoe UI Emoji / Noto Color Emoji / Twemoji Mozilla / EmojiOne Color / Android Emoji) applied to all 7 flag-rendering spans across 6 components — fixes Windows "PS" letter-block fallback. **Stats integration phase 2 (ranking screen Option C + LogMatch picker filtering by season roster) deferred to S051** — current behavior shows all league players regardless of season. SW v57→v58→v59→v60→v61. All 4 deploys READY. S049 closes Issue #15 in single commit d3200d6 (2 files +8/-7): bottom nav floating-pill 14→6px above safe-area-inset-bottom, pedestal 82→68px, pill padding 8/6/10→6/6/8, wrapper paddingBottom 96→82px. Header overscroll root cause was iOS rubber-band exposing wrapper `BG` color above sticky header at the absolute top of the page — fixed via one-line CSS injection: `html,body{background:#0d0d14;overscroll-behavior-y:none;-webkit-overflow-scrolling:auto;}` matches the header gradient start (#0d0d14) so any rubber-band reveals the same dark color rather than the lighter BG, and `overscroll-behavior-y` prevents the rubber-band entirely on supporting browsers. Header now visually identical at top vs scrolled. SW v56→v57. S048 closes Issue #13 in single commit 1e6d58a (5 files +53/-48): admin entry points consolidated into AdminDashboard. Admin Management section (owner-only member-role list) ported from SettingsView → AdminDashboard between Roster and League Settings. Platform Admin button (super-admin only, `user.id === PLATFORM_ADMIN_ID`) ported from Sidebar → AdminDashboard bottom (after Data Export). Sidebar: 📩 Invite Players gated on `isAdmin` (was visible to all members); 🛡️ Platform Admin button removed; PLATFORM_ADMIN_ID import dropped. SettingsView trimmed -5 props (`leagueMembers`, `memberProfiles`, `updateMemberRole`, `isOwner`, `league`). App.jsx: `updateMemberRole` added to LeagueContext, SettingsView prop list trimmed. SW v55→v56. **Implicit assumption:** Platform Admin button now only reachable when super-admin is also a league admin in the currently-selected league (true for current super-admin = league owner of all leagues). S047 closes Issue #11 in single commit c415b1a: bottom nav Leaderboard→Ranking + Combos→Partners (tab IDs unchanged), ranking screen redesigned with italic uppercase title + active-season selector + 8-column Premier-Padel-format table (# · Player avatar+italic name · Country flag+ISO3 · MP · MW · ML · CW · Eff%) with gold/silver/bronze rank colors and CW≥3 gold-highlight, podium retained, sort logic untouched. New Last 5 Matches form strip below table (relocated from Players list per #12 handoff). PlayerStats drill-in flash-cards renamed (Win Rate→Effectiveness, Games Played→Match Played, Wins→Match Won, Losses→Match Lost, Streak→Cons. Wins) + MOTM section rename. CombosView 'My Combos' sub-tab→'My Partners'. **Nav bar lock re-applied** in this file's Design System note + Workflow Rules + `tasks/lessons.md` Critical Rule #2. SW v54→v55. S046 closes Issue #12 in 2 commits (87d4dbb v1, 3bd48b0 v2). Visual polish: blended header gradient under status bar with italic uppercase PADELHUB wordmark, floating pill bottom nav with solid-pedestal backdrop hiding scrolled content from gutters/below, italic uppercase display type across screen titles + sub-tab toggles + player names. Players sub-tab redesigned as 2-col avatar grid (ELO/WR/last-5 hidden, deferred to ranking screen in #11). AdminDashboard rewritten — inline player list replaced with single "Player Management" button → dedicated `PlayerManagement.jsx` screen with `EditPlayerModal.jsx` bottom sheet (photo upload via Supabase storage at `avatars/players/{id}.jpg`, country dropdown 42 ISO-3 codes A-Z, left/right position toggle, name/nickname). DB additions: `players.country` + `playing_position` + `avatar_url` columns, CHECK constraint on position, storage policies for `avatars/players/*` path, 13-row country backfill per S046 preset list (Padel Stars: PSE/IRQ/LBN/KWT/GBR + Ryan→DEU). New `flagEmoji(iso3)` helper (42-code map). Drill-in profile gains country flag + ISO-3 row in top card (visible-when-data-present). SW v52→v54. Remaining backlog: Issue #11 (Ranking format + terminology renames + season selector), SE/DE stepper conversion, FT-07 Player Deletion Redesign.
+
+## Overview
+Mobile-first web app for tracking padel matches, rankings, partnerships, and tournaments among a group of friends. Rebranded from "Padel Battle" to "PadelHub" in Phase 4.
+
+## Tech Stack
+- **Frontend:** React 19 (modular — App.jsx 1,084 lines + 28 extracted modules = ~5,500 total), Vite 8, inline styles
+- **Bundle:** 6 chunks via code splitting (S013). Largest: vendor-react 190 KB. Main: 132 KB. Lazy: GameMode 64 KB, PlayerStats 28 KB, CombosView 11 KB. No Vite warnings.
+- **Backend:** Supabase (PostgreSQL + Auth + RLS + Realtime)
+- **Auth:** Email/Password, Google OAuth (Magic Link removed in BF-14)
+- **Hosting:** Vercel (auto-deploys from GitHub main branch)
+- **PWA:** manifest.json, service worker (sw.js), branded icons
+- **Fonts:** Outfit (UI), JetBrains Mono (numbers/stats)
+
+## Key Files
+- `src/App.jsx` — main app shell + AppContent (1,068 lines — extracted 4 views in S019)
+- `src/theme.js` — color palette + tab definitions
+- `src/utils/` — helpers.js, elo.js, tournaments.js
+- `src/data/` — achievements.js, rules.js
+- `src/components/` — AuthGate, LeagueGate, LogMatch, PlayerStats, ScheduleView, MatchHistory, CombosView, GameMode, BracketSVG, AmericanoMode, SingleElimination, DoubleElimination, RoundRobin, Sidebar, ProfileView, AdminDashboard, **PlayerManagement (S046)**, **EditPlayerModal (S046)**, SettingsView, NotificationCenter, ScoreStepper, EditMatchModal, MatchApprovalsQueue, icons, ErrorBoundary, FormDots
+- `src/supabase.js` — Supabase client initialization
+- `public/manifest.json` — PWA manifest
+- `public/sw.js` — service worker (network-first strategy)
+- `public/icons/icon-192.png` — PWA icon (branded PadelHub logo)
+- `public/icons/icon-512.png` — PWA icon (branded PadelHub logo)
+- `index.html` — entry point with PWA meta tags and service worker registration
+- `spec.md` — complete application specification
+- `docs/database-schema.sql` — full database schema with RLS policies
+
+## GitHub & Deploy
+- **Repo:** github.com/mmuwahid/Padel-Battle (main branch) — **PUBLIC** (keep it public)
+- **Live URL:** padel-battle.vercel.app
+- **Vercel team:** team_HYo81T72HYGzt54bLoeLYkZx
+- **Vercel project:** prj_bzHHFRoGxhigKIecyN20vw4M1rrr
+- **Deploy process:** Push to main → Vercel auto-builds and deploys
+- **Code updates:** Copy-paste App.jsx via GitHub web editor (file too large for browser upload tool)
+
+### ⚠️ CRITICAL — GIT COMMIT AUTHOR RULE (check BEFORE first push each session)
+Always commit as `m.muwahid@gmail.com` (the Gmail address linked to the `mmuwahid` GitHub account). Verify at cold start with `git config user.email` in `/tmp/Padel-Battle` and set if needed:
+```bash
+git config user.email "m.muwahid@gmail.com"
+git config user.name "mmuwahid"
+```
+**Why:** When the repo is private, Vercel instantly ERRORs (empty build logs) on commits whose author email doesn't map to a GitHub account with repo access. Incident on 2026-04-21: commits from `m.muwahid@unec.ae` (UNEC work PC default) failed twice before switching to Gmail. The repo was then made public as a safety net — but always use Gmail to avoid any Vercel/GitHub attribution quirks.
+
+## Database
+- **Supabase project:** nkvqbwdsoxylkqhubhig
+- **Tables:** profiles, leagues, league_members, players, seasons, matches, tournaments
+- **RLS:** All tables have RLS enabled with SECURITY DEFINER helper functions to avoid recursion
+- **Realtime:** postgres_changes subscriptions for live updates
+- **Key relationships:**
+  - `league_members.role` = 'admin' | 'member' (used for admin features)
+  - `leagues.created_by` = user who created the league (Owner, cannot be demoted)
+  - `players.user_id` = linked to auth user (for player claim)
+
+## Design System
+- **Theme:** Dark
+- **Colors:** BG=#0a0a0f, Cards=#12121a, Card2=#1a1a26, Border=#2a2a3a, Text=#e4e4ef, Muted=#9090a4 (was #7a7a8e, fixed S013 for WCAG AA), Accent=#4ADE80, Danger=#f87171, Gold=#FFD700, Silver=#C0C0C0, Bronze=#CD7F32
+- **Nav bar (LOCKED — updated S054 for issue #26):** Ranking(🏆), Matches(court) | [+] | Players(👥), Game Mode(⚡). 5 tabs total (`repeat(5,1fr)`). Partners(combos) and Rules tabs removed from nav — Rules accessible via sidebar "📖 Official Rules". Floating pill style with accent-soft border + solid pedestal backdrop. Do NOT modify tab IDs, labels, icons, or layout without an explicit waiver in this section.
+- **Tab IDs (LOCKED):** board, history, combos, stats, gamemode, rules, log — internal route/tab IDs are independent of display labels.
+- **Analytics sub-tabs:** 📈 League, 🤝 Partners, ⚔️ H2H, 💡 Insights
+- **Combos sub-tabs:** 🔥 Best Duos, 👤 My Combos, 🧪 Chemistry
+- **Sidebar menu icons:** 👤 My Profile, 🔄 Switch League, 📩 Invite Players, ⚙️ Settings, 📲 Install App
+- **Logo:** PadelHub branded logo (padel racket with hub/network pattern)
+- **Bottom nav:** 3-left + center floating "+" button + 3-right, backdrop blur
+
+## Component Architecture (inside App.jsx)
+- `App` → `AuthGate` → `LeagueGate` → `AppContent`
+- **AuthGate:** Handles login/signup (email/password, Google OAuth, forgot password)
+- **LeagueGate:** League selection, create, join. Passes `leagueId` and `switchLeague` callback
+- **AppContent:** Main app with all tabs, sidebar, and features
+- **Sidebar:** Controlled by `sidebarOpen` + `sidebarView` (null | "profile" | "settings" | "admin"). H2H removed from sidebar in S014 — now in PlayerStats.
+- **State management:** useState + useEffect + Supabase queries
+- **Realtime:** postgres_changes subscription in useEffect
+
+## Feature inventory + reference docs
+Phase-by-phase deployed-feature history lives in [`docs/feature-history.md`](docs/feature-history.md). Master plan: `planning/padelhub-master-plan V3.0.docx`. Handoff: `planning/PadelHub-Handoff-Document.docx`.
+
+## Known Gotchas (universal — durable rules)
+
+Per-session implementation notes (S013–S040) live in [`docs/known-gotchas.md`](docs/known-gotchas.md). The rules below are cross-session and universal.
+
+### Architecture / DB
+- **RLS recursion:** `league_members` policies use SECURITY DEFINER helpers — never add direct self-referencing policies.
+- **Tournament scoring:** JSONB arrays — validate structure before writes.
+- **RPC parameter types:** Never use JSONB as RPC parameter type from JS — use TEXT and cast internally with `::JSONB`.
+- **CRITICAL — Verify columns before `.select()`** (S022 A-09): Run `SELECT column_name FROM information_schema.columns WHERE table_name='X'` before writing `.select("col1,col2")`. Wrong column names return HTTP 400 silently — data appears empty/deleted. Notable traps: `players` has no `active`; `profiles` has no `user_metadata` (that's on `auth.users`).
+- **Edge Function DB access:** Use `supabaseUser` + SECURITY DEFINER RPCs only. Direct table queries with service_role key DO NOT work (rediscovered THREE times: S020, S022, S029).
+- **`expire_stale_challenges()` runs on every loadLeagueData().** New tables need explicit GRANTs after creation.
+
+### React + UI patterns
+- **Plain-object Context, never useMemo** (S026): Early returns in AppContent make any hook after them violate Rules of Hooks. Cascading useMemo also caused production #310 crash. Plain object is the only safe pattern.
+- **CRITICAL — Never place hooks after conditional returns** (S025 BF-32). PlayerStats had useState/useMemo after early return → blank screen on player click.
+- **`formatTeam(p1, p2)`** (helpers.js line 10) — always use for team displays, never manual `&` / `x` concatenation.
+- **`formatDate(dateStr)`** (helpers.js line 13) — always use for DD/MMM/YYYY display.
+- **`setTotals(sets)`** (helpers.js, S039) — single-pass `reduce` returning `[gA, gB]`. Use over two separate reduces.
+- **Bottom nav:** CSS Grid `repeat(7, 1fr)` — do not switch to flexbox.
+- **Footer nav alignment:** fixed 24px icon + 12px label containers; court icon is horizontal.
+- **Toast position:** `env(safe-area-inset-top)` — never hardcoded `top` for fixed-top elements.
+- **PWA icons:** Both `"purpose": "any"` and `"purpose": "maskable"` entries in manifest.json.
+
+### Score input components (S043)
+- **`<ScoreStepper value max onChange aColor ariaLabel />`** at `src/components/ScoreStepper.jsx` is the canonical numeric score input. Use it for any new score entry surface — never a bare `<input type="text" inputMode="numeric">`.
+- Wraps the S040 native iOS input behaviour and adds ± buttons. `max` optional (omit for no cap, e.g., RoundRobin). `aColor` optional (defaults to A green; pass `BL` for Team A blue, `GD` for Team B yellow on the manual LogMatch screen, or `DG` for danger-red).
+- SE/DE haven't been migrated yet — they use uncontrolled inputs read via `document.getElementById(...).value` at submit. Convert them to controlled state before adding ScoreStepper.
+- LogMatch manual mode uses BL/GD for Team A/B respectively (S043 colour change) to avoid collision with the app's win=green / loss=red palette. LIVE mode + ScheduleView + tournament components still use A/DG.
+
+### Match Approval / Admin Promotion (S044 / FT-09)
+- **`matches.status`** is `'pending' | 'approved'`. Default `pending`. Trigger `trg_matches_set_status` (BEFORE INSERT) auto-flips to `approved` for owner/admin submitters via existing `is_league_admin_or_owner(lid, uid)` SECURITY DEFINER helper. **Single source of truth — never set status from the client.**
+- **Admin notification on pending submission:** AFTER INSERT trigger `trg_matches_notify_admins` calls `notify_admins_on_pending_match()` to fan out a `type='match'` / `data.kind='pending'` notification to every league admin (owner + role='admin'), excluding the submitter. **Shipping a new notification kind requires both UI rendering (NotificationCenter) AND a DB-side producer (trigger/RPC).**
+- **Approvals queue lives on the Matches tab** (inline above MatchHistory) via `MatchApprovalsQueue.jsx`, NOT inside AdminDashboard. Component self-gates to admins with non-empty queue and mounts EditMatchModal internally.
+- **Role-change UI = gold (`GD`)** to match the Owner ★ badge and the league-status visual language. Promote/Demote buttons + Confirm strip + Admin badge all use GD. Owner ★ and Admin ⚡ badges are both gold but stay distinct via icon + label and never co-render on the same player.
+- **Role mutation push:** `setRole` calls `sendPushNotification("members", title, body, [targetUserId])` after the RPC succeeds. The RPC inserts the in-app notification; the client fires the push. Don't drop one without the other (S044 polish lesson).
+- **`league_members_select` RLS:** `league_id IN (SELECT get_user_league_ids(auth.uid()))` — members of a league can see every other member of that league. NOT `(user_id = auth.uid())` (that was the S025 hardening over-restriction; needed widening in S044 for AdminDashboard's role mutation to function). When RLS-hardening any table, enumerate every consumer first.
+- **Challenge confirm uses explicit `count(*)` not `bool_and`.** `bool_and` ignores NULLs — players who hadn't responded yet would invisibly pass the check. The fixed pattern in `respond_to_challenge` and `join_challenge`:
+  ```sql
+  SELECT count(*) FROM unnest(all_ids) AS pid WHERE COALESCE(map->>pid::TEXT, '') = 'accepted'
+  -- compare to array_length(all_ids, 1) AND require total > 0
+  ```
+- **RLS `matches_select`** is now a 3-way union: approved-as-member OR pending-mine OR pending-as-admin. Realtime subscriptions inherit the filter automatically.
+- **`approvedMatches` selector** in App.jsx (`useMemo` filter on context's raw `matches`) is what every stats consumer reads (ELO, ps, getStreak, getForm, season awards, all prop pass-throughs to PlayerStats / CombosView / ProfileView / LogMatch / ScheduleView). **Only AdminDashboard's queue and MatchHistory's My-Pending section read raw `matches`.** Adding a new stats consumer? Use `approvedMatches`. Don't filter inline.
+- **`isOwner` (NEW) vs `isAdmin`:** `isOwner = leagues.created_by === user.id`. `isAdmin = isOwner || league_members.role === 'admin'`. Owner-only gates (regenerate invite code, promote/demote members, future delete-league): use `isOwner`. Match-management / player-management / approval gates: use `isAdmin`.
+- **Match approval RPCs (all SECURITY DEFINER):** `approve_match(uuid)`, `reject_match(uuid)` (hard delete + notify), `update_pending_match(...)` (server-builds JSONB diff, applies update, sets approved, notifies submitter). All admin/owner gated via `is_league_admin_or_owner()`.
+- **Role mutation:** `set_member_role(member_id, role)` is **owner-only** (NOT admin-promotes-admin). Prevents privilege drift. Refuses to demote the owner's own membership row.
+- **`play_challenge` RPC return type changed** (uuid → jsonb `{id, status}`) so ScheduleView can drive the toast on submission. **If you change `play_challenge` again, keep both fields in the return object** — front-end has a legacy-uuid fallback but expects jsonb in the happy path.
+- **Notification kinds (data.kind):** `'approved'` (✓ green), `'edited'` (✎ blue, includes `data.diff` array), `'rejected'` (✕ red), `'role_change'` (⚡ purple, on `members` type). Diff format: `[{field, old, new}, ...]` where field is `team_a | team_b | sets | date | motm`. NotificationCenter renders inline diff for the `edited` variant.
+- **Submitter == approver auto-skip:** if an admin approves their own pending match (rare), notification insert is skipped via `m.logged_by <> caller` guard.
+- **Out-of-scope (NOT routed through approval):** Tournament internal matches (RR / SE / DE / Americano) — they don't write to `matches` table directly (state lives in `tournaments.bracket_state`). If a future tournament finalization flushes results to `matches`, the trigger will pend non-admin submissions — bypass with a SECURITY DEFINER RPC that explicitly sets `status='approved'`.
+
+### LIVE scoring engine (S041)
+- `src/utils/scoringEngine.js` accepts `setsToPlay` parameter through `scorePoint(state, team, setsToPlay = 3)`. Cascades to `addGamePoint` → `winGame` → `winSet` (and the tiebreak path).
+- Match-over rule: `matchOver = newCompleted.length >= setsToPlay`. Semantics = "play exactly N sets" — match continues even if one team is up 2-0 in a 3-sets game.
+- Wrapper flags around state-machine `matchOver` are an anti-pattern. The engine's own `if (state.matchOver) return state` guard wins. If you need new end-of-match logic, parameterize the engine itself.
+- Test pattern: `node --input-type=module` harness simulating 24 `scorePoint` calls per set. Cheap validation before deploy.
+
+### FIP scoring enforcement (S045 / FT-09b)
+- **`validateMatch(rawSets)`** in `src/utils/scoringEngine.js` is the single source of truth. Returns `{ status: 'invalid'|'incomplete'|'complete', error, completedSets, invalidIndexes, winner, droppedSets }`. Strips trailing `[0,0]` (not played), auto-truncates dead-rubber sets after 2-0, flags FIP-invalid shapes by index. **Every new match-entry surface must import + gate save on its result.** Don't reimplement the rule per consumer.
+- **`isValidSet([a,b])`** companion export — pure FIP shape check (6-0..6-4, 7-5, 7-6 and mirrors). Use when you need just shape validation without completeness logic (e.g. inline form pre-flight).
+- **`status` enum values:** `pending | approved | incomplete`. Incomplete = FIP-valid sets but no 2-set winner. Excluded from ELO/leaderboard/H2H/stats by the existing `approvedMatches` selector. Visible in MatchHistory with grey tint + "Incomplete" badge.
+- **`incompleteMatches`** selector in App.jsx + context export. Same `useMemo` shape as `approvedMatches`/`pendingMatches`. MatchHistory merges `[...approvedMatches, ...incompleteMatches]` for the chronological timeline.
+- **DB BEFORE INSERT trigger (`matches_set_status_on_insert`)** RAISEs `EXCEPTION` (ERRCODE 23514) for FIP-invalid sets — defense-in-depth against console-direct INSERTs that bypass the client validator. Then assigns status via 4-quadrant logic: `admin+complete=approved`, `admin+incomplete=incomplete`, `non-admin+complete=pending`, `non-admin+incomplete=incomplete`. **Trigger is the single source of truth — never set status from the client.**
+- **CHECK constraint `matches_sets_valid_or_incomplete`** wraps `all_sets_valid(jsonb)` IMMUTABLE function (Postgres CHECK forbids subqueries). Conditional pattern `status = 'incomplete' OR all_sets_valid(sets)` — incomplete rows bypass shape validation, preserving historical malformed data + admin escape hatch.
+- **`matches_select` RLS** is now a 4-way union: approved-as-member OR incomplete-as-member OR pending-mine OR pending-as-admin. Incomplete matches visible to all league members (transparency; they're just out-of-rankings, not hidden).
+- **EditMatchModal blocks BOTH invalid AND incomplete on Save & Approve.** Admin reviewing a pending match must either edit it to be complete or use Reject. Saving as incomplete via the approve flow doesn't make semantic sense (admin is explicitly approving a result).
+- **ScoreStepper `invalid` prop** swaps border colour to `DG` (danger red) when true. Pass `invalid={invalidIndexes.includes(i)}` from validator output.
+
+### Score inputs (CRITICAL — do NOT regress, S040)
+All 8 set-score inputs use `type="text" inputMode="numeric" pattern="[0-9]*"` — **never `type="number"`** (iOS Safari doesn't support `setSelectionRange` on number inputs, breaks cursor + backspace). Controlled inputs intentionally do NOT have `onFocus={e=>e.target.select()}` (forced select-all on every tap). Empty-state pattern: `value={n===0?"":String(n)}` + `placeholder="0"`, onChange strips non-digits + clamps to max (7 for LogMatch/ScheduleView, ptsPerRound for AmericanoMode, no cap for RoundRobin).
+
+### Build / deploy / SW
+- **CRITICAL — Never cache-first for JS on Vercel** (S033). Vercel generates new hashes and DELETES old files on every deploy → cache-first guarantees blank screens. Always network-first for `/assets/*`.
+- **SW cache version:** Bump `CACHE_NAME` in `sw.js` on every major deploy (currently `v51`). Forces PWA re-fetch.
+- **Vite 8 + Rolldown:** `manualChunks` must be a **function**, not an object. Object syntax silently fails with TypeError.
+- **Vercel deploy email:** Private repo + unrecognized commit author email = instant ERROR state with empty build logs. Repo currently PUBLIC (made public 2026-04-21 after incident). Git config on `/tmp/Padel-Battle` must be `m.muwahid@gmail.com`.
+
+### Environment
+- **Multi-PC workflow:** Local `padelhub/` can desync from git when work is done on another PC. ALWAYS run `diff -rq` at cold start.
+- **Multi-PC sync — /tmp → OneDrive file-by-file** (S037): `for f in $(git ls-files); do cp "$f" OneDrive/$f; done` rather than `cp -r`. Blanket copy wipes workspace-only files.
+- **Windows /tmp in Node:** Git Bash /tmp = `AppData/Local/Temp`. Node.js /tmp = `C:\tmp`. Always use full Windows path in Node scripts.
+- **Supabase CLI:** `npx supabase` (not `supabase` directly). Project linked: `npx supabase link --project-ref nkvqbwdsoxylkqhubhig`.
+- **Git push via CLI:** Clone to `/tmp`, copy files, commit, push. More reliable than API-based uploads.
+- **VM builds:** Vite build crashes in Cowork VM (memory). Use esbuild for syntax checks.
+- **Supabase free tier email rate limit:** 2/hour. `friendlyAuthError()` shows "Too many attempts. Please wait..." instead of raw error.
+- **VAPID keys:** Public in `src/vapidPublicKey.js`, private in Supabase secret. Reference `docs/vapid-keys-DO-NOT-COMMIT.md`.
+
+## Workflow Rules
+1. **Mockup first:** HTML mockup → user review → approval → implement
+2. **Nav bar is LOCKED — re-locked S047 after #11+#12 shipped.** Tab IDs always locked. Labels/icons/layout locked unless an open issue explicitly waives it. No active waivers as of 2026-05-06.
+3. **No design changes without approval:** If not explicitly decided, don't change it
+4. **Placeholder data:** Use "Your League", "Player 1" etc. Never invent names
+5. **Deploy process:** Copy-paste App.jsx via GitHub editor. Binary files via upload page. Vercel auto-deploys.
