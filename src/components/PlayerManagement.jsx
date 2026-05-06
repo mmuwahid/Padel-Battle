@@ -137,7 +137,7 @@ export function PlayerManagement({ memberProfiles, setSidebarView }) {
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4, fontSize: 10, color: MT }}>
                     {p.country && flagEmoji(p.country) && (
                       <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-                        <span style={{ fontSize: 12, lineHeight: 1 }}>{flagEmoji(p.country)}</span>
+                        <span className="flag" style={{ fontSize: 12, lineHeight: 1 }}>{flagEmoji(p.country)}</span>
                         <span style={{ fontWeight: 600, letterSpacing: 0.5 }}>{p.country}</span>
                       </span>
                     )}

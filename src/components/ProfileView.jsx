@@ -35,7 +35,7 @@ export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, re
             <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,marginTop:8,flexWrap:"wrap"}}>
               {claimedPlayer.country && (
                 <span style={{fontSize:11,color:TX,background:CD2,padding:"4px 10px",borderRadius:12,display:"inline-flex",alignItems:"center",gap:4}}>
-                  <span style={{fontSize:13,lineHeight:1}}>{flagEmoji(claimedPlayer.country)}</span>
+                  <span className="flag" style={{fontSize:13,lineHeight:1}}>{flagEmoji(claimedPlayer.country)}</span>
                   <span style={{fontWeight:700,letterSpacing:0.5}}>{claimedPlayer.country}</span>
                 </span>
               )}

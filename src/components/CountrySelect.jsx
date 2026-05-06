@@ -220,9 +220,17 @@ export function CountrySelect({ value, onChange, placeholder = "Select country..
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return COUNTRIES;
-    return COUNTRIES.filter(c =>
-      c.name.toLowerCase().includes(q) || c.iso3.toLowerCase().includes(q)
-    );
+    // Starts-with match: country shows up if any word in the name starts with the query,
+    // OR the ISO-3 code starts with the query. So typing "p" pulls Pakistan / Palau /
+    // Palestine / ... but NOT Cabo Verde or Japan. Typing "south" pulls all three South-x.
+    return COUNTRIES.filter(c => {
+      const name = c.name.toLowerCase();
+      if (name.startsWith(q)) return true;
+      if (c.iso3.toLowerCase().startsWith(q)) return true;
+      // also match second-or-later word starts (so "korea" finds "South Korea", "republic" finds "Czech Republic")
+      const words = name.split(/[\s-]+/);
+      return words.some(w => w.startsWith(q));
+    });
   }, [query]);
 
   // Auto-focus search input when panel opens
@@ -283,7 +291,7 @@ export function CountrySelect({ value, onChange, placeholder = "Select country..
         <span style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0, overflow: "hidden" }}>
           {selected ? (
             <>
-              <span style={{ fontSize: 15, lineHeight: 1 }}>{flagEmoji(selected.iso3)}</span>
+              <span className="flag" style={{ fontSize: 15, lineHeight: 1 }}>{flagEmoji(selected.iso3)}</span>
               <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{selected.name}</span>
               <span style={{ color: MT, fontSize: 11, fontWeight: 600, letterSpacing: 0.5 }}>({selected.iso3})</span>
             </>
@@ -387,7 +395,7 @@ export function CountrySelect({ value, onChange, placeholder = "Select country..
                     gap: 8,
                   }}
                 >
-                  <span style={{ fontSize: 15, lineHeight: 1 }}>{flagEmoji(c.iso3)}</span>
+                  <span className="flag" style={{ fontSize: 15, lineHeight: 1 }}>{flagEmoji(c.iso3)}</span>
                   <span style={{ flex: 1 }}>{c.name}</span>
                   <span style={{ color: isSelected ? A : MT, fontSize: 11, fontWeight: 600, letterSpacing: 0.5 }}>{c.iso3}</span>
                 </button>

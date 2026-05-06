@@ -158,7 +158,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
           {/* FT-12: country flag slot — empty until #11 fills players.country */}
           {player.country && flagEmoji(player.country) && (
             <div style={{display:"flex",justifyContent:"center",alignItems:"center",gap:6,marginTop:8}}>
-              <span style={{fontSize:18,lineHeight:1}}>{flagEmoji(player.country)}</span>
+              <span className="flag" style={{fontSize:18,lineHeight:1}}>{flagEmoji(player.country)}</span>
               <span style={{fontSize:11,color:MT,fontWeight:600,letterSpacing:0.5}}>{player.country.toUpperCase()}</span>
             </div>
           )}
@@ -498,7 +498,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
             {/* FT-12: country flag slot — populated by #11 */}
             {p.country && flagEmoji(p.country) ? (
               <div style={{display:"flex",alignItems:"center",gap:4,marginTop:4}}>
-                <span style={{fontSize:14,lineHeight:1}}>{flagEmoji(p.country)}</span>
+                <span className="flag" style={{fontSize:14,lineHeight:1}}>{flagEmoji(p.country)}</span>
                 <span style={{fontSize:10,color:MT,fontWeight:600,letterSpacing:0.5}}>{p.country.toUpperCase()}</span>
               </div>
             ) : p.nickname ? (

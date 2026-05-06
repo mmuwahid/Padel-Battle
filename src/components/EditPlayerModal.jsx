@@ -119,7 +119,7 @@ export function EditPlayerModal({ player, onClose, onSaved }) {
         <input value={nickname} onChange={e => setNickname(e.target.value)} style={{ ...inp, marginBottom: 12 }} placeholder="Optional" />
 
         {/* Country */}
-        <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: MT, marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>Country {country && <span style={{ fontSize: 14, marginLeft: 4 }}>{flagEmoji(country)}</span>}</label>
+        <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: MT, marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>Country {country && <span className="flag" style={{ fontSize: 14, marginLeft: 4 }}>{flagEmoji(country)}</span>}</label>
         <div style={{ marginBottom: 12 }}>
           <CountrySelect value={country} onChange={setCountry}/>
         </div>

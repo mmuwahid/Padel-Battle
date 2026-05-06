@@ -774,8 +774,9 @@ function AppContent({leagueId,user,onSwitchLeague}){
   return (
     <LeagueContext.Provider value={leagueCtx}>
     <div style={{background:BG,minHeight:"100vh",paddingBottom:"calc(82px + env(safe-area-inset-bottom, 0px))",fontFamily:"'Outfit',sans-serif",color:TX}}>
-      {/* Issue #15: paint html/body dark + lock overscroll so rubber-band at the page top no longer reveals BG above the sticky header */}
-      <style>{`html,body{background:#0d0d14;overscroll-behavior-y:none;-webkit-overflow-scrolling:auto;} @keyframes spin{to{transform:rotate(360deg)}} @keyframes fadeIn{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}} input:focus,select:focus,textarea:focus{border-color:${A} !important;box-shadow:0 0 0 2px ${A}30 !important;}`}</style>
+      {/* Issue #15: paint html/body dark + lock overscroll so rubber-band at the page top no longer reveals BG above the sticky header.
+          S050 .flag class: forces an emoji-priority font stack so country flag glyphs render across Windows / iOS / Android / macOS — without it, Windows may fall back to "PS"/"GB" letter blocks because the inherited Outfit font lacks emoji glyphs. */}
+      <style>{`html,body{background:#0d0d14;overscroll-behavior-y:none;-webkit-overflow-scrolling:auto;} .flag{font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji','Twemoji Mozilla','EmojiOne Color','Android Emoji',sans-serif;font-style:normal;font-weight:normal;} @keyframes spin{to{transform:rotate(360deg)}} @keyframes fadeIn{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}} input:focus,select:focus,textarea:focus{border-color:${A} !important;box-shadow:0 0 0 2px ${A}30 !important;}`}</style>
       {/* HEADER — FT-12: gradient blends under status bar / dynamic island, italic uppercase wordmark, tight S044 v3 padding restored */}
       <div style={{background:"linear-gradient(180deg,#0d0d14 0%,"+CD+" 100%)",padding:"4px 16px",paddingTop:"calc(env(safe-area-inset-top, 0px) + 0px)",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:10}}>
         <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
@@ -983,7 +984,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
                     </div>
                     <div style={{textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:1}}>
                       {flag ? <>
-                        <span style={{fontSize:14,lineHeight:1}}>{flag}</span>
+                        <span className="flag" style={{fontSize:14,lineHeight:1}}>{flag}</span>
                         <span style={{fontSize:8,color:MT,fontWeight:700,letterSpacing:0.3}}>{ctry}</span>
                       </> : <span style={{fontSize:11,color:MT,opacity:0.4}}>—</span>}
                     </div>
