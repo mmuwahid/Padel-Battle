@@ -370,8 +370,8 @@ function AppContent({leagueId,user,onSwitchLeague}){
     // Top Pair (best win rate, min 3 matches together)
     const pairs = {};
     seasonMatches.forEach(m => {
-      const keyA = [m.team_a[0], m.team_a[1]].sort().join('-');
-      const keyB = [m.team_b[0], m.team_b[1]].sort().join('-');
+      const keyA = [m.team_a[0], m.team_a[1]].sort().join('|');
+      const keyB = [m.team_b[0], m.team_b[1]].sort().join('|');
       if (!pairs[keyA]) pairs[keyA] = { wins: 0, total: 0 };
       if (!pairs[keyB]) pairs[keyB] = { wins: 0, total: 0 };
       pairs[keyA].total++; pairs[keyB].total++;
@@ -381,7 +381,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
     const validPairs = Object.entries(pairs).filter(([_, p]) => p.total >= 3);
     if (validPairs.length > 0) {
       const best = validPairs.reduce((a, b) => (b[1].wins / b[1].total) > (a[1].wins / a[1].total) ? b : a);
-      const [p1, p2] = best[0].split('-');
+      const [p1, p2] = best[0].split('|');
       awards.topPair = { playerIds: [p1, p2], wins: best[1].wins, total: best[1].total, winRate: ((best[1].wins / best[1].total) * 100).toFixed(0) };
     }
 
@@ -974,7 +974,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
                           <div style={{display:"flex",alignItems:"center",gap:8}}>
                             <Avatar pid={awards.champion.playerId} size={34}/>
                             <div>
-                              <div style={{fontSize:13,fontWeight:900,color:TX,fontStyle:"italic",textTransform:"uppercase"}}>{getName(awards.champion.playerId)}</div>
+                              <div style={{fontSize:13,fontWeight:900,color:TX,textTransform:"uppercase"}}>{getName(awards.champion.playerId)}</div>
                               <div style={{fontSize:11,color:GD,fontWeight:700}}>{awards.champion.wins} wins</div>
                             </div>
                           </div>
@@ -986,7 +986,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
                           <div style={{display:"flex",alignItems:"center",gap:8}}>
                             <Avatar pid={awards.runnerUp.playerId} size={34}/>
                             <div>
-                              <div style={{fontSize:13,fontWeight:900,color:TX,fontStyle:"italic",textTransform:"uppercase"}}>{getName(awards.runnerUp.playerId)}</div>
+                              <div style={{fontSize:13,fontWeight:900,color:TX,textTransform:"uppercase"}}>{getName(awards.runnerUp.playerId)}</div>
                               <div style={{fontSize:11,color:SV,fontWeight:700}}>{awards.runnerUp.wins} wins</div>
                             </div>
                           </div>
@@ -994,20 +994,22 @@ function AppContent({leagueId,user,onSwitchLeague}){
                       )}
                     </div>
                   )}
-                  {/* Top Pair — full-width */}
+                  {/* Top Pair — full-width, centered avatar+name per player */}
                   {awards.topPair && (
-                    <div style={{padding:"14px 12px",background:CD2,borderRadius:10,border:`1px solid ${A}30`}}>
-                      <div style={{fontSize:9,fontWeight:800,color:A,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8}}>🤝 Top Pair</div>
-                      <div style={{display:"flex",alignItems:"center",gap:10}}>
-                        <div style={{display:"flex",alignItems:"center"}}>
-                          <Avatar pid={awards.topPair.playerIds[0]} size={30}/>
-                          <Avatar pid={awards.topPair.playerIds[1]} size={30} />
+                    <div style={{padding:"14px 12px",background:CD2,borderRadius:10,border:`1px solid ${A}30`,textAlign:"center"}}>
+                      <div style={{fontSize:9,fontWeight:800,color:A,letterSpacing:0.8,textTransform:"uppercase",marginBottom:10}}>🤝 Top Pair</div>
+                      <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:20}}>
+                        <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,minWidth:0,flex:1}}>
+                          <Avatar pid={awards.topPair.playerIds[0]} size={32}/>
+                          <div style={{fontSize:11,fontWeight:800,color:TX,textTransform:"uppercase",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:"100%"}}>{getName(awards.topPair.playerIds[0])}</div>
                         </div>
-                        <div style={{flex:1,minWidth:0}}>
-                          <div style={{fontSize:12,fontWeight:800,color:TX,fontStyle:"italic",textTransform:"uppercase",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{formatTeam(getName(awards.topPair.playerIds[0]),getName(awards.topPair.playerIds[1]))}</div>
-                          <div style={{fontSize:11,color:A,fontWeight:600}}>{awards.topPair.winRate}% WR · {awards.topPair.wins}W/{awards.topPair.total-awards.topPair.wins}L</div>
+                        <div style={{fontSize:13,color:MT,fontWeight:700,flexShrink:0}}>×</div>
+                        <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,minWidth:0,flex:1}}>
+                          <Avatar pid={awards.topPair.playerIds[1]} size={32}/>
+                          <div style={{fontSize:11,fontWeight:800,color:TX,textTransform:"uppercase",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:"100%"}}>{getName(awards.topPair.playerIds[1])}</div>
                         </div>
                       </div>
+                      <div style={{fontSize:10,color:A,fontWeight:600,marginTop:8}}>{awards.topPair.winRate}% WR · {awards.topPair.wins}W/{awards.topPair.total-awards.topPair.wins}L</div>
                     </div>
                   )}
                   {/* Bottom row: Most Active · Most MOTM · Longest Streak */}
@@ -1016,7 +1018,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
                       <div style={{padding:"10px 8px",background:CD2,borderRadius:10,border:`1px solid ${BD}`}}>
                         <div style={{fontSize:8,fontWeight:800,color:MT,letterSpacing:0.5,textTransform:"uppercase",marginBottom:6}}>⚡ Most Active</div>
                         <Avatar pid={awards.mostActive.playerId} size={26}/>
-                        <div style={{fontSize:11,fontWeight:800,color:TX,marginTop:5,fontStyle:"italic",textTransform:"uppercase",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{getName(awards.mostActive.playerId)}</div>
+                        <div style={{fontSize:11,fontWeight:800,color:TX,marginTop:5,textTransform:"uppercase",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{getName(awards.mostActive.playerId)}</div>
                         <div style={{fontSize:10,color:A,fontWeight:700,marginTop:2}}>{awards.mostActive.value} MP</div>
                       </div>
                     )}
@@ -1024,16 +1026,16 @@ function AppContent({leagueId,user,onSwitchLeague}){
                       <div style={{padding:"10px 8px",background:CD2,borderRadius:10,border:`1px solid ${BD}`}}>
                         <div style={{fontSize:8,fontWeight:800,color:MT,letterSpacing:0.5,textTransform:"uppercase",marginBottom:6}}>⭐ Most MOTM</div>
                         <Avatar pid={awards.mostMotm.playerId} size={26}/>
-                        <div style={{fontSize:11,fontWeight:800,color:TX,marginTop:5,fontStyle:"italic",textTransform:"uppercase",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{getName(awards.mostMotm.playerId)}</div>
+                        <div style={{fontSize:11,fontWeight:800,color:TX,marginTop:5,textTransform:"uppercase",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{getName(awards.mostMotm.playerId)}</div>
                         <div style={{fontSize:10,color:GD,fontWeight:700,marginTop:2}}>{awards.mostMotm.value}× MOTM</div>
                       </div>
                     )}
                     {awards.longestStreak && (
                       <div style={{padding:"10px 8px",background:CD2,borderRadius:10,border:`1px solid ${BD}`}}>
-                        <div style={{fontSize:8,fontWeight:800,color:MT,letterSpacing:0.5,textTransform:"uppercase",marginBottom:6}}>🔥 Best Streak</div>
+                        <div style={{fontSize:8,fontWeight:800,color:MT,letterSpacing:0.5,textTransform:"uppercase",marginBottom:6}}>🔥 Cons. Wins</div>
                         <Avatar pid={awards.longestStreak.playerId} size={26}/>
-                        <div style={{fontSize:11,fontWeight:800,color:TX,marginTop:5,fontStyle:"italic",textTransform:"uppercase",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{getName(awards.longestStreak.playerId)}</div>
-                        <div style={{fontSize:10,color:DG,fontWeight:700,marginTop:2}}>{awards.longestStreak.value} in a row</div>
+                        <div style={{fontSize:11,fontWeight:800,color:TX,marginTop:5,textTransform:"uppercase",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{getName(awards.longestStreak.playerId)}</div>
+                        <div style={{fontSize:10,color:A,fontWeight:700,marginTop:2}}>{awards.longestStreak.value} in a row</div>
                       </div>
                     )}
                   </div>
@@ -1113,7 +1115,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
                       <div style={{width:30,height:30,borderRadius:"50%",overflow:"hidden",background:`linear-gradient(135deg,${A}25,${A}08)`,border:`1.5px solid ${A}30`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:800,color:A,flexShrink:0}}>
                         {player?.avatar_url ? <img src={player.avatar_url} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/> : (p.name[0]||"?").toUpperCase()}
                       </div>
-                      <div style={{fontSize:11,fontWeight:900,fontStyle:"italic",textTransform:"uppercase",letterSpacing:0.3,color:TX,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{p.nickname||p.name}</div>
+                      <div style={{fontSize:11,fontWeight:900,textTransform:"uppercase",letterSpacing:0.3,color:TX,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{p.nickname||p.name}</div>
                     </div>
                     <div style={{textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:1}}>
                       {flag ? <>
@@ -1139,7 +1141,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
               <div style={{display:"flex",flexDirection:"column",gap:8}}>
                 {seasonLb.map(p=>(
                   <div key={"f"+p.id} onClick={()=>{setSelectedPlayer(p.id);setTab("stats");}} style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,cursor:"pointer"}}>
-                    <span style={{fontSize:12,fontWeight:700,color:TX,fontStyle:"italic",textTransform:"uppercase",letterSpacing:0.3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",minWidth:0,flex:1}}>{p.nickname||p.name}</span>
+                    <span style={{fontSize:12,fontWeight:700,color:TX,textTransform:"uppercase",letterSpacing:0.3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",minWidth:0,flex:1}}>{p.nickname||p.name}</span>
                     <FD f={getSeasonForm(p.id)}/>
                   </div>
                 ))}
