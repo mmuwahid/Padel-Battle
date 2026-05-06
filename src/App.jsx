@@ -771,8 +771,9 @@ function AppContent({leagueId,user,onSwitchLeague}){
 
   return (
     <LeagueContext.Provider value={leagueCtx}>
-    <div style={{background:BG,minHeight:"100vh",paddingBottom:"calc(96px + env(safe-area-inset-bottom, 0px))",fontFamily:"'Outfit',sans-serif",color:TX}}>
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}} @keyframes fadeIn{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}} input:focus,select:focus,textarea:focus{border-color:${A} !important;box-shadow:0 0 0 2px ${A}30 !important;}`}</style>
+    <div style={{background:BG,minHeight:"100vh",paddingBottom:"calc(82px + env(safe-area-inset-bottom, 0px))",fontFamily:"'Outfit',sans-serif",color:TX}}>
+      {/* Issue #15: paint html/body dark + lock overscroll so rubber-band at the page top no longer reveals BG above the sticky header */}
+      <style>{`html,body{background:#0d0d14;overscroll-behavior-y:none;-webkit-overflow-scrolling:auto;} @keyframes spin{to{transform:rotate(360deg)}} @keyframes fadeIn{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}} input:focus,select:focus,textarea:focus{border-color:${A} !important;box-shadow:0 0 0 2px ${A}30 !important;}`}</style>
       {/* HEADER — FT-12: gradient blends under status bar / dynamic island, italic uppercase wordmark, tight S044 v3 padding restored */}
       <div style={{background:"linear-gradient(180deg,#0d0d14 0%,"+CD+" 100%)",padding:"4px 16px",paddingTop:"calc(env(safe-area-inset-top, 0px) + 0px)",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:10}}>
         <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
@@ -1174,10 +1175,10 @@ function AppContent({leagueId,user,onSwitchLeague}){
         </div>
       )}
 
-      {/* FT-12 v2: solid pedestal behind floating nav — hides scrolled content from showing through side gutters / below nav */}
-      <div style={{position:"fixed",bottom:0,left:0,right:0,height:`calc(82px + env(safe-area-inset-bottom, 0px))`,background:BG,zIndex:99,pointerEvents:"none"}}/>
-      {/* BOTTOM NAV — FT-12: floating rounded pill with side gutters, accent-soft border, fixed at bottom */}
-      <div style={{position:"fixed",bottom:`calc(14px + env(safe-area-inset-bottom, 0px))`,left:14,right:14,background:`${CD}f0`,backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",border:`1px solid ${A}40`,borderRadius:28,display:"grid",gridTemplateColumns:"repeat(7,1fr)",alignItems:"end",padding:"8px 6px 10px",zIndex:100,boxShadow:"0 8px 30px rgba(0,0,0,0.45)"}}>
+      {/* FT-12 v2: solid pedestal behind floating nav — hides scrolled content from showing through side gutters / below nav. Issue #15: pedestal slimmed 82→68px to track tighter nav. */}
+      <div style={{position:"fixed",bottom:0,left:0,right:0,height:`calc(68px + env(safe-area-inset-bottom, 0px))`,background:BG,zIndex:99,pointerEvents:"none"}}/>
+      {/* BOTTOM NAV — FT-12: floating rounded pill with side gutters, accent-soft border, fixed at bottom. Issue #15: gap from screen bottom 14→6px, internal padding 8/6/10 → 6/6/8. */}
+      <div style={{position:"fixed",bottom:`calc(6px + env(safe-area-inset-bottom, 0px))`,left:14,right:14,background:`${CD}f0`,backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",border:`1px solid ${A}40`,borderRadius:28,display:"grid",gridTemplateColumns:"repeat(7,1fr)",alignItems:"end",padding:"6px 6px 8px",zIndex:100,boxShadow:"0 8px 30px rgba(0,0,0,0.45)"}}>
         {TL.map(t => (
           <button key={t.key} onClick={()=>{setTab(t.key);setSidebarOpen(false);setSidebarView(null);}} style={{background:tab===t.key?A+"15":"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",color:tab===t.key?A:MT,cursor:"pointer",padding:"6px 0",borderRadius:8,minHeight:44}}>
             <div style={{height:24,display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:18,lineHeight:1}}>{t.icon==="court"?<CourtIcon/>:t.icon}</span></div>
