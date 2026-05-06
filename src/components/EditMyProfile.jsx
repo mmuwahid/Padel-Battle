@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { A, CD, CD2, BD, TX, MT } from "../theme";
 import { useLeague } from "../LeagueContext";
-import { COUNTRIES } from "./EditPlayerModal";
+import { CountrySelect } from "./CountrySelect";
 
 // S050: User self-edit modal for the player record they've claimed.
 // Lets the user update name / nickname / country / playing_position on
@@ -66,10 +66,7 @@ export function EditMyProfile({ player, onClose }) {
         {/* Country */}
         <div style={{marginBottom:12}}>
           <label style={{display:"block",fontSize:10,color:MT,fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>Country</label>
-          <select value={country} onChange={(e)=>setCountry(e.target.value)} style={{width:"100%",padding:"10px 12px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:13,fontFamily:"'Outfit',sans-serif",outline:"none"}}>
-            <option value="">— Not set —</option>
-            {COUNTRIES.map(c => <option key={c.iso3} value={c.iso3}>{c.name} ({c.iso3})</option>)}
-          </select>
+          <CountrySelect value={country} onChange={setCountry}/>
         </div>
 
         {/* Playing Position */}

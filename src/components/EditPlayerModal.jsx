@@ -2,54 +2,12 @@ import React, { useState, useRef } from "react";
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, BL } from "../theme";
 import { flagEmoji } from "../utils/helpers";
 import { useLeague } from "../LeagueContext";
+import { CountrySelect } from "./CountrySelect";
 
-// FT-12 v2: country list (aligned with flagEmoji helper). Sorted alphabetically.
-// Add more codes here AND in helpers.js ISO3_TO_ISO2 if needed.
-// S050: exported so EditMyProfile (user self-edit) can reuse the same list.
-export const COUNTRIES = [
-  { iso3: "ARE", name: "United Arab Emirates" },
-  { iso3: "ARG", name: "Argentina" },
-  { iso3: "AUS", name: "Australia" },
-  { iso3: "AUT", name: "Austria" },
-  { iso3: "BEL", name: "Belgium" },
-  { iso3: "BRA", name: "Brazil" },
-  { iso3: "CAN", name: "Canada" },
-  { iso3: "CHE", name: "Switzerland" },
-  { iso3: "CHN", name: "China" },
-  { iso3: "DEU", name: "Germany" },
-  { iso3: "DNK", name: "Denmark" },
-  { iso3: "DZA", name: "Algeria" },
-  { iso3: "EGY", name: "Egypt" },
-  { iso3: "ESP", name: "Spain" },
-  { iso3: "FIN", name: "Finland" },
-  { iso3: "FRA", name: "France" },
-  { iso3: "GBR", name: "Great Britain" },
-  { iso3: "GRC", name: "Greece" },
-  { iso3: "IND", name: "India" },
-  { iso3: "IRL", name: "Ireland" },
-  { iso3: "IRQ", name: "Iraq" },
-  { iso3: "ITA", name: "Italy" },
-  { iso3: "JOR", name: "Jordan" },
-  { iso3: "JPN", name: "Japan" },
-  { iso3: "KOR", name: "South Korea" },
-  { iso3: "KWT", name: "Kuwait" },
-  { iso3: "LBN", name: "Lebanon" },
-  { iso3: "MAR", name: "Morocco" },
-  { iso3: "MEX", name: "Mexico" },
-  { iso3: "NLD", name: "Netherlands" },
-  { iso3: "NOR", name: "Norway" },
-  { iso3: "POL", name: "Poland" },
-  { iso3: "PRT", name: "Portugal" },
-  { iso3: "PSE", name: "Palestine" },
-  { iso3: "QAT", name: "Qatar" },
-  { iso3: "RUS", name: "Russia" },
-  { iso3: "SAU", name: "Saudi Arabia" },
-  { iso3: "SWE", name: "Sweden" },
-  { iso3: "SYR", name: "Syria" },
-  { iso3: "TUN", name: "Tunisia" },
-  { iso3: "TUR", name: "Turkey" },
-  { iso3: "USA", name: "United States" },
-];
+// S050: COUNTRIES moved to ./CountrySelect (full UN list, sorted by name,
+// Israel excluded). EditPlayerModal renders <CountrySelect/> instead of a
+// native <select>. flagEmoji helper handles the matching ISO3→ISO2 map in
+// utils/helpers.js.
 
 export function EditPlayerModal({ player, onClose, onSaved }) {
   const { supabase, user, showToast, loadLeagueData } = useLeague();
@@ -162,10 +120,9 @@ export function EditPlayerModal({ player, onClose, onSaved }) {
 
         {/* Country */}
         <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: MT, marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>Country {country && <span style={{ fontSize: 14, marginLeft: 4 }}>{flagEmoji(country)}</span>}</label>
-        <select value={country} onChange={e => setCountry(e.target.value)} style={{ ...inp, marginBottom: 12, appearance: "auto", cursor: "pointer" }}>
-          <option value="">— Select country —</option>
-          {COUNTRIES.map(c => <option key={c.iso3} value={c.iso3}>{c.name} ({c.iso3})</option>)}
-        </select>
+        <div style={{ marginBottom: 12 }}>
+          <CountrySelect value={country} onChange={setCountry}/>
+        </div>
 
         {/* Playing position */}
         <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: MT, marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>Playing Position</label>
