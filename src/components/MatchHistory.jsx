@@ -13,12 +13,14 @@ const REACTIONS = [
 ];
 
 export function MatchHistory({onEdit,shareMatch,sel,onMatchDeleted}){
-  const { supabase, user, players, approvedMatches, pendingMatches, incompleteMatches, isAdmin, getName, showToast } = useLeague();
+  const { supabase, user, players, approvedMatches, pendingMatches, incompleteMatches, isAdmin, getName, showToast, seasons, selectedSeason, setSelectedSeason } = useLeague();
   // FT-09: existing list reads approved-only. My-pending section reads pending submitted by current user.
   // FT-09b / S045: incomplete matches are merged into the timeline with grey styling + "Incomplete" badge.
-  const matches = approvedMatches;
-  const myPendingMatches = (pendingMatches || []).filter(m => m.logged_by === user?.id);
-  const incompleteList = incompleteMatches || [];
+  // Issue #40: season selector synced via LeagueContext (same source as Ranking screen).
+  const seasonFilter = (m) => !selectedSeason || m.season_id === selectedSeason;
+  const matches = approvedMatches.filter(seasonFilter);
+  const myPendingMatches = (pendingMatches || []).filter(m => m.logged_by === user?.id).filter(seasonFilter);
+  const incompleteList = (incompleteMatches || []).filter(seasonFilter);
   const [pendingExpanded, setPendingExpanded] = useState(true);
   const [fp,setFp]=useState("");
   const [cd,setCd]=useState(null);
@@ -78,6 +80,15 @@ export function MatchHistory({onEdit,shareMatch,sel,onMatchDeleted}){
 
   return (
     <div>
+      {/* Issue #40: Season selector — synced with Ranking screen via LeagueContext */}
+      {seasons && seasons.length > 0 && (
+        <div style={{display:"flex",justifyContent:"flex-end",marginBottom:10}}>
+          <select value={selectedSeason||""} onChange={e=>setSelectedSeason(e.target.value)} style={{background:CD2,color:TX,border:`1px solid ${BD}`,borderRadius:10,padding:"6px 10px",fontSize:12,fontWeight:700,fontFamily:"'Outfit',sans-serif",cursor:"pointer",outline:"none"}}>
+            {seasons.map(s=><option key={s.id} value={s.id}>{s.name}{s.active?" (active)":""}</option>)}
+          </select>
+        </div>
+      )}
+
       {/* FT-09: Admin Approvals Queue — visible only to admins/owners with non-empty queue */}
       <MatchApprovalsQueue />
 

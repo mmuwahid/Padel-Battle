@@ -827,7 +827,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
   // S022/S026: Plain object — NOT useMemo. Early returns above this line make useMemo violate Rules of Hooks.
   const leagueCtx = {
     supabase, user, leagueId, league, players, matches, approvedMatches, pendingMatches, incompleteMatches,
-    elo, seasons, isAdmin, isOwner, myMemberId, leagueMembers, memberProfiles,
+    elo, seasons, selectedSeason, setSelectedSeason, isAdmin, isOwner, myMemberId, leagueMembers, memberProfiles,
     getName, showToast, sendPushNotification, loadLeagueData,
   };
 
