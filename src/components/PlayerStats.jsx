@@ -437,8 +437,12 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
               <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:12,textTransform:"uppercase",letterSpacing:0.5}}>⭐ MOTM Ranking</div>
               {analyticsData.topMotm.map((x,i)=>(
                 <div key={x.pid} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:i<analyticsData.topMotm.length-1?`1px solid ${BD}`:undefined}}>
-                  <span style={{fontSize:12,color:TX}}>{i+1}. {getName(x.pid)}</span>
-                  <span style={{fontSize:12,fontWeight:700,color:GD,fontFamily:"'JetBrains Mono'"}}>{x.count}× ⭐</span>
+                  <div style={{display:"flex",alignItems:"center",gap:8,minWidth:0,flex:1}}>
+                    <span style={{fontSize:12,color:MT,fontWeight:700,fontFamily:"'JetBrains Mono'",minWidth:14,textAlign:"right"}}>{i+1}.</span>
+                    <div style={{width:28,height:28,borderRadius:"50%",background:`${GD}15`,border:`2px solid ${GD}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:GD,overflow:"hidden",flexShrink:0}}>{getAvatar(x.pid)?<img src={getAvatar(x.pid)} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:getName(x.pid)[0]}</div>
+                    <span style={{fontSize:12,color:TX,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{getName(x.pid)}</span>
+                  </div>
+                  <span style={{fontSize:12,fontWeight:700,color:GD,fontFamily:"'JetBrains Mono'",flexShrink:0}}>{x.count}× ⭐</span>
                 </div>
               ))}
             </div>}
