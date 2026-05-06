@@ -60,11 +60,11 @@ export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, re
         {claimedPlayer && ps.filter(p=>p.id===claimedPlayer.id).map(p=>(
           <React.Fragment key={p.id}>
             <div style={{background:CD2,padding:12,borderRadius:8,textAlign:"center"}}>
-              <div style={{fontSize:11,color:MT,fontWeight:600,marginBottom:4}}>Wins</div>
+              <div style={{fontSize:11,color:MT,fontWeight:600,marginBottom:4}}>Match Won</div>
               <div style={{fontSize:20,fontWeight:800,color:A}}>{p.wins}</div>
             </div>
             <div style={{background:CD2,padding:12,borderRadius:8,textAlign:"center"}}>
-              <div style={{fontSize:11,color:MT,fontWeight:600,marginBottom:4}}>Losses</div>
+              <div style={{fontSize:11,color:MT,fontWeight:600,marginBottom:4}}>Match Lost</div>
               <div style={{fontSize:20,fontWeight:800,color:p.losses>0?DG:TX}}>{p.losses}</div>
             </div>
             <div style={{background:CD2,padding:12,borderRadius:8,textAlign:"center"}}>

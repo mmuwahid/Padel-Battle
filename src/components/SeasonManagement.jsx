@@ -213,11 +213,11 @@ export function SeasonManagement({ setSidebarView }) {
 
         {/* Dates */}
         <div style={{display:"flex",gap:8,marginBottom:16}}>
-          <div style={{flex:1}}>
+          <div style={{flex:1,minWidth:0,overflow:"hidden"}}>
             <label style={labelStyle}>Start</label>
             <input type="date" value={editStart} onChange={(e)=>setEditStart(e.target.value)} style={inputStyle}/>
           </div>
-          <div style={{flex:1}}>
+          <div style={{flex:1,minWidth:0,overflow:"hidden"}}>
             <label style={labelStyle}>End</label>
             <input type="date" value={editEnd} onChange={(e)=>setEditEnd(e.target.value)} style={inputStyle}/>
           </div>
@@ -321,7 +321,7 @@ export function SeasonManagement({ setSidebarView }) {
       {/* New Season sheet */}
       {showCreate && (
         <div onClick={()=>!creating && setShowCreate(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:200,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
-          <div onClick={(e)=>e.stopPropagation()} style={{width:"100%",maxWidth:480,background:CD,borderTopLeftRadius:20,borderTopRightRadius:20,padding:"16px 16px calc(20px + env(safe-area-inset-bottom, 0px))",fontFamily:"'Outfit',sans-serif"}}>
+          <div onClick={(e)=>e.stopPropagation()} style={{width:"100%",maxWidth:480,background:CD,borderTopLeftRadius:20,borderTopRightRadius:20,padding:"16px 16px calc(20px + env(safe-area-inset-bottom, 0px))",fontFamily:"'Outfit',sans-serif",overflow:"hidden"}}>
             <div style={{width:36,height:4,background:BD,borderRadius:2,margin:"0 auto 14px"}}/>
             <h3 style={{fontSize:16,fontWeight:900,fontStyle:"italic",textTransform:"uppercase",letterSpacing:0.5,color:TX,margin:"0 0 14px"}}>New Season</h3>
 
