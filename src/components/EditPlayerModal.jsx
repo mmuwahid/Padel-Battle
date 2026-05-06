@@ -5,7 +5,8 @@ import { useLeague } from "../LeagueContext";
 
 // FT-12 v2: country list (aligned with flagEmoji helper). Sorted alphabetically.
 // Add more codes here AND in helpers.js ISO3_TO_ISO2 if needed.
-const COUNTRIES = [
+// S050: exported so EditMyProfile (user self-edit) can reuse the same list.
+export const COUNTRIES = [
   { iso3: "ARE", name: "United Arab Emirates" },
   { iso3: "ARG", name: "Argentina" },
   { iso3: "AUS", name: "Australia" },

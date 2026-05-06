@@ -1,10 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import { A, CD, CD2, BD, TX, MT, DG } from '../theme';
-import { formatTeam, win, formatDate } from '../utils/helpers';
+import { formatTeam, win, formatDate, flagEmoji } from '../utils/helpers';
 import { calcElo } from '../utils/elo';
 import { ACHS } from '../data/achievements';
+import { EditMyProfile } from './EditMyProfile';
 
 export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, removeAvatar, claimedPlayer, ps, elo, matches, players, isAdmin, getName, getStreak, setSidebarView, setTab, setSidebarOpen }) {
+  const [editingMyProfile, setEditingMyProfile] = useState(false);
   return (
     <div style={{padding:"20px 16px",paddingBottom:"calc(80px + env(safe-area-inset-bottom, 0px))"}}>
       <button onClick={()=>setSidebarView(null)} style={{marginBottom:20,background:"none",border:"none",color:A,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>← Back</button>
@@ -22,12 +24,36 @@ export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, re
         </div>
         {avatarUploading && <div style={{fontSize:11,color:A,marginBottom:4}}>Uploading...</div>}
         {avatarUrl && <button onClick={removeAvatar} style={{background:"none",border:"none",color:DG,fontSize:10,cursor:"pointer",marginBottom:4,fontFamily:"'Outfit',sans-serif"}}>Remove Photo</button>}
-        <h2 style={{fontSize:18,fontWeight:700,margin:0,color:TX}}>{user.user_metadata?.display_name||user.email?.split("@")[0]||"User"}</h2>
+        <h2 style={{fontSize:18,fontWeight:700,margin:0,color:TX}}>{claimedPlayer?.name || user.user_metadata?.display_name||user.email?.split("@")[0]||"User"}</h2>
         <p style={{fontSize:12,color:MT,margin:"4px 0 0 0"}}>{user.email}</p>
-        {claimedPlayer && <div style={{fontSize:11,color:A,marginTop:4,display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
-          <span>{isAdmin?"👤 Admin":"👤 Member"}</span>
-        </div>}
+        {claimedPlayer && (
+          <>
+            <div style={{fontSize:11,color:A,marginTop:4,display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
+              <span>{isAdmin?"👤 Admin":"👤 Member"}</span>
+            </div>
+            {/* S050: country / position chips + Edit Profile entry */}
+            <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,marginTop:8,flexWrap:"wrap"}}>
+              {claimedPlayer.country && (
+                <span style={{fontSize:11,color:TX,background:CD2,padding:"4px 10px",borderRadius:12,display:"inline-flex",alignItems:"center",gap:4}}>
+                  <span style={{fontSize:13,lineHeight:1}}>{flagEmoji(claimedPlayer.country)}</span>
+                  <span style={{fontWeight:700,letterSpacing:0.5}}>{claimedPlayer.country}</span>
+                </span>
+              )}
+              {claimedPlayer.playing_position && (
+                <span style={{fontSize:11,color:TX,background:CD2,padding:"4px 10px",borderRadius:12,textTransform:"capitalize",fontWeight:600}}>{claimedPlayer.playing_position} side</span>
+              )}
+              {claimedPlayer.nickname && (
+                <span style={{fontSize:11,color:MT,background:CD2,padding:"4px 10px",borderRadius:12,fontStyle:"italic"}}>"{claimedPlayer.nickname}"</span>
+              )}
+            </div>
+            <button onClick={()=>setEditingMyProfile(true)} style={{marginTop:10,padding:"8px 16px",background:"transparent",border:`1px solid ${A}40`,borderRadius:8,color:A,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif",fontStyle:"italic",textTransform:"uppercase",letterSpacing:0.5}}>✎ Edit Profile</button>
+          </>
+        )}
       </div>
+
+      {editingMyProfile && claimedPlayer && (
+        <EditMyProfile player={claimedPlayer} onClose={()=>setEditingMyProfile(false)}/>
+      )}
 
       {/* Career Stats Grid */}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:24}}>
