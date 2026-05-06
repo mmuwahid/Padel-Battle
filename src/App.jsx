@@ -11,6 +11,7 @@ import { ProfileView } from './components/ProfileView';
 import { AdminDashboard } from './components/AdminDashboard';
 import { PlayerManagement } from './components/PlayerManagement';
 import { SeasonManagement } from './components/SeasonManagement';
+import { LeagueManagement } from './components/LeagueManagement';
 import { PlatformAdmin } from './components/PlatformAdmin';
 import { SettingsView } from './components/SettingsView';
 import { NotificationCenter } from './components/NotificationCenter';
@@ -255,7 +256,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
         supabase.from("league_members").select("id,user_id,role,profiles(id,email,display_name,avatar_url)").eq("league_id",leagueId),
         supabase.from("players").select("id,name,nickname,user_id,created_by,created_at,avatar_url,country,playing_position").eq("league_id",leagueId).order("name"),
         supabase.from("matches").select("id,team_a,team_b,sets,motm,date,season_id,league_id,status,logged_by,created_at").eq("league_id",leagueId).order("date",{ascending:false}).limit(500),
-        supabase.from("seasons").select("id,name,active").eq("league_id",leagueId).order("start_date"),
+        supabase.from("seasons").select("id,name,active,start_date,end_date,location").eq("league_id",leagueId).order("start_date"),
         supabase.from("challenges").select("id,team_a,team_b,status,date,time,location,notes,created_by,match_id,responses,duration,league_id").eq("league_id",leagueId).in("status",["open","pending","confirmed","played"]).order("date",{ascending:true})
       ]);
 
@@ -338,75 +339,59 @@ function AppContent({leagueId,user,onSwitchLeague}){
 
     if (seasonMatches.length === 0) return awards;
 
-    // MVP (highest ELO)
-    const eloAtSeason = calcElo(players, seasonMatches);
-    const mvpPlayer = Object.entries(eloAtSeason).reduce((a, b) => b[1] > a[1] ? b : a, ['', 0]);
-    if (mvpPlayer[0]) awards.mvp = { playerId: mvpPlayer[0], value: Math.round(mvpPlayer[1]) };
-
-    // Most Active (most matches played)
-    const matchCounts = {};
-    seasonMatches.forEach(m => {
-      m.team_a.forEach(p => matchCounts[p] = (matchCounts[p] || 0) + 1);
-      m.team_b.forEach(p => matchCounts[p] = (matchCounts[p] || 0) + 1);
-    });
-    const activePlayer = Object.entries(matchCounts).reduce((a, b) => b[1] > a[1] ? b : a, ['', 0]);
-    if (activePlayer[0]) awards.mostActive = { playerId: activePlayer[0], value: activePlayer[1] };
-
-    // Best Partnership (pair with highest win rate, min 3 matches)
-    const partnerships = {};
-    seasonMatches.forEach(m => {
-      const teamA = [m.team_a[0], m.team_a[1]].sort().join('-');
-      const teamB = [m.team_b[0], m.team_b[1]].sort().join('-');
-      partnerships[teamA] = (partnerships[teamA] || { wins: 0, total: 0 });
-      partnerships[teamB] = (partnerships[teamB] || { wins: 0, total: 0 });
-      partnerships[teamA].total++;
-      partnerships[teamB].total++;
-      const w = win(m.sets);
-      if (w === 'A') partnerships[teamA].wins++;
-      else partnerships[teamB].wins++;
-    });
-    const validPartnerships = Object.entries(partnerships).filter(([_, p]) => p.total >= 3);
-    if (validPartnerships.length > 0) {
-      const bestPair = validPartnerships.reduce((a, b) => (b[1].wins / b[1].total) > (a[1].wins / a[1].total) ? b : a);
-      const [p1, p2] = bestPair[0].split('-');
-      awards.bestPartnership = {
-        playerIds: [p1, p2],
-        winRate: ((bestPair[1].wins / bestPair[1].total) * 100).toFixed(0)
-      };
-    }
-
-    // Most Improved (biggest ELO gain)
-    if (seasonMatches.length > 0) {
-      const firstMatch = seasonMatches[0];
-      const eloFirstMatch = calcElo(players, [firstMatch]);
-      const eloLastMatch = eloAtSeason;
-      const improvements = {};
-      Object.keys(eloLastMatch).forEach(pid => {
-        const start = eloFirstMatch[pid] || 1500;
-        const end = eloLastMatch[pid] || 1500;
-        improvements[pid] = end - start;
-      });
-      const improvedPlayer = Object.entries(improvements).reduce((a, b) => b[1] > a[1] ? b : a, ['', 0]);
-      if (improvedPlayer[0] && improvedPlayer[1] > 0) awards.mostImproved = { playerId: improvedPlayer[0], value: Math.round(improvedPlayer[1]) };
-    }
-
-    // Longest Win Streak
-    const streaks = {};
+    // Per-player stats
+    const pStats = {};
     players.forEach(p => {
-      const pMatches = seasonMatches.filter(m => m.team_a.includes(p.id) || m.team_b.includes(p.id)).sort((a, b) => new Date(a.date) - new Date(b.date));
-      let currentStreak = 0;
-      let maxStreak = 0;
-      pMatches.forEach(m => {
-        const w = win(m.sets);
+      const pM = seasonMatches.filter(m => m.team_a.includes(p.id) || m.team_b.includes(p.id));
+      const wins = pM.filter(m => win(m.sets) === (m.team_a.includes(p.id) ? 'A' : 'B')).length;
+      let motm = 0;
+      seasonMatches.forEach(m => { if (m.motm === p.id) motm++; });
+      let cur = 0, maxStreak = 0;
+      [...pM].sort((a, b) => new Date(a.date) - new Date(b.date)).forEach(m => {
         const pTeam = m.team_a.includes(p.id) ? 'A' : 'B';
-        if (w === pTeam) currentStreak++;
-        else currentStreak = 0;
-        maxStreak = Math.max(maxStreak, currentStreak);
+        if (win(m.sets) === pTeam) cur++;
+        else cur = 0;
+        maxStreak = Math.max(maxStreak, cur);
       });
-      streaks[p.id] = maxStreak;
+      pStats[p.id] = { wins, games: pM.length, motm, maxStreak };
     });
-    const streakPlayer = Object.entries(streaks).reduce((a, b) => b[1] > a[1] ? b : a, ['', 0]);
-    if (streakPlayer[0] && streakPlayer[1] > 0) awards.longestStreak = { playerId: streakPlayer[0], value: streakPlayer[1] };
+
+    // Champion + Runner-Up (most wins, min 1 match played)
+    const ranked = Object.entries(pStats)
+      .filter(([_, s]) => s.games > 0)
+      .sort((a, b) => b[1].wins - a[1].wins || b[1].games - a[1].games);
+    if (ranked.length > 0) awards.champion = { playerId: ranked[0][0], wins: ranked[0][1].wins };
+    if (ranked.length > 1) awards.runnerUp = { playerId: ranked[1][0], wins: ranked[1][1].wins };
+
+    // Most Active (most games played)
+    const mostActive = Object.entries(pStats).reduce((a, b) => b[1].games > a[1].games ? b : a, ['', { games: 0 }]);
+    if (mostActive[0] && mostActive[1].games > 0) awards.mostActive = { playerId: mostActive[0], value: mostActive[1].games };
+
+    // Top Pair (best win rate, min 3 matches together)
+    const pairs = {};
+    seasonMatches.forEach(m => {
+      const keyA = [m.team_a[0], m.team_a[1]].sort().join('-');
+      const keyB = [m.team_b[0], m.team_b[1]].sort().join('-');
+      if (!pairs[keyA]) pairs[keyA] = { wins: 0, total: 0 };
+      if (!pairs[keyB]) pairs[keyB] = { wins: 0, total: 0 };
+      pairs[keyA].total++; pairs[keyB].total++;
+      if (win(m.sets) === 'A') pairs[keyA].wins++;
+      else pairs[keyB].wins++;
+    });
+    const validPairs = Object.entries(pairs).filter(([_, p]) => p.total >= 3);
+    if (validPairs.length > 0) {
+      const best = validPairs.reduce((a, b) => (b[1].wins / b[1].total) > (a[1].wins / a[1].total) ? b : a);
+      const [p1, p2] = best[0].split('-');
+      awards.topPair = { playerIds: [p1, p2], wins: best[1].wins, total: best[1].total, winRate: ((best[1].wins / best[1].total) * 100).toFixed(0) };
+    }
+
+    // Most MOTM
+    const motmBest = Object.entries(pStats).reduce((a, b) => b[1].motm > a[1].motm ? b : a, ['', { motm: 0 }]);
+    if (motmBest[0] && motmBest[1].motm > 0) awards.mostMotm = { playerId: motmBest[0], value: motmBest[1].motm };
+
+    // Most Consecutive Wins
+    const streakBest = Object.entries(pStats).reduce((a, b) => b[1].maxStreak > a[1].maxStreak ? b : a, ['', { maxStreak: 0 }]);
+    if (streakBest[0] && streakBest[1].maxStreak > 0) awards.longestStreak = { playerId: streakBest[0], value: streakBest[1].maxStreak };
 
     return awards;
   };
@@ -419,6 +404,29 @@ function AppContent({leagueId,user,onSwitchLeague}){
       const pTeam = m.team_a.includes(pid) ? "A" : "B";
       return w === pTeam ? "W" : "L";
     });
+  };
+
+  const getSeasonForm = (pid) => {
+    const pMatches = selectedSeasonMatches.filter(m => m.team_a.includes(pid) || m.team_b.includes(pid));
+    const sorted = [...pMatches].sort((a,b) => new Date(b.date) - new Date(a.date));
+    return sorted.slice(0, 5).map(m => {
+      const w = win(m.sets);
+      const pTeam = m.team_a.includes(pid) ? "A" : "B";
+      return w === pTeam ? "W" : "L";
+    });
+  };
+
+  const getSeasonStreak = (pid) => {
+    const pMatches = selectedSeasonMatches.filter(m => m.team_a.includes(pid) || m.team_b.includes(pid));
+    const sorted = [...pMatches].sort((a,b) => new Date(b.date) - new Date(a.date));
+    let streak = 0;
+    for (let m of sorted) {
+      const w = win(m.sets);
+      const pTeam = m.team_a.includes(pid) ? "A" : "B";
+      if (w === pTeam) streak++;
+      else break;
+    }
+    return streak;
   };
 
   // Update member role (admin/member toggle)
@@ -679,6 +687,35 @@ function AppContent({leagueId,user,onSwitchLeague}){
     });
   },[ps,elo]);
 
+  // Season-filtered matches (ranking tab uses selectedSeason; falls back to all-time when no season set)
+  const selectedSeasonMatches = useMemo(
+    () => selectedSeason ? approvedMatches.filter(m => m.season_id === selectedSeason) : approvedMatches,
+    [approvedMatches, selectedSeason]
+  );
+
+  // Season-specific ELO (ranking tab only)
+  const seasonElo = useMemo(() => calcElo(players, selectedSeasonMatches), [players, selectedSeasonMatches]);
+
+  // Season-specific leaderboard (ranking tab only)
+  const seasonLb = useMemo(() => {
+    const sps = players.map(p => {
+      const pM = selectedSeasonMatches.filter(m => m.team_a.includes(p.id) || m.team_b.includes(p.id));
+      const wins = pM.filter(m => win(m.sets) === (m.team_a.includes(p.id) ? 'A' : 'B')).length;
+      const losses = pM.length - wins;
+      const winRate = pM.length > 0 ? wins / pM.length : 0;
+      return { ...p, wins, losses, winRate, games: pM.length };
+    });
+    return sps.filter(p => p.games > 0).sort((a, b) => {
+      if (b.wins !== a.wins) return b.wins - a.wins;
+      const wrA = Math.round(a.winRate * 1000), wrB = Math.round(b.winRate * 1000);
+      if (wrB !== wrA) return wrB - wrA;
+      const eA = seasonElo[a.id] || 1500, eB = seasonElo[b.id] || 1500;
+      if (eB !== eA) return eB - eA;
+      if (b.games !== a.games) return b.games - a.games;
+      return a.name.localeCompare(b.name);
+    });
+  }, [players, selectedSeasonMatches, seasonElo]);
+
   // Combos (most common team-ups)
   const combos = useMemo(()=>{
     const combo={};
@@ -852,6 +889,9 @@ function AppContent({leagueId,user,onSwitchLeague}){
           {sidebarView==="seasonManagement" && (
             <SeasonManagement setSidebarView={setSidebarView}/>
           )}
+          {sidebarView==="leagueManagement" && (
+            <LeagueManagement setSidebarView={setSidebarView}/>
+          )}
           {sidebarView==="settings" && (
             <SettingsView user={user} claimedPlayer={claimedPlayer} isAdmin={isAdmin} pushSubscribed={pushSubscribed} subscribeToPush={subscribeToPush} unsubscribeFromPush={unsubscribeFromPush} notifNewMatch={notifNewMatch} notifRankingChange={notifRankingChange} notifNewMembers={notifNewMembers} notifChallenges={notifChallenges} toggleNotification={toggleNotification} onSwitchLeague={onSwitchLeague} setSidebarView={setSidebarView} showToast={showToast} loadLeagueData={loadLeagueData} testPushNotification={testPushNotification}/>
           )}
@@ -913,54 +953,97 @@ function AppContent({leagueId,user,onSwitchLeague}){
           {selectedSeason && !seasons.find(s=>s.id===selectedSeason)?.active && (() => {
             const awards = calculateSeasonAwards(selectedSeason);
             const hasAwards = Object.keys(awards).length > 0;
+            const Avatar = ({pid, size=32}) => {
+              const pl = players.find(p=>p.id===pid);
+              return (
+                <div style={{width:size,height:size,borderRadius:"50%",overflow:"hidden",background:`linear-gradient(135deg,${A}25,${A}08)`,border:`1.5px solid ${A}30`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*0.4,fontWeight:800,color:A,flexShrink:0}}>
+                  {pl?.avatar_url ? <img src={pl.avatar_url} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/> : (pl?.name?.[0]||"?").toUpperCase()}
+                </div>
+              );
+            };
             return hasAwards && (
               <div style={{marginBottom:20}}>
-                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,cursor:"pointer"}}>
-                  <h3 style={{fontSize:13,fontWeight:700,color:A,margin:0}}>🏆 Season Awards</h3>
-                </div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:20}}>
-                  {awards.mvp && (
-                    <div style={{padding:12,background:CD2,borderRadius:8,border:`1px solid ${A}40`}}>
-                      <div style={{fontSize:10,color:MT,fontWeight:600,marginBottom:4}}>MVP</div>
-                      <div style={{fontSize:13,fontWeight:700,color:TX,marginBottom:2}}>{getName(awards.mvp.playerId)}</div>
-                      <div style={{fontSize:11,color:A,fontWeight:600}}>{awards.mvp.value} ELO</div>
+                <h3 style={{fontSize:13,fontWeight:800,color:A,margin:"0 0 12px",textTransform:"uppercase",letterSpacing:0.5}}>🏆 Season Awards</h3>
+                <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                  {/* Champion + Runner-Up side by side */}
+                  {(awards.champion || awards.runnerUp) && (
+                    <div style={{display:"grid",gridTemplateColumns:awards.runnerUp?"1fr 1fr":"1fr",gap:10}}>
+                      {awards.champion && (
+                        <div style={{padding:"14px 12px",background:`linear-gradient(135deg,${GD}15,${CD2})`,borderRadius:10,border:`1.5px solid ${GD}50`,display:"flex",flexDirection:"column",gap:8}}>
+                          <div style={{fontSize:9,fontWeight:800,color:GD,letterSpacing:0.8,textTransform:"uppercase"}}>🥇 Champion</div>
+                          <div style={{display:"flex",alignItems:"center",gap:8}}>
+                            <Avatar pid={awards.champion.playerId} size={34}/>
+                            <div>
+                              <div style={{fontSize:13,fontWeight:900,color:TX,fontStyle:"italic",textTransform:"uppercase"}}>{getName(awards.champion.playerId)}</div>
+                              <div style={{fontSize:11,color:GD,fontWeight:700}}>{awards.champion.wins} wins</div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      {awards.runnerUp && (
+                        <div style={{padding:"14px 12px",background:`linear-gradient(135deg,${SV}12,${CD2})`,borderRadius:10,border:`1.5px solid ${SV}50`,display:"flex",flexDirection:"column",gap:8}}>
+                          <div style={{fontSize:9,fontWeight:800,color:SV,letterSpacing:0.8,textTransform:"uppercase"}}>🥈 Runner-Up</div>
+                          <div style={{display:"flex",alignItems:"center",gap:8}}>
+                            <Avatar pid={awards.runnerUp.playerId} size={34}/>
+                            <div>
+                              <div style={{fontSize:13,fontWeight:900,color:TX,fontStyle:"italic",textTransform:"uppercase"}}>{getName(awards.runnerUp.playerId)}</div>
+                              <div style={{fontSize:11,color:SV,fontWeight:700}}>{awards.runnerUp.wins} wins</div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
-                  {awards.mostActive && (
-                    <div style={{padding:12,background:CD2,borderRadius:8,border:`1px solid ${A}40`}}>
-                      <div style={{fontSize:10,color:MT,fontWeight:600,marginBottom:4}}>Most Active</div>
-                      <div style={{fontSize:13,fontWeight:700,color:TX,marginBottom:2}}>{getName(awards.mostActive.playerId)}</div>
-                      <div style={{fontSize:11,color:A,fontWeight:600}}>{awards.mostActive.value} matches</div>
+                  {/* Top Pair — full-width */}
+                  {awards.topPair && (
+                    <div style={{padding:"14px 12px",background:CD2,borderRadius:10,border:`1px solid ${A}30`}}>
+                      <div style={{fontSize:9,fontWeight:800,color:A,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8}}>🤝 Top Pair</div>
+                      <div style={{display:"flex",alignItems:"center",gap:10}}>
+                        <div style={{display:"flex",alignItems:"center"}}>
+                          <Avatar pid={awards.topPair.playerIds[0]} size={30}/>
+                          <Avatar pid={awards.topPair.playerIds[1]} size={30} />
+                        </div>
+                        <div style={{flex:1,minWidth:0}}>
+                          <div style={{fontSize:12,fontWeight:800,color:TX,fontStyle:"italic",textTransform:"uppercase",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{formatTeam(getName(awards.topPair.playerIds[0]),getName(awards.topPair.playerIds[1]))}</div>
+                          <div style={{fontSize:11,color:A,fontWeight:600}}>{awards.topPair.winRate}% WR · {awards.topPair.wins}W/{awards.topPair.total-awards.topPair.wins}L</div>
+                        </div>
+                      </div>
                     </div>
                   )}
-                  {awards.bestPartnership && (
-                    <div style={{padding:12,background:CD2,borderRadius:8,border:`1px solid ${A}40`}}>
-                      <div style={{fontSize:10,color:MT,fontWeight:600,marginBottom:4}}>Best Partnership</div>
-                      <div style={{fontSize:13,fontWeight:700,color:TX,marginBottom:2}}>{formatTeam(getName(awards.bestPartnership.playerIds[0]),getName(awards.bestPartnership.playerIds[1]))}</div>
-                      <div style={{fontSize:11,color:A,fontWeight:600}}>{awards.bestPartnership.winRate}% WR</div>
-                    </div>
-                  )}
-                  {awards.mostImproved && (
-                    <div style={{padding:12,background:CD2,borderRadius:8,border:`1px solid ${A}40`}}>
-                      <div style={{fontSize:10,color:MT,fontWeight:600,marginBottom:4}}>Most Improved</div>
-                      <div style={{fontSize:13,fontWeight:700,color:TX,marginBottom:2}}>{getName(awards.mostImproved.playerId)}</div>
-                      <div style={{fontSize:11,color:A,fontWeight:600}}>{awards.mostImproved.value > 0 ? "+" : ""}{awards.mostImproved.value} ELO</div>
-                    </div>
-                  )}
-                  {awards.longestStreak && (
-                    <div style={{padding:12,background:CD2,borderRadius:8,border:`1px solid ${A}40`}}>
-                      <div style={{fontSize:10,color:MT,fontWeight:600,marginBottom:4}}>Longest Streak</div>
-                      <div style={{fontSize:13,fontWeight:700,color:TX,marginBottom:2}}>{getName(awards.longestStreak.playerId)}</div>
-                      <div style={{fontSize:11,color:A,fontWeight:600}}>{awards.longestStreak.value} wins 🔥</div>
-                    </div>
-                  )}
+                  {/* Bottom row: Most Active · Most MOTM · Longest Streak */}
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+                    {awards.mostActive && (
+                      <div style={{padding:"10px 8px",background:CD2,borderRadius:10,border:`1px solid ${BD}`}}>
+                        <div style={{fontSize:8,fontWeight:800,color:MT,letterSpacing:0.5,textTransform:"uppercase",marginBottom:6}}>⚡ Most Active</div>
+                        <Avatar pid={awards.mostActive.playerId} size={26}/>
+                        <div style={{fontSize:11,fontWeight:800,color:TX,marginTop:5,fontStyle:"italic",textTransform:"uppercase",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{getName(awards.mostActive.playerId)}</div>
+                        <div style={{fontSize:10,color:A,fontWeight:700,marginTop:2}}>{awards.mostActive.value} MP</div>
+                      </div>
+                    )}
+                    {awards.mostMotm && (
+                      <div style={{padding:"10px 8px",background:CD2,borderRadius:10,border:`1px solid ${BD}`}}>
+                        <div style={{fontSize:8,fontWeight:800,color:MT,letterSpacing:0.5,textTransform:"uppercase",marginBottom:6}}>⭐ Most MOTM</div>
+                        <Avatar pid={awards.mostMotm.playerId} size={26}/>
+                        <div style={{fontSize:11,fontWeight:800,color:TX,marginTop:5,fontStyle:"italic",textTransform:"uppercase",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{getName(awards.mostMotm.playerId)}</div>
+                        <div style={{fontSize:10,color:GD,fontWeight:700,marginTop:2}}>{awards.mostMotm.value}× MOTM</div>
+                      </div>
+                    )}
+                    {awards.longestStreak && (
+                      <div style={{padding:"10px 8px",background:CD2,borderRadius:10,border:`1px solid ${BD}`}}>
+                        <div style={{fontSize:8,fontWeight:800,color:MT,letterSpacing:0.5,textTransform:"uppercase",marginBottom:6}}>🔥 Best Streak</div>
+                        <Avatar pid={awards.longestStreak.playerId} size={26}/>
+                        <div style={{fontSize:11,fontWeight:800,color:TX,marginTop:5,fontStyle:"italic",textTransform:"uppercase",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{getName(awards.longestStreak.playerId)}</div>
+                        <div style={{fontSize:10,color:DG,fontWeight:700,marginTop:2}}>{awards.longestStreak.value} in a row</div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             );
           })()}
 
           {/* S1-01: Empty state when no players have games */}
-          {lb.length===0&&(
+          {seasonLb.length===0&&(
             <div style={{textAlign:"center",padding:"40px 20px",background:CD,borderRadius:12,border:`1px solid ${BD}`}}>
               <div style={{fontSize:40,marginBottom:12}}>🎾</div>
               <div style={{fontSize:15,fontWeight:600,color:TX,marginBottom:6}}>No rankings yet</div>
@@ -969,42 +1052,41 @@ function AppContent({leagueId,user,onSwitchLeague}){
           )}
 
           {/* Podium (Top 3) — only when 3+ players qualified */}
-          {lb.length>=3&&(
+          {seasonLb.length>=3&&(
             <div style={{marginBottom:"24px",background:CD,padding:"16px",borderRadius:"8px",border:`1px solid ${BD}`}}>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px",alignItems:"flex-end"}}>
                 {/* 2nd place */}
-                <div onClick={()=>{setSelectedPlayer(lb[1].id);setTab("stats");}} style={{textAlign:"center",padding:"14px 12px",background:CD2,borderRadius:"6px",borderTop:`3px solid ${SV}`,cursor:"pointer"}}>
+                <div onClick={()=>{setSelectedPlayer(seasonLb[1].id);setTab("stats");}} style={{textAlign:"center",padding:"14px 12px",background:CD2,borderRadius:"6px",borderTop:`3px solid ${SV}`,cursor:"pointer"}}>
                   <div style={{fontSize:"20px",marginBottom:"4px"}}>🥈</div>
-                  <div style={{fontSize:"13px",fontWeight:"bold",marginBottom:"4px"}}>{lb[1].nickname||lb[1].name}</div>
-                  <div style={{fontSize:"11px"}}><span style={{color:lb[1].wins>0?A:MT}}>{lb[1].wins}W</span> <span style={{color:lb[1].losses>0?DG:TX}}>{lb[1].losses}L</span></div>
-                  <div style={{fontSize:"12px",color:SV,fontWeight:"bold",marginTop:"4px"}}>{(lb[1].winRate*100).toFixed(0)}%</div>
-                  <div style={{fontSize:"10px",color:MT,marginTop:"2px"}}>{Math.round(elo[lb[1].id]||1500)} ELO</div>
+                  <div style={{fontSize:"13px",fontWeight:"bold",marginBottom:"4px"}}>{seasonLb[1].nickname||seasonLb[1].name}</div>
+                  <div style={{fontSize:"11px"}}><span style={{color:seasonLb[1].wins>0?A:MT}}>{seasonLb[1].wins}W</span> <span style={{color:seasonLb[1].losses>0?DG:TX}}>{seasonLb[1].losses}L</span></div>
+                  <div style={{fontSize:"12px",color:SV,fontWeight:"bold",marginTop:"4px"}}>{(seasonLb[1].winRate*100).toFixed(0)}%</div>
+                  <div style={{fontSize:"10px",color:MT,marginTop:"2px"}}>{Math.round(seasonElo[seasonLb[1].id]||1500)} ELO</div>
                 </div>
 
                 {/* 1st place */}
-                <div onClick={()=>{setSelectedPlayer(lb[0].id);setTab("stats");}} style={{textAlign:"center",padding:"16px",background:CD2,borderRadius:"6px",borderTop:`3px solid ${GD}`,transform:"scale(1.05)",cursor:"pointer"}}>
+                <div onClick={()=>{setSelectedPlayer(seasonLb[0].id);setTab("stats");}} style={{textAlign:"center",padding:"16px",background:CD2,borderRadius:"6px",borderTop:`3px solid ${GD}`,transform:"scale(1.05)",cursor:"pointer"}}>
                   <div style={{fontSize:"28px",marginBottom:"6px"}}>🥇</div>
-                  <div style={{fontSize:"14px",fontWeight:"bold",marginBottom:"6px"}}>{lb[0].nickname||lb[0].name}</div>
-                  <div style={{fontSize:"12px"}}><span style={{color:lb[0].wins>0?A:MT}}>{lb[0].wins}W</span> <span style={{color:lb[0].losses>0?DG:TX}}>{lb[0].losses}L</span></div>
-                  <div style={{fontSize:"13px",color:GD,fontWeight:"bold",marginTop:"6px"}}>{(lb[0].winRate*100).toFixed(0)}%</div>
-                  <div style={{fontSize:"10px",color:MT,marginTop:"2px"}}>{Math.round(elo[lb[0].id]||1500)} ELO</div>
+                  <div style={{fontSize:"14px",fontWeight:"bold",marginBottom:"6px"}}>{seasonLb[0].nickname||seasonLb[0].name}</div>
+                  <div style={{fontSize:"12px"}}><span style={{color:seasonLb[0].wins>0?A:MT}}>{seasonLb[0].wins}W</span> <span style={{color:seasonLb[0].losses>0?DG:TX}}>{seasonLb[0].losses}L</span></div>
+                  <div style={{fontSize:"13px",color:GD,fontWeight:"bold",marginTop:"6px"}}>{(seasonLb[0].winRate*100).toFixed(0)}%</div>
+                  <div style={{fontSize:"10px",color:MT,marginTop:"2px"}}>{Math.round(seasonElo[seasonLb[0].id]||1500)} ELO</div>
                 </div>
 
                 {/* 3rd place */}
-                <div onClick={()=>{setSelectedPlayer(lb[2].id);setTab("stats");}} style={{textAlign:"center",padding:"8px 12px",background:CD2,borderRadius:"6px",borderTop:`3px solid ${BZ}`,cursor:"pointer"}}>
+                <div onClick={()=>{setSelectedPlayer(seasonLb[2].id);setTab("stats");}} style={{textAlign:"center",padding:"8px 12px",background:CD2,borderRadius:"6px",borderTop:`3px solid ${BZ}`,cursor:"pointer"}}>
                   <div style={{fontSize:"20px",marginBottom:"4px"}}>🥉</div>
-                  <div style={{fontSize:"13px",fontWeight:"bold",marginBottom:"4px"}}>{lb[2].nickname||lb[2].name}</div>
-                  <div style={{fontSize:"11px"}}><span style={{color:lb[2].wins>0?A:MT}}>{lb[2].wins}W</span> <span style={{color:lb[2].losses>0?DG:TX}}>{lb[2].losses}L</span></div>
-                  <div style={{fontSize:"12px",color:BZ,fontWeight:"bold",marginTop:"4px"}}>{(lb[2].winRate*100).toFixed(0)}%</div>
-                  <div style={{fontSize:"10px",color:MT,marginTop:"2px"}}>{Math.round(elo[lb[2].id]||1500)} ELO</div>
+                  <div style={{fontSize:"13px",fontWeight:"bold",marginBottom:"4px"}}>{seasonLb[2].nickname||seasonLb[2].name}</div>
+                  <div style={{fontSize:"11px"}}><span style={{color:seasonLb[2].wins>0?A:MT}}>{seasonLb[2].wins}W</span> <span style={{color:seasonLb[2].losses>0?DG:TX}}>{seasonLb[2].losses}L</span></div>
+                  <div style={{fontSize:"12px",color:BZ,fontWeight:"bold",marginTop:"4px"}}>{(seasonLb[2].winRate*100).toFixed(0)}%</div>
+                  <div style={{fontSize:"10px",color:MT,marginTop:"2px"}}>{Math.round(seasonElo[seasonLb[2].id]||1500)} ELO</div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* S047: Full ranking table with column headers (Premier Padel format)
-              Columns: Rank · Player (avatar+name) · Country · MP · MW · ML · Cons.Wins · Effectiveness · Last 5 */}
-          {lb.length>0 && (
+          {/* S047: Full ranking table (Premier Padel format) — season-filtered */}
+          {seasonLb.length>0 && (
             <div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,overflow:"hidden"}}>
               {/* Header row */}
               <div style={{display:"grid",gridTemplateColumns:"32px 1fr 36px 28px 28px 28px 30px 38px",gap:6,padding:"10px 8px",background:CD2,borderBottom:`1px solid ${BD}`,alignItems:"center"}}>
@@ -1018,14 +1100,14 @@ function AppContent({leagueId,user,onSwitchLeague}){
                 <div style={{fontSize:9,fontWeight:800,color:MT,letterSpacing:0.5,textAlign:"center",textTransform:"uppercase"}} title="Effectiveness (Match Won / Match Played)">Eff%</div>
               </div>
               {/* Data rows */}
-              {lb.map((p,idx)=>{
+              {seasonLb.map((p,idx)=>{
                 const player = players.find(pp=>pp.id===p.id);
                 const flag = player?.country ? flagEmoji(player.country) : "";
                 const ctry = player?.country || "";
                 const eff = (p.winRate*100).toFixed(0);
-                const cw = getStreak(p.id);
+                const cw = getSeasonStreak(p.id);
                 return (
-                  <div key={p.id} onClick={()=>{setSelectedPlayer(p.id);setTab("stats");}} style={{display:"grid",gridTemplateColumns:"32px 1fr 36px 28px 28px 28px 30px 38px",gap:6,padding:"10px 8px",borderBottom:idx<lb.length-1?`1px solid ${BD}40`:"none",alignItems:"center",cursor:"pointer"}}>
+                  <div key={p.id} onClick={()=>{setSelectedPlayer(p.id);setTab("stats");}} style={{display:"grid",gridTemplateColumns:"32px 1fr 36px 28px 28px 28px 30px 38px",gap:6,padding:"10px 8px",borderBottom:idx<seasonLb.length-1?`1px solid ${BD}40`:"none",alignItems:"center",cursor:"pointer"}}>
                     <div style={{textAlign:"center",fontSize:13,fontWeight:900,fontFamily:"'JetBrains Mono'",color:idx===0?GD:idx===1?SV:idx===2?BZ:MT}}>{idx===0?"🥇":idx===1?"🥈":idx===2?"🥉":idx+1}</div>
                     <div style={{display:"flex",alignItems:"center",gap:8,minWidth:0}}>
                       <div style={{width:30,height:30,borderRadius:"50%",overflow:"hidden",background:`linear-gradient(135deg,${A}25,${A}08)`,border:`1.5px solid ${A}30`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:800,color:A,flexShrink:0}}>
@@ -1050,15 +1132,15 @@ function AppContent({leagueId,user,onSwitchLeague}){
             </div>
           )}
 
-          {/* Last 5 form strip — moved here from Players list (Issue #12 → #11 handoff) */}
-          {lb.length>0 && (
+          {/* Last 5 form strip — season-filtered */}
+          {seasonLb.length>0 && (
             <div style={{marginTop:18,background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14}}>
               <div style={{fontSize:11,fontWeight:800,color:MT,marginBottom:10,letterSpacing:0.5,textTransform:"uppercase"}}>Last 5 Matches · Form</div>
               <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                {lb.map(p=>(
+                {seasonLb.map(p=>(
                   <div key={"f"+p.id} onClick={()=>{setSelectedPlayer(p.id);setTab("stats");}} style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,cursor:"pointer"}}>
                     <span style={{fontSize:12,fontWeight:700,color:TX,fontStyle:"italic",textTransform:"uppercase",letterSpacing:0.3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",minWidth:0,flex:1}}>{p.nickname||p.name}</span>
-                    <FD f={getForm(p.id)}/>
+                    <FD f={getSeasonForm(p.id)}/>
                   </div>
                 ))}
               </div>
