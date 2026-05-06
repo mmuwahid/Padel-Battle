@@ -1,5 +1,5 @@
 import React from "react";
-import { A, CD2, BD, TX, MT } from "../theme";
+import { A, CD2, BD, TX, MT, DG } from "../theme";
 
 /**
  * ScoreStepper — horizontal [−] [value] [+] for entering numeric scores.
@@ -15,8 +15,10 @@ import { A, CD2, BD, TX, MT } from "../theme";
  * - onChange: (n: number) => void — fires with the new value after clamp.
  * - aColor:   string  — accent border colour (defaults to theme A green).
  * - ariaLabel?: string — passed through to the input for screen readers.
+ * - invalid?: boolean — when true, swaps border colour to DG (danger red) to
+ *                       indicate a FIP-invalid set shape (S045 / FT-09b).
  */
-export function ScoreStepper({ value, max, onChange, aColor = A, ariaLabel }) {
+export function ScoreStepper({ value, max, onChange, aColor = A, ariaLabel, invalid = false }) {
   const v = Number.isFinite(value) ? value : 0;
   const atMin = v <= 0;
   const atMax = typeof max === "number" && v >= max;
@@ -60,7 +62,7 @@ export function ScoreStepper({ value, max, onChange, aColor = A, ariaLabel }) {
       style={{
         display: "inline-flex",
         alignItems: "stretch",
-        border: `1px solid ${aColor}40`,
+        border: `1px solid ${invalid ? DG : `${aColor}40`}`,
         borderRadius: 10,
         overflow: "hidden",
         background: CD2,

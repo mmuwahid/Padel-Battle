@@ -3,6 +3,7 @@ import { A, BG, CD, CD2, BD, TX, MT, DG, GD, BL, PU } from '../theme';
 import { formatDate, win, setTotals } from '../utils/helpers';
 import { TeamShuffler } from './TeamShuffler';
 import { ScoreStepper } from './ScoreStepper';
+import { validateMatch } from '../utils/scoringEngine';
 
 export function ScheduleView({challenges,players,matches,supabase,leagueId,user,getName,isAdmin,onUpdate,showToast,sendPushNotification,sel,elo,seasonId}){
   const [showForm,setShowForm]=useState(false);
@@ -23,6 +24,9 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
   const [logNs,setLogNs]=useState(2);
   const [logMotm,setLogMotm]=useState("");
   const [logSaving,setLogSaving]=useState(false);
+  // FT-09b / S045: FIP validation state for the inline log form
+  const [logInvalidIdx,setLogInvalidIdx]=useState([]);
+  const [logValidationError,setLogValidationError]=useState("");
 
   const inp={background:CD2,color:TX,border:`1px solid ${BD}`,borderRadius:8,padding:"10px 12px",fontSize:13,width:"100%",outline:"none",fontFamily:"'Outfit',sans-serif"};
   const getEloBadge=(pid)=>{const gp=(matches||[]).filter(m=>(m.team_a||[]).includes(pid)||(m.team_b||[]).includes(pid)).length;if(gp<5)return null;const e=elo?.[pid]||1500;if(e>=1600)return{label:"Pro",color:DG};if(e>=1400)return{label:"Advanced",color:GD};if(e>=1200)return{label:"Intermediate",color:PU};return{label:"Beginner",color:BL};};
@@ -126,11 +130,23 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
     }
   }
 
-  function openLogMatch(ch){setLoggingMatch(ch.id);setLogSets([[0,0],[0,0],[0,0]]);setLogNs(2);setLogMotm("");}
+  function openLogMatch(ch){setLoggingMatch(ch.id);setLogSets([[0,0],[0,0],[0,0]]);setLogNs(2);setLogMotm("");setLogInvalidIdx([]);setLogValidationError("");}
   async function saveLoggedMatch(){
     const ch=challenges.find(c2=>c2.id===loggingMatch);if(!ch)return;
-    const sd=logSets.slice(0,logNs).filter(([a,b])=>a>0||b>0);
+    // FT-09b / S045: FIP validation — auto-truncates dead rubbers, rejects invalid shapes.
+    const v=validateMatch(logSets.slice(0,logNs));
+    if(v.status==='invalid'){
+      setLogInvalidIdx(v.invalidIndexes);
+      setLogValidationError(v.error);
+      showToast(v.error,"error");
+      return;
+    }
+    setLogInvalidIdx([]);
+    setLogValidationError("");
+    const sd=v.completedSets;
     if(!sd.length){showToast("Enter at least one set score","error");return;}
+    const isIncomplete=v.status==='incomplete';
+    const droppedSets=v.droppedSets;
     setLogSaving(true);
     try{
       // S026: Transactional match creation via RPC (atomic insert+update)
@@ -150,10 +166,13 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
       // result may be {id, status} (post-migration) or just a uuid string (pre-migration legacy) — handle both.
       const status = (result && typeof result === "object" && result.status) || "approved";
       const isPending = status === "pending";
-      if(isPending){
+      const isIncompleteSaved = status === "incomplete";
+      if(isIncompleteSaved){
+        showToast("Saved as incomplete — won't count toward rankings");
+      } else if(isPending){
         showToast("Submitted — waiting for admin approval");
       } else {
-        showToast("Match logged!");
+        showToast(droppedSets>0?"Match logged (dead-rubber set dropped)":"Match logged!");
         if(sendPushNotification){
           const allNames=[...(ch.team_a||[]),...(ch.team_b||[])].map(id=>getName(id)).join(", ");
           sendPushNotification("match","Match Result",`${allNames} — tap to see the score`);
@@ -342,10 +361,15 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
                   </div>
                   {logSets.slice(0,logNs).map((s,i)=>(<div key={i} style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
                     <span style={{fontSize:10,color:MT,width:32,fontWeight:600}}>Set {i+1}</span>
-                    <ScoreStepper value={s[0]} max={7} aColor={A} ariaLabel={`Set ${i+1} Team A`} onChange={(n)=>{const x=logSets.map(y=>[...y]);x[i]=[n,x[i][1]];setLogSets(x);}}/>
+                    <ScoreStepper value={s[0]} max={7} aColor={A} ariaLabel={`Set ${i+1} Team A`} invalid={logInvalidIdx.includes(i)} onChange={(n)=>{const x=logSets.map(y=>[...y]);x[i]=[n,x[i][1]];setLogSets(x);if(logInvalidIdx.length)setLogInvalidIdx([]);if(logValidationError)setLogValidationError("");}}/>
                     <span style={{color:MT,fontWeight:700}}>-</span>
-                    <ScoreStepper value={s[1]} max={7} aColor={DG} ariaLabel={`Set ${i+1} Team B`} onChange={(n)=>{const x=logSets.map(y=>[...y]);x[i]=[x[i][0],n];setLogSets(x);}}/>
+                    <ScoreStepper value={s[1]} max={7} aColor={DG} ariaLabel={`Set ${i+1} Team B`} invalid={logInvalidIdx.includes(i)} onChange={(n)=>{const x=logSets.map(y=>[...y]);x[i]=[x[i][0],n];setLogSets(x);if(logInvalidIdx.length)setLogInvalidIdx([]);if(logValidationError)setLogValidationError("");}}/>
                   </div>))}
+                  {logValidationError&&(
+                    <div style={{marginTop:8,padding:"6px 10px",background:`${DG}15`,border:`1px solid ${DG}40`,borderRadius:6,fontSize:11,color:DG,fontWeight:600}}>
+                      ⚠️ {logValidationError}
+                    </div>
+                  )}
                   <div style={{marginTop:8,marginBottom:10}}>
                     <div style={{fontSize:10,color:MT,fontWeight:600,marginBottom:4}}>⭐ Man of the Match</div>
                     <select value={logMotm} onChange={e=>setLogMotm(e.target.value)} style={{...sel,fontSize:12}}><option value="">Select MVP</option>{[...(ch.team_a||[]),...(ch.team_b||[])].map(pid=>(<option key={pid} value={pid}>{getName(pid)}</option>))}</select>

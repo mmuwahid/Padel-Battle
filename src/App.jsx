@@ -299,6 +299,12 @@ function AppContent({leagueId,user,onSwitchLeague}){
     () => matches.filter(m => m.status === 'pending'),
     [matches]
   );
+  // FT-09b / S045: Incomplete matches — visible in MatchHistory with grey styling + badge,
+  // but excluded from rankings (NOT in approvedMatches). Same league-wide visibility as approved.
+  const incompleteMatches = useMemo(
+    () => matches.filter(m => m.status === 'incomplete'),
+    [matches]
+  );
 
   // Calculate season awards
   const calculateSeasonAwards = (seasonId) => {
@@ -757,7 +763,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
   // A-04: React Context — shared data available to all children without prop drilling
   // S022/S026: Plain object — NOT useMemo. Early returns above this line make useMemo violate Rules of Hooks.
   const leagueCtx = {
-    supabase, user, leagueId, league, players, matches, approvedMatches, pendingMatches,
+    supabase, user, leagueId, league, players, matches, approvedMatches, pendingMatches, incompleteMatches,
     elo, seasons, isAdmin, isOwner, myMemberId, leagueMembers, memberProfiles,
     getName, showToast, sendPushNotification, loadLeagueData,
   };

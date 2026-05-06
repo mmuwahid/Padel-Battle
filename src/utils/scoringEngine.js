@@ -112,3 +112,84 @@ export function getLiveDisplay(state) {
 export function liveToSets(state) {
   return state.completedSets.map(({ a, b }) => [a, b]);
 }
+
+// ─── FT-09b / S045: FIP-compliant set & match validation ────────────────────
+// Used by LogMatch, ScheduleView, EditMatchModal at submit time.
+// DB has matching helpers (is_valid_set, is_complete_match) + CHECK constraint
+// for defense-in-depth.
+
+// Single set shape check.
+// Valid: 6-0..6-4, 7-5, 7-6 and mirrors. Anything else (5-3, 6-5, 7-4, 7-7, 8-6) fails.
+export function isValidSet(s) {
+  if (!Array.isArray(s) || s.length !== 2) return false;
+  const [a, b] = s;
+  if (!Number.isInteger(a) || !Number.isInteger(b)) return false;
+  if (a < 0 || b < 0) return false;
+  if (a === 6 && b >= 0 && b <= 4) return true;
+  if (b === 6 && a >= 0 && a <= 4) return true;
+  if (a === 7 && b === 5) return true;
+  if (b === 7 && a === 5) return true;
+  if (a === 7 && b === 6) return true;
+  if (b === 7 && a === 6) return true;
+  return false;
+}
+
+// Full match validator. Returns:
+//   status: 'invalid' | 'incomplete' | 'complete'
+//   error: human-readable string when invalid, else null
+//   completedSets: input minus trailing [0,0] minus dead-rubber sets after a 2-0
+//   invalidIndexes: indexes (in stripped array) of FIP-invalid sets
+//   winner: 'A' | 'B' | null
+//   droppedSets: count of dead-rubber sets auto-truncated (informational)
+export function validateMatch(rawSets) {
+  const empty = {
+    status: 'invalid', error: 'No sets entered',
+    completedSets: [], invalidIndexes: [], winner: null, droppedSets: 0
+  };
+  if (!Array.isArray(rawSets) || rawSets.length === 0) return empty;
+
+  // Strip TRAILING [0,0] only (not played). Mid-zeros are kept and flagged invalid.
+  const sets = [...rawSets];
+  while (sets.length > 0) {
+    const last = sets[sets.length - 1];
+    if (Array.isArray(last) && last.length === 2 && last[0] === 0 && last[1] === 0) {
+      sets.pop();
+    } else {
+      break;
+    }
+  }
+  if (sets.length === 0) return empty;
+
+  // Per-set FIP shape validation
+  const invalidIndexes = [];
+  sets.forEach((s, i) => { if (!isValidSet(s)) invalidIndexes.push(i); });
+  if (invalidIndexes.length > 0) {
+    const nums = invalidIndexes.map(i => i + 1).join(', ');
+    const verb = invalidIndexes.length === 1 ? 'is' : 'are';
+    return {
+      status: 'invalid',
+      error: `Set ${nums} ${verb} not a valid score. FIP rules: 6-0..6-4, 7-5, or 7-6.`,
+      completedSets: sets, invalidIndexes, winner: null, droppedSets: 0
+    };
+  }
+
+  // All sets valid — count wins and auto-truncate dead-rubber sets after 2-0
+  let aWins = 0, bWins = 0;
+  const truncated = [];
+  for (let i = 0; i < sets.length; i++) {
+    const [a, b] = sets[i];
+    truncated.push([a, b]);
+    if (a > b) aWins++; else if (b > a) bWins++;
+    if (aWins === 2 || bWins === 2) break;
+  }
+  const droppedSets = sets.length - truncated.length;
+
+  if (aWins === 2) {
+    return { status: 'complete', error: null, completedSets: truncated, invalidIndexes: [], winner: 'A', droppedSets };
+  }
+  if (bWins === 2) {
+    return { status: 'complete', error: null, completedSets: truncated, invalidIndexes: [], winner: 'B', droppedSets };
+  }
+  // Incomplete: all valid but no 2-set winner
+  return { status: 'incomplete', error: null, completedSets: sets, invalidIndexes: [], winner: null, droppedSets: 0 };
+}

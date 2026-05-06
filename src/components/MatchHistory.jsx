@@ -13,10 +13,12 @@ const REACTIONS = [
 ];
 
 export function MatchHistory({onEdit,shareMatch,sel,onMatchDeleted}){
-  const { supabase, user, players, approvedMatches, pendingMatches, isAdmin, getName, showToast } = useLeague();
+  const { supabase, user, players, approvedMatches, pendingMatches, incompleteMatches, isAdmin, getName, showToast } = useLeague();
   // FT-09: existing list reads approved-only. My-pending section reads pending submitted by current user.
+  // FT-09b / S045: incomplete matches are merged into the timeline with grey styling + "Incomplete" badge.
   const matches = approvedMatches;
   const myPendingMatches = (pendingMatches || []).filter(m => m.logged_by === user?.id);
+  const incompleteList = incompleteMatches || [];
   const [pendingExpanded, setPendingExpanded] = useState(true);
   const [fp,setFp]=useState("");
   const [cd,setCd]=useState(null);
@@ -57,8 +59,10 @@ export function MatchHistory({onEdit,shareMatch,sel,onMatchDeleted}){
       });
     }
   }
-  const f=fp?matches.filter(m=>m.team_a.includes(fp)||m.team_b.includes(fp)):matches;
-  const s=[...f].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  // Merge approved + incomplete for timeline display. Incomplete renders with grey styling + badge.
+  const timeline = [...matches, ...incompleteList];
+  const f = fp ? timeline.filter(m => m.team_a.includes(fp) || m.team_b.includes(fp)) : timeline;
+  const s = [...f].sort((a,b)=>new Date(b.date)-new Date(a.date));
 
   async function deleteMatch(matchId){
     if(!isAdmin)return;
@@ -131,12 +135,15 @@ export function MatchHistory({onEdit,shareMatch,sel,onMatchDeleted}){
           <div style={{fontSize:12,color:MT,lineHeight:1.5}}>Tap the + button to log your first match.</div>
         </div>
       )}
-      {s.map(m=>{const w=win(m.sets);const [tA,tB]=setTotals(m.sets);
-        return (<div key={m.id} style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:8}}>
+      {s.map(m=>{const isIncomplete=m.status==='incomplete';const w=isIncomplete?null:win(m.sets);const [tA,tB]=setTotals(m.sets);
+        return (<div key={m.id} style={{background:CD,borderRadius:12,border:`1px solid ${isIncomplete?MT+"40":BD}`,padding:14,marginBottom:8,opacity:isIncomplete?0.7:1}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-            <span style={{fontSize:11,color:MT,fontWeight:400}}>{formatDate(m.date)}</span>
+            <div style={{display:"flex",alignItems:"center",gap:6}}>
+              <span style={{fontSize:11,color:MT,fontWeight:400}}>{formatDate(m.date)}</span>
+              {isIncomplete&&<span style={{fontSize:9,fontWeight:700,letterSpacing:0.8,padding:"2px 6px",borderRadius:4,textTransform:"uppercase",background:`${MT}25`,color:MT,border:`1px solid ${MT}40`}}>Incomplete</span>}
+            </div>
             <div style={{display:"flex",gap:4,alignItems:"center"}}>
-              {m.motm&&<span style={{fontSize:10,background:`${GD}20`,color:GD,padding:"2px 6px",borderRadius:6,fontWeight:600}}>⭐{getName(m.motm)}</span>}
+              {m.motm&&!isIncomplete&&<span style={{fontSize:10,background:`${GD}20`,color:GD,padding:"2px 6px",borderRadius:6,fontWeight:600}}>⭐{getName(m.motm)}</span>}
               <button onClick={()=>shareMatch(m)} style={{background:"none",border:"none",fontSize:13,cursor:"pointer",padding:"2px 4px"}}>📤</button>
               <button onClick={()=>onEdit(m)} style={{background:"none",border:"none",color:BL,fontSize:13,cursor:"pointer",padding:"2px 4px"}}>✏️</button>
               {isAdmin&&(cd===m.id?<div style={{display:"flex",gap:3}}><button onClick={()=>{deleteMatch(m.id);}} disabled={deleting} style={{background:DG,border:"none",color:"#fff",fontSize:9,fontWeight:700,padding:"3px 6px",borderRadius:6,cursor:"pointer",opacity:deleting?0.6:1}}>{deleting?"..":"Yes"}</button><button onClick={()=>setCd(null)} style={{background:BD,border:"none",color:TX,fontSize:9,fontWeight:700,padding:"3px 6px",borderRadius:6,cursor:"pointer"}}>No</button></div>:<button onClick={()=>setCd(m.id)} style={{background:"none",border:"none",color:DG,fontSize:13,cursor:"pointer",padding:"2px 4px"}}>🗑️</button>)}
@@ -144,20 +151,21 @@ export function MatchHistory({onEdit,shareMatch,sel,onMatchDeleted}){
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",gap:8,alignItems:"center"}}>
             <div style={{textAlign:"center"}}>
-              <div style={{fontSize:13,fontWeight:700,color:w==="A"?A:DG}}>{getName(m.team_a[0])}</div>
-              <div style={{fontSize:13,fontWeight:700,color:w==="A"?A:DG}}>{getName(m.team_a[1])}</div>
-              {w==="A"?<div style={{fontSize:10,color:A,fontWeight:700,marginTop:3}}>WIN</div>:<div style={{fontSize:10,color:DG,fontWeight:700,marginTop:3}}>LOSS</div>}
+              <div style={{fontSize:13,fontWeight:700,color:isIncomplete?TX:(w==="A"?A:DG)}}>{getName(m.team_a[0])}</div>
+              <div style={{fontSize:13,fontWeight:700,color:isIncomplete?TX:(w==="A"?A:DG)}}>{getName(m.team_a[1])}</div>
+              {!isIncomplete&&(w==="A"?<div style={{fontSize:10,color:A,fontWeight:700,marginTop:3}}>WIN</div>:<div style={{fontSize:10,color:DG,fontWeight:700,marginTop:3}}>LOSS</div>)}
             </div>
             <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
               <div style={{display:"flex",gap:6,fontFamily:"'JetBrains Mono'",fontWeight:700,fontSize:16}}>
-                {m.sets.map((s,i)=><span key={i} style={{color:s[0]>s[1]?A:DG}}>{s[0]}-{s[1]}</span>)}
+                {m.sets.map((s,i)=><span key={i} style={{color:isIncomplete?MT:(s[0]>s[1]?A:DG)}}>{s[0]}-{s[1]}</span>)}
               </div>
               <span style={{fontSize:10,color:MT,fontFamily:"'JetBrains Mono'"}}>{tA}-{tB}</span>
+              {isIncomplete&&<span style={{fontSize:9,color:MT,fontStyle:"italic",marginTop:2}}>not counted in rankings</span>}
             </div>
             <div style={{textAlign:"center"}}>
-              <div style={{fontSize:13,fontWeight:700,color:w==="B"?A:DG}}>{getName(m.team_b[0])}</div>
-              <div style={{fontSize:13,fontWeight:700,color:w==="B"?A:DG}}>{getName(m.team_b[1])}</div>
-              {w==="B"?<div style={{fontSize:10,color:A,fontWeight:700,marginTop:3}}>WIN</div>:<div style={{fontSize:10,color:DG,fontWeight:700,marginTop:3}}>LOSS</div>}
+              <div style={{fontSize:13,fontWeight:700,color:isIncomplete?TX:(w==="B"?A:DG)}}>{getName(m.team_b[0])}</div>
+              <div style={{fontSize:13,fontWeight:700,color:isIncomplete?TX:(w==="B"?A:DG)}}>{getName(m.team_b[1])}</div>
+              {!isIncomplete&&(w==="B"?<div style={{fontSize:10,color:A,fontWeight:700,marginTop:3}}>WIN</div>:<div style={{fontSize:10,color:DG,fontWeight:700,marginTop:3}}>LOSS</div>)}
             </div>
           </div>
           {/* Reaction bar */}

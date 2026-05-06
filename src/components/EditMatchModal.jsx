@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { A, CD, CD2, BD, TX, MT, DG, GD, BL } from '../theme';
 import { useLeague } from '../LeagueContext';
 import { ScoreStepper } from './ScoreStepper';
+import { validateMatch } from '../utils/scoringEngine';
 
 // FT-09 / S044: Admin edits a pending match, then "Save & Approve" applies + flips status.
 // Calls update_pending_match RPC (server builds diff, notifies submitter, sets status='approved').
@@ -17,6 +18,11 @@ export function EditMatchModal({ match, onClose, onSaved }) {
 
   // Players in match (for MOTM dropdown)
   const matchPlayerIds = useMemo(() => [...teamA, ...teamB].filter(Boolean), [teamA, teamB]);
+
+  // FT-09b / S045: FIP validation — drives Save button disabled state, inline error, and red borders.
+  const validation = useMemo(() => validateMatch(sets), [sets]);
+  const invalidIdx = validation.invalidIndexes || [];
+  const canApprove = validation.status === 'complete';
 
   // Diff calculation for live preview
   const diff = useMemo(() => {
@@ -69,8 +75,15 @@ export function EditMatchModal({ match, onClose, onSaved }) {
       showToast("Each team needs 2 players", "error");
       return;
     }
-    if (sets.some(s => s[0] === 0 && s[1] === 0)) {
-      showToast("All sets must have a score", "error");
+    // FT-09b / S045: enforce FIP strictly on approve. Admin must make the match complete
+    // and all sets must be valid shapes — otherwise reject this save (admin should use the
+    // Reject button instead, or edit the sets to make the match complete).
+    if (validation.status === 'invalid') {
+      showToast(validation.error, "error");
+      return;
+    }
+    if (validation.status === 'incomplete') {
+      showToast("Match has no winner yet — needs 2 sets won. Use Reject if it can't be completed.", "error");
       return;
     }
     setSaving(true);
@@ -79,12 +92,13 @@ export function EditMatchModal({ match, onClose, onSaved }) {
         p_match_id: match.id,
         p_team_a: JSON.stringify(teamA),
         p_team_b: JSON.stringify(teamB),
-        p_sets: JSON.stringify(sets),
+        // Auto-truncated by validator (drops dead-rubber sets after 2-0)
+        p_sets: JSON.stringify(validation.completedSets),
         p_date: date,
         p_motm: motm || null,
       });
       if (error) throw error;
-      showToast("Match approved with edits");
+      showToast(validation.droppedSets > 0 ? "Match approved (dead-rubber set dropped)" : "Match approved with edits");
       onSaved && onSaved();
       onClose();
     } catch (err) {
@@ -162,12 +176,28 @@ export function EditMatchModal({ match, onClose, onSaved }) {
                   )}
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                  <ScoreStepper value={s[0]} max={7} aColor={BL} ariaLabel={`Set ${i + 1} Team A`} onChange={(n) => setSetValue(i, 0, n)} />
-                  <ScoreStepper value={s[1]} max={7} aColor={GD} ariaLabel={`Set ${i + 1} Team B`} onChange={(n) => setSetValue(i, 1, n)} />
+                  <ScoreStepper value={s[0]} max={7} aColor={BL} ariaLabel={`Set ${i + 1} Team A`} invalid={invalidIdx.includes(i)} onChange={(n) => setSetValue(i, 0, n)} />
+                  <ScoreStepper value={s[1]} max={7} aColor={GD} ariaLabel={`Set ${i + 1} Team B`} invalid={invalidIdx.includes(i)} onChange={(n) => setSetValue(i, 1, n)} />
                 </div>
               </div>
             ))}
             <button onClick={addSet} style={{ width: "100%", background: "transparent", border: `1px dashed ${BD}`, color: MT, padding: 10, borderRadius: 10, fontSize: 12, fontWeight: 600, cursor: "pointer", marginTop: 4, fontFamily: "'Outfit',sans-serif" }}>+ Add Set</button>
+            {/* FT-09b / S045: inline FIP validation feedback */}
+            {validation.status === 'invalid' && (
+              <div style={{ marginTop: 8, padding: "8px 12px", background: `${DG}15`, border: `1px solid ${DG}40`, borderRadius: 8, fontSize: 11, color: DG, fontWeight: 600 }}>
+                ⚠️ {validation.error}
+              </div>
+            )}
+            {validation.status === 'incomplete' && (
+              <div style={{ marginTop: 8, padding: "8px 12px", background: `${GD}15`, border: `1px solid ${GD}40`, borderRadius: 8, fontSize: 11, color: GD, fontWeight: 600 }}>
+                ⚠️ Match has no 2-set winner yet — cannot approve. Edit sets to complete the match, or use Reject.
+              </div>
+            )}
+            {validation.status === 'complete' && validation.droppedSets > 0 && (
+              <div style={{ marginTop: 8, padding: "8px 12px", background: `${A}10`, border: `1px solid ${A}40`, borderRadius: 8, fontSize: 11, color: A, fontWeight: 600 }}>
+                ℹ️ Match decided 2-0 in first two sets. Dead-rubber set will be dropped on save.
+              </div>
+            )}
           </div>
 
           {/* MOTM */}
@@ -202,7 +232,7 @@ export function EditMatchModal({ match, onClose, onSaved }) {
         {/* Footer */}
         <div style={{ padding: "12px 16px", borderTop: `1px solid ${BD}`, background: CD2, display: "grid", gridTemplateColumns: "1fr 1.6fr", gap: 8 }}>
           <button onClick={onClose} disabled={saving} style={{ background: CD, color: TX, border: `1px solid ${BD}`, borderRadius: 10, padding: "12px 0", fontSize: 13, fontWeight: 700, cursor: saving ? "not-allowed" : "pointer", fontFamily: "'Outfit',sans-serif", height: 42, opacity: saving ? 0.5 : 1 }}>Cancel</button>
-          <button onClick={save} disabled={saving} style={{ background: A, color: "#000", border: 0, borderRadius: 10, padding: "12px 0", fontSize: 13, fontWeight: 700, cursor: saving ? "not-allowed" : "pointer", fontFamily: "'Outfit',sans-serif", height: 42, opacity: saving ? 0.6 : 1 }}>{saving ? "Saving..." : "Save & Approve"}</button>
+          <button onClick={save} disabled={saving || !canApprove} style={{ background: !canApprove ? BD : A, color: !canApprove ? MT : "#000", border: 0, borderRadius: 10, padding: "12px 0", fontSize: 13, fontWeight: 700, cursor: (saving || !canApprove) ? "not-allowed" : "pointer", fontFamily: "'Outfit',sans-serif", height: 42, opacity: saving ? 0.6 : 1 }}>{saving ? "Saving..." : "Save & Approve"}</button>
         </div>
       </div>
     </div>

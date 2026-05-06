@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { A, BG, CD2, BD, TX, MT, DG, GD, PU, BL } from '../theme';
 import { TeamShuffler } from './TeamShuffler';
-import { createInitialLiveState, scorePoint, undoPoint, getLiveDisplay, liveToSets } from '../utils/scoringEngine';
+import { createInitialLiveState, scorePoint, undoPoint, getLiveDisplay, liveToSets, validateMatch } from '../utils/scoringEngine';
 import { formatTeam } from '../utils/helpers';
 import { ScoreStepper } from './ScoreStepper';
 
@@ -22,6 +22,9 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
   const [mode,setMode]=useState('manual');
   const [liveState,setLiveState]=useState(createInitialLiveState);
   const [liveNs,setLiveNs]=useState(3);
+  // FT-09b / S045: FIP validation state
+  const [invalidIdx,setInvalidIdx]=useState([]);
+  const [validationError,setValidationError]=useState("");
 
   useEffect(()=>{
     if(em){
@@ -73,10 +76,24 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
     if(tA.some(x=>!x)||tB.some(x=>!x))return;
     if(date>new Date().toISOString().split("T")[0]){if(showToast)showToast("Cannot log a match for a future date","error");return;}
 
-    const as=mode==='live'
-      ? liveToSets(liveState).filter(([a,b])=>a>0||b>0)
-      : sets.slice(0,ns).filter(([a,b])=>a>0||b>0);
-    if(!as.length){if(showToast&&mode==='live')showToast("Score at least one set to save","error");return;}
+    // FT-09b / S045: FIP validation — single source of truth for both modes.
+    // Auto-truncates dead-rubber sets (post-2-0); rejects invalid shapes (5-3, 6-5, etc.).
+    const rawSets = mode==='live' ? liveToSets(liveState) : sets.slice(0,ns);
+    const result = validateMatch(rawSets);
+
+    if(result.status === 'invalid'){
+      setInvalidIdx(result.invalidIndexes);
+      setValidationError(result.error);
+      if(showToast)showToast(result.error,"error");
+      return;
+    }
+    // Clear any prior validation error state
+    setInvalidIdx([]);
+    setValidationError("");
+
+    const as = result.completedSets;
+    if(!as.length){if(showToast)showToast("Score at least one set to save","error");return;}
+    const isIncomplete = result.status === 'incomplete';
 
     setSaving(true);
     let insertedStatus = "approved"; // FT-09: tracks status of new INSERT (set by trigger)
@@ -114,13 +131,18 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
       setTimeout(()=>setSaved(false),2000);
       if(onSave)onSave();
       // FT-09: pending submissions get a different toast and skip the broadcast push (server handles admin notification).
+      // FT-09b / S045: incomplete matches save but are excluded from rankings.
       const isPending = !isE && insertedStatus === "pending";
+      const isIncompleteSaved = !isE && insertedStatus === "incomplete";
       if(showToast){
         if(isE) showToast("Match updated");
+        else if(isIncompleteSaved) showToast("Saved as incomplete — won't count toward rankings");
         else if(isPending) showToast(hasNext?`Submitted for approval — ${queue.length} remaining`:"Submitted — waiting for admin approval");
+        else if(result.droppedSets>0) showToast(hasNext?`Match saved (dead-rubber set dropped). Next up — ${queue.length} remaining`:"Match saved (dead-rubber set dropped)");
         else showToast(hasNext?`Match saved! Next up — ${queue.length} remaining`:"Match saved!");
       }
-      if(!isE && !isPending && sendPushNotification){
+      // Don't show the won/lost UX state for incomplete or pending saves.
+      if(!isE && !isPending && !isIncompleteSaved && !isIncomplete && sendPushNotification){
         const tANames=formatTeam(getName?getName(tA[0]):tA[0],getName?getName(tA[1]):tA[1]);
         const tBNames=formatTeam(getName?getName(tB[0]):tB[0],getName?getName(tB[1]):tB[1]);
         let setsA=0,setsB=0;
@@ -381,11 +403,16 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
           {sets.slice(0,ns).map((s,i)=>(
             <div key={i} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
               <span style={{fontSize:11,color:MT,width:36,fontWeight:600}}>Set {i+1}</span>
-              <ScoreStepper value={s[0]} max={7} aColor={BL} ariaLabel={`Set ${i+1} Team A`} onChange={(n)=>{const x=sets.map(y=>[...y]);x[i]=[n,x[i][1]];setSets(x);}}/>
+              <ScoreStepper value={s[0]} max={7} aColor={BL} ariaLabel={`Set ${i+1} Team A`} invalid={invalidIdx.includes(i)} onChange={(n)=>{const x=sets.map(y=>[...y]);x[i]=[n,x[i][1]];setSets(x);if(invalidIdx.length)setInvalidIdx([]);if(validationError)setValidationError("");}}/>
               <span style={{color:MT,fontWeight:700}}>-</span>
-              <ScoreStepper value={s[1]} max={7} aColor={GD} ariaLabel={`Set ${i+1} Team B`} onChange={(n)=>{const x=sets.map(y=>[...y]);x[i]=[x[i][0],n];setSets(x);}}/>
+              <ScoreStepper value={s[1]} max={7} aColor={GD} ariaLabel={`Set ${i+1} Team B`} invalid={invalidIdx.includes(i)} onChange={(n)=>{const x=sets.map(y=>[...y]);x[i]=[x[i][0],n];setSets(x);if(invalidIdx.length)setInvalidIdx([]);if(validationError)setValidationError("");}}/>
             </div>
           ))}
+          {validationError && (
+            <div style={{marginTop:8,padding:"8px 12px",background:`${DG}15`,border:`1px solid ${DG}40`,borderRadius:8,fontSize:12,color:DG,fontWeight:600}}>
+              ⚠️ {validationError}
+            </div>
+          )}
         </div>
       )}
 
