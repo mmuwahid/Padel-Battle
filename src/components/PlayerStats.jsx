@@ -2,7 +2,7 @@ import React, { useState, useMemo } from "react";
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, BL, PU } from '../theme';
 import { ACHS } from '../data/achievements';
 import { FD } from './FormDots';
-import { formatTeam, win, formatDate, setTotals } from '../utils/helpers';
+import { formatTeam, win, formatDate, setTotals, flagEmoji } from '../utils/helpers';
 
 export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matches,supabase,leagueId,isAdmin,getName,sel,onPlayersChange,showToast}){
   const player=sp?pm[sp]:null;
@@ -155,6 +155,13 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
           <div style={{width:64,height:64,borderRadius:"50%",background:`linear-gradient(135deg,${A}25,${A}08)`,border:`2px solid ${A}50`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,fontWeight:800,color:A,margin:"0 auto 10px"}}>{player.name[0]}</div>
           <h2 style={{fontSize:22,fontWeight:800}}>{player.name}</h2>
           {player.nickname&&<p style={{fontSize:13,color:MT}}>"{player.nickname}"</p>}
+          {/* FT-12: country flag slot — empty until #11 fills players.country */}
+          {player.country && flagEmoji(player.country) && (
+            <div style={{display:"flex",justifyContent:"center",alignItems:"center",gap:6,marginTop:8}}>
+              <span style={{fontSize:18,lineHeight:1}}>{flagEmoji(player.country)}</span>
+              <span style={{fontSize:11,color:MT,fontWeight:600,letterSpacing:0.5}}>{player.country.toUpperCase()}</span>
+            </div>
+          )}
           <div style={{display:"flex",justifyContent:"center",gap:20,marginTop:12}}>
             <div><div style={{fontSize:32,fontWeight:900,color:BL,fontFamily:"'JetBrains Mono'"}}>{e}</div><p style={{fontSize:11,color:MT}}>ELO</p></div>
             <div><div style={{fontSize:32,fontWeight:900,color:A,fontFamily:"'JetBrains Mono'"}}>{wp.toFixed(0)}%</div><p style={{fontSize:11,color:MT}}>Win Rate</p></div>
@@ -189,10 +196,10 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
 
   return (
     <div style={{padding:"20px 16px",maxWidth:"600px",margin:"0 auto"}}>
-      {/* FT-04: Sub-tab toggle */}
+      {/* FT-04: Sub-tab toggle — FT-12: italic uppercase Premier-Padel styling */}
       <div style={{display:"flex",gap:4,marginBottom:16,background:CD,borderRadius:10,padding:3}}>
-        {["roster","analytics"].map(t=>(
-          <button key={t} onClick={()=>setSubTab(t)} style={{flex:1,padding:"8px 12px",borderRadius:8,border:"none",background:subTab===t?A:"transparent",color:subTab===t?"#000":MT,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif",textTransform:"capitalize"}}>{t}</button>
+        {[["roster","Players"],["analytics","Analytics"]].map(([k,l])=>(
+          <button key={k} onClick={()=>setSubTab(k)} style={{flex:1,padding:"8px 12px",borderRadius:8,border:"none",background:subTab===k?A:"transparent",color:subTab===k?"#000":MT,fontSize:12,fontWeight:800,cursor:"pointer",fontFamily:"'Outfit',sans-serif",fontStyle:"italic",textTransform:"uppercase",letterSpacing:0.8}}>{l}</button>
         ))}
       </div>
 
@@ -476,25 +483,35 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
         <input placeholder="Nickname" value={newNick} onChange={e=>setNewNick(e.target.value)} style={{...inp,marginBottom:8}}/>
         <button onClick={addPlayer} style={{width:"100%",padding:10,borderRadius:10,border:"none",background:A,color:BG,fontSize:13,fontWeight:700,cursor:"pointer"}}>Add Player</button>
       </div>}
-      {players.map(p=>{const s=ps[p.id];const e=elo[p.id]||1500;const badges=ACHS.filter(a=>a.ck(s));
-        if(editMode&&editPid===p.id)return (<div key={p.id} style={{background:CD,borderRadius:12,border:`1px solid ${GD}40`,padding:14,marginBottom:6}}>
+      {/* FT-12: 2-col grid of italic-name avatar cards. ELO/WR/last-5 hidden at list level (moves to Ranking tab in #11). */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px 12px"}}>
+      {players.map(p=>{
+        if(editMode&&editPid===p.id)return (<div key={p.id} style={{gridColumn:"1 / -1",background:CD,borderRadius:12,border:`1px solid ${GD}40`,padding:14}}>
           <input value={editName} onChange={e=>setEditName(e.target.value)} placeholder="Name *" style={{...inp,marginBottom:6,borderColor:`${GD}40`}}/>
           <input value={editNick} onChange={e=>setEditNick(e.target.value)} placeholder="Nickname" style={{...inp,marginBottom:8,borderColor:`${GD}40`}}/>
           <div style={{display:"flex",gap:6}}><button onClick={()=>updatePlayer(p.id,editName,editNick)} style={{flex:1,padding:8,borderRadius:8,border:"none",background:A,color:BG,fontSize:12,fontWeight:700,cursor:"pointer"}}>Save</button><button onClick={()=>setEditPid(null)} style={{flex:1,padding:8,borderRadius:8,border:`1px solid ${BD}`,background:"transparent",color:MT,fontSize:12,fontWeight:700,cursor:"pointer"}}>Cancel</button></div>
         </div>);
-        return (<div key={p.id} onClick={()=>{if(!editMode)setSp(p.id);}} style={{display:"flex",alignItems:"center",padding:"12px 14px",marginBottom:6,background:CD,borderRadius:12,border:`1px solid ${editMode?`${GD}20`:BD}`,cursor:editMode?"default":"pointer"}}>
-          {editMode&&<div style={{display:"flex",flexDirection:"column",gap:4,marginRight:10}}>
+        return (<div key={p.id} onClick={()=>{if(!editMode)setSp(p.id);}} style={{position:"relative",display:"flex",alignItems:"center",gap:10,padding:"10px 8px",borderBottom:`1px solid ${BD}40`,cursor:editMode?"default":"pointer"}}>
+          <div style={{width:44,height:44,borderRadius:"50%",background:`linear-gradient(135deg,${A}25,${A}08)`,border:`2px solid ${A}30`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:800,color:A,flexShrink:0}}>{p.name[0]}</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:13,fontWeight:900,fontStyle:"italic",textTransform:"uppercase",letterSpacing:0.5,color:TX,lineHeight:1.1,wordBreak:"break-word"}}>{p.name}</div>
+            {/* FT-12: country flag slot — populated by #11 */}
+            {p.country && flagEmoji(p.country) ? (
+              <div style={{display:"flex",alignItems:"center",gap:4,marginTop:4}}>
+                <span style={{fontSize:14,lineHeight:1}}>{flagEmoji(p.country)}</span>
+                <span style={{fontSize:10,color:MT,fontWeight:600,letterSpacing:0.5}}>{p.country.toUpperCase()}</span>
+              </div>
+            ) : p.nickname ? (
+              <div style={{fontSize:10,color:MT,marginTop:4,fontStyle:"italic"}}>"{p.nickname}"</div>
+            ) : null}
+          </div>
+          {editMode&&<div style={{display:"flex",flexDirection:"column",gap:4,flexShrink:0}}>
             <button onClick={e=>{e.stopPropagation();startEdit(p);}} style={{background:"none",border:"none",fontSize:14,cursor:"pointer",padding:0}}>✏️</button>
             {isAdmin&&(confirmDel===p.id?<div style={{display:"flex",flexDirection:"column",gap:2}}><button onClick={e=>{e.stopPropagation();deletePlayer(p.id);setConfirmDel(null);}} style={{background:DG,border:"none",color:"#fff",fontSize:8,fontWeight:700,padding:"3px 4px",borderRadius:4,cursor:"pointer"}}>Yes</button><button onClick={e=>{e.stopPropagation();setConfirmDel(null);}} style={{background:BD,border:"none",color:TX,fontSize:8,fontWeight:700,padding:"3px 4px",borderRadius:4,cursor:"pointer"}}>No</button></div>:<button onClick={e=>{e.stopPropagation();setConfirmDel(p.id);}} style={{background:"none",border:"none",fontSize:14,cursor:"pointer",padding:0}}>🗑️</button>)}
           </div>}
-          <div style={{width:38,height:38,borderRadius:"50%",background:`${A}12`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:700,color:A,marginRight:10}}>{p.name[0]}</div>
-          <div style={{flex:1}}>
-            <div style={{display:"flex",alignItems:"center",gap:6}}><span style={{fontSize:14,fontWeight:600}}>{p.name}</span>{p.nickname&&<span style={{fontSize:12,color:MT}}>"{p.nickname}"</span>}</div>
-            <div style={{display:"flex",alignItems:"center",gap:6,marginTop:2}}><span style={{fontSize:11,color:MT}}>{s.games} GP</span><FD f={getForm(p.id)}/>{badges.length>0&&<span style={{fontSize:10}}>{badges.slice(0,3).map(b=>b.icon).join("")}</span>}</div>
-          </div>
-          <div style={{textAlign:"right"}}><div style={{fontSize:16,fontWeight:800,color:BL,fontFamily:"'JetBrains Mono'"}}>{e}</div><div style={{fontSize:10,color:MT}}>{s.games>0?(s.wins/s.games*100).toFixed(0):"—"}%</div></div>
         </div>);
       })}
+      </div>
     </>}
     </div>
   );

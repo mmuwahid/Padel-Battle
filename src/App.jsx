@@ -673,8 +673,8 @@ function AppContent({leagueId,user,onSwitchLeague}){
 
   if (loading) return (<div style={{background:BG,width:"100vw",height:"100vh",fontFamily:"'Outfit',sans-serif"}}>
     <style>{`@keyframes shimmer{0%{background-position:-200px 0}100%{background-position:200px 0}} .skel{background:linear-gradient(90deg,${CD} 25%,${CD2} 50%,${CD} 75%);background-size:400px 100%;animation:shimmer 1.5s infinite;border-radius:6px;}`}</style>
-    {/* Skeleton header */}
-    <div style={{background:CD,borderBottom:`1px solid ${BD}`,padding:"4px 16px",paddingTop:"calc(env(safe-area-inset-top, 0px) + 0px)",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+    {/* Skeleton header — FT-12: matches new blended header treatment */}
+    <div style={{background:"linear-gradient(180deg,#0d0d14 0%,"+CD+" 100%)",padding:"6px 16px 10px",paddingTop:"calc(env(safe-area-inset-top, 0px) + 6px)",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
       <div style={{display:"flex",alignItems:"center",gap:10}}>
         <div className="skel" style={{width:32,height:32,borderRadius:"50%"}}/>
         <div><div className="skel" style={{width:80,height:14,marginBottom:4}}/><div className="skel" style={{width:140,height:10}}/></div>
@@ -770,15 +770,15 @@ function AppContent({leagueId,user,onSwitchLeague}){
 
   return (
     <LeagueContext.Provider value={leagueCtx}>
-    <div style={{background:BG,minHeight:"100vh",paddingBottom:"calc(80px + env(safe-area-inset-bottom, 0px))",fontFamily:"'Outfit',sans-serif",color:TX}}>
+    <div style={{background:BG,minHeight:"100vh",paddingBottom:"calc(96px + env(safe-area-inset-bottom, 0px))",fontFamily:"'Outfit',sans-serif",color:TX}}>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}} @keyframes fadeIn{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}} input:focus,select:focus,textarea:focus{border-color:${A} !important;box-shadow:0 0 0 2px ${A}30 !important;}`}</style>
-      {/* HEADER — Line 1: PadelHub branding, Line 2: League | Season */}
-      <div style={{background:CD,borderBottom:`1px solid ${BD}`,padding:"4px 16px",paddingTop:"calc(env(safe-area-inset-top, 0px) + 0px)",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:10}}>
+      {/* HEADER — FT-12: gradient blends under status bar / dynamic island, italic uppercase wordmark */}
+      <div style={{background:"linear-gradient(180deg,#0d0d14 0%,"+CD+" 100%)",padding:"6px 16px 10px",paddingTop:"calc(env(safe-area-inset-top, 0px) + 6px)",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:10}}>
         <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
           <PadelLogoSmall/>
           <div>
             <div style={{display:"flex",alignItems:"center",gap:"6px"}}>
-              <h1 style={{fontSize:"14px",fontWeight:900,margin:0,letterSpacing:1,fontFamily:"'Outfit',sans-serif"}}><span style={{color:TX}}>Padel</span><span style={{color:A}}>Hub</span></h1>
+              <h1 style={{fontSize:"14px",fontWeight:900,margin:0,letterSpacing:1,fontFamily:"'Outfit',sans-serif",fontStyle:"italic",textTransform:"uppercase"}}><span style={{color:TX}}>Padel</span><span style={{color:A}}>Hub</span></h1>
             </div>
             <p style={{fontSize:"9px",color:MT,margin:"1px 0 0 0",fontWeight:400}}>
               {league?.name||"League"}{seasons.find(s=>s.active) ? ` | ${seasons.find(s=>s.active).name}` : ""}
@@ -1135,8 +1135,8 @@ function AppContent({leagueId,user,onSwitchLeague}){
         </div>
       )}
 
-      {/* BOTTOM NAV — 7-column grid: 3 left + center "+" + 3 right */}
-      <div style={{position:"fixed",bottom:0,left:0,right:0,background:`${CD}f0`,backdropFilter:"blur(20px)",borderTop:`1px solid ${BD}`,display:"grid",gridTemplateColumns:"repeat(7,1fr)",alignItems:"end",padding:`6px 0 env(safe-area-inset-bottom, 6px)`,zIndex:100}}>
+      {/* BOTTOM NAV — FT-12: floating rounded pill with side gutters, accent-soft border, fixed at bottom */}
+      <div style={{position:"fixed",bottom:`calc(14px + env(safe-area-inset-bottom, 0px))`,left:14,right:14,background:`${CD}f0`,backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",border:`1px solid ${A}40`,borderRadius:28,display:"grid",gridTemplateColumns:"repeat(7,1fr)",alignItems:"end",padding:"8px 6px 10px",zIndex:100,boxShadow:"0 8px 30px rgba(0,0,0,0.45)"}}>
         {TL.map(t => (
           <button key={t.key} onClick={()=>{setTab(t.key);setSidebarOpen(false);setSidebarView(null);}} style={{background:tab===t.key?A+"15":"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",color:tab===t.key?A:MT,cursor:"pointer",padding:"6px 0",borderRadius:8,minHeight:44}}>
             <div style={{height:24,display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:18,lineHeight:1}}>{t.icon==="court"?<CourtIcon/>:t.icon}</span></div>

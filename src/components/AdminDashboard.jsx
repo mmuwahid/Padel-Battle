@@ -160,12 +160,15 @@ export function AdminDashboard({ memberProfiles, setSidebarView }) {
             const showRoleControls = isOwner && claimed && !isLeagueOwner && memberId;
 
             return (
-              <div key={p.id} style={{padding:"12px",background:CD2,borderRadius:8}}>
-                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
-                  <div style={{width:8,height:8,borderRadius:"50%",background:claimed?A:MT,flexShrink:0}}/>
+              <div key={p.id} style={{padding:"14px",background:CD,border:`1px solid ${BD}`,borderRadius:12}}>
+                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+                  <div style={{position:"relative",flexShrink:0}}>
+                    <div style={{width:36,height:36,borderRadius:"50%",background:`linear-gradient(135deg,${A}25,${A}08)`,border:`2px solid ${A}30`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:800,color:A}}>{(p.nickname||p.name||"?")[0].toUpperCase()}</div>
+                    <div style={{position:"absolute",bottom:-1,right:-1,width:10,height:10,borderRadius:"50%",background:claimed?A:MT,boxShadow:`0 0 0 2px ${CD}`}} title={claimed?"Linked":"Unclaimed"}/>
+                  </div>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
-                      <span style={{fontSize:13,fontWeight:600,color:TX}}>{p.nickname||p.name}</span>
+                      <span style={{fontSize:14,fontWeight:900,fontStyle:"italic",textTransform:"uppercase",letterSpacing:0.5,color:TX}}>{p.nickname||p.name}</span>
                       {isLeagueOwner && <span style={{fontSize:9,fontWeight:800,letterSpacing:0.8,padding:"2px 6px",borderRadius:4,textTransform:"uppercase",background:`${GD}2e`,color:GD,border:`1px solid ${GD}59`}}>★ Owner</span>}
                       {!isLeagueOwner && playerIsAdmin && <span style={{fontSize:9,fontWeight:800,letterSpacing:0.8,padding:"2px 6px",borderRadius:4,textTransform:"uppercase",background:`${GD}2e`,color:GD,border:`1px solid ${GD}59`}}>⚡ Admin</span>}
                       {isMe && <span style={{fontSize:9,fontWeight:800,letterSpacing:0.8,padding:"2px 6px",borderRadius:4,textTransform:"uppercase",background:`${A}24`,color:A,border:`1px solid ${A}59`}}>You</span>}
