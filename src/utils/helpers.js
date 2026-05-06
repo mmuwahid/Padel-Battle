@@ -34,3 +34,23 @@ const ISO3_TO_ISO2={
   ZMB:"ZM",ZWE:"ZW",
 };
 export function flagEmoji(iso3){if(!iso3)return"";const c=ISO3_TO_ISO2[iso3.toUpperCase()];if(!c)return"";return String.fromCodePoint(...c.split("").map(ch=>0x1F1E6+ch.charCodeAt(0)-65));}
+
+// S051 / Issue #20: Decode an image File to a drawable (ImageBitmap or HTMLImageElement).
+// Tries `createImageBitmap` first — natively decodes HEIC on iOS 17+ and avoids the
+// FileReader->data URL->Image chain that was failing intermittently on first attempt
+// in iOS Safari PWA mode. Falls back to URL.createObjectURL + Image for older browsers.
+// Both ImageBitmap and HTMLImageElement are valid first args to ctx.drawImage().
+export async function decodeImageFile(file){
+  if(typeof createImageBitmap==="function"){
+    try{return await createImageBitmap(file);}catch(_e){/* fall through */}
+  }
+  const url=URL.createObjectURL(file);
+  const img=new Image();
+  try{
+    await new Promise((res,rej)=>{img.onload=res;img.onerror=()=>rej(new Error("Failed to load image"));img.src=url;});
+    return img;
+  }catch(e){
+    URL.revokeObjectURL(url);
+    throw e;
+  }
+}

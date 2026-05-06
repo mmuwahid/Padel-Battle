@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback, Suspense, lazy } from "react";
 import { supabase } from './supabase';
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, BL, PU, TL, TR } from './theme';
-import { formatTeam, win, formatDate, setTotals, flagEmoji } from './utils/helpers';
+import { formatTeam, win, formatDate, setTotals, flagEmoji, decodeImageFile } from './utils/helpers';
 import { calcElo } from './utils/elo';
 import { RULES, ARGUED } from './data/rules';
 import { CourtIcon, PadelLogo, PadelLogoSmall } from './components/icons';
@@ -76,22 +76,25 @@ function AppContent({leagueId,user,onSwitchLeague}){
     })();
   },[user.id]);
 
-  // FT-03: Upload avatar (resize to 200x200, upload to storage, save URL)
+  // FT-03 / Issue #20: Upload avatar (resize to 200x200, upload to storage, save URL).
+  // S051: switched from FileReader->dataURL->Image to decodeImageFile() helper —
+  // fixes iOS Safari PWA "Failed to load on first attempt" by using createImageBitmap
+  // (native HEIC decode + reliable async). Also write-through to claimedPlayer.avatar_url
+  // so the user's photo propagates to every player-avatar slot in the app (ranking,
+  // partners, H2H, etc.) which read from players.avatar_url.
   const uploadAvatar=async(file)=>{
     if(!file)return;
     setAvatarUploading(true);
     try{
-      // Read file as data URL (works for all image formats including HEIF on iOS)
-      const dataUrl=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file);});
+      const img=await decodeImageFile(file);
+      if(!img.width||!img.height)throw new Error("Invalid image dimensions");
       const canvas=document.createElement("canvas");
       canvas.width=200;canvas.height=200;
       const ctx=canvas.getContext("2d");
-      const img=new Image();
-      await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(new Error("Failed to load image"));img.src=dataUrl;});
-      if(!img.width||!img.height)throw new Error("Invalid image dimensions");
       const s=Math.min(img.width,img.height);
       const sx=(img.width-s)/2,sy=(img.height-s)/2;
       ctx.drawImage(img,sx,sy,s,s,0,0,200,200);
+      if(img.close)img.close();
       const blob=await new Promise(r=>canvas.toBlob(r,"image/jpeg",0.85));
       const path=`${user.id}/avatar.jpg`;
       const {error:upErr}=await supabase.storage.from("avatars").upload(path,blob,{upsert:true,contentType:"image/jpeg"});
@@ -99,6 +102,13 @@ function AppContent({leagueId,user,onSwitchLeague}){
       const {data:{publicUrl}}=supabase.storage.from("avatars").getPublicUrl(path);
       const url=publicUrl+"?t="+Date.now();
       await supabase.from("profiles").update({avatar_url:url}).eq("id",user.id);
+      // S051 Issue #20: write-through to the user's claimed player row so the photo
+      // appears everywhere players.avatar_url is rendered (ranking, partners, H2H,
+      // Players grid, drill-in profile). Skip if the user hasn't claimed a player yet.
+      if(claimedPlayer?.id){
+        await supabase.from("players").update({avatar_url:url}).eq("id",claimedPlayer.id);
+        await loadLeagueData();
+      }
       setAvatarUrl(url);
       showToast("Photo updated!");
     }catch(_err){
@@ -111,6 +121,11 @@ function AppContent({leagueId,user,onSwitchLeague}){
     try{
       await supabase.storage.from("avatars").remove([`${user.id}/avatar.jpg`]);
       await supabase.from("profiles").update({avatar_url:null}).eq("id",user.id);
+      // S051 Issue #20: also clear the claimed player's avatar so all surfaces revert.
+      if(claimedPlayer?.id){
+        await supabase.from("players").update({avatar_url:null}).eq("id",claimedPlayer.id);
+        await loadLeagueData();
+      }
       setAvatarUrl(null);
       showToast("Photo removed");
     }catch(_err){showToast("Failed to remove photo","error");}

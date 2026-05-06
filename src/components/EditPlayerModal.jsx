@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, BL } from "../theme";
-import { flagEmoji } from "../utils/helpers";
+import { flagEmoji, decodeImageFile } from "../utils/helpers";
 import { useLeague } from "../LeagueContext";
 import { CountrySelect } from "./CountrySelect";
 
@@ -23,21 +23,21 @@ export function EditPlayerModal({ player, onClose, onSaved }) {
 
   const inp = { background: CD2, color: TX, border: `1px solid ${BD}`, borderRadius: 10, padding: "10px 12px", fontSize: 14, width: "100%", outline: "none", fontWeight: 400, fontFamily: "'Outfit',sans-serif" };
 
-  // Resize + upload (mirrors App.jsx uploadAvatar pattern; player path: players/{playerId}.jpg)
+  // Resize + upload (mirrors App.jsx uploadAvatar pattern; player path: players/{playerId}.jpg).
+  // S051 Issue #20: switched to decodeImageFile() — fixes iOS first-attempt failure.
   const uploadPhoto = async (file) => {
     if (!file) return;
     setUploading(true);
     try {
-      const dataUrl = await new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(r.result); r.onerror = reject; r.readAsDataURL(file); });
+      const img = await decodeImageFile(file);
+      if (!img.width || !img.height) throw new Error("Invalid image dimensions");
       const canvas = document.createElement("canvas");
       canvas.width = 200; canvas.height = 200;
       const ctx = canvas.getContext("2d");
-      const img = new Image();
-      await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = () => reject(new Error("Failed to load image")); img.src = dataUrl; });
-      if (!img.width || !img.height) throw new Error("Invalid image dimensions");
       const s = Math.min(img.width, img.height);
       const sx = (img.width - s) / 2, sy = (img.height - s) / 2;
       ctx.drawImage(img, sx, sy, s, s, 0, 0, 200, 200);
+      if (img.close) img.close();
       const blob = await new Promise(r => canvas.toBlob(r, "image/jpeg", 0.85));
       const path = `players/${player.id}.jpg`;
       const { error: upErr } = await supabase.storage.from("avatars").upload(path, blob, { upsert: true, contentType: "image/jpeg" });

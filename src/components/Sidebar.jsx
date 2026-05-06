@@ -27,20 +27,21 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, user, ava
         boxShadow:sidebarOpen?"0 0 20px rgba(0,0,0,0.5)":"none",
         overflow:"auto",
       }}>
-        {/* Header with user info */}
+        {/* Header with user info — Issue #21: clickable to open My Profile */}
         <div style={{padding:"20px 16px",paddingTop:"calc(env(safe-area-inset-top, 0px) + 20px)",borderBottom:`1px solid ${BD}`}}>
           <div style={{display:"flex",justifyContent:"flex-end",marginBottom:8}}>
             <button onClick={()=>setSidebarOpen(false)} style={{background:"none",border:"none",color:MT,fontSize:20,cursor:"pointer",padding:"4px 8px",lineHeight:1}} aria-label="Close sidebar">✕</button>
           </div>
-          <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
-            <div style={{width:56,height:56,borderRadius:"50%",background:`${A}20`,border:`2px solid ${A}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,fontWeight:800,color:A,overflow:"hidden"}}>
+          <button onClick={()=>{setSidebarView("profile");setSidebarOpen(false);}} style={{display:"flex",alignItems:"center",gap:12,marginBottom:12,width:"100%",background:"transparent",border:"none",padding:0,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif"}} aria-label="Open my profile">
+            <div style={{width:56,height:56,borderRadius:"50%",background:`${A}20`,border:`2px solid ${A}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,fontWeight:800,color:A,overflow:"hidden",flexShrink:0}}>
               {avatarUrl?<img src={avatarUrl} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:(user.user_metadata?.display_name||user.email||"U")[0].toUpperCase()}
             </div>
-            <div style={{flex:1}}>
+            <div style={{flex:1,minWidth:0}}>
               <div style={{fontSize:14,fontWeight:700,color:TX}}>{user.user_metadata?.display_name||user.email?.split("@")[0]||"User"}</div>
-              <div style={{fontSize:10,color:MT,marginTop:2}}>{user.email}</div>
+              <div style={{fontSize:10,color:MT,marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{user.email}</div>
             </div>
-          </div>
+            <span style={{fontSize:14,color:MT,fontWeight:400,paddingRight:4}} aria-hidden="true">›</span>
+          </button>
         </div>
 
         {/* Sidebar content — NAVIGATION ONLY, closes on selection */}
@@ -48,13 +49,6 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, user, ava
             .sidebar-nav button:active { background: ${CD2} !important; }
           `}</style>
         <div className="sidebar-nav" style={{flex:1,padding:"16px",overflow:"auto"}}>
-          <div>
-            <button onClick={()=>{setSidebarView("profile");setSidebarOpen(false);}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>
-              👤 My Profile
-            </button>
-          </div>
-
-          <div style={{height:"1px",background:BD,margin:"12px 0"}} />
 
           <div style={{marginBottom:12}}>
             <div style={{fontSize:10,color:MT,fontWeight:600,letterSpacing:1,textTransform:"uppercase",paddingLeft:16,marginBottom:8}}>League</div>

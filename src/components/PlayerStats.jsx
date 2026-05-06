@@ -39,6 +39,10 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
 
   const inp={background:CD2,color:TX,border:`1px solid ${BD}`,borderRadius:10,padding:"10px 12px",fontSize:14,width:"100%",outline:"none",fontWeight:400};
 
+  // S051 Issue #20: lookup helper — find player.avatar_url by id. Used in every
+  // avatar slot in this component (drill-in profile, insights, pairs, H2H, grid).
+  const getAvatar=(pid)=>players.find(pp=>pp.id===pid)?.avatar_url;
+
   async function addPlayer(){
     if(!newName.trim())return;
     try{
@@ -152,7 +156,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
       <div style={{padding:"20px 16px",maxWidth:"600px",margin:"0 auto"}}>
         <button onClick={()=>setSp(null)} style={{background:"none",border:"none",color:A,fontSize:13,fontWeight:600,cursor:"pointer",marginBottom:12}}>← All Players</button>
         <div style={{background:CD,borderRadius:16,border:`1px solid ${BD}`,padding:20,marginBottom:12,textAlign:"center"}}>
-          <div style={{width:64,height:64,borderRadius:"50%",background:`linear-gradient(135deg,${A}25,${A}08)`,border:`2px solid ${A}50`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,fontWeight:800,color:A,margin:"0 auto 10px"}}>{player.name[0]}</div>
+          <div style={{width:64,height:64,borderRadius:"50%",background:`linear-gradient(135deg,${A}25,${A}08)`,border:`2px solid ${A}50`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,fontWeight:800,color:A,margin:"0 auto 10px",overflow:"hidden"}}>{player.avatar_url?<img src={player.avatar_url} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:player.name[0]}</div>
           <h2 style={{fontSize:22,fontWeight:800}}>{player.name}</h2>
           {player.nickname&&<p style={{fontSize:13,color:MT}}>"{player.nickname}"</p>}
           {/* FT-12: country flag slot — empty until #11 fills players.country */}
@@ -229,7 +233,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
               <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:12,textTransform:"uppercase",letterSpacing:0.5}}>Most Active Players</div>
               {analyticsData.mostActive.map((x,i)=>(
                 <div key={x.pid} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderBottom:i<analyticsData.mostActive.length-1?`1px solid ${BD}`:undefined}}>
-                  <div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:32,height:32,borderRadius:"50%",background:`${A}15`,border:`2px solid ${A}30`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:A}}>{getName(x.pid)[0]}</div><span style={{fontSize:12,color:TX}}>{getName(x.pid)}</span></div>
+                  <div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:32,height:32,borderRadius:"50%",background:`${A}15`,border:`2px solid ${A}30`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:A,overflow:"hidden"}}>{getAvatar(x.pid)?<img src={getAvatar(x.pid)} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:getName(x.pid)[0]}</div><span style={{fontSize:12,color:TX}}>{getName(x.pid)}</span></div>
                   <div style={{textAlign:"right"}}><span style={{fontSize:14,fontWeight:700,color:A,fontFamily:"'JetBrains Mono'"}}>{x.games}</span><span style={{fontSize:10,color:MT,marginLeft:4}}>GP</span></div>
                 </div>
               ))}
@@ -298,7 +302,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
               {analyticsData.bestPartnership&&<div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14}}>
                 <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:8}}>Best Pairs</div>
                 <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
-                  <div style={{width:32,height:32,borderRadius:"50%",background:`${A}15`,border:`2px solid ${A}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:A}}>{getName(analyticsData.bestPartnership.a)[0]}</div>
+                  <div style={{width:32,height:32,borderRadius:"50%",background:`${A}15`,border:`2px solid ${A}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:A,overflow:"hidden"}}>{getAvatar(analyticsData.bestPartnership.a)?<img src={getAvatar(analyticsData.bestPartnership.a)} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:getName(analyticsData.bestPartnership.a)[0]}</div>
                   <div><div style={{fontSize:12,fontWeight:700,color:TX}}>{getName(analyticsData.bestPartnership.a)} x {getName(analyticsData.bestPartnership.b)}</div>
                   <div style={{fontSize:11,color:A}}>{analyticsData.bestPartnership.w}W-{analyticsData.bestPartnership.l}L ({Math.round(analyticsData.bestPartnership.w/(analyticsData.bestPartnership.w+analyticsData.bestPartnership.l)*100)}%)</div></div>
                 </div>
@@ -306,7 +310,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
               {analyticsData.worstPartnership&&<div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14}}>
                 <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:8}}>Worst Pairs</div>
                 <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
-                  <div style={{width:32,height:32,borderRadius:"50%",background:`${DG}15`,border:`2px solid ${DG}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:DG}}>{getName(analyticsData.worstPartnership.a)[0]}</div>
+                  <div style={{width:32,height:32,borderRadius:"50%",background:`${DG}15`,border:`2px solid ${DG}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:DG,overflow:"hidden"}}>{getAvatar(analyticsData.worstPartnership.a)?<img src={getAvatar(analyticsData.worstPartnership.a)} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:getName(analyticsData.worstPartnership.a)[0]}</div>
                   <div><div style={{fontSize:12,fontWeight:700,color:TX}}>{getName(analyticsData.worstPartnership.a)} x {getName(analyticsData.worstPartnership.b)}</div>
                   <div style={{fontSize:11,color:DG}}>{analyticsData.worstPartnership.w}W-{analyticsData.worstPartnership.l}L ({Math.round(analyticsData.worstPartnership.w/(analyticsData.worstPartnership.w+analyticsData.worstPartnership.l)*100)}%)</div></div>
                 </div>
@@ -369,9 +373,9 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                 {/* H2H Card */}
                 <div style={{background:CD2,padding:16,borderRadius:12,marginBottom:16,textAlign:"center"}}>
                   <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:12,marginBottom:12}}>
-                    <div style={{width:48,height:48,borderRadius:"50%",background:`${A}20`,border:`2px solid ${A}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:800,color:A}}>{(p1?.name||"?")[0]}</div>
+                    <div style={{width:48,height:48,borderRadius:"50%",background:`${A}20`,border:`2px solid ${A}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:800,color:A,overflow:"hidden"}}>{p1?.avatar_url?<img src={p1.avatar_url} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:(p1?.name||"?")[0]}</div>
                     <div style={{fontSize:16,fontWeight:700,color:TX}}>{p1W} - {p2W}</div>
-                    <div style={{width:48,height:48,borderRadius:"50%",background:`${A}20`,border:`2px solid ${A}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:800,color:A}}>{(p2?.name||"?")[0]}</div>
+                    <div style={{width:48,height:48,borderRadius:"50%",background:`${A}20`,border:`2px solid ${A}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:800,color:A,overflow:"hidden"}}>{p2?.avatar_url?<img src={p2.avatar_url} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:(p2?.name||"?")[0]}</div>
                   </div>
                   <div style={{width:"100%",height:4,background:CD,borderRadius:2,overflow:"hidden",marginBottom:8}}>
                     <div style={{width:`${h2hM.length>0?(p1W/h2hM.length)*100:50}%`,height:"100%",background:A}}/>
@@ -492,7 +496,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
           <div style={{display:"flex",gap:6}}><button onClick={()=>updatePlayer(p.id,editName,editNick)} style={{flex:1,padding:8,borderRadius:8,border:"none",background:A,color:BG,fontSize:12,fontWeight:700,cursor:"pointer"}}>Save</button><button onClick={()=>setEditPid(null)} style={{flex:1,padding:8,borderRadius:8,border:`1px solid ${BD}`,background:"transparent",color:MT,fontSize:12,fontWeight:700,cursor:"pointer"}}>Cancel</button></div>
         </div>);
         return (<div key={p.id} onClick={()=>{if(!editMode)setSp(p.id);}} style={{position:"relative",display:"flex",alignItems:"center",gap:10,padding:"10px 8px",borderBottom:`1px solid ${BD}40`,cursor:editMode?"default":"pointer"}}>
-          <div style={{width:44,height:44,borderRadius:"50%",background:`linear-gradient(135deg,${A}25,${A}08)`,border:`2px solid ${A}30`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:800,color:A,flexShrink:0}}>{p.name[0]}</div>
+          <div style={{width:44,height:44,borderRadius:"50%",background:`linear-gradient(135deg,${A}25,${A}08)`,border:`2px solid ${A}30`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:800,color:A,flexShrink:0,overflow:"hidden"}}>{p.avatar_url?<img src={p.avatar_url} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:p.name[0]}</div>
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontSize:13,fontWeight:900,fontStyle:"italic",textTransform:"uppercase",letterSpacing:0.5,color:TX,lineHeight:1.1,wordBreak:"break-word"}}>{p.name}</div>
             {/* FT-12: country flag slot — populated by #11 */}
