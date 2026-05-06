@@ -298,23 +298,35 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
 
           {/* PARTNERSHIP ANALYTICS */}
           {analyticsSection==="partnership"&&<div>
+            {/* S053 Issue #23: both pair cards render BOTH players' avatars (L + R flanking the names),
+                Worst Pairs always shown with empty-state when there's no losing partnership yet. */}
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
               {analyticsData.bestPartnership&&<div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14}}>
                 <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:8}}>Best Pairs</div>
-                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
-                  <div style={{width:32,height:32,borderRadius:"50%",background:`${A}15`,border:`2px solid ${A}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:A,overflow:"hidden"}}>{getAvatar(analyticsData.bestPartnership.a)?<img src={getAvatar(analyticsData.bestPartnership.a)} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:getName(analyticsData.bestPartnership.a)[0]}</div>
-                  <div><div style={{fontSize:12,fontWeight:700,color:TX}}>{getName(analyticsData.bestPartnership.a)} x {getName(analyticsData.bestPartnership.b)}</div>
-                  <div style={{fontSize:11,color:A}}>{analyticsData.bestPartnership.w}W-{analyticsData.bestPartnership.l}L ({Math.round(analyticsData.bestPartnership.w/(analyticsData.bestPartnership.w+analyticsData.bestPartnership.l)*100)}%)</div></div>
+                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+                  <div style={{width:32,height:32,borderRadius:"50%",background:`${A}15`,border:`2px solid ${A}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:A,overflow:"hidden",flexShrink:0}}>{getAvatar(analyticsData.bestPartnership.a)?<img src={getAvatar(analyticsData.bestPartnership.a)} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:getName(analyticsData.bestPartnership.a)[0]}</div>
+                  <div style={{flex:1,minWidth:0,textAlign:"center"}}>
+                    <div style={{fontSize:11,fontWeight:700,color:TX,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{getName(analyticsData.bestPartnership.a)} x {getName(analyticsData.bestPartnership.b)}</div>
+                    <div style={{fontSize:11,color:A,marginTop:2}}>{analyticsData.bestPartnership.w}W-{analyticsData.bestPartnership.l}L ({Math.round(analyticsData.bestPartnership.w/(analyticsData.bestPartnership.w+analyticsData.bestPartnership.l)*100)}%)</div>
+                  </div>
+                  <div style={{width:32,height:32,borderRadius:"50%",background:`${A}15`,border:`2px solid ${A}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:A,overflow:"hidden",flexShrink:0}}>{getAvatar(analyticsData.bestPartnership.b)?<img src={getAvatar(analyticsData.bestPartnership.b)} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:getName(analyticsData.bestPartnership.b)[0]}</div>
                 </div>
               </div>}
-              {analyticsData.worstPartnership&&<div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14}}>
+              <div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14}}>
                 <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:8}}>Worst Pairs</div>
-                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
-                  <div style={{width:32,height:32,borderRadius:"50%",background:`${DG}15`,border:`2px solid ${DG}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:DG,overflow:"hidden"}}>{getAvatar(analyticsData.worstPartnership.a)?<img src={getAvatar(analyticsData.worstPartnership.a)} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:getName(analyticsData.worstPartnership.a)[0]}</div>
-                  <div><div style={{fontSize:12,fontWeight:700,color:TX}}>{getName(analyticsData.worstPartnership.a)} x {getName(analyticsData.worstPartnership.b)}</div>
-                  <div style={{fontSize:11,color:DG}}>{analyticsData.worstPartnership.w}W-{analyticsData.worstPartnership.l}L ({Math.round(analyticsData.worstPartnership.w/(analyticsData.worstPartnership.w+analyticsData.worstPartnership.l)*100)}%)</div></div>
-                </div>
-              </div>}
+                {analyticsData.worstPartnership ? (
+                  <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+                    <div style={{width:32,height:32,borderRadius:"50%",background:`${DG}15`,border:`2px solid ${DG}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:DG,overflow:"hidden",flexShrink:0}}>{getAvatar(analyticsData.worstPartnership.a)?<img src={getAvatar(analyticsData.worstPartnership.a)} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:getName(analyticsData.worstPartnership.a)[0]}</div>
+                    <div style={{flex:1,minWidth:0,textAlign:"center"}}>
+                      <div style={{fontSize:11,fontWeight:700,color:TX,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{getName(analyticsData.worstPartnership.a)} x {getName(analyticsData.worstPartnership.b)}</div>
+                      <div style={{fontSize:11,color:DG,marginTop:2}}>{analyticsData.worstPartnership.w}W-{analyticsData.worstPartnership.l}L ({Math.round(analyticsData.worstPartnership.w/(analyticsData.worstPartnership.w+analyticsData.worstPartnership.l)*100)}%)</div>
+                    </div>
+                    <div style={{width:32,height:32,borderRadius:"50%",background:`${DG}15`,border:`2px solid ${DG}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:DG,overflow:"hidden",flexShrink:0}}>{getAvatar(analyticsData.worstPartnership.b)?<img src={getAvatar(analyticsData.worstPartnership.b)} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:getName(analyticsData.worstPartnership.b)[0]}</div>
+                  </div>
+                ) : (
+                  <div style={{fontSize:11,color:MT,textAlign:"center",padding:"10px 0",lineHeight:1.4}}>No losing partnerships yet</div>
+                )}
+              </div>
             </div>
             {/* All partnerships */}
             <div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14}}>
