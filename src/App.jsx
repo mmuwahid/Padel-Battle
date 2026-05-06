@@ -9,6 +9,7 @@ import { FD } from './components/FormDots';
 import { Sidebar } from './components/Sidebar';
 import { ProfileView } from './components/ProfileView';
 import { AdminDashboard } from './components/AdminDashboard';
+import { PlayerManagement } from './components/PlayerManagement';
 import { PlatformAdmin } from './components/PlatformAdmin';
 import { SettingsView } from './components/SettingsView';
 import { NotificationCenter } from './components/NotificationCenter';
@@ -228,7 +229,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
         supabase.from("leagues").select("id,name,invite_code,created_by").eq("id",leagueId).single(),
         supabase.from("league_members").select("id,role").eq("league_id",leagueId).eq("user_id",user.id).single(),
         supabase.from("league_members").select("id,user_id,role,profiles(id,email,display_name,avatar_url)").eq("league_id",leagueId),
-        supabase.from("players").select("id,name,nickname,user_id,created_by,created_at").eq("league_id",leagueId).order("name"),
+        supabase.from("players").select("id,name,nickname,user_id,created_by,created_at,avatar_url,country,playing_position").eq("league_id",leagueId).order("name"),
         supabase.from("matches").select("id,team_a,team_b,sets,motm,date,season_id,league_id,status,logged_by,created_at").eq("league_id",leagueId).order("date",{ascending:false}).limit(500),
         supabase.from("seasons").select("id,name,active").eq("league_id",leagueId).order("start_date"),
         supabase.from("challenges").select("id,team_a,team_b,status,date,time,location,notes,created_by,match_id,responses,duration,league_id").eq("league_id",leagueId).in("status",["open","pending","confirmed","played"]).order("date",{ascending:true})
@@ -673,8 +674,8 @@ function AppContent({leagueId,user,onSwitchLeague}){
 
   if (loading) return (<div style={{background:BG,width:"100vw",height:"100vh",fontFamily:"'Outfit',sans-serif"}}>
     <style>{`@keyframes shimmer{0%{background-position:-200px 0}100%{background-position:200px 0}} .skel{background:linear-gradient(90deg,${CD} 25%,${CD2} 50%,${CD} 75%);background-size:400px 100%;animation:shimmer 1.5s infinite;border-radius:6px;}`}</style>
-    {/* Skeleton header — FT-12: matches new blended header treatment */}
-    <div style={{background:"linear-gradient(180deg,#0d0d14 0%,"+CD+" 100%)",padding:"6px 16px 10px",paddingTop:"calc(env(safe-area-inset-top, 0px) + 6px)",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+    {/* Skeleton header — FT-12: matches new blended header treatment with tight padding */}
+    <div style={{background:"linear-gradient(180deg,#0d0d14 0%,"+CD+" 100%)",padding:"4px 16px",paddingTop:"calc(env(safe-area-inset-top, 0px) + 0px)",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
       <div style={{display:"flex",alignItems:"center",gap:10}}>
         <div className="skel" style={{width:32,height:32,borderRadius:"50%"}}/>
         <div><div className="skel" style={{width:80,height:14,marginBottom:4}}/><div className="skel" style={{width:140,height:10}}/></div>
@@ -772,8 +773,8 @@ function AppContent({leagueId,user,onSwitchLeague}){
     <LeagueContext.Provider value={leagueCtx}>
     <div style={{background:BG,minHeight:"100vh",paddingBottom:"calc(96px + env(safe-area-inset-bottom, 0px))",fontFamily:"'Outfit',sans-serif",color:TX}}>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}} @keyframes fadeIn{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}} input:focus,select:focus,textarea:focus{border-color:${A} !important;box-shadow:0 0 0 2px ${A}30 !important;}`}</style>
-      {/* HEADER — FT-12: gradient blends under status bar / dynamic island, italic uppercase wordmark */}
-      <div style={{background:"linear-gradient(180deg,#0d0d14 0%,"+CD+" 100%)",padding:"6px 16px 10px",paddingTop:"calc(env(safe-area-inset-top, 0px) + 6px)",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:10}}>
+      {/* HEADER — FT-12: gradient blends under status bar / dynamic island, italic uppercase wordmark, tight S044 v3 padding restored */}
+      <div style={{background:"linear-gradient(180deg,#0d0d14 0%,"+CD+" 100%)",padding:"4px 16px",paddingTop:"calc(env(safe-area-inset-top, 0px) + 0px)",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:10}}>
         <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
           <PadelLogoSmall/>
           <div>
@@ -820,6 +821,9 @@ function AppContent({leagueId,user,onSwitchLeague}){
           )}
           {sidebarView==="admin" && (
             <AdminDashboard memberProfiles={memberProfiles} setSidebarView={setSidebarView}/>
+          )}
+          {sidebarView==="playerManagement" && (
+            <PlayerManagement memberProfiles={memberProfiles} setSidebarView={setSidebarView}/>
           )}
           {sidebarView==="settings" && (
             <SettingsView user={user} claimedPlayer={claimedPlayer} isAdmin={isAdmin} isOwner={isOwner} league={league} leagueMembers={leagueMembers} memberProfiles={memberProfiles} pushSubscribed={pushSubscribed} subscribeToPush={subscribeToPush} unsubscribeFromPush={unsubscribeFromPush} notifNewMatch={notifNewMatch} notifRankingChange={notifRankingChange} notifNewMembers={notifNewMembers} notifChallenges={notifChallenges} toggleNotification={toggleNotification} updateMemberRole={updateMemberRole} onSwitchLeague={onSwitchLeague} setSidebarView={setSidebarView} showToast={showToast} loadLeagueData={loadLeagueData} testPushNotification={testPushNotification}/>
@@ -1135,6 +1139,8 @@ function AppContent({leagueId,user,onSwitchLeague}){
         </div>
       )}
 
+      {/* FT-12 v2: solid pedestal behind floating nav — hides scrolled content from showing through side gutters / below nav */}
+      <div style={{position:"fixed",bottom:0,left:0,right:0,height:`calc(82px + env(safe-area-inset-bottom, 0px))`,background:BG,zIndex:99,pointerEvents:"none"}}/>
       {/* BOTTOM NAV — FT-12: floating rounded pill with side gutters, accent-soft border, fixed at bottom */}
       <div style={{position:"fixed",bottom:`calc(14px + env(safe-area-inset-bottom, 0px))`,left:14,right:14,background:`${CD}f0`,backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",border:`1px solid ${A}40`,borderRadius:28,display:"grid",gridTemplateColumns:"repeat(7,1fr)",alignItems:"end",padding:"8px 6px 10px",zIndex:100,boxShadow:"0 8px 30px rgba(0,0,0,0.45)"}}>
         {TL.map(t => (
