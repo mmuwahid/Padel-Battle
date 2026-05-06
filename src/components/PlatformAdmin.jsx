@@ -74,13 +74,12 @@ export function PlatformAdmin({ onClose, showToast }) {
 
   return (
     <div style={{ padding: "20px 16px", paddingTop: "calc(env(safe-area-inset-top, 0px) + 16px)", minHeight: "100vh", background: BG }}>
+      {/* Issue #16: Back button matching SettingsView/AdminDashboard convention */}
+      <button onClick={onClose} style={{ marginBottom: 20, background: "none", border: "none", color: A, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'Outfit',sans-serif", padding: 0 }}>← Back</button>
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-        <div>
-          <div style={{ fontSize: 16, fontWeight: 800, color: TX, letterSpacing: 1 }}>Platform Admin</div>
-          <div style={{ fontSize: 10, color: MT, fontWeight: 600, marginTop: 2 }}>Super Admin Dashboard</div>
-        </div>
-        <button onClick={onClose} style={{ background: "none", border: "1px solid " + BD, borderRadius: 8, color: MT, fontSize: 11, fontWeight: 600, cursor: "pointer", padding: "6px 12px", fontFamily: "'Outfit',sans-serif" }}>Close</button>
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ fontSize: 20, fontWeight: 900, fontStyle: "italic", textTransform: "uppercase", letterSpacing: 1, color: TX }}>Platform Admin</div>
+        <div style={{ fontSize: 10, color: MT, fontWeight: 600, marginTop: 2 }}>Super Admin Dashboard</div>
       </div>
 
       {loading ? (

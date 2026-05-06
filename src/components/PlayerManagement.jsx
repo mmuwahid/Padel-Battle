@@ -144,7 +144,7 @@ export function PlayerManagement({ memberProfiles, setSidebarView }) {
                     {p.playing_position && (
                       <>
                         {p.country && <span style={{ opacity: 0.5 }}>·</span>}
-                        <span style={{ textTransform: "capitalize", fontWeight: 600 }}>{p.playing_position} hand</span>
+                        <span style={{ textTransform: "capitalize", fontWeight: 600 }}>{p.playing_position} side</span>
                       </>
                     )}
                     {!p.country && !p.playing_position && (

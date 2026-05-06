@@ -10,10 +10,12 @@ export function AdminDashboard({ setSidebarView }) {
     showToast, loadLeagueData, getName,
     matches,
     isOwner,
-    leagueMembers, memberProfiles, updateMemberRole,
   } = useLeague();
 
   const [confirmRegenCode, setConfirmRegenCode] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [draftName, setDraftName] = useState(league?.name || "");
+  const [savingName, setSavingName] = useState(false);
 
   // ────────────────────────────────────────
   // CSV Export
@@ -61,6 +63,22 @@ export function AdminDashboard({ setSidebarView }) {
     }
   };
 
+  const saveLeagueName = async () => {
+    const trimmed = (draftName || "").trim();
+    if (!trimmed || trimmed === league?.name) { setEditingName(false); return; }
+    setSavingName(true);
+    try {
+      const { error: err } = await supabase.rpc("update_league_name", { p_league_id: leagueId, p_name: trimmed });
+      if (err) throw err;
+      await loadLeagueData();
+      showToast("League renamed");
+      setEditingName(false);
+    } catch (err) {
+      showToast(err.message || "Failed to rename","error");
+    }
+    setSavingName(false);
+  };
+
   return (
     <div style={{padding:"20px 16px",paddingBottom:"calc(96px + env(safe-area-inset-bottom, 0px))"}}>
       <button onClick={()=>setSidebarView(null)} style={{marginBottom:20,background:"none",border:"none",color:A,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>← Back</button>
@@ -68,59 +86,42 @@ export function AdminDashboard({ setSidebarView }) {
       <h2 style={{fontSize:20,fontWeight:900,fontStyle:"italic",textTransform:"uppercase",letterSpacing:1,marginBottom:8,color:TX}}>Admin Dashboard</h2>
       <div style={{fontSize:11,color:MT,marginBottom:20,lineHeight:1.5}}>Pending match approvals appear inline at the top of the <strong style={{color:TX}}>Matches</strong> tab.</div>
 
-      {/* ────── Player Management — opens dedicated screen (FT-12 v2) ────── */}
+      {/* ────── Roster — Player Management button (Issue #17: subtitle removed) ────── */}
       <div style={{marginBottom:28}}>
         <h3 style={{fontSize:13,fontWeight:700,color:A,marginBottom:12,textTransform:"uppercase",letterSpacing:1}}>Roster</h3>
         <button onClick={()=>setSidebarView("playerManagement")} style={{width:"100%",padding:"16px 14px",background:CD,border:`1px solid ${BD}`,borderRadius:12,color:TX,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
           <span style={{display:"flex",alignItems:"center",gap:10}}>
             <span style={{fontSize:18}}>👥</span>
-            <span style={{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:2}}>
-              <span style={{fontSize:14,fontWeight:900,fontStyle:"italic",textTransform:"uppercase",letterSpacing:0.5}}>Player Management</span>
-              <span style={{fontSize:11,fontWeight:400,color:MT}}>Edit name, photo, country, position · {isOwner ? "promote/demote admins" : "rename + delete"}</span>
-            </span>
+            <span style={{fontSize:14,fontWeight:900,fontStyle:"italic",textTransform:"uppercase",letterSpacing:0.5}}>Player Management</span>
           </span>
           <span style={{fontSize:18,color:MT}}>→</span>
         </button>
       </div>
 
-      {/* ────── Admin Management — owner-only (Issue #13: relocated from Settings) ────── */}
-      {isOwner && (
-        <div style={{marginBottom:28}}>
-          <h3 style={{fontSize:13,fontWeight:700,color:A,marginBottom:12,textTransform:"uppercase",letterSpacing:1}}>Admin Management</h3>
-          <div style={{display:"flex",flexDirection:"column",gap:8}}>
-            {leagueMembers.map(member => {
-              const profile = memberProfiles[member.user_id];
-              const memberIsOwner = league?.created_by === member.user_id;
-              return (
-                <div key={member.user_id} style={{padding:"10px 12px",background:CD2,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:12,fontWeight:600,color:TX,overflow:"hidden",textOverflow:"ellipsis"}}>{profile?.display_name || profile?.email?.split("@")[0] || "User"}</div>
-                    <div style={{fontSize:10,color:MT}}>{profile?.email || ""}</div>
-                  </div>
-                  <div style={{marginLeft:12}}>
-                    {memberIsOwner ? (
-                      <span style={{fontSize:10,color:A,fontWeight:700,background:`${A}20`,padding:"4px 8px",borderRadius:4}}>Owner</span>
-                    ) : (
-                      <select value={member.role || "member"} onChange={(e)=>updateMemberRole(member.user_id,e.target.value)} style={{fontSize:11,padding:"4px 8px",background:BD,border:`1px solid ${BD}`,borderRadius:4,color:TX,fontFamily:"'Outfit',sans-serif",cursor:"pointer"}}>
-                        <option value="member">Member</option>
-                        <option value="admin">Admin</option>
-                      </select>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* ────── League Settings (regenerate code = owner-only) ────── */}
+      {/* ────── League Management (Issue #16: name + invite + season management) ────── */}
       <div style={{marginBottom:28}}>
-        <h3 style={{fontSize:13,fontWeight:700,color:A,marginBottom:12,textTransform:"uppercase",letterSpacing:1}}>League Settings</h3>
+        <h3 style={{fontSize:13,fontWeight:700,color:A,marginBottom:12,textTransform:"uppercase",letterSpacing:1}}>League Management</h3>
+
+        {/* League Name (owner can edit, others see it) */}
         <div style={{padding:"12px",background:CD2,borderRadius:8,marginBottom:8}}>
-          <div style={{fontSize:11,color:MT,fontWeight:600,marginBottom:4}}>League Name</div>
-          <div style={{fontSize:13,color:TX,fontWeight:600}}>{league?.name}</div>
+          <div style={{fontSize:11,color:MT,fontWeight:600,marginBottom:6}}>League Name</div>
+          {editingName && isOwner ? (
+            <div style={{display:"flex",gap:8,alignItems:"center"}}>
+              <input type="text" value={draftName} onChange={(e)=>setDraftName(e.target.value)} placeholder="League name" style={{flex:1,padding:"8px 10px",background:CD,border:`1px solid ${BD}`,borderRadius:6,color:TX,fontSize:13,fontFamily:"'Outfit',sans-serif",outline:"none"}}/>
+              <button onClick={saveLeagueName} disabled={savingName} style={{padding:"8px 12px",background:A,border:"none",borderRadius:6,color:"#000",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif",opacity:savingName?0.6:1}}>{savingName?"...":"Save"}</button>
+              <button onClick={()=>{setEditingName(false);setDraftName(league?.name||"");}} style={{padding:"8px 10px",background:CD2,border:`1px solid ${BD}`,borderRadius:6,color:MT,fontSize:11,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>Cancel</button>
+            </div>
+          ) : (
+            <div style={{display:"flex",gap:8,alignItems:"center",justifyContent:"space-between"}}>
+              <div style={{fontSize:13,color:TX,fontWeight:600,flex:1,minWidth:0,overflow:"hidden",textOverflow:"ellipsis"}}>{league?.name}</div>
+              {isOwner && (
+                <button onClick={()=>{setDraftName(league?.name||"");setEditingName(true);}} style={{padding:"6px 10px",background:"transparent",border:`1px solid ${BD}`,borderRadius:6,color:A,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>Edit</button>
+              )}
+            </div>
+          )}
         </div>
+
+        {/* Invite Code */}
         <div style={{padding:"12px",background:CD2,borderRadius:8,marginBottom:8}}>
           <div style={{fontSize:11,color:MT,fontWeight:600,marginBottom:4}}>Invite Code</div>
           <div style={{display:"flex",gap:8,alignItems:"center"}}>
@@ -130,18 +131,31 @@ export function AdminDashboard({ setSidebarView }) {
             </button>
           </div>
         </div>
+
+        {/* Regenerate Invite Code (owner-only) */}
         {isOwner && (
           confirmRegenCode ? (
-            <div style={{display:"flex",gap:8,alignItems:"center",justifyContent:"center",width:"100%"}}>
+            <div style={{display:"flex",gap:8,alignItems:"center",justifyContent:"center",width:"100%",marginBottom:8}}>
               <span style={{fontSize:11,color:TX}}>Old links stop working. Sure?</span>
               <button onClick={()=>{regenerateInviteCode();setConfirmRegenCode(false);}} style={{padding:"6px 10px",background:DG,border:"none",borderRadius:6,color:"#fff",fontSize:11,fontWeight:600,cursor:"pointer"}}>Yes</button>
               <button onClick={()=>setConfirmRegenCode(false)} style={{padding:"6px 10px",background:CD2,border:"1px solid "+BD,borderRadius:6,color:MT,fontSize:11,cursor:"pointer"}}>No</button>
             </div>
           ) : (
-            <button onClick={()=>setConfirmRegenCode(true)} style={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
+            <button onClick={()=>setConfirmRegenCode(true)} style={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif",marginBottom:8}}>
               Regenerate Code
             </button>
           )
+        )}
+
+        {/* Season Management button — owner-only entry to FT-14 screen */}
+        {isOwner && (
+          <button onClick={()=>setSidebarView("seasonManagement")} style={{width:"100%",padding:"16px 14px",background:CD,border:`1px solid ${BD}`,borderRadius:12,color:TX,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
+            <span style={{display:"flex",alignItems:"center",gap:10}}>
+              <span style={{fontSize:18}}>📅</span>
+              <span style={{fontSize:14,fontWeight:900,fontStyle:"italic",textTransform:"uppercase",letterSpacing:0.5}}>Season Management</span>
+            </span>
+            <span style={{fontSize:18,color:MT}}>→</span>
+          </button>
         )}
       </div>
 
@@ -153,7 +167,7 @@ export function AdminDashboard({ setSidebarView }) {
         </button>
       </div>
 
-      {/* ────── Platform Admin — super-admin only (Issue #13: relocated from Sidebar) ────── */}
+      {/* ────── Platform Admin — super-admin only ────── */}
       {user?.id === PLATFORM_ADMIN_ID && (
         <div>
           <h3 style={{fontSize:13,fontWeight:700,color:A,marginBottom:12,textTransform:"uppercase",letterSpacing:1}}>Platform</h3>

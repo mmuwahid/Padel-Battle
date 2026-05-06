@@ -10,6 +10,7 @@ import { Sidebar } from './components/Sidebar';
 import { ProfileView } from './components/ProfileView';
 import { AdminDashboard } from './components/AdminDashboard';
 import { PlayerManagement } from './components/PlayerManagement';
+import { SeasonManagement } from './components/SeasonManagement';
 import { PlatformAdmin } from './components/PlatformAdmin';
 import { SettingsView } from './components/SettingsView';
 import { NotificationCenter } from './components/NotificationCenter';
@@ -145,8 +146,9 @@ function AppContent({leagueId,user,onSwitchLeague}){
   useEffect(()=>{const h=(e)=>{e.preventDefault();setInstallPrompt(e);};window.addEventListener("beforeinstallprompt",h);return ()=>window.removeEventListener("beforeinstallprompt",h);},[]);
   const handleInstall=async()=>{if(!installPrompt)return;installPrompt.prompt();const r=await installPrompt.userChoice;if(r.outcome==="accepted")setInstallPrompt(null);};
 
-  // GN-09: Scroll to top on tab change
-  useEffect(()=>{window.scrollTo({top:0,behavior:"smooth"});},[tab]);
+  // GN-09 / Issue #16: Scroll to top on tab change AND on sidebar-view change
+  // (opening Admin Dashboard / Platform Admin / Settings / Profile / etc. should always start at the top)
+  useEffect(()=>{window.scrollTo({top:0,behavior:"smooth"});},[tab,sidebarView]);
 
   // GN-06: Keyboard viewport fix — prevent content pushing off screen on mobile
   useEffect(()=>{
@@ -766,7 +768,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
   const leagueCtx = {
     supabase, user, leagueId, league, players, matches, approvedMatches, pendingMatches, incompleteMatches,
     elo, seasons, isAdmin, isOwner, myMemberId, leagueMembers, memberProfiles,
-    getName, showToast, sendPushNotification, loadLeagueData, updateMemberRole,
+    getName, showToast, sendPushNotification, loadLeagueData,
   };
 
   return (
@@ -826,11 +828,14 @@ function AppContent({leagueId,user,onSwitchLeague}){
           {sidebarView==="playerManagement" && (
             <PlayerManagement memberProfiles={memberProfiles} setSidebarView={setSidebarView}/>
           )}
+          {sidebarView==="seasonManagement" && (
+            <SeasonManagement setSidebarView={setSidebarView}/>
+          )}
           {sidebarView==="settings" && (
             <SettingsView user={user} claimedPlayer={claimedPlayer} isAdmin={isAdmin} pushSubscribed={pushSubscribed} subscribeToPush={subscribeToPush} unsubscribeFromPush={unsubscribeFromPush} notifNewMatch={notifNewMatch} notifRankingChange={notifRankingChange} notifNewMembers={notifNewMembers} notifChallenges={notifChallenges} toggleNotification={toggleNotification} onSwitchLeague={onSwitchLeague} setSidebarView={setSidebarView} showToast={showToast} loadLeagueData={loadLeagueData} testPushNotification={testPushNotification}/>
           )}
           {sidebarView==="platform" && (
-            <PlatformAdmin onClose={()=>setSidebarView(null)} showToast={showToast}/>
+            <PlatformAdmin onClose={()=>setSidebarView("admin")} showToast={showToast}/>
           )}
           {sidebarView==="notifications" && (
             <NotificationCenter onClose={()=>{setSidebarView(null);loadLeagueData();}}/>
