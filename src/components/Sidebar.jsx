@@ -1,7 +1,6 @@
 import React from "react";
 import { supabase } from '../supabase';
 import { A, CD, CD2, BD, TX, MT, DG, BL } from '../theme';
-import { PLATFORM_ADMIN_ID } from './PlatformAdmin';
 
 export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, user, avatarUrl, league, isAdmin, onSwitchLeague, showToast, installPrompt, handleInstall }) {
   return (
@@ -68,7 +67,9 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, user, ava
             <button onClick={()=>{onSwitchLeague();}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>
               🔄 Switch League
             </button>
-            <button onClick={()=>{const code=league?.invite_code;if(code){const url=`${window.location.origin}${window.location.pathname}?invite=${code}`;if(navigator.share)navigator.share({title:"Join my PadelHub league",text:`Join "${league?.name}" on PadelHub!`,url});else{navigator.clipboard.writeText(url);showToast("Invite link copied!");}}}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>📩 Invite Players</button>
+            {isAdmin && (
+              <button onClick={()=>{const code=league?.invite_code;if(code){const url=`${window.location.origin}${window.location.pathname}?invite=${code}`;if(navigator.share)navigator.share({title:"Join my PadelHub league",text:`Join "${league?.name}" on PadelHub!`,url});else{navigator.clipboard.writeText(url);showToast("Invite link copied!");}}}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>📩 Invite Players</button>
+            )}
           </div>
 
           <div style={{height:"1px",background:BD,margin:"12px 0"}} />
@@ -88,14 +89,6 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, user, ava
               </div>
             ) : null}
           </div>
-
-          {user.id === PLATFORM_ADMIN_ID && (
-            <div style={{marginTop:12}}>
-              <button onClick={()=>{setSidebarView("platform");setSidebarOpen(false);}} style={{width:"100%",padding:"12px 16px",background:`${A}10`,border:`1px solid ${A}30`,borderRadius:8,color:A,fontSize:13,fontWeight:700,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",transition:"all 0.2s"}}>
-                🛡️ Platform Admin
-              </button>
-            </div>
-          )}
 
           <div style={{padding:"16px 0",borderTop:`1px solid ${BD}`,marginTop:12}}>
             <button onClick={async()=>{await supabase.auth.signOut();}} style={{width:"100%",padding:"12px",background:`${DG}15`,border:`1px solid ${DG}40`,borderRadius:8,color:DG,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>

@@ -766,7 +766,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
   const leagueCtx = {
     supabase, user, leagueId, league, players, matches, approvedMatches, pendingMatches, incompleteMatches,
     elo, seasons, isAdmin, isOwner, myMemberId, leagueMembers, memberProfiles,
-    getName, showToast, sendPushNotification, loadLeagueData,
+    getName, showToast, sendPushNotification, loadLeagueData, updateMemberRole,
   };
 
   return (
@@ -826,7 +826,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
             <PlayerManagement memberProfiles={memberProfiles} setSidebarView={setSidebarView}/>
           )}
           {sidebarView==="settings" && (
-            <SettingsView user={user} claimedPlayer={claimedPlayer} isAdmin={isAdmin} isOwner={isOwner} league={league} leagueMembers={leagueMembers} memberProfiles={memberProfiles} pushSubscribed={pushSubscribed} subscribeToPush={subscribeToPush} unsubscribeFromPush={unsubscribeFromPush} notifNewMatch={notifNewMatch} notifRankingChange={notifRankingChange} notifNewMembers={notifNewMembers} notifChallenges={notifChallenges} toggleNotification={toggleNotification} updateMemberRole={updateMemberRole} onSwitchLeague={onSwitchLeague} setSidebarView={setSidebarView} showToast={showToast} loadLeagueData={loadLeagueData} testPushNotification={testPushNotification}/>
+            <SettingsView user={user} claimedPlayer={claimedPlayer} isAdmin={isAdmin} pushSubscribed={pushSubscribed} subscribeToPush={subscribeToPush} unsubscribeFromPush={unsubscribeFromPush} notifNewMatch={notifNewMatch} notifRankingChange={notifRankingChange} notifNewMembers={notifNewMembers} notifChallenges={notifChallenges} toggleNotification={toggleNotification} onSwitchLeague={onSwitchLeague} setSidebarView={setSidebarView} showToast={showToast} loadLeagueData={loadLeagueData} testPushNotification={testPushNotification}/>
           )}
           {sidebarView==="platform" && (
             <PlatformAdmin onClose={()=>setSidebarView(null)} showToast={showToast}/>

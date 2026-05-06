@@ -3,7 +3,7 @@ import { supabase } from '../supabase';
 import { A, CD, CD2, BD, TX, MT, DG } from '../theme';
 import { ErrorBoundary } from './ErrorBoundary';
 
-export function SettingsView({ user, claimedPlayer, isAdmin, isOwner, league, leagueMembers, memberProfiles, pushSubscribed, subscribeToPush, unsubscribeFromPush, notifNewMatch, notifRankingChange, notifNewMembers, notifChallenges, toggleNotification, updateMemberRole, onSwitchLeague, setSidebarView, showToast, loadLeagueData, testPushNotification }) {
+export function SettingsView({ user, claimedPlayer, isAdmin, pushSubscribed, subscribeToPush, unsubscribeFromPush, notifNewMatch, notifRankingChange, notifNewMembers, notifChallenges, toggleNotification, onSwitchLeague, setSidebarView, showToast, loadLeagueData, testPushNotification }) {
   // State moved from AppContent — settings-only
   const [editDisplayName, setEditDisplayName] = useState(user.user_metadata?.display_name || user.email?.split("@")[0] || "");
   const [profileSaving, setProfileSaving] = useState(false);
@@ -98,38 +98,6 @@ export function SettingsView({ user, claimedPlayer, isAdmin, isOwner, league, le
           </button>
         </div>
       </div>
-
-      {/* Admin Management Section — owner-only (FT-09: only league owner can change roles) */}
-      {isOwner && (
-        <div style={{marginBottom:24}}>
-          <h3 style={{fontSize:12,fontWeight:700,color:MT,letterSpacing:1,textTransform:"uppercase",marginBottom:12}}>Admin Management</h3>
-
-          <div style={{display:"flex",flexDirection:"column",gap:8}}>
-            {leagueMembers.map(member => {
-              const profile = memberProfiles[member.user_id];
-              const memberIsOwner = league?.created_by === member.user_id;
-              return (
-                <div key={member.user_id} style={{padding:"10px 12px",background:CD2,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:12,fontWeight:600,color:TX,overflow:"hidden",textOverflow:"ellipsis"}}>{profile?.display_name || profile?.email?.split("@")[0] || "User"}</div>
-                    <div style={{fontSize:10,color:MT}}>{profile?.email || ""}</div>
-                  </div>
-                  <div style={{marginLeft:12}}>
-                    {memberIsOwner ? (
-                      <span style={{fontSize:10,color:A,fontWeight:700,background:`${A}20`,padding:"4px 8px",borderRadius:4}}>Owner</span>
-                    ) : (
-                      <select value={member.role || "member"} onChange={(e)=>updateMemberRole(member.user_id,e.target.value)} style={{fontSize:11,padding:"4px 8px",background:BD,border:`1px solid ${BD}`,borderRadius:4,color:TX,fontFamily:"'Outfit',sans-serif",cursor:"pointer"}}>
-                        <option value="member">Member</option>
-                        <option value="admin">Admin</option>
-                      </select>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       {/* League Section */}
       <div style={{marginBottom:24}}>

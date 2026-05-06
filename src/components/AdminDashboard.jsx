@@ -2,13 +2,15 @@ import React, { useState } from "react";
 import { A, CD, CD2, BD, TX, MT, DG } from '../theme';
 import { formatTeam, win } from '../utils/helpers';
 import { useLeague } from '../LeagueContext';
+import { PLATFORM_ADMIN_ID } from './PlatformAdmin';
 
 export function AdminDashboard({ setSidebarView }) {
   const {
-    supabase, league, leagueId,
+    supabase, user, league, leagueId,
     showToast, loadLeagueData, getName,
     matches,
     isOwner,
+    leagueMembers, memberProfiles, updateMemberRole,
   } = useLeague();
 
   const [confirmRegenCode, setConfirmRegenCode] = useState(false);
@@ -81,6 +83,37 @@ export function AdminDashboard({ setSidebarView }) {
         </button>
       </div>
 
+      {/* ────── Admin Management — owner-only (Issue #13: relocated from Settings) ────── */}
+      {isOwner && (
+        <div style={{marginBottom:28}}>
+          <h3 style={{fontSize:13,fontWeight:700,color:A,marginBottom:12,textTransform:"uppercase",letterSpacing:1}}>Admin Management</h3>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {leagueMembers.map(member => {
+              const profile = memberProfiles[member.user_id];
+              const memberIsOwner = league?.created_by === member.user_id;
+              return (
+                <div key={member.user_id} style={{padding:"10px 12px",background:CD2,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:12,fontWeight:600,color:TX,overflow:"hidden",textOverflow:"ellipsis"}}>{profile?.display_name || profile?.email?.split("@")[0] || "User"}</div>
+                    <div style={{fontSize:10,color:MT}}>{profile?.email || ""}</div>
+                  </div>
+                  <div style={{marginLeft:12}}>
+                    {memberIsOwner ? (
+                      <span style={{fontSize:10,color:A,fontWeight:700,background:`${A}20`,padding:"4px 8px",borderRadius:4}}>Owner</span>
+                    ) : (
+                      <select value={member.role || "member"} onChange={(e)=>updateMemberRole(member.user_id,e.target.value)} style={{fontSize:11,padding:"4px 8px",background:BD,border:`1px solid ${BD}`,borderRadius:4,color:TX,fontFamily:"'Outfit',sans-serif",cursor:"pointer"}}>
+                        <option value="member">Member</option>
+                        <option value="admin">Admin</option>
+                      </select>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* ────── League Settings (regenerate code = owner-only) ────── */}
       <div style={{marginBottom:28}}>
         <h3 style={{fontSize:13,fontWeight:700,color:A,marginBottom:12,textTransform:"uppercase",letterSpacing:1}}>League Settings</h3>
@@ -113,12 +146,23 @@ export function AdminDashboard({ setSidebarView }) {
       </div>
 
       {/* ────── Data Export ────── */}
-      <div>
+      <div style={{marginBottom:user?.id === PLATFORM_ADMIN_ID ? 28 : 0}}>
         <h3 style={{fontSize:13,fontWeight:700,color:A,marginBottom:12,textTransform:"uppercase",letterSpacing:1}}>Data Export</h3>
         <button onClick={exportMatchesCSV} style={{width:"100%",padding:"12px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
           Export Match History (CSV)
         </button>
       </div>
+
+      {/* ────── Platform Admin — super-admin only (Issue #13: relocated from Sidebar) ────── */}
+      {user?.id === PLATFORM_ADMIN_ID && (
+        <div>
+          <h3 style={{fontSize:13,fontWeight:700,color:A,marginBottom:12,textTransform:"uppercase",letterSpacing:1}}>Platform</h3>
+          <button onClick={()=>setSidebarView("platform")} style={{width:"100%",padding:"12px",background:`${A}10`,border:`1px solid ${A}30`,borderRadius:8,color:A,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif",textAlign:"left",display:"flex",alignItems:"center",gap:10}}>
+            <span style={{fontSize:16}}>🛡️</span>
+            <span>Platform Admin</span>
+          </button>
+        </div>
+      )}
 
     </div>
   );
