@@ -128,7 +128,12 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
       if(pA!==pB)return pA-pB;
       return (b.w+b.l)-(a.w+a.l);
     });
-    const worstPartnership=partnerships.length>=6?(worstSorted[0]||null):null;
+    // S053 Issue #23 follow-up: removed `partnerships.length >= 6` gate so the per-player
+    // drill-down shows Worst Pairs whenever ANY losing partnership exists for this player.
+    // The 6-partnership minimum was league-scale logic copied into the per-player view,
+    // which made the card disappear for players with fewer partners even when the league
+    // had plenty of data. Empty-state branch in the JSX handles "no losses yet".
+    const worstPartnership=worstSorted[0]||null;
     const h2hAll={};
     matches.forEach(m=>{const w=win(m.sets);
       const process=(myTeam,oppTeam,won)=>{myTeam.forEach(me=>{oppTeam.forEach(opp=>{
