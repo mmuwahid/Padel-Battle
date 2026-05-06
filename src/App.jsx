@@ -38,7 +38,7 @@ const GameMode = lazy(() => import('./components/GameMode').then(m => ({default:
 
 
 // Lazy loading fallback
-const LazyFallback = () => <div style={{display:'flex',justifyContent:'center',alignItems:'center',padding:40,color:'#7a7a8e'}}>Loading...</div>;
+const LazyFallback = () => <div style={{minHeight:80}}/>;
 // MAIN APP COMPONENT
 // ============================================================================
 function AppContent({leagueId,user,onSwitchLeague}){
@@ -160,6 +160,13 @@ function AppContent({leagueId,user,onSwitchLeague}){
   const [installPrompt,setInstallPrompt]=useState(null);
   useEffect(()=>{const h=(e)=>{e.preventDefault();setInstallPrompt(e);};window.addEventListener("beforeinstallprompt",h);return ()=>window.removeEventListener("beforeinstallprompt",h);},[]);
   const handleInstall=async()=>{if(!installPrompt)return;installPrompt.prompt();const r=await installPrompt.userChoice;if(r.outcome==="accepted")setInstallPrompt(null);};
+
+  // Preload lazy chunks on first mount to eliminate loading flash on first tab switch
+  useEffect(()=>{
+    import('./components/PlayerStats');
+    import('./components/CombosView');
+    import('./components/GameMode');
+  },[]);
 
   // GN-09 / Issue #16: Scroll to top on tab change AND on sidebar-view change
   // (opening Admin Dashboard / Platform Admin / Settings / Profile / etc. should always start at the top)
@@ -854,6 +861,37 @@ function AppContent({leagueId,user,onSwitchLeague}){
           {sidebarView==="notifications" && (
             <NotificationCenter onClose={()=>{setSidebarView(null);loadLeagueData();}}/>
           )}
+          {sidebarView==="rules" && (
+            <div className="fu">
+              <button onClick={()=>setSidebarView(null)} style={{marginBottom:16,background:"none",border:"none",color:A,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif",padding:0}}>← Back</button>
+              <h2 style={{fontSize:18,fontWeight:800,marginBottom:4}}>Padel Rules</h2>
+              <p style={{fontSize:11,color:MT,marginBottom:16}}>Official FIP rules summary</p>
+              {RULES.map((r,i) => (
+                <div key={i} style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:8}}>
+                  <h3 style={{fontSize:14,fontWeight:700,color:A,marginBottom:r.intro?4:6}}>{r.title}</h3>
+                  {r.intro && <p style={{fontSize:11,color:MT,marginBottom:10,fontStyle:"italic"}}>{r.intro}</p>}
+                  {r.subRules ? (
+                    r.subRules.map((sr,j) => (
+                      <div key={j} style={{background:CD2,borderRadius:8,padding:"10px 12px",marginTop:j===0?0:6}}>
+                        <h4 style={{fontSize:12,fontWeight:700,color:GD,margin:"0 0 4px 0",letterSpacing:0.3}}>{sr.title}</h4>
+                        <p style={{fontSize:12,color:TX,lineHeight:1.5,margin:0}}>{sr.content}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <p style={{fontSize:13,color:TX,lineHeight:1.5}}>{r.content}</p>
+                  )}
+                </div>
+              ))}
+              <h2 style={{fontSize:18,fontWeight:800,marginTop:20,marginBottom:4,color:"#f97316"}}>⚡ Most Argued Calls</h2>
+              <p style={{fontSize:11,color:MT,marginBottom:16}}>Settle it once and for all</p>
+              {ARGUED.map((r,i) => (
+                <div key={i} style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:8}}>
+                  <h3 style={{fontSize:13,fontWeight:700,color:A,marginBottom:8}}>❓ {r.q}</h3>
+                  <p style={{fontSize:13,color:TX,lineHeight:1.5,fontWeight:400}}>{r.a}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -1197,7 +1235,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
       {/* FT-12 v2: solid pedestal behind floating nav — hides scrolled content from showing through side gutters / below nav. Issue #15: pedestal slimmed 82→68px to track tighter nav. */}
       <div style={{position:"fixed",bottom:0,left:0,right:0,height:`calc(68px + env(safe-area-inset-bottom, 0px))`,background:BG,zIndex:99,pointerEvents:"none"}}/>
       {/* BOTTOM NAV — FT-12: floating rounded pill with side gutters, accent-soft border, fixed at bottom. Issue #15: gap from screen bottom 14→6px, internal padding 8/6/10 → 6/6/8. */}
-      <div style={{position:"fixed",bottom:`calc(6px + env(safe-area-inset-bottom, 0px))`,left:14,right:14,background:`${CD}f0`,backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",border:`1px solid ${A}40`,borderRadius:28,display:"grid",gridTemplateColumns:"repeat(7,1fr)",alignItems:"end",padding:"6px 6px 8px",zIndex:100,boxShadow:"0 8px 30px rgba(0,0,0,0.45)"}}>
+      <div style={{position:"fixed",bottom:`calc(6px + env(safe-area-inset-bottom, 0px))`,left:14,right:14,background:`${CD}f0`,backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",border:`1px solid ${A}40`,borderRadius:28,display:"grid",gridTemplateColumns:"repeat(5,1fr)",alignItems:"end",padding:"6px 6px 8px",zIndex:100,boxShadow:"0 8px 30px rgba(0,0,0,0.45)"}}>
         {TL.map(t => (
           <button key={t.key} onClick={()=>{setTab(t.key);setSidebarOpen(false);setSidebarView(null);}} style={{background:tab===t.key?A+"15":"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",color:tab===t.key?A:MT,cursor:"pointer",padding:"6px 0",borderRadius:8,minHeight:44}}>
             <div style={{height:24,display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:18,lineHeight:1}}>{t.icon==="court"?<CourtIcon/>:t.icon}</span></div>

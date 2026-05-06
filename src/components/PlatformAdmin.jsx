@@ -10,27 +10,48 @@ export function PlatformAdmin({ onClose, showToast }) {
   const [users, setUsers] = useState([]);
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [search, setSearch] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleteTyped, setDeleteTyped] = useState("");
+  const [deleteUserConfirm, setDeleteUserConfirm] = useState(null);
+  const [deleteUserTyped, setDeleteUserTyped] = useState("");
 
   useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
     setLoading(true);
+    setLoadError(false);
     try {
-      const [statsRes, leaguesRes, usersRes] = await Promise.all([
+      const [statsRes, leaguesRes, usersRes] = await Promise.allSettled([
         supabase.rpc("platform_get_stats"),
         supabase.rpc("platform_get_leagues"),
         supabase.rpc("platform_get_users"),
       ]);
-      if (statsRes.data) setStats(statsRes.data);
-      if (leaguesRes.data) setLeagues(leaguesRes.data);
-      if (usersRes.data) setUsers(usersRes.data);
+      if (statsRes.status === "fulfilled" && statsRes.value.data) setStats(statsRes.value.data);
+      if (leaguesRes.status === "fulfilled" && leaguesRes.value.data) setLeagues(leaguesRes.value.data);
+      if (usersRes.status === "fulfilled" && usersRes.value.data) setUsers(usersRes.value.data);
+      const allFailed = [statsRes, leaguesRes, usersRes].every(r => r.status === "rejected" || r.value?.error);
+      if (allFailed) setLoadError(true);
     } catch (_err) {
-      if (showToast) showToast("Failed to load platform data", "error");
+      setLoadError(true);
     }
     setLoading(false);
+  };
+
+  const handleDeleteUser = async (userId, userEmail) => {
+    if (deleteUserConfirm !== userId) { setDeleteUserConfirm(userId); setDeleteUserTyped(""); return; }
+    if (deleteUserTyped.trim() !== userEmail.trim()) { if (showToast) showToast("Email didn't match", "error"); return; }
+    try {
+      const { error } = await supabase.rpc("platform_delete_user", { p_user_id: userId });
+      if (error) throw error;
+      if (showToast) showToast("User deleted");
+      setDeleteUserConfirm(null);
+      setDeleteUserTyped("");
+      await loadData();
+    } catch (err) {
+      if (showToast) showToast(err.message || "Failed to delete user", "error");
+    }
   };
 
   const handleDeleteLeague = async (leagueId, leagueName) => {
@@ -84,6 +105,11 @@ export function PlatformAdmin({ onClose, showToast }) {
 
       {loading ? (
         <div style={{ textAlign: "center", color: MT, padding: 40, fontSize: 13 }}>Loading platform data...</div>
+      ) : loadError ? (
+        <div style={{ textAlign: "center", padding: 40 }}>
+          <div style={{ color: MT, fontSize: 13, marginBottom: 16 }}>Failed to load platform data</div>
+          <button onClick={loadData} style={{ padding: "8px 20px", background: A + "20", border: "1px solid " + A + "40", borderRadius: 8, color: A, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Outfit',sans-serif" }}>↺ Retry</button>
+        </div>
       ) : (
         <>
           {/* Stats Cards */}
@@ -156,18 +182,30 @@ export function PlatformAdmin({ onClose, showToast }) {
 
           {/* Users Tab */}
           {activeTab === "users" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {filteredUsers.length === 0 && <div style={{ color: MT, fontSize: 12, textAlign: "center", padding: 20 }}>No users found</div>}
               {filteredUsers.map(u => (
-                <div key={u.id} style={{ background: CD, border: "1px solid " + BD, borderRadius: 10, padding: "10px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: TX }}>{u.display_name || u.email?.split("@")[0]}</div>
-                    <div style={{ fontSize: 10, color: MT, marginTop: 1 }}>{u.email}</div>
+                <div key={u.id} style={{ background: CD, border: "1px solid " + BD, borderRadius: 10, padding: "10px 14px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: deleteUserConfirm === u.id ? 8 : 0 }}>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: TX }}>{u.display_name || u.email?.split("@")[0]}</div>
+                      <div style={{ fontSize: 10, color: MT, marginTop: 1 }}>{u.email}</div>
+                    </div>
+                    <div style={{ textAlign: "right" }}>
+                      <div style={{ fontSize: 11, color: A, fontWeight: 700, fontFamily: "'JetBrains Mono',monospace" }}>{u.league_count} league{u.league_count !== 1 ? "s" : ""}</div>
+                      <div style={{ fontSize: 9, color: MT, marginBottom: 4 }}>{fmtDate(u.created_at)}</div>
+                      {deleteUserConfirm !== u.id && (
+                        <button onClick={() => handleDeleteUser(u.id, u.email)} style={{ padding: "4px 8px", background: "none", border: "1px solid " + DG + "40", borderRadius: 6, color: DG, fontSize: 9, fontWeight: 600, cursor: "pointer", fontFamily: "'Outfit',sans-serif" }}>Delete</button>
+                      )}
+                    </div>
                   </div>
-                  <div style={{ textAlign: "right" }}>
-                    <div style={{ fontSize: 11, color: A, fontWeight: 700, fontFamily: "'JetBrains Mono',monospace" }}>{u.league_count} league{u.league_count !== 1 ? "s" : ""}</div>
-                    <div style={{ fontSize: 9, color: MT }}>{fmtDate(u.created_at)}</div>
-                  </div>
+                  {deleteUserConfirm === u.id && (
+                    <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+                      <input value={deleteUserTyped} onChange={e => setDeleteUserTyped(e.target.value)} placeholder={"Type email to confirm"} style={{ flex: 1, minWidth: 120, padding: "6px 10px", borderRadius: 6, border: "1px solid " + DG, background: CD2, color: TX, fontSize: 11, fontFamily: "'Outfit',sans-serif", outline: "none" }} />
+                      <button onClick={() => handleDeleteUser(u.id, u.email)} style={{ padding: "6px 10px", background: DG, border: "none", borderRadius: 6, color: "#fff", fontSize: 10, fontWeight: 700, cursor: "pointer" }}>Confirm</button>
+                      <button onClick={() => { setDeleteUserConfirm(null); setDeleteUserTyped(""); }} style={{ padding: "6px 8px", background: "none", border: "1px solid " + BD, borderRadius: 6, color: MT, fontSize: 10, cursor: "pointer" }}>Cancel</button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
