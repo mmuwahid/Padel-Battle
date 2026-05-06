@@ -117,21 +117,21 @@ export function SettingsView({ user, claimedPlayer, isAdmin, pushSubscribed, sub
         </div>
       </div>
 
-      {/* Delete Account Section — S053 Issue #22 */}
-      <div style={{marginBottom:24,padding:14,background:`${DG}08`,border:`1px solid ${DG}40`,borderRadius:12}}>
-        <h3 style={{fontSize:12,fontWeight:700,color:DG,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Danger Zone</h3>
-        <p style={{fontSize:11,color:DG,opacity:0.85,marginBottom:12,lineHeight:1.4}}>
-          Permanently delete your account, profile, league memberships, notifications, and push subscriptions. Your match history is preserved (your name remains on past matches as an unclaimed player). This action cannot be undone.
-          <br/><br/>
-          <span style={{fontWeight:700}}>Note:</span> if you own any leagues, you must transfer ownership or delete those leagues first.
-        </p>
+      {/* Delete Account — S053 / S054 Issue #22 follow-up: button-only by default,
+          warning copy revealed only after the user taps it. Version line + divider removed. */}
+      <div style={{marginBottom:24}}>
         {!confirmDelete ? (
           <button onClick={()=>setConfirmDelete(true)} style={{width:"100%",padding:"12px",background:"transparent",border:`1px solid ${DG}`,borderRadius:8,color:DG,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif",textTransform:"uppercase",letterSpacing:0.5}}>
             Delete Account
           </button>
         ) : (
-          <div style={{display:"flex",flexDirection:"column",gap:8}}>
-            <div style={{fontSize:11,color:DG,fontWeight:700,textAlign:"center",padding:"6px 0"}}>Are you absolutely sure?</div>
+          <div style={{padding:14,background:`${DG}08`,border:`1px solid ${DG}40`,borderRadius:12}}>
+            <h3 style={{fontSize:12,fontWeight:700,color:DG,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Danger Zone</h3>
+            <p style={{fontSize:11,color:DG,opacity:0.85,marginBottom:12,lineHeight:1.4}}>
+              Permanently delete your account, profile, league memberships, notifications, and push subscriptions. Your match history is preserved (your name remains on past matches as an unclaimed player). This action cannot be undone.
+              <br/><br/>
+              <span style={{fontWeight:700}}>Note:</span> if you own any leagues, you must transfer ownership or delete those leagues first.
+            </p>
             <div style={{display:"flex",gap:8}}>
               <button onClick={()=>setConfirmDelete(false)} disabled={deleting} style={{flex:1,padding:"12px",background:"transparent",border:`1px solid ${BD}`,borderRadius:8,color:MT,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>Cancel</button>
               <button onClick={async()=>{setDeleting(true);try{const {error}=await supabase.rpc("delete_my_account");if(error)throw error;showToast("Account deleted");await supabase.auth.signOut();}catch(err){showToast(err.message||"Failed to delete account","error");setDeleting(false);setConfirmDelete(false);}}} disabled={deleting} style={{flex:1,padding:"12px",background:DG,border:"none",borderRadius:8,color:"#fff",fontSize:12,fontWeight:800,cursor:"pointer",fontFamily:"'Outfit',sans-serif",textTransform:"uppercase",letterSpacing:0.5,opacity:deleting?0.6:1}}>
@@ -140,11 +140,6 @@ export function SettingsView({ user, claimedPlayer, isAdmin, pushSubscribed, sub
             </div>
           </div>
         )}
-      </div>
-
-      {/* Version */}
-      <div style={{textAlign:"center",paddingTop:20,borderTop:`1px solid ${BD}`,marginTop:20}}>
-        <div style={{fontSize:10,color:MT,fontWeight:600}}>PadelHub</div>
       </div>
       </ErrorBoundary>
     </div>
