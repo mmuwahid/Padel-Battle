@@ -296,7 +296,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
           {analyticsSection==="partnership"&&<div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
               {analyticsData.bestPartnership&&<div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14}}>
-                <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:8}}>Best Partnerships</div>
+                <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:8}}>Best Pairs</div>
                 <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
                   <div style={{width:32,height:32,borderRadius:"50%",background:`${A}15`,border:`2px solid ${A}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:A}}>{getName(analyticsData.bestPartnership.a)[0]}</div>
                   <div><div style={{fontSize:12,fontWeight:700,color:TX}}>{getName(analyticsData.bestPartnership.a)} x {getName(analyticsData.bestPartnership.b)}</div>
@@ -304,7 +304,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                 </div>
               </div>}
               {analyticsData.worstPartnership&&<div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14}}>
-                <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:8}}>Worst Partnerships</div>
+                <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:8}}>Worst Pairs</div>
                 <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
                   <div style={{width:32,height:32,borderRadius:"50%",background:`${DG}15`,border:`2px solid ${DG}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:DG}}>{getName(analyticsData.worstPartnership.a)[0]}</div>
                   <div><div style={{fontSize:12,fontWeight:700,color:TX}}>{getName(analyticsData.worstPartnership.a)} x {getName(analyticsData.worstPartnership.b)}</div>

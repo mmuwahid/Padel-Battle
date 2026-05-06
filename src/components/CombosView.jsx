@@ -54,13 +54,13 @@ export function CombosView({combos,players,matches,pm,getName}){
   return (
     <div style={{padding:"20px 16px",maxWidth:"600px",margin:"0 auto"}}>
       <div style={{display:"flex",gap:6,marginBottom:16}}>
-        {[["duos","🔥 Best Duos"],["player","👤 My Partners"],["matrix","🧪 Chemistry"]].map(([k,l])=>(
+        {[["duos","🔥 Best Pairs"],["player","👤 My Partners"],["matrix","🧪 Chemistry"]].map(([k,l])=>(
           <button key={k} onClick={()=>setView(k)} style={{padding:"6px 12px",borderRadius:8,border:`1px solid ${view===k?A:BD}`,background:view===k?`${A}15`:"transparent",color:view===k?A:MT,fontSize:11,fontWeight:600,cursor:"pointer",flex:1,textAlign:"center"}}>{l}</button>
         ))}
       </div>
 
       {view==="duos"&&<div>
-        <h2 style={{fontSize:16,fontWeight:700,marginBottom:14}}>🔥 Top Partnerships</h2>
+        <h2 style={{fontSize:16,fontWeight:700,marginBottom:14}}>🔥 Top Pairs</h2>
         {top3.length===0&&<p style={{fontSize:13,color:MT}}>No partnerships recorded yet</p>}
         {top3.map((c,i)=>{
           const pct=c.games>0?(c.wins/c.games*100):0;
@@ -88,7 +88,7 @@ export function CombosView({combos,players,matches,pm,getName}){
         })}
 
         {worst3.length>0&&<div style={{marginTop:16}}>
-          <h2 style={{fontSize:16,fontWeight:700,marginBottom:14,color:DG}}>💔 Worst Partnerships</h2>
+          <h2 style={{fontSize:16,fontWeight:700,marginBottom:14,color:DG}}>💔 Worst Pairs</h2>
           {worst3.map((c,i)=>{
             const pct=c.games>0?(c.wins/c.games*100):0;
             const skulls=["💀","🥶","😅"];
