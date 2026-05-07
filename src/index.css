@@ -87,23 +87,27 @@ body {
    component is NOT used for nav artwork.
    ─────────────────────────────────────────────────────────── */
 
-/* Header */
+/* Header — values restored to S058 live styling (post-Phase-2 visual revert).
+   The class-based markup stays for design-system consistency, but every value
+   matches the inline-styled S058 header to preserve the look the user signed
+   off on through Issues #15 / #18 / FT-12 / S044 v3 padding tightening. */
 .hdr {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 13px 18px;
-  border-bottom: 1px solid var(--border);
-  background: rgba(8, 8, 8, 0.92);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  padding: 4px 16px;
+  padding-top: calc(env(safe-area-inset-top, 0px) + 0px);
+  background: linear-gradient(180deg, #0d0d14 0%, #12121a 100%);
   position: sticky;
   top: 0;
-  z-index: 50;
+  z-index: 10;
 }
-.hl { flex: 1; display: flex; align-items: center; }
-.hr { flex: 1; display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+.hl { display: flex; align-items: center; }
+.hr { display: flex; align-items: center; gap: 8px; }
 .logo { display: flex; align-items: center; gap: 10px; }
+/* .lm intentionally NOT used in restored header — PadelLogoSmall renders bare
+   next to the wordmark, matching S058. Class kept defined in case a future
+   phase wants to opt into the spec's tinted logo box. */
 .lm {
   width: 36px; height: 36px;
   border-radius: var(--r-sm);
@@ -115,73 +119,75 @@ body {
 .lt {
   font-size: 14px;
   font-weight: 900;
-  letter-spacing: 0.06em;
+  letter-spacing: 1px;
   text-transform: uppercase;
   font-family: 'Outfit', sans-serif;
   margin: 0;
   line-height: 1;
+  color: #e4e4ef;
 }
-.lt .accent { color: var(--accent); }
+.lt .accent { color: #4ADE80; }
 
 .ibtn {
-  width: 34px; height: 34px;
-  border-radius: var(--r-full);
+  width: 32px; height: 32px;
+  border-radius: 50%;
   background: transparent;
-  border: 1px solid var(--border);
+  border: 1px solid #2a2a3a;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; position: relative;
   transition: border-color 150ms var(--ease-smooth), color 150ms var(--ease-smooth), transform 120ms var(--ease-smooth), background 150ms var(--ease-smooth);
-  color: var(--muted);
+  color: #9090a4;
   padding: 0;
   font-size: 14px;
   font-family: inherit;
 }
-.ibtn:hover { border-color: var(--border-hover); color: var(--text); }
+.ibtn:hover { border-color: #4ADE8040; color: #e4e4ef; }
 .ibtn:active { transform: scale(0.92); }
-.ibtn.on { background: var(--accent-dim); border-color: var(--accent-glow); color: var(--accent); }
+.ibtn.on { background: #4ADE8020; border-color: #4ADE8040; color: #4ADE80; }
 .ibtn .ndot {
   position: absolute;
   top: -4px; right: -4px;
   min-width: 16px; height: 16px;
-  border-radius: var(--r-full);
-  background: var(--danger);
+  border-radius: 50%;
+  background: #f87171;
   color: #fff;
   font-size: 9px;
   font-weight: 800;
   display: flex; align-items: center; justify-content: center;
-  border: 2px solid #0d0d14;
+  border: 2px solid #0a0a0f;
   padding: 0 4px;
   line-height: 1;
 }
 
 .av {
   width: 36px; height: 36px;
-  border-radius: var(--r-full);
-  border: 2px solid var(--accent-glow);
-  background: var(--accent-dim);
-  color: var(--accent);
+  border-radius: 50%;
+  border: 2px solid #4ADE8040;
+  background: #4ADE8020;
+  color: #4ADE80;
   font-size: 14px;
   font-weight: 800;
   font-family: 'Outfit', sans-serif;
   cursor: pointer;
   overflow: hidden;
   display: flex; align-items: center; justify-content: center;
-  transition: all 150ms var(--ease-smooth);
+  transition: all 200ms var(--ease-smooth);
   padding: 0;
 }
-.av.on { background: var(--accent); color: #000; border-color: var(--accent); }
+.av.on { background: #4ADE80; color: #000; border-color: #4ADE80; }
 .av img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-/* Bottom nav — uses NavIcons.jsx artwork (S057, frozen) inside .nicon */
+/* Bottom nav — values restored to S058 live styling.
+   Uses NavIcons.jsx artwork (S057, frozen) inside .nicon. */
 .bnav {
   position: fixed;
   bottom: calc(6px + env(safe-area-inset-bottom, 0px));
   left: 14px;
   right: 14px;
-  background: rgba(8, 8, 8, 0.95);
+  background: rgba(18, 18, 26, 0.94);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--accent-glow);
+  border: 1px solid rgba(74, 222, 128, 0.25);
   border-radius: 28px;
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -191,74 +197,63 @@ body {
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
 }
 .ntab {
-  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  padding: 5px 4px;
+  padding: 6px 4px;
   min-height: 44px;
   border: none;
   background: none;
-  color: var(--muted);
+  color: #9090a4;
   font-family: 'Outfit', sans-serif;
   cursor: pointer;
-  transition: color 200ms var(--ease-smooth);
+  transition: background 200ms ease, color 200ms ease;
   align-self: center;
-}
-.ntab.on { color: var(--accent); }
-.npill {
-  position: absolute;
-  inset: 0;
   border-radius: 22px;
-  background: var(--accent-dim);
-  border: 1px solid var(--accent-glow);
-  opacity: 0;
-  transform: scale(0.6);
-  transition: opacity 250ms, transform 350ms var(--ease-spring);
-  pointer-events: none;
+  font-weight: 500;
 }
-.ntab.on .npill { opacity: 1; transform: scale(1); }
+.ntab.on {
+  color: #4ADE80;
+  background: rgba(74, 222, 128, 0.20);
+  font-weight: 700;
+}
+/* .npill kept defined but unused after revert — direct .ntab.on bg is the active treatment now. */
+.npill { display: none; }
 .nicon {
-  position: relative;
-  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   height: 24px;
-  transition: transform 300ms var(--ease-spring);
 }
-.ntab.on .nicon { transform: scale(1.12); }
-.ntab:active .nicon { transform: scale(0.85); }
 .nlbl {
-  position: relative;
-  z-index: 1;
   font-size: 9px;
-  font-weight: 600;
+  font-weight: inherit;
   line-height: 1;
+  height: 12px;
+  display: flex;
+  align-items: center;
 }
-.ntab.on .nlbl { font-weight: 700; }
 
 .fab-wrap { display: flex; align-items: flex-end; justify-content: center; }
 .fab {
   width: 56px; height: 56px;
-  border-radius: var(--r-full);
-  background: linear-gradient(135deg, var(--accent), rgba(74, 222, 128, 0.8));
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4ADE80, #4ADE80cc);
   border: none;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #080808;
-  box-shadow:
-    0 0 0 1px rgba(74, 222, 128, 0.40),
-    0 4px 20px rgba(74, 222, 128, 0.40);
-  transition: transform 200ms var(--ease-spring), box-shadow 200ms var(--ease-smooth);
+  color: #0a0a0f;
+  font-size: 30px;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: 0 4px 20px rgba(74, 222, 128, 0.25);
+  transition: transform 150ms var(--ease-spring);
   margin-top: -20px;
   padding: 0;
 }
-.fab:hover { transform: scale(1.06); }
 .fab:active { transform: scale(0.94); }
 
 /* ───────────────────────────────────────────────────────────

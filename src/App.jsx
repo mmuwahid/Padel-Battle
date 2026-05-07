@@ -6,7 +6,6 @@ import { calcElo } from './utils/elo';
 import { RULES, ARGUED } from './data/rules';
 import { CourtIcon, PadelLogo, PadelLogoSmall } from './components/icons';
 import { NavIcon } from './components/NavIcons';
-import Icon from './components/Icon';
 import { FD } from './components/FormDots';
 import { Sidebar } from './components/Sidebar';
 import { ProfileView } from './components/ProfileView';
@@ -840,12 +839,12 @@ function AppContent({leagueId,user,onSwitchLeague}){
     <div style={{background:BG,minHeight:"100vh",paddingBottom:"calc(82px + env(safe-area-inset-bottom, 0px))",fontFamily:"'Outfit',sans-serif",color:TX}}>
       {/* Issue #15 + #43 (S058): paint html/body to gradient-start color (#0d0d14) so rubber-band overscroll at the page top reveals a color identical to the header — no visible seam. The body bg paint is the actual fix; the previous `overscroll-behavior-y:none` was defensive and is now removed to restore native iOS rubber-band + momentum scrolling per #43. `-webkit-overflow-scrolling:touch` re-enables iOS momentum on legacy WebKit (no-op on iOS 13+).
           S050 .flag class: forces an emoji-priority font stack so country flag glyphs render across Windows / iOS / Android / macOS — without it, Windows may fall back to "PS"/"GB" letter blocks because the inherited Outfit font lacks emoji glyphs. */}
-      <style>{`html,body{margin:0;padding:0;background:#080808;-webkit-overflow-scrolling:touch;} #root{margin:0;padding:0;} .flag{font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji','Twemoji Mozilla','EmojiOne Color','Android Emoji',sans-serif;font-style:normal;font-weight:normal;} @keyframes spin{to{transform:rotate(360deg)}} @keyframes fadeIn{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}} input:focus,select:focus,textarea:focus{border-color:${A} !important;box-shadow:0 0 0 2px ${A}30 !important;}`}</style>
+      <style>{`html,body{margin:0;padding:0;background:#0d0d14;-webkit-overflow-scrolling:touch;} #root{margin:0;padding:0;} .flag{font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji','Twemoji Mozilla','EmojiOne Color','Android Emoji',sans-serif;font-style:normal;font-weight:normal;} @keyframes spin{to{transform:rotate(360deg)}} @keyframes fadeIn{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}} input:focus,select:focus,textarea:focus{border-color:${A} !important;box-shadow:0 0 0 2px ${A}30 !important;}`}</style>
       {/* HEADER — Issue #46 Phase 2: class-based markup. Logo uses PadelLogoSmall + Outfit-bold wordmark; refresh / bell / avatar use .ibtn / .av tokens. Sticky behavior unchanged so Lessons #18 / #44 still hold. */}
       <header className="hdr">
         <div className="hl">
           <div className="logo">
-            <div className="lm"><PadelLogoSmall size={28}/></div>
+            <PadelLogoSmall size={36}/>
             <h1 className="lt"><span>Padel</span><span className="accent">Hub</span></h1>
           </div>
         </div>
@@ -1306,7 +1305,9 @@ function AppContent({leagueId,user,onSwitchLeague}){
         </div>
       )}
 
-      {/* BOTTOM NAV — Issue #46 Phase 2: class-based markup. .bnav floating bar uses NavIcons.jsx artwork inside .nicon (S057, frozen — never migrate to the new <Icon> for nav). .npill scale-in via --ease-spring. Pedestal removed: spec's full-width nav with solid bg has no side gutters to bleed through. Lessons #15/#42/#43 still hold via the wrapper paddingBottom + body bg paint above. */}
+      {/* FT-12 v2: solid pedestal behind floating nav — hides scrolled content from showing through side gutters / below nav. Issue #15: pedestal slimmed 82→68px to track tighter nav. Restored after Phase 2 visual revert. */}
+      <div style={{position:"fixed",bottom:0,left:0,right:0,height:`calc(68px + env(safe-area-inset-bottom, 0px))`,background:"#0a0a0f",zIndex:99,pointerEvents:"none"}}/>
+      {/* BOTTOM NAV — Issue #46 Phase 2 markup with S058 visuals restored. .bnav uses class-based markup but every value matches the inline-styled S058 nav (bg #12121af0, accent border 25%, simple .ntab.on direct bg, FAB text + with single shadow). NavIcons.jsx (S057, frozen) renders inside .nicon. Pedestal restored above this block per Lesson #34. */}
       <nav className="bnav">
         {TL.map(t => (
           <button key={t.key} className={"ntab"+(tab===t.key?" on":"")} onClick={()=>{setTab(t.key);setSidebarOpen(false);setSidebarView(null);}} aria-label={t.label} aria-current={tab===t.key?"page":undefined}>
@@ -1317,7 +1318,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
         ))}
         <div className="fab-wrap">
           <button className="fab" onClick={()=>{setEditingMatch(null);setTab("log");setSidebarOpen(false);setSidebarView(null);}} aria-label="Log a match">
-            <Icon name="plus" size={26} color="#080808" strokeWidth={2.5}/>
+            +
           </button>
         </div>
         {TR.map(t => (
