@@ -177,16 +177,17 @@ body {
 .av.on { background: #4ADE80; color: #000; border-color: #4ADE80; }
 .av img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-/* Bottom nav — values restored to S058 live styling.
-   Uses NavIcons.jsx artwork (S057, frozen) inside .nicon. */
+/* Bottom nav — opaque card bg so scrolled content cannot pass through.
+   User feedback after S058 restoration: 6% transparency + backdrop-blur was
+   still letting blurred scrolled content show through behind the floating
+   nav. Bumped to fully opaque #12121a (= var(--surface-2) / CD card bg) +
+   dropped backdrop-filter. NavIcons.jsx (S057, frozen) renders inside .nicon. */
 .bnav {
   position: fixed;
   bottom: calc(6px + env(safe-area-inset-bottom, 0px));
   left: 14px;
   right: 14px;
-  background: rgba(18, 18, 26, 0.94);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: #12121a;
   border: 1px solid rgba(74, 222, 128, 0.25);
   border-radius: 28px;
   display: grid;

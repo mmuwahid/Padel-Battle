@@ -1306,7 +1306,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
       )}
 
       {/* FT-12 v2: solid pedestal behind floating nav — hides scrolled content from showing through side gutters / below nav. Issue #15: pedestal slimmed 82→68px to track tighter nav. Restored after Phase 2 visual revert. */}
-      <div style={{position:"fixed",bottom:0,left:0,right:0,height:`calc(68px + env(safe-area-inset-bottom, 0px))`,background:"#0a0a0f",zIndex:99,pointerEvents:"none"}}/>
+      <div style={{position:"fixed",bottom:0,left:0,right:0,height:`calc(68px + env(safe-area-inset-bottom, 0px))`,background:"#12121a",zIndex:99,pointerEvents:"none"}}/>
       {/* BOTTOM NAV — Issue #46 Phase 2 markup with S058 visuals restored. .bnav uses class-based markup but every value matches the inline-styled S058 nav (bg #12121af0, accent border 25%, simple .ntab.on direct bg, FAB text + with single shadow). NavIcons.jsx (S057, frozen) renders inside .nicon. Pedestal restored above this block per Lesson #34. */}
       <nav className="bnav">
         {TL.map(t => (
