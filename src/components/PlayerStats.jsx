@@ -2,12 +2,14 @@ import React, { useState, useMemo } from "react";
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, BL, PU } from '../theme';
 import { ACHS } from '../data/achievements';
 import { FD } from './FormDots';
+import Icon from './Icon';
 import { formatTeam, win, formatDate, setTotals, flagEmoji } from '../utils/helpers';
 
-export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matches,supabase,leagueId,isAdmin,getName,sel,onPlayersChange,showToast}){
+export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matches,supabase,leagueId,isAdmin,getName,sel,onPlayersChange,showToast,claimedPlayer}){
   const player=sp?pm[sp]:null;
   const stats=sp?ps[sp]:null;
   const [subTab,setSubTab]=useState("roster"); // roster | analytics
+  const [q,setQ]=useState(""); // Phase 5 search
   const [editMode,setEditMode]=useState(false);
   const [editPid,setEditPid]=useState(null);
   const [editName,setEditName]=useState("");
@@ -204,16 +206,16 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
   }
 
   return (
-    <div style={{padding:"20px 16px",maxWidth:"600px",margin:"0 auto"}}>
-      {/* FT-04: Sub-tab toggle — FT-12: italic uppercase Premier-Padel styling */}
-      <div style={{display:"flex",gap:4,marginBottom:16,background:CD,borderRadius:10,padding:3}}>
+    <div style={{maxWidth:"600px",margin:"0 auto"}}>
+      {/* Phase 5: segmented control replacing italic-uppercase pills (S047 styling). */}
+      <div className="seg">
         {[["roster","Players"],["analytics","Analytics"]].map(([k,l])=>(
-          <button key={k} onClick={()=>setSubTab(k)} style={{flex:1,padding:"8px 12px",borderRadius:8,border:"none",background:subTab===k?A:"transparent",color:subTab===k?"#000":MT,fontSize:12,fontWeight:800,cursor:"pointer",fontFamily:"'Outfit',sans-serif",fontStyle:"italic",textTransform:"uppercase",letterSpacing:0.8}}>{l}</button>
+          <button key={k} className={`sb${subTab===k?" on":""}`} onClick={()=>setSubTab(k)}>{l}</button>
         ))}
       </div>
 
       {subTab==="analytics" && analyticsData ? (
-        <div>
+        <div style={{padding:"20px 16px"}}>
           {/* Analytics Section Tabs — matching mockup control panel */}
           <div style={{display:"flex",gap:4,marginBottom:16}}>
             {[["league","📈 League"],["partnership","🤝 Partners"],["opponent","⚔️ H2H"],["insights","💡 Insights"]].map(([k,l])=>(
@@ -495,49 +497,104 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
         </div>
       ) : null}
 
-      {subTab==="roster" && <>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-        <h2 style={{fontSize:16,fontWeight:700}}>Player Roster ({players.length})</h2>
-        <div style={{display:"flex",gap:6}}>
-          <button onClick={()=>{setEditMode(!editMode);setEditPid(null);setConfirmDel(null);setShowAddPlayer(false);}} style={{padding:"6px 14px",borderRadius:8,border:`1px solid ${editMode?GD:BD}`,background:editMode?`${GD}15`:"transparent",color:editMode?GD:MT,fontSize:12,fontWeight:700,cursor:"pointer"}}>{editMode?"Done":"✏️ Edit"}</button>
-          {!editMode&&<button onClick={()=>setShowAddPlayer(!showAddPlayer)} style={{padding:"6px 14px",borderRadius:8,border:`1px solid ${A}`,background:`${A}15`,color:A,fontSize:12,fontWeight:700,cursor:"pointer"}}>{showAddPlayer?"Cancel":"+ Add"}</button>}
-        </div>
-      </div>
-      {showAddPlayer&&!editMode&&<div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:12}}>
-        <input placeholder="Name *" value={newName} onChange={e=>setNewName(e.target.value)} style={{...inp,marginBottom:8}}/>
-        <input placeholder="Nickname" value={newNick} onChange={e=>setNewNick(e.target.value)} style={{...inp,marginBottom:8}}/>
-        <button onClick={addPlayer} style={{width:"100%",padding:10,borderRadius:10,border:"none",background:A,color:BG,fontSize:13,fontWeight:700,cursor:"pointer"}}>Add Player</button>
-      </div>}
-      {/* FT-12: 2-col grid of italic-name avatar cards. ELO/WR/last-5 hidden at list level (moves to Ranking tab in #11). */}
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px 12px"}}>
-      {players.map(p=>{
-        if(editMode&&editPid===p.id)return (<div key={p.id} style={{gridColumn:"1 / -1",background:CD,borderRadius:12,border:`1px solid ${GD}40`,padding:14}}>
-          <input value={editName} onChange={e=>setEditName(e.target.value)} placeholder="Name *" style={{...inp,marginBottom:6,borderColor:`${GD}40`}}/>
-          <input value={editNick} onChange={e=>setEditNick(e.target.value)} placeholder="Nickname" style={{...inp,marginBottom:8,borderColor:`${GD}40`}}/>
-          <div style={{display:"flex",gap:6}}><button onClick={()=>updatePlayer(p.id,editName,editNick)} style={{flex:1,padding:8,borderRadius:8,border:"none",background:A,color:BG,fontSize:12,fontWeight:700,cursor:"pointer"}}>Save</button><button onClick={()=>setEditPid(null)} style={{flex:1,padding:8,borderRadius:8,border:`1px solid ${BD}`,background:"transparent",color:MT,fontSize:12,fontWeight:700,cursor:"pointer"}}>Cancel</button></div>
-        </div>);
-        return (<div key={p.id} onClick={()=>{if(!editMode)setSp(p.id);}} style={{position:"relative",display:"flex",alignItems:"center",gap:10,padding:"10px 8px",borderBottom:`1px solid ${BD}40`,cursor:editMode?"default":"pointer"}}>
-          <div style={{width:44,height:44,borderRadius:"50%",background:`linear-gradient(135deg,${A}25,${A}08)`,border:`2px solid ${A}30`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:800,color:A,flexShrink:0,overflow:"hidden"}}>{p.avatar_url?<img src={p.avatar_url} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:p.name[0]}</div>
-          <div style={{flex:1,minWidth:0}}>
-            <div style={{fontSize:13,fontWeight:900,fontStyle:"italic",textTransform:"uppercase",letterSpacing:0.5,color:TX,lineHeight:1.1,wordBreak:"break-word"}}>{p.name}</div>
-            {/* FT-12: country flag slot — populated by #11 */}
-            {p.country && flagEmoji(p.country) ? (
-              <div style={{display:"flex",alignItems:"center",gap:4,marginTop:4}}>
-                <span className="flag" style={{fontSize:14,lineHeight:1}}>{flagEmoji(p.country)}</span>
-                <span style={{fontSize:10,color:MT,fontWeight:600,letterSpacing:0.5}}>{p.country.toUpperCase()}</span>
-              </div>
-            ) : p.nickname ? (
-              <div style={{fontSize:10,color:MT,marginTop:4,fontStyle:"italic"}}>"{p.nickname}"</div>
-            ) : null}
+      {subTab==="roster" && (() => {
+        const filtered = q==="" ? players : players.filter(p => {
+          const tokens = (p.name+" "+(p.nickname||"")).toLowerCase().split(/[\s-]+/).filter(Boolean);
+          const ql = q.toLowerCase();
+          return tokens.some(t => t.startsWith(ql));
+        });
+        return (<>
+          {/* Phase 5: roster header bar with edit/add controls (admin only) */}
+          <div className="rbar">
+            <div className="rbar-t">Roster<span className="rbar-count">({filtered.length})</span></div>
+            {isAdmin && <div style={{display:"flex",gap:6,alignItems:"center"}}>
+              <button className={`gbtn${editMode?" on":""}`} onClick={()=>{setEditMode(!editMode);setEditPid(null);setConfirmDel(null);setShowAddPlayer(false);}}>
+                <Icon name="edit" size={12}/>{editMode?"Done":"Edit"}
+              </button>
+              {!editMode && <button className="pbtn" onClick={()=>setShowAddPlayer(!showAddPlayer)}>
+                <Icon name="plus" size={12} color="#000" strokeWidth={2.5}/>{showAddPlayer?"Cancel":"Add"}
+              </button>}
+            </div>}
           </div>
-          {editMode&&<div style={{display:"flex",flexDirection:"column",gap:4,flexShrink:0}}>
-            <button onClick={e=>{e.stopPropagation();startEdit(p);}} style={{background:"none",border:"none",fontSize:14,cursor:"pointer",padding:0}}>✏️</button>
-            {isAdmin&&(confirmDel===p.id?<div style={{display:"flex",flexDirection:"column",gap:2}}><button onClick={e=>{e.stopPropagation();deletePlayer(p.id);setConfirmDel(null);}} style={{background:DG,border:"none",color:"#fff",fontSize:8,fontWeight:700,padding:"3px 4px",borderRadius:4,cursor:"pointer"}}>Yes</button><button onClick={e=>{e.stopPropagation();setConfirmDel(null);}} style={{background:BD,border:"none",color:TX,fontSize:8,fontWeight:700,padding:"3px 4px",borderRadius:4,cursor:"pointer"}}>No</button></div>:<button onClick={e=>{e.stopPropagation();setConfirmDel(p.id);}} style={{background:"none",border:"none",fontSize:14,cursor:"pointer",padding:0}}>🗑️</button>)}
+
+          {/* Phase 5: search input */}
+          <div className="srchw">
+            <div className="srchi"><Icon name="search" size={15}/></div>
+            <input className="srch" placeholder="Search players…" value={q} onChange={e=>setQ(e.target.value)}/>
+          </div>
+
+          {/* Add Player form preserved verbatim (S046 admin path) */}
+          {showAddPlayer&&!editMode&&<div style={{margin:"0 18px 12px",background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14}}>
+            <input placeholder="Name *" value={newName} onChange={e=>setNewName(e.target.value)} style={{...inp,marginBottom:8}}/>
+            <input placeholder="Nickname" value={newNick} onChange={e=>setNewNick(e.target.value)} style={{...inp,marginBottom:8}}/>
+            <button onClick={addPlayer} style={{width:"100%",padding:10,borderRadius:10,border:"none",background:A,color:BG,fontSize:13,fontWeight:700,cursor:"pointer"}}>Add Player</button>
           </div>}
-        </div>);
-      })}
-      </div>
-    </>}
+
+          {/* Phase 5: hybrid 2-col grid of .prow cards (Q1=C, Q2=A W-L shown, Q3=A circle avatar) */}
+          <div className="plist">
+            {filtered.length===0 && q && (
+              <div className="plist-empty">No players matching "{q}"</div>
+            )}
+            {filtered.map(p=>{
+              const stat = ps[p.id];
+              const wl = stat ? {w:stat.wins||0, l:stat.losses||0} : {w:0,l:0};
+              const isMe = claimedPlayer?.id === p.id;
+              if(editMode && editPid===p.id) return (
+                <div key={p.id} className="prow editing">
+                  <div style={{flex:1}}>
+                    <input value={editName} onChange={e=>setEditName(e.target.value)} placeholder="Name *" style={{...inp,marginBottom:6,borderColor:`${GD}40`}}/>
+                    <input value={editNick} onChange={e=>setEditNick(e.target.value)} placeholder="Nickname" style={{...inp,marginBottom:8,borderColor:`${GD}40`}}/>
+                    <div style={{display:"flex",gap:6}}>
+                      <button onClick={()=>updatePlayer(p.id,editName,editNick)} style={{flex:1,padding:8,borderRadius:8,border:"none",background:A,color:BG,fontSize:12,fontWeight:700,cursor:"pointer"}}>Save</button>
+                      <button onClick={()=>setEditPid(null)} style={{flex:1,padding:8,borderRadius:8,border:`1px solid ${BD}`,background:"transparent",color:MT,fontSize:12,fontWeight:700,cursor:"pointer"}}>Cancel</button>
+                    </div>
+                  </div>
+                </div>
+              );
+              return (
+                <div key={p.id} className="prow" onClick={()=>{if(!editMode)setSp(p.id);}} style={editMode?{cursor:"default"}:undefined}>
+                  <div className={`ravi${isMe?" me":""}`}>
+                    {p.avatar_url ? <img src={p.avatar_url} alt=""/> : (p.name[0]||"?").toUpperCase()}
+                  </div>
+                  <div className="pinfo">
+                    <div className="pnam">{p.nickname||p.name}</div>
+                    <div className="pmet">
+                      {p.country && flagEmoji(p.country) ? (
+                        <>
+                          <span className="pflag flag">{flagEmoji(p.country)}</span>
+                          <span className="pctry">{p.country.toUpperCase()}</span>
+                        </>
+                      ) : (
+                        <span className="pctry" style={{opacity:.4}}>—</span>
+                      )}
+                      {(wl.w+wl.l)>0 && <>
+                        <span className="pmet-sep">·</span>
+                        <span className="prec2"><span className="w">{wl.w}W</span><span>{wl.l}L</span></span>
+                      </>}
+                    </div>
+                  </div>
+                  {isMe && !editMode && <span className="pbadge">YOU</span>}
+                  {editMode ? (
+                    <div className="padmin" onClick={e=>e.stopPropagation()}>
+                      <button title="Edit" onClick={()=>startEdit(p)}>✏️</button>
+                      {isAdmin && (confirmDel===p.id ? (
+                        <div className="yn">
+                          <button className="y" onClick={()=>{deletePlayer(p.id);setConfirmDel(null);}}>Yes</button>
+                          <button className="n" onClick={()=>setConfirmDel(null)}>No</button>
+                        </div>
+                      ) : (
+                        <button title="Delete" onClick={()=>setConfirmDel(p.id)}>🗑️</button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="pchev"><Icon name="chevron" size={14}/></div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </>);
+      })()}
     </div>
   );
 }
