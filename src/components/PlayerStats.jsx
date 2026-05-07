@@ -498,10 +498,13 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
       ) : null}
 
       {subTab==="roster" && (() => {
+        // Search filter: simple displayed-name startsWith only.
+        // Typing "a" matches only players whose displayed name starts with "a"
+        // (NOT players with "a" anywhere in the name). Per user: same behavior
+        // applies in every search bar in the app.
         const filtered = q==="" ? players : players.filter(p => {
-          const tokens = (p.name+" "+(p.nickname||"")).toLowerCase().split(/[\s-]+/).filter(Boolean);
-          const ql = q.toLowerCase();
-          return tokens.some(t => t.startsWith(ql));
+          const display = (p.nickname || p.name || "").toLowerCase();
+          return display.startsWith(q.toLowerCase());
         });
         return (<>
           {/* Phase 5: roster header bar with edit/add controls (admin only) */}
