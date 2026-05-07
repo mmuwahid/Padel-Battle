@@ -256,3 +256,278 @@ body {
 }
 .fab:hover { transform: scale(1.06); }
 .fab:active { transform: scale(0.94); }
+
+/* ───────────────────────────────────────────────────────────
+   Issue #46 Phase 3 — Login + League Picker
+   AuthGate + LeagueGate restyled to use Phase 1 tokens.
+   Visual-only — no behavior changes; full OnboardingScreen
+   (claim player + DOB/gender/side fields) is Phase 11.
+   ─────────────────────────────────────────────────────────── */
+
+@keyframes pg {
+  0%, 100% { box-shadow: 0 0 40px rgba(74, 222, 128, 0.15); }
+  50%      { box-shadow: 0 0 60px rgba(74, 222, 128, 0.25); }
+}
+
+.lscreen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+.lbg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(74, 222, 128, 0.08), transparent 60%),
+    linear-gradient(rgba(74, 222, 128, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(74, 222, 128, 0.02) 1px, transparent 1px),
+    var(--bg);
+  background-size: auto, 28px 28px, 28px 28px, auto;
+  pointer-events: none;
+}
+.lhero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 32px 32px 28px;
+  position: relative;
+  z-index: 1;
+}
+.llogobox {
+  width: 72px; height: 72px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, rgba(74, 222, 128, 0.14), rgba(74, 222, 128, 0.04));
+  border: 1px solid var(--accent-glow);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 40px rgba(74, 222, 128, 0.15);
+  animation: pg 3s ease-in-out infinite;
+  margin-bottom: 18px;
+  overflow: hidden;
+}
+.lbrand {
+  font-size: 32px;
+  font-weight: 800;
+  font-family: 'Outfit', sans-serif;
+  letter-spacing: 0.02em;
+  color: var(--text);
+}
+.lbrand .accent { color: var(--accent); }
+.ltag {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-top: 6px;
+  text-align: center;
+}
+.lform {
+  flex-shrink: 0;
+  padding: 0 20px 28px;
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 430px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.flbl {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+  display: block;
+}
+.fwrap { position: relative; }
+.finput {
+  width: 100%;
+  padding: 13px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  color: var(--text);
+  font-family: 'Outfit', sans-serif;
+  font-size: 15px;
+  outline: none;
+  transition: border-color 200ms var(--ease-smooth);
+  box-sizing: border-box;
+}
+.finput::placeholder { color: var(--muted); }
+.finput:focus { border-color: var(--accent-glow); }
+.finput.pw { padding-right: 48px; }
+.pwtog {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.pwtog:hover { color: var(--text); }
+.lcta {
+  width: 100%;
+  padding: 15px;
+  border-radius: var(--r-md);
+  background: var(--accent);
+  border: none;
+  cursor: pointer;
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #000;
+  transition: transform 200ms var(--ease-spring), box-shadow 200ms var(--ease-smooth), opacity 150ms;
+}
+.lcta:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(74, 222, 128, 0.35); }
+.lcta:active { transform: translateY(0); }
+.lcta:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+.gbg2 {
+  width: 100%;
+  padding: 13px 16px;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: background 200ms var(--ease-smooth), border-color 200ms var(--ease-smooth);
+}
+.gbg2:hover { background: var(--surface-2); border-color: var(--border-hover); }
+.or-div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  margin: 4px 0;
+}
+.or-div::before, .or-div::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+.llink {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 12px;
+  font-family: var(--mono);
+  cursor: pointer;
+  text-decoration: none;
+  padding: 0;
+}
+.llink:hover { text-decoration: underline; }
+.llink.danger { color: var(--danger); }
+.lerr {
+  font-size: 12px;
+  padding: 10px 14px;
+  background: var(--danger-dim);
+  border: 1px solid var(--danger-glow);
+  border-radius: var(--r-md);
+  color: var(--danger);
+  font-family: 'Outfit', sans-serif;
+}
+.lok {
+  font-size: 12px;
+  padding: 10px 14px;
+  background: var(--accent-dim);
+  border: 1px solid var(--accent-glow);
+  border-radius: var(--r-md);
+  color: var(--accent);
+  font-family: 'Outfit', sans-serif;
+}
+
+/* League picker — extends the same form language */
+.lgcard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: border-color 150ms var(--ease-smooth);
+}
+.lgcard:hover { border-color: var(--border-hover); }
+.lgrow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.lgactions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.lgactionbtn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+  font-family: 'Outfit', sans-serif;
+  transition: border-color 150ms, color 150ms;
+}
+.lgactionbtn:hover { border-color: var(--border-hover); color: var(--text); }
+.lgactionbtn.accent { border-color: var(--accent-glow); color: var(--accent); }
+.lgactionbtn.danger { border-color: var(--danger-glow); color: var(--danger); }
+.lgsection {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+}
+.lgsection-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.lginline {
+  display: flex;
+  gap: 8px;
+}
+.lginline .finput { flex: 1; padding: 11px 14px; font-size: 14px; }
+.lginline .lcta-sm {
+  padding: 11px 16px;
+  border-radius: var(--r-md);
+  background: var(--accent);
+  border: none;
+  cursor: pointer;
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #000;
+  flex-shrink: 0;
+}
+.lginline .lcta-sm:disabled { opacity: 0.5; cursor: not-allowed; }
