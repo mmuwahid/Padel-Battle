@@ -54,12 +54,13 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, user, ava
             <div style={{fontSize:10,color:MT,fontWeight:600,letterSpacing:1,textTransform:"uppercase",paddingLeft:16,marginBottom:8}}>League</div>
             <div style={{padding:"12px 16px",background:CD2,borderRadius:8,marginBottom:8}}>
               <div style={{fontSize:13,fontWeight:600,color:TX,display:"flex",alignItems:"center",gap:6}}>
-                {league?.name||"—"}
-                {isAdmin && <span style={{fontSize:9,color:A,fontWeight:700,background:`${A}20`,padding:"2px 6px",borderRadius:4}}>Admin</span>}
+                {league?.name || <span style={{color:MT,fontStyle:"italic"}}>No league selected</span>}
+                {league && isAdmin && <span style={{fontSize:9,color:A,fontWeight:700,background:`${A}20`,padding:"2px 6px",borderRadius:4}}>Admin</span>}
               </div>
             </div>
-            {/* S053 Issue #22: Switch League button removed — already in Settings → League section */}
-            {isAdmin && (
+            {/* S063: full league management — switch / create / join */}
+            <button onClick={()=>{setSidebarView("leagues");setSidebarOpen(false);}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>🏟️ Leagues</button>
+            {league && isAdmin && (
               <button onClick={()=>{const code=league?.invite_code;if(code){const url=`${window.location.origin}${window.location.pathname}?invite=${code}`;if(navigator.share)navigator.share({title:"Join my PadelHub league",text:`Join "${league?.name}" on PadelHub!`,url});else{navigator.clipboard.writeText(url);showToast("Invite link copied!");}}}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>📩 Invite Players</button>
             )}
           </div>

@@ -31,6 +31,7 @@ function urlBase64ToUint8Array(base64String) {
 }
 import { AuthGate } from './components/AuthGate';
 import { LeagueGate } from './components/LeagueGate';
+import { LeaguesView } from './components/LeaguesView';
 import { LogMatch } from './components/LogMatch';
 const PlayerStats = lazy(() => import('./components/PlayerStats').then(m => ({default: m.PlayerStats})));
 import { ScheduleView } from './components/ScheduleView';
@@ -43,7 +44,7 @@ const GameMode = lazy(() => import('./components/GameMode').then(m => ({default:
 const LazyFallback = () => <div style={{minHeight:80}}/>;
 // MAIN APP COMPONENT
 // ============================================================================
-function AppContent({leagueId,user,onSwitchLeague}){
+function AppContent({leagueId,user,leagues,leagueHandlers}){
   const [league,setLeague]=useState(null);
   const [players,setPlayers]=useState([]);
   const [matches,setMatches]=useState([]);
@@ -68,7 +69,11 @@ function AppContent({leagueId,user,onSwitchLeague}){
   const [claimError,setClaimError]=useState("");
   // Sidebar and view management
   const [sidebarOpen,setSidebarOpen]=useState(false);
-  const [sidebarView,setSidebarView]=useState(null); // null | "profile" | "settings" | "admin"
+  const [sidebarView,setSidebarView]=useState(null); // null | "profile" | "settings" | "admin" | "leagues"
+  // S063: "Switch League" / "Back to Leagues" now open the in-app Leagues
+  // sub-view in the sidebar instead of nulling out the leagueId. Replaces
+  // the old LeagueGate full-screen picker.
+  const onSwitchLeague = () => setSidebarView("leagues");
   const [avatarUrl,setAvatarUrl]=useState(null);
   const [avatarUploading,setAvatarUploading]=useState(false);
 
@@ -221,6 +226,10 @@ function AppContent({leagueId,user,onSwitchLeague}){
   useEffect(()=>{
     loadLeagueData();
 
+    // S063: skip Realtime subscriptions when there's no league selected.
+    // 0-league users have nothing to subscribe to.
+    if (!leagueId) return;
+
     // S1-05: Supabase Realtime — subscribe to changes for live cross-device sync
     // P-12: Targeted Realtime subscriptions (per-table with league filter)
     // S026: Debounced to prevent rapid successive reloads
@@ -240,6 +249,15 @@ function AppContent({leagueId,user,onSwitchLeague}){
   },[leagueId,user.id]);
 
   const loadLeagueData = async () => {
+    // S063: 0-league users have leagueId=null. Skip the data fetch entirely
+    // and render the inline empty-state on Ranking. Returning early here
+    // also prevents the postgrest errors that .eq("league_id", null) would
+    // emit if we let the queries run.
+    if (!leagueId) {
+      setLoading(false);
+      firstLoadRef.current = false;
+      return;
+    }
     try {
       if (firstLoadRef.current) setLoading(true);
 
@@ -890,6 +908,16 @@ function AppContent({leagueId,user,onSwitchLeague}){
           {sidebarView==="notifications" && (
             <NotificationCenter onClose={()=>{setSidebarView(null);loadLeagueData();}}/>
           )}
+          {sidebarView==="leagues" && (
+            <LeaguesView
+              user={user}
+              leagues={leagues || []}
+              leagueId={leagueId}
+              handlers={leagueHandlers}
+              onClose={()=>setSidebarView(null)}
+              showToast={showToast}
+            />
+          )}
           {sidebarView==="rules" && (
             <div className="fu">
               <button onClick={()=>setSidebarView(null)} style={{marginBottom:16,background:"none",border:"none",color:A,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif",padding:0}}>← Back</button>
@@ -925,7 +953,24 @@ function AppContent({leagueId,user,onSwitchLeague}){
       )}
 
       {/* RANKING TAB — Issue #46 Phase 4: class-based markup */}
-      {!sidebarView && tab==="board"&&(
+      {!sidebarView && tab==="board" && !leagueId && (
+        // S063: 0-league empty state. Replaces what LeagueGate used to render
+        // for users with no memberships. CTAs open the in-app Leagues view.
+        <div className="empty-leagues">
+          <div className="empty-leagues-icon">🏟️</div>
+          <div className="empty-leagues-title">You're not in a league yet</div>
+          <div className="empty-leagues-sub">Create your first league to start tracking matches and rankings, or join an existing one with an invite code.</div>
+          <div className="empty-leagues-actions">
+            <button className="pbtn" style={{justifyContent:"center"}} onClick={()=>setSidebarView("leagues")}>
+              Create your first league
+            </button>
+            <button className="gbtn" style={{justifyContent:"center"}} onClick={()=>setSidebarView("leagues")}>
+              Join with invite code
+            </button>
+          </div>
+        </div>
+      )}
+      {!sidebarView && tab==="board" && leagueId && (
         <div style={{padding:"0 16px 20px"}}>
 
           {/* Title + season selector */}
@@ -1345,7 +1390,14 @@ export default function App(){
     <AuthGate>
       {(user)=>(
         <LeagueGate user={user}>
-          {(leagueId,switchLeague)=><AppContent leagueId={leagueId} user={user} onSwitchLeague={switchLeague}/>}
+          {({ leagueId, leagues, handlers })=>(
+            <AppContent
+              leagueId={leagueId}
+              user={user}
+              leagues={leagues}
+              leagueHandlers={handlers}
+            />
+          )}
         </LeagueGate>
       )}
     </AuthGate>
