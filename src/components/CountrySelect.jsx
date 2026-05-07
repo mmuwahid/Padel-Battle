@@ -220,17 +220,16 @@ export function CountrySelect({ value, onChange, placeholder = "Select country..
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return COUNTRIES;
-    // Starts-with match: country shows up if any word in the name starts with the query,
-    // OR the ISO-3 code starts with the query. So typing "p" pulls Pakistan / Palau /
-    // Palestine / ... but NOT Cabo Verde or Japan. Typing "south" pulls all three South-x.
-    return COUNTRIES.filter(c => {
-      const name = c.name.toLowerCase();
-      if (name.startsWith(q)) return true;
-      if (c.iso3.toLowerCase().startsWith(q)) return true;
-      // also match second-or-later word starts (so "korea" finds "South Korea", "republic" finds "Czech Republic")
-      const words = name.split(/[\s-]+/);
-      return words.some(w => w.startsWith(q));
-    });
+    // Strict startsWith on displayed name (or ISO-3 code) per user directive:
+    // typing "p" matches only countries whose name starts with "p" (Pakistan,
+    // Palau, Palestine, Panama, ...), NOT countries containing "p" elsewhere.
+    // Same rule applies in every search bar in the app for consistency.
+    // Trade-off: typing "korea" no longer matches "South Korea" / "North Korea";
+    // user must search for "south" or "north" instead.
+    return COUNTRIES.filter(c =>
+      c.name.toLowerCase().startsWith(q) ||
+      c.iso3.toLowerCase().startsWith(q)
+    );
   }, [query]);
 
   // Auto-focus search input when panel opens

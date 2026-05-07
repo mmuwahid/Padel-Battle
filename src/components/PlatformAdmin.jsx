@@ -84,13 +84,17 @@ export function PlatformAdmin({ onClose, showToast }) {
     cursor: "pointer", fontFamily: "'Outfit',sans-serif",
   });
 
+  // Strict startsWith on displayed value per user directive — same rule as
+  // PlayerStats roster search and CountrySelect: typing "a" matches only
+  // values that START with "a", not values containing "a" anywhere.
+  const sQ = search.trim().toLowerCase();
   const filteredLeagues = leagues.filter(l =>
-    l.name.toLowerCase().includes(search.toLowerCase()) ||
-    (l.creator_email || "").toLowerCase().includes(search.toLowerCase())
+    l.name.toLowerCase().startsWith(sQ) ||
+    (l.creator_email || "").toLowerCase().startsWith(sQ)
   );
   const filteredUsers = users.filter(u =>
-    (u.email || "").toLowerCase().includes(search.toLowerCase()) ||
-    (u.display_name || "").toLowerCase().includes(search.toLowerCase())
+    (u.email || "").toLowerCase().startsWith(sQ) ||
+    (u.display_name || "").toLowerCase().startsWith(sQ)
   );
 
   return (
