@@ -50,6 +50,8 @@ function AppContent({leagueId,user,onSwitchLeague}){
   const [seasons,setSeasons]=useState([]);
   const [tab,setTab]=useState(()=>{const h=window.location.hash.replace("#","");if(h==="schedule"||h==="history")return "history";return "board";});
   const [loading,setLoading]=useState(true);
+  // Issue #24 (S058): only the FIRST loadLeagueData() shows the full-screen skeleton. Subsequent refreshes (realtime echo, post-write reload, refresh button) update data silently in place — no more flash on tab switch when a background reload is in flight.
+  const firstLoadRef = useRef(true);
   const [isAdmin,setIsAdmin]=useState(false);
   const [isOwner,setIsOwner]=useState(false);
   const [myMemberId,setMyMemberId]=useState(null);
@@ -239,7 +241,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
 
   const loadLeagueData = async () => {
     try {
-      setLoading(true);
+      if (firstLoadRef.current) setLoading(true);
 
       // PA-04: Parallelize all independent queries
       // A-09: Specific column selects instead of SELECT *
@@ -300,6 +302,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
       setClaimedPlayer(claimed || null);
 
       setLoading(false);
+      firstLoadRef.current = false;
     } catch (_err) {
       // S026: Clear state on error so user sees empty state, not stale data
       setLeague(null); setPlayers([]); setMatches([]); setSeasons([]); setChallenges([]);
