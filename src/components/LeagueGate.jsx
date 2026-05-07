@@ -1,14 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { supabase } from '../supabase';
-import { A, BG, CD, CD2, BD, TX, MT, DG, GD, PU } from '../theme';
 import { PadelLogoSmall } from './icons';
 
 export function LeagueGate({user,children,showToast}){
   const [leagues,setLeagues]=useState([]);
   const [selectedLeagueId,setSelectedLeagueId]=useState(null);
   const [loading,setLoading]=useState(true);
-  const [showCreate,setShowCreate]=useState(false);
-  const [showJoin,setShowJoin]=useState(false);
   const [leagueName,setLeagueName]=useState("");
   const [inviteCode,setInviteCode]=useState("");
   const [error,setError]=useState("");
@@ -23,14 +20,11 @@ export function LeagueGate({user,children,showToast}){
   useEffect(()=>{
     const init = async () => {
       await loadUserLeagues();
-      // Check URL for invite code and auto-join
       const params = new URLSearchParams(window.location.search);
       const code = params.get("invite");
       if (code) {
         setInviteCode(code);
-        // Auto-join the league from invite link
         await autoJoinByInvite(code);
-        // Clean the URL
         window.history.replaceState(null, "", window.location.pathname);
       }
     };
@@ -41,20 +35,16 @@ export function LeagueGate({user,children,showToast}){
     try {
       const {data:rpcData,error:findErr} = await supabase.rpc("lookup_league_by_invite",{code:code.trim()});
       const leagueData=rpcData?.[0]||null;
-      if (findErr || !leagueData) return; // silently fail — invalid code
-      // Check if already member
+      if (findErr || !leagueData) return;
       const {data:existing} = await supabase
         .from("league_members").select("id").eq("league_id",leagueData.id).eq("user_id",user.id).single();
       if (existing) {
-        // Already a member — just select the league
         setSelectedLeagueId(leagueData.id);
         return;
       }
-      // Add as member
       const {error:addErr} = await supabase
         .from("league_members").insert({league_id:leagueData.id,user_id:user.id,role:"member"});
       if (addErr) throw addErr;
-      // Notify league about new member
       const dn = user.user_metadata?.display_name || user.email?.split("@")[0] || "Someone";
       supabase.functions.invoke("push-notify", {
         body: { league_id: leagueData.id, type: "members", title: "New Member Joined!", body: `${dn} joined the league`, exclude_user_id: user.id },
@@ -63,15 +53,10 @@ export function LeagueGate({user,children,showToast}){
       setSelectedLeagueId(leagueData.id);
       setInviteCode("");
       setJoinMsg(`Welcome to ${leagueData.name}!`);
-    } catch (_err) {
-      // Don't block — user can still manually join
-    }
+    } catch (_err) {}
   };
 
-  // Issue #41 (S058): users in exactly 1 league should land directly on the Leaderboard
-  // after login. The picker is only useful when 0 leagues (CTA to create/join) or 2+
-  // (need to choose). Use a ref so a manual "Switch League" returns to the picker
-  // (sets selectedLeagueId=null) without immediately auto-selecting again.
+  // S058 #41: auto-skip picker for users in exactly 1 league.
   const autoSelectedRef = useRef(false);
   const loadUserLeagues = async () => {
     try {
@@ -83,7 +68,6 @@ export function LeagueGate({user,children,showToast}){
       if (err) throw err;
       const userLeagues = data?.map(m=>({...m.leagues,_userRole:m.role})).filter(Boolean) || [];
       setLeagues(userLeagues);
-      // Auto-select the only league on first load to skip the picker for single-league users.
       if (!autoSelectedRef.current && userLeagues.length === 1) {
         autoSelectedRef.current = true;
         setSelectedLeagueId(userLeagues[0].id);
@@ -103,7 +87,6 @@ export function LeagueGate({user,children,showToast}){
     }
     setCreating(true);
     try {
-      // Create league (created_by required for RLS, trigger auto-adds user as admin)
       const {data:leagueData,error:leagueErr} = await supabase
         .from("leagues")
         .insert({name:leagueName.trim(),created_by:user.id})
@@ -111,26 +94,15 @@ export function LeagueGate({user,children,showToast}){
         .single();
 
       if (leagueErr) throw leagueErr;
-
       const leagueId = leagueData.id;
-
-      // Note: handle_new_league trigger auto-inserts user as admin member
-
-      // Create default Season 1
-      const {data:seasonData,error:seasonErr} = await supabase
+      const {error:seasonErr} = await supabase
         .from("seasons")
         .insert({league_id:leagueId,name:"Season 1",start_date:new Date().toISOString().split("T")[0],active:true})
         .select()
         .single();
-
       if (seasonErr) throw seasonErr;
-
-      // No default roster — players are created when users join and claim/create their identity
-
-      // Refresh and select
       await loadUserLeagues();
       setSelectedLeagueId(leagueId);
-      setShowCreate(false);
       setLeagueName("");
     } catch (err) {
       setError(err.message || "Failed to create league");
@@ -147,46 +119,26 @@ export function LeagueGate({user,children,showToast}){
     }
     setJoining(true);
     try {
-      // Find league by invite_code (uses RPC to bypass restricted leagues_select)
       const {data:rpcData,error:findErr} = await supabase.rpc("lookup_league_by_invite",{code:inviteCode.trim()});
       const foundLeague=rpcData?.[0]||null;
-
       if (findErr || !foundLeague) throw new Error("Invalid invite code");
-
       const leagueId = foundLeague.id;
-
-      // Check if already member
       const {data:existing} = await supabase
-        .from("league_members")
-        .select("id")
-        .eq("league_id",leagueId)
-        .eq("user_id",user.id)
-        .single();
-
+        .from("league_members").select("id").eq("league_id",leagueId).eq("user_id",user.id).single();
       if (existing) {
         setSelectedLeagueId(leagueId);
-        setShowJoin(false);
         setInviteCode("");
         return;
       }
-
-      // Add as member
       const {error:addErr} = await supabase
-        .from("league_members")
-        .insert({league_id:leagueId,user_id:user.id,role:"member"});
-
+        .from("league_members").insert({league_id:leagueId,user_id:user.id,role:"member"});
       if (addErr) throw addErr;
-
-      // Notify league members about new member
       const displayName = user.user_metadata?.display_name || user.email?.split("@")[0] || "Someone";
       supabase.functions.invoke("push-notify", {
         body: { league_id: leagueId, type: "members", title: "New Member Joined!", body: `${displayName} joined the league`, exclude_user_id: user.id },
       }).catch(() => {});
-
-      // Refresh and select
       await loadUserLeagues();
       setSelectedLeagueId(leagueId);
-      setShowJoin(false);
       setInviteCode("");
     } catch (err) {
       setError(err.message || "Failed to join league");
@@ -217,7 +169,17 @@ export function LeagueGate({user,children,showToast}){
     } catch(err) { setError(err.message || "Failed to delete league"); }
   };
 
-  if (loading) return <div style={{background:BG,width:"100vw",height:"100vh",display:"flex",alignItems:"center",justifyContent:"center",color:TX}}>Loading leagues...</div>;
+  if (loading) {
+    return (
+      <div className="lscreen">
+        <div className="lbg"/>
+        <div className="lhero">
+          <div className="llogobox"><PadelLogoSmall size={42}/></div>
+          <div className="ltag">Loading leagues…</div>
+        </div>
+      </div>
+    );
+  }
 
   if (selectedLeagueId && leagues.some(l=>l.id===selectedLeagueId)) {
     const switchLeague = () => setSelectedLeagueId(null);
@@ -225,44 +187,61 @@ export function LeagueGate({user,children,showToast}){
   }
 
   return (
-    <div style={{background:BG,minHeight:"100vh",padding:"20px",fontFamily:"'Outfit',sans-serif",color:TX}}>
-      <div style={{maxWidth:"420px",margin:"0 auto",paddingTop:"20px"}}>
-        <div style={{textAlign:"center",marginBottom:28}}>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-            <PadelLogoSmall/>
-            <h1 style={{fontSize:20,fontWeight:900,letterSpacing:2}}><span style={{color:A}}>Padel</span>Hub</h1>
-          </div>
-          <p style={{color:MT,fontSize:11,fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginTop:6}}>Select a League</p>
-        </div>
+    <div className="lscreen">
+      <div className="lbg"/>
+      <div className="lhero" style={{padding:"32px 32px 18px"}}>
+        <div className="llogobox" style={{width:60,height:60,marginBottom:14}}><PadelLogoSmall size={36}/></div>
+        <div className="lbrand" style={{fontSize:24}}>Padel<span className="accent">Hub</span></div>
+        <div className="ltag">Select a League</div>
+      </div>
 
-        {/* Join success message */}
-        {joinMsg && (
-          <div style={{marginBottom:16,padding:"12px 16px",background:`${A}15`,border:`1px solid ${A}40`,borderRadius:12,color:A,fontSize:13,fontWeight:600,textAlign:"center"}}>
-            {joinMsg}
-          </div>
-        )}
+      <div className="lform">
+        {joinMsg && <div className="lok">{joinMsg}</div>}
+        {error && <div className="lerr">{error}</div>}
 
-        {/* Existing leagues */}
         {leagues.length > 0 && (
-          <div style={{marginBottom:20}}>
-            <div style={{fontSize:11,color:MT,fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>Your Leagues</div>
-            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          <div>
+            <div className="flbl" style={{marginBottom:8}}>Your Leagues</div>
+            <div className="lgrow">
               {leagues.map(l=>(
-                <div key={l.id} style={{background:CD,border:`1px solid ${BD}`,borderRadius:12,padding:"12px 16px",display:"flex",alignItems:"center",gap:10}}>
+                <div key={l.id} className="lgcard">
                   {editingLeagueId===l.id ? (
-                    <div style={{flex:1,display:"flex",gap:6,alignItems:"center"}}>
-                      <input value={editLeagueName} onChange={e=>setEditLeagueName(e.target.value)} style={{flex:1,padding:"6px 10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:13,fontFamily:"'Outfit',sans-serif",outline:"none"}}/>
-                      <button onClick={()=>handleRenameLeague(l.id)} style={{padding:"6px 10px",background:A,border:"none",borderRadius:8,color:"#000",fontSize:11,fontWeight:700,cursor:"pointer"}}>Save</button>
-                      <button onClick={()=>setEditingLeagueId(null)} style={{padding:"6px 10px",background:"transparent",border:`1px solid ${BD}`,borderRadius:8,color:MT,fontSize:11,fontWeight:600,cursor:"pointer"}}>✕</button>
-                    </div>
+                    <>
+                      <input className="finput" style={{flex:1,padding:"8px 12px",fontSize:13}} value={editLeagueName} onChange={e=>setEditLeagueName(e.target.value)}/>
+                      <div className="lgactions">
+                        <button className="lgactionbtn accent" onClick={()=>handleRenameLeague(l.id)}>Save</button>
+                        <button className="lgactionbtn" onClick={()=>setEditingLeagueId(null)}>✕</button>
+                      </div>
+                    </>
                   ) : (
                     <>
-                      <button onClick={()=>setSelectedLeagueId(l.id)} style={{flex:1,background:"none",border:"none",color:TX,fontSize:14,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",gap:10}}>
-                        <span style={{fontSize:18}}>🏟️</span> {l.name}
+                      <button onClick={()=>setSelectedLeagueId(l.id)} style={{flex:1,background:"none",border:"none",color:"var(--text)",fontSize:14,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",gap:10,padding:0,minWidth:0}}>
+                        <span style={{fontSize:18,flexShrink:0}}>🏟️</span>
+                        <span style={{whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{l.name}</span>
                       </button>
-                      {(l.created_by===user.id || l._userRole==="admin") && <button onClick={()=>{const url=`${window.location.origin}${window.location.pathname}?invite=${l.invite_code}`;if(navigator.share)navigator.share({title:"Join my PadelHub league",text:`Join "${l.name}" on PadelHub!`,url});else{navigator.clipboard.writeText(url);if(showToast)showToast("Invite link copied!");;}}} style={{background:"none",border:`1px solid ${A}40`,borderRadius:6,color:A,fontSize:10,fontWeight:600,cursor:"pointer",padding:"4px 8px",fontFamily:"'Outfit',sans-serif"}} title="Share invite link">Invite</button>}
-                      {(l.created_by===user.id || l._userRole==="admin") && <button onClick={()=>{setEditingLeagueId(l.id);setEditLeagueName(l.name);}} style={{background:"none",border:`1px solid ${BD}`,borderRadius:6,color:MT,fontSize:10,fontWeight:600,cursor:"pointer",padding:"4px 8px",fontFamily:"'Outfit',sans-serif"}} title="Edit">Edit</button>}
-                      {l.created_by===user.id && (deleteConfirmId===l.id?<div style={{display:"flex",gap:4,alignItems:"center",flexWrap:"wrap"}}><input value={deleteTyped} onChange={e=>setDeleteTyped(e.target.value)} placeholder={"Type \""+l.name+"\" to delete"} style={{width:140,padding:"4px 6px",borderRadius:6,border:"1px solid "+DG,background:CD2,color:TX,fontSize:10,fontFamily:"'Outfit',sans-serif"}}/><button onClick={()=>handleDeleteLeague(l.id,l.name)} style={{padding:"4px 8px",background:DG,border:"none",borderRadius:6,color:"#fff",fontSize:10,fontWeight:700,cursor:"pointer"}}>Confirm</button><button onClick={()=>{setDeleteConfirmId(null);setDeleteTyped("");}} style={{padding:"4px 6px",background:"none",border:"1px solid "+BD,borderRadius:6,color:MT,fontSize:10,cursor:"pointer"}}>X</button></div>:<button onClick={()=>handleDeleteLeague(l.id,l.name)} style={{background:"none",border:`1px solid ${DG}40`,borderRadius:6,color:DG,fontSize:10,fontWeight:600,cursor:"pointer",padding:"4px 8px",fontFamily:"'Outfit',sans-serif"}} title="Delete">Delete</button>)}
+                      <div className="lgactions">
+                        {(l.created_by===user.id || l._userRole==="admin") && (
+                          <button className="lgactionbtn accent" title="Share invite link" onClick={()=>{
+                            const url=`${window.location.origin}${window.location.pathname}?invite=${l.invite_code}`;
+                            if(navigator.share)navigator.share({title:"Join my PadelHub league",text:`Join "${l.name}" on PadelHub!`,url}).catch(()=>{});
+                            else{navigator.clipboard.writeText(url);if(showToast)showToast("Invite link copied!");}
+                          }}>Invite</button>
+                        )}
+                        {(l.created_by===user.id || l._userRole==="admin") && (
+                          <button className="lgactionbtn" title="Edit" onClick={()=>{setEditingLeagueId(l.id);setEditLeagueName(l.name);}}>Edit</button>
+                        )}
+                        {l.created_by===user.id && (
+                          deleteConfirmId===l.id ? (
+                            <div style={{display:"flex",gap:4,alignItems:"center",flexWrap:"wrap"}}>
+                              <input className="finput" style={{width:140,padding:"4px 6px",fontSize:10,borderColor:"var(--danger-glow)"}} value={deleteTyped} onChange={e=>setDeleteTyped(e.target.value)} placeholder={"Type \""+l.name+"\" to delete"}/>
+                              <button className="lgactionbtn danger" onClick={()=>handleDeleteLeague(l.id,l.name)}>Confirm</button>
+                              <button className="lgactionbtn" onClick={()=>{setDeleteConfirmId(null);setDeleteTyped("");}}>X</button>
+                            </div>
+                          ) : (
+                            <button className="lgactionbtn danger" title="Delete" onClick={()=>handleDeleteLeague(l.id,l.name)}>Delete</button>
+                          )
+                        )}
+                      </div>
                     </>
                   )}
                 </div>
@@ -271,96 +250,27 @@ export function LeagueGate({user,children,showToast}){
           </div>
         )}
 
-        {/* Create league */}
-        <div style={{marginBottom:12,padding:"16px",background:CD,border:`1px solid ${BD}`,borderRadius:14}}>
-          <div style={{fontSize:11,color:MT,fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>Create a League</div>
-          <form onSubmit={handleCreateLeague} style={{display:"flex",gap:8}}>
-            <input
-              type="text"
-              value={leagueName}
-              onChange={(e)=>setLeagueName(e.target.value)}
-              placeholder="League name"
-              style={{
-                flex:1,
-                padding:"10px 14px",
-                background:CD2,
-                border:`1px solid ${BD}`,
-                borderRadius:10,
-                color:TX,
-                fontSize:13,
-                fontFamily:"'Outfit',sans-serif",
-                outline:"none",
-              }}
-            />
-            <button
-              type="submit"
-              disabled={creating}
-              style={{
-                padding:"10px 18px",
-                background:A,
-                border:"none",
-                borderRadius:10,
-                color:"#000",
-                fontWeight:700,
-                fontSize:13,
-                cursor:creating?"not-allowed":"pointer",
-                fontFamily:"'Outfit',sans-serif",
-                opacity:creating?0.6:1,
-              }}
-            >
-              {creating?"Creating...":"Create"}
-            </button>
+        <div className="lgsection">
+          <div className="lgsection-label">Create a League</div>
+          <form onSubmit={handleCreateLeague} className="lginline">
+            <input className="finput" type="text" value={leagueName} onChange={(e)=>setLeagueName(e.target.value)} placeholder="League name"/>
+            <button type="submit" className="lcta-sm" disabled={creating}>{creating?"Creating…":"Create"}</button>
           </form>
         </div>
 
-        {/* Join league */}
-        <div style={{padding:"16px",background:CD,border:`1px solid ${BD}`,borderRadius:14}}>
-          <div style={{fontSize:11,color:MT,fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>Join a League</div>
-          <form onSubmit={handleJoinLeague} style={{display:"flex",gap:8}}>
-            <input
-              type="text"
-              value={inviteCode}
-              onChange={(e)=>setInviteCode(e.target.value)}
-              placeholder="Invite code"
-              style={{
-                flex:1,
-                padding:"10px 14px",
-                background:CD2,
-                border:`1px solid ${BD}`,
-                borderRadius:10,
-                color:TX,
-                fontSize:13,
-                fontFamily:"'Outfit',sans-serif",
-                outline:"none",
-              }}
-            />
-            <button
-              type="submit"
-              disabled={joining}
-              style={{
-                padding:"10px 18px",
-                background:A,
-                border:"none",
-                borderRadius:10,
-                color:"#000",
-                fontWeight:700,
-                fontSize:13,
-                cursor:joining?"not-allowed":"pointer",
-                fontFamily:"'Outfit',sans-serif",
-                opacity:joining?0.6:1,
-              }}
-            >
-              {joining?"Joining...":"Join"}
-            </button>
+        <div className="lgsection">
+          <div className="lgsection-label">Join a League</div>
+          <form onSubmit={handleJoinLeague} className="lginline">
+            <input className="finput" type="text" value={inviteCode} onChange={(e)=>setInviteCode(e.target.value)} placeholder="Invite code"/>
+            <button type="submit" className="lcta-sm" disabled={joining}>{joining?"Joining…":"Join"}</button>
           </form>
         </div>
 
-        {error && <div style={{marginTop:14,color:DG,fontSize:12,padding:"10px 14px",background:`${DG}15`,borderRadius:10,border:`1px solid ${DG}30`}}>{error}</div>}
+        <div style={{textAlign:"center",marginTop:8}}>
+          <button className="llink danger" onClick={async()=>{await supabase.auth.signOut();}}>Sign Out</button>
+        </div>
 
-        {/* Sign Out */}
-        <button onClick={async()=>{await supabase.auth.signOut();}} style={{marginTop:20,width:"100%",padding:"12px",background:"transparent",border:`1px solid ${DG}40`,borderRadius:10,color:DG,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>Sign Out</button>
-
-        {toast && <div role="alert" aria-live="polite" style={{position:"fixed",top:`calc(env(safe-area-inset-top, 0px) + 12px)`,left:"50%",transform:"translateX(-50%)",padding:"10px 20px",borderRadius:10,background:toast.type==="error"?DG:A,color:"#fff",fontSize:12,fontWeight:700,zIndex:9999,boxShadow:"0 4px 12px rgba(0,0,0,0.3)"}}>{toast.msg}</div>}
+        {toast && <div role="alert" aria-live="polite" style={{position:"fixed",top:`calc(env(safe-area-inset-top, 0px) + 12px)`,left:"50%",transform:"translateX(-50%)",padding:"10px 20px",borderRadius:"var(--r-md)",background:toast.type==="error"?"var(--danger)":"var(--accent)",color:"#fff",fontSize:12,fontWeight:700,zIndex:9999,boxShadow:"0 4px 12px rgba(0,0,0,0.3)",fontFamily:"'Outfit',sans-serif"}}>{toast.msg}</div>}
       </div>
     </div>
   );
