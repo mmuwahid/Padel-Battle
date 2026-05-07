@@ -1051,7 +1051,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
                 <div className="pname">{seasonLb[1].nickname||seasonLb[1].name}</div>
                 <div className="prec">
                   <span style={{color:"var(--win)"}}>{seasonLb[1].wins}W</span>
-                  <span style={{color:"var(--los)"}}>{seasonLb[1].losses}L</span>
+                  <span style={{color:"var(--loss)"}}>{seasonLb[1].losses}L</span>
                 </div>
                 <div className="ppct">{(seasonLb[1].winRate*100).toFixed(0)}%</div>
                 <div className="pelo">{Math.round(seasonElo[seasonLb[1].id]||1500)} ELO</div>
@@ -1062,7 +1062,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
                 <div className="pname">{seasonLb[0].nickname||seasonLb[0].name}</div>
                 <div className="prec">
                   <span style={{color:"var(--win)"}}>{seasonLb[0].wins}W</span>
-                  <span style={{color:"var(--los)"}}>{seasonLb[0].losses}L</span>
+                  <span style={{color:"var(--loss)"}}>{seasonLb[0].losses}L</span>
                 </div>
                 <div className="ppct">{(seasonLb[0].winRate*100).toFixed(0)}%</div>
                 <div className="pelo">{Math.round(seasonElo[seasonLb[0].id]||1500)} ELO</div>
@@ -1073,7 +1073,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
                 <div className="pname">{seasonLb[2].nickname||seasonLb[2].name}</div>
                 <div className="prec">
                   <span style={{color:"var(--win)"}}>{seasonLb[2].wins}W</span>
-                  <span style={{color:"var(--los)"}}>{seasonLb[2].losses}L</span>
+                  <span style={{color:"var(--loss)"}}>{seasonLb[2].losses}L</span>
                 </div>
                 <div className="ppct">{(seasonLb[2].winRate*100).toFixed(0)}%</div>
                 <div className="pelo">{Math.round(seasonElo[seasonLb[2].id]||1500)} ELO</div>
@@ -1091,8 +1091,8 @@ function AppContent({leagueId,user,onSwitchLeague}){
                 <div className="lbh r">Ctry</div>
                 <div className="lbh r">MP</div>
                 <div className="lbh r" style={{color:"var(--win)"}}>MW</div>
-                <div className="lbh r" style={{color:"var(--los)"}}>ML</div>
-                <div className="lbh r" style={{color:"var(--go)"}}>CW</div>
+                <div className="lbh r" style={{color:"var(--loss)"}}>ML</div>
+                <div className="lbh r" style={{color:"var(--gold)"}}>CW</div>
                 <div className="lbh r">Eff%</div>
               </div>
               {/* Data rows */}
@@ -1107,7 +1107,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
                 return (
                   <div key={p.id} className={`lbrow${isMe?" me":""}`}
                     onClick={()=>{setSelectedPlayer(p.id);setTab("stats");}}>
-                    <div className="lbrank" style={{color:idx===0?"#facc15":idx===1?"#94a3b8":idx===2?"#c97b2e":"var(--mu)"}}>
+                    <div className="lbrank" style={{color:idx===0?"#facc15":idx===1?"#94a3b8":idx===2?"#c97b2e":"#9090a4"}}>
                       {idx===0?"🥇":idx===1?"🥈":idx===2?"🥉":idx+1}
                     </div>
                     <div className="lbply">
@@ -1128,8 +1128,8 @@ function AppContent({leagueId,user,onSwitchLeague}){
                     <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:1,paddingTop:2}}>
                       {flag
                         ? <><span className="flag" style={{fontSize:13,lineHeight:1}}>{flag}</span>
-                           <span style={{fontSize:8,color:"var(--mu)",fontWeight:700,letterSpacing:.3,fontFamily:"var(--mo)"}}>{ctry}</span></>
-                        : <span style={{fontSize:11,color:"var(--mu)",opacity:.4}}>—</span>}
+                           <span style={{fontSize:8,color:"#9090a4",fontWeight:700,letterSpacing:.3,fontFamily:"var(--mono)"}}>{ctry}</span></>
+                        : <span style={{fontSize:11,color:"#9090a4",opacity:.4}}>—</span>}
                     </div>
                     <div className="lbc">{p.games}</div>
                     <div className="lbc w">{p.wins}</div>
