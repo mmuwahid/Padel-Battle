@@ -531,3 +531,54 @@ body {
   flex-shrink: 0;
 }
 .lginline .lcta-sm:disabled { opacity: 0.5; cursor: not-allowed; }
+
+
+/* ─── Phase 4 — Ranking ──────────────────────────────────────────────── */
+.lbbar{display:flex;align-items:center;justify-content:space-between;padding:20px 18px 0;}
+.lbtitle{font-size:26px;font-weight:800;letter-spacing:-.02em;text-transform:uppercase;}
+.spill{appearance:none;-webkit-appearance:none;display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:7px 12px;font-family:var(--mono);font-size:11px;color:var(--text);cursor:pointer;outline:none;transition:all 150ms;}
+.spill:focus{border-color:var(--accent-glow);}
+.pod-wrap{display:flex;align-items:flex-end;justify-content:center;gap:6px;padding:16px 14px 14px;}
+.pod{display:flex;flex-direction:column;align-items:center;gap:5px;border-radius:var(--r-lg);padding:16px 10px 14px;border:1px solid var(--border);background:var(--surface);flex:1;position:relative;overflow:hidden;transition:transform 200ms;cursor:pointer;}
+.pod:hover{transform:translateY(-2px);}
+.pod::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.pod.p1{padding-top:40px;border-color:rgba(250,204,21,.4);background:linear-gradient(160deg,rgba(250,204,21,.09),var(--surface) 55%);}
+.pod.p1::before{background:linear-gradient(90deg,transparent,#facc15,transparent);}
+.pod.p2{padding-top:22px;}
+.pod.p2::before{background:linear-gradient(90deg,transparent,#94a3b8,transparent);}
+.pod.p3{padding-top:10px;}
+.pod.p3::before{background:linear-gradient(90deg,transparent,#c97b2e,transparent);}
+.pmedal{font-size:26px;line-height:1;margin-bottom:2px;}
+.pod.p1 .pmedal{font-size:32px;}
+.pname{font-size:13px;font-weight:800;text-align:center;text-transform:uppercase;letter-spacing:.02em;}
+.pod.p1 .pname{font-size:15px;}
+.prec{display:flex;gap:5px;font-family:var(--mono);font-size:9px;}
+.ppct{font-size:15px;font-weight:700;font-family:var(--mono);}
+.pod.p1 .ppct{color:#facc15;font-size:17px;}
+.pod.p2 .ppct{color:#94a3b8;}
+.pod.p3 .ppct{color:#c97b2e;}
+.pelo{font-family:var(--mono);font-size:9px;color:#9090a4;}
+.lbtable{margin:0 0 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;}
+.lbth{display:grid;grid-template-columns:28px 1fr 28px 28px 28px 28px 30px 38px;gap:4px;padding:9px 10px;border-bottom:1px solid var(--border);background:var(--surface-2);}
+.lbh{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#9090a4;display:flex;align-items:center;}
+.lbh.r{justify-content:flex-end;}
+.lbrow{display:grid;grid-template-columns:28px 1fr 28px 28px 28px 28px 30px 38px;gap:4px;padding:9px 10px;border-bottom:1px solid rgba(42,42,58,.4);align-items:start;cursor:pointer;transition:background 150ms;}
+.lbrow:last-child{border-bottom:none;}
+.lbrow:hover{background:var(--surface-2);}
+.lbrow.me{background:rgba(74,222,128,.04);}
+.lbrank{font-family:var(--mono);font-size:11px;font-weight:900;color:#9090a4;padding-top:2px;text-align:center;}
+.lbply{display:flex;align-items:flex-start;gap:7px;min-width:0;}
+.lbavi{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;background:linear-gradient(135deg,rgba(74,222,128,.15),rgba(74,222,128,.05));border:1.5px solid rgba(74,222,128,.3);color:var(--accent);flex-shrink:0;margin-top:1px;overflow:hidden;}
+.lbrow.me .lbavi{border-color:var(--accent-glow);}
+.lbpinfo{display:flex;flex-direction:column;gap:4px;min-width:0;}
+.lbn{font-family:var(--mono);font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.form-dots{display:flex;align-items:center;gap:3px;}
+.fdot{width:7px;height:7px;border-radius:50%;}
+.fdot.w{background:rgba(74,222,128,.75);}
+.fdot.l{background:rgba(248,113,113,.5);}
+.lbc{font-family:var(--mono);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:flex-end;padding-top:3px;}
+.lbc.w{color:var(--win);}
+.lbc.l{color:var(--loss);}
+.lbc.hi{color:var(--accent);font-weight:800;}
+.lbc.lo{color:var(--danger);}
+.lbc.cw{color:var(--gold);}

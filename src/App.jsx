@@ -924,19 +924,19 @@ function AppContent({leagueId,user,onSwitchLeague}){
         </div>
       )}
 
-      {/* RANKING TAB — Issue #11 redesign */}
+      {/* RANKING TAB — Issue #46 Phase 4: class-based markup */}
       {!sidebarView && tab==="board"&&(
-        <div style={{padding:"20px 16px"}}>
-          {/* S047: Title + season selector row */}
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14,gap:10,flexWrap:"wrap"}}>
-            <h2 style={{fontSize:20,fontWeight:900,textTransform:"uppercase",letterSpacing:1,margin:0}}>Leaderboard</h2>
+        <div style={{padding:"0 16px 20px"}}>
+
+          {/* Title + season selector */}
+          <div className="lbbar">
+            <h2 className="lbtitle">Leaderboard</h2>
             {seasons.length>0 && (
-              <select value={selectedSeason||""} onChange={e=>setSelectedSeason(e.target.value)} style={{background:CD2,color:TX,border:`1px solid ${BD}`,borderRadius:10,padding:"6px 10px",fontSize:12,fontWeight:700,fontFamily:"'Outfit',sans-serif",cursor:"pointer",outline:"none"}}>
+              <select className="spill" value={selectedSeason||""} onChange={e=>setSelectedSeason(e.target.value)}>
                 {seasons.map(s=><option key={s.id} value={s.id}>{s.name}{s.active?" (active)":""}</option>)}
               </select>
             )}
           </div>
-
 
           {/* Season Awards Section — only shown for ended seasons */}
           {selectedSeason && !seasons.find(s=>s.id===selectedSeason)?.active && (() => {
@@ -1033,7 +1033,7 @@ function AppContent({leagueId,user,onSwitchLeague}){
             );
           })()}
 
-          {/* S1-01: Empty state when no players have games */}
+          {/* Empty state */}
           {seasonLb.length===0&&(
             <div style={{textAlign:"center",padding:"40px 20px",background:CD,borderRadius:12,border:`1px solid ${BD}`}}>
               <div style={{fontSize:40,marginBottom:12}}>🎾</div>
@@ -1044,51 +1044,56 @@ function AppContent({leagueId,user,onSwitchLeague}){
 
           {/* Podium (Top 3) — only when 3+ players qualified */}
           {seasonLb.length>=3&&(
-            <div style={{marginBottom:"24px",background:CD,padding:"16px",borderRadius:"8px",border:`1px solid ${BD}`}}>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px",alignItems:"flex-end"}}>
-                {/* 2nd place */}
-                <div onClick={()=>{setSelectedPlayer(seasonLb[1].id);setTab("stats");}} style={{textAlign:"center",padding:"14px 12px",background:CD2,borderRadius:"6px",borderTop:`3px solid ${SV}`,cursor:"pointer"}}>
-                  <div style={{fontSize:"20px",marginBottom:"4px"}}>🥈</div>
-                  <div style={{fontSize:"13px",fontWeight:"bold",marginBottom:"4px"}}>{seasonLb[1].nickname||seasonLb[1].name}</div>
-                  <div style={{fontSize:"11px"}}><span style={{color:seasonLb[1].wins>0?A:MT}}>{seasonLb[1].wins}W</span> <span style={{color:seasonLb[1].losses>0?DG:TX}}>{seasonLb[1].losses}L</span></div>
-                  <div style={{fontSize:"12px",color:SV,fontWeight:"bold",marginTop:"4px"}}>{(seasonLb[1].winRate*100).toFixed(0)}%</div>
-                  <div style={{fontSize:"10px",color:MT,marginTop:"2px"}}>{Math.round(seasonElo[seasonLb[1].id]||1500)} ELO</div>
+            <div className="pod-wrap">
+              {/* 2nd place */}
+              <div className="pod p2" onClick={()=>{setSelectedPlayer(seasonLb[1].id);setTab("stats");}}>
+                <div className="pmedal">🥈</div>
+                <div className="pname">{seasonLb[1].nickname||seasonLb[1].name}</div>
+                <div className="prec">
+                  <span style={{color:"var(--win)"}}>{seasonLb[1].wins}W</span>
+                  <span style={{color:"var(--los)"}}>{seasonLb[1].losses}L</span>
                 </div>
-
-                {/* 1st place */}
-                <div onClick={()=>{setSelectedPlayer(seasonLb[0].id);setTab("stats");}} style={{textAlign:"center",padding:"16px",background:CD2,borderRadius:"6px",borderTop:`3px solid ${GD}`,transform:"scale(1.05)",cursor:"pointer"}}>
-                  <div style={{fontSize:"28px",marginBottom:"6px"}}>🥇</div>
-                  <div style={{fontSize:"14px",fontWeight:"bold",marginBottom:"6px"}}>{seasonLb[0].nickname||seasonLb[0].name}</div>
-                  <div style={{fontSize:"12px"}}><span style={{color:seasonLb[0].wins>0?A:MT}}>{seasonLb[0].wins}W</span> <span style={{color:seasonLb[0].losses>0?DG:TX}}>{seasonLb[0].losses}L</span></div>
-                  <div style={{fontSize:"13px",color:GD,fontWeight:"bold",marginTop:"6px"}}>{(seasonLb[0].winRate*100).toFixed(0)}%</div>
-                  <div style={{fontSize:"10px",color:MT,marginTop:"2px"}}>{Math.round(seasonElo[seasonLb[0].id]||1500)} ELO</div>
+                <div className="ppct">{(seasonLb[1].winRate*100).toFixed(0)}%</div>
+                <div className="pelo">{Math.round(seasonElo[seasonLb[1].id]||1500)} ELO</div>
+              </div>
+              {/* 1st place */}
+              <div className="pod p1" onClick={()=>{setSelectedPlayer(seasonLb[0].id);setTab("stats");}}>
+                <div className="pmedal">🥇</div>
+                <div className="pname">{seasonLb[0].nickname||seasonLb[0].name}</div>
+                <div className="prec">
+                  <span style={{color:"var(--win)"}}>{seasonLb[0].wins}W</span>
+                  <span style={{color:"var(--los)"}}>{seasonLb[0].losses}L</span>
                 </div>
-
-                {/* 3rd place */}
-                <div onClick={()=>{setSelectedPlayer(seasonLb[2].id);setTab("stats");}} style={{textAlign:"center",padding:"8px 12px",background:CD2,borderRadius:"6px",borderTop:`3px solid ${BZ}`,cursor:"pointer"}}>
-                  <div style={{fontSize:"20px",marginBottom:"4px"}}>🥉</div>
-                  <div style={{fontSize:"13px",fontWeight:"bold",marginBottom:"4px"}}>{seasonLb[2].nickname||seasonLb[2].name}</div>
-                  <div style={{fontSize:"11px"}}><span style={{color:seasonLb[2].wins>0?A:MT}}>{seasonLb[2].wins}W</span> <span style={{color:seasonLb[2].losses>0?DG:TX}}>{seasonLb[2].losses}L</span></div>
-                  <div style={{fontSize:"12px",color:BZ,fontWeight:"bold",marginTop:"4px"}}>{(seasonLb[2].winRate*100).toFixed(0)}%</div>
-                  <div style={{fontSize:"10px",color:MT,marginTop:"2px"}}>{Math.round(seasonElo[seasonLb[2].id]||1500)} ELO</div>
+                <div className="ppct">{(seasonLb[0].winRate*100).toFixed(0)}%</div>
+                <div className="pelo">{Math.round(seasonElo[seasonLb[0].id]||1500)} ELO</div>
+              </div>
+              {/* 3rd place */}
+              <div className="pod p3" onClick={()=>{setSelectedPlayer(seasonLb[2].id);setTab("stats");}}>
+                <div className="pmedal">🥉</div>
+                <div className="pname">{seasonLb[2].nickname||seasonLb[2].name}</div>
+                <div className="prec">
+                  <span style={{color:"var(--win)"}}>{seasonLb[2].wins}W</span>
+                  <span style={{color:"var(--los)"}}>{seasonLb[2].losses}L</span>
                 </div>
+                <div className="ppct">{(seasonLb[2].winRate*100).toFixed(0)}%</div>
+                <div className="pelo">{Math.round(seasonElo[seasonLb[2].id]||1500)} ELO</div>
               </div>
             </div>
           )}
 
-          {/* S047: Full ranking table (Premier Padel format) — season-filtered */}
-          {seasonLb.length>0 && (
-            <div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,overflow:"hidden"}}>
+          {/* S047/Phase4: Full ranking table — season-filtered, class-based */}
+          {seasonLb.length>0&&(
+            <div className="lbtable">
               {/* Header row */}
-              <div style={{display:"grid",gridTemplateColumns:"32px 1fr 36px 28px 28px 28px 30px 38px",gap:6,padding:"10px 8px",background:CD2,borderBottom:`1px solid ${BD}`,alignItems:"center"}}>
-                <div style={{fontSize:9,fontWeight:800,color:MT,letterSpacing:0.5,textAlign:"center",textTransform:"uppercase"}}>#</div>
-                <div style={{fontSize:9,fontWeight:800,color:MT,letterSpacing:0.5,textTransform:"uppercase",paddingLeft:6}}>Player</div>
-                <div style={{fontSize:9,fontWeight:800,color:MT,letterSpacing:0.5,textAlign:"center",textTransform:"uppercase"}}>Ctry</div>
-                <div style={{fontSize:9,fontWeight:800,color:MT,letterSpacing:0.5,textAlign:"center",textTransform:"uppercase"}} title="Match Played">MP</div>
-                <div style={{fontSize:9,fontWeight:800,color:MT,letterSpacing:0.5,textAlign:"center",textTransform:"uppercase"}} title="Match Won">MW</div>
-                <div style={{fontSize:9,fontWeight:800,color:MT,letterSpacing:0.5,textAlign:"center",textTransform:"uppercase"}} title="Match Lost">ML</div>
-                <div style={{fontSize:9,fontWeight:800,color:MT,letterSpacing:0.5,textAlign:"center",textTransform:"uppercase"}} title="Consecutive Wins">CW</div>
-                <div style={{fontSize:9,fontWeight:800,color:MT,letterSpacing:0.5,textAlign:"center",textTransform:"uppercase"}} title="Effectiveness (Match Won / Match Played)">Eff%</div>
+              <div className="lbth">
+                <div className="lbh">#</div>
+                <div className="lbh">Player</div>
+                <div className="lbh r">Ctry</div>
+                <div className="lbh r">MP</div>
+                <div className="lbh r" style={{color:"var(--win)"}}>MW</div>
+                <div className="lbh r" style={{color:"var(--los)"}}>ML</div>
+                <div className="lbh r" style={{color:"var(--go)"}}>CW</div>
+                <div className="lbh r">Eff%</div>
               </div>
               {/* Data rows */}
               {seasonLb.map((p,idx)=>{
@@ -1097,46 +1102,46 @@ function AppContent({leagueId,user,onSwitchLeague}){
                 const ctry = player?.country || "";
                 const eff = (p.winRate*100).toFixed(0);
                 const cw = getSeasonStreak(p.id);
+                const form = getSeasonForm(p.id);
+                const isMe = claimedPlayer?.id === p.id;
                 return (
-                  <div key={p.id} onClick={()=>{setSelectedPlayer(p.id);setTab("stats");}} style={{display:"grid",gridTemplateColumns:"32px 1fr 36px 28px 28px 28px 30px 38px",gap:6,padding:"10px 8px",borderBottom:idx<seasonLb.length-1?`1px solid ${BD}40`:"none",alignItems:"center",cursor:"pointer"}}>
-                    <div style={{textAlign:"center",fontSize:13,fontWeight:900,fontFamily:"'JetBrains Mono'",color:idx===0?GD:idx===1?SV:idx===2?BZ:MT}}>{idx===0?"🥇":idx===1?"🥈":idx===2?"🥉":idx+1}</div>
-                    <div style={{display:"flex",alignItems:"center",gap:8,minWidth:0}}>
-                      <div style={{width:30,height:30,borderRadius:"50%",overflow:"hidden",background:`linear-gradient(135deg,${A}25,${A}08)`,border:`1.5px solid ${A}30`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:800,color:A,flexShrink:0}}>
-                        {player?.avatar_url ? <img src={player.avatar_url} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/> : (p.name[0]||"?").toUpperCase()}
+                  <div key={p.id} className={`lbrow${isMe?" me":""}`}
+                    onClick={()=>{setSelectedPlayer(p.id);setTab("stats");}}>
+                    <div className="lbrank" style={{color:idx===0?"#facc15":idx===1?"#94a3b8":idx===2?"#c97b2e":"var(--mu)"}}>
+                      {idx===0?"🥇":idx===1?"🥈":idx===2?"🥉":idx+1}
+                    </div>
+                    <div className="lbply">
+                      <div className="lbavi">
+                        {player?.avatar_url
+                          ? <img src={player.avatar_url} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                          : (p.name[0]||"?").toUpperCase()}
                       </div>
-                      <div style={{fontSize:11,fontWeight:900,textTransform:"uppercase",letterSpacing:0.3,color:TX,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{p.nickname||p.name}</div>
+                      <div className="lbpinfo">
+                        <div className="lbn">{p.nickname||p.name}</div>
+                        {form.length>0&&(
+                          <div className="form-dots">
+                            {form.map((r,i)=><div key={i} className={`fdot ${r==="W"?"w":"l"}`}/>)}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div style={{textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:1}}>
-                      {flag ? <>
-                        <span className="flag" style={{fontSize:14,lineHeight:1}}>{flag}</span>
-                        <span style={{fontSize:8,color:MT,fontWeight:700,letterSpacing:0.3}}>{ctry}</span>
-                      </> : <span style={{fontSize:11,color:MT,opacity:0.4}}>—</span>}
+                    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:1,paddingTop:2}}>
+                      {flag
+                        ? <><span className="flag" style={{fontSize:13,lineHeight:1}}>{flag}</span>
+                           <span style={{fontSize:8,color:"var(--mu)",fontWeight:700,letterSpacing:.3,fontFamily:"var(--mo)"}}>{ctry}</span></>
+                        : <span style={{fontSize:11,color:"var(--mu)",opacity:.4}}>—</span>}
                     </div>
-                    <div style={{textAlign:"center",fontSize:12,fontWeight:700,fontFamily:"'JetBrains Mono'",color:TX}}>{p.games}</div>
-                    <div style={{textAlign:"center",fontSize:12,fontWeight:700,fontFamily:"'JetBrains Mono'",color:p.wins>0?A:MT}}>{p.wins}</div>
-                    <div style={{textAlign:"center",fontSize:12,fontWeight:700,fontFamily:"'JetBrains Mono'",color:p.losses>0?DG:MT}}>{p.losses}</div>
-                    <div style={{textAlign:"center",fontSize:12,fontWeight:700,fontFamily:"'JetBrains Mono'",color:cw>=3?GD:TX}}>{cw}</div>
-                    <div style={{textAlign:"center",fontSize:11,fontWeight:800,fontFamily:"'JetBrains Mono'",color:p.winRate>=0.5?A:DG}}>{eff}%</div>
+                    <div className="lbc">{p.games}</div>
+                    <div className="lbc w">{p.wins}</div>
+                    <div className="lbc l">{p.losses||"–"}</div>
+                    <div className={`lbc${cw>=3?" cw":""}`}>{cw}</div>
+                    <div className={`lbc ${parseFloat(eff)>=50?"hi":"lo"}`}>{eff}%</div>
                   </div>
                 );
               })}
             </div>
           )}
 
-          {/* Last 5 form strip — season-filtered */}
-          {seasonLb.length>0 && (
-            <div style={{marginTop:18,background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14}}>
-              <div style={{fontSize:11,fontWeight:800,color:MT,marginBottom:10,letterSpacing:0.5,textTransform:"uppercase"}}>Last 5 Matches · Form</div>
-              <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                {seasonLb.map(p=>(
-                  <div key={"f"+p.id} onClick={()=>{setSelectedPlayer(p.id);setTab("stats");}} style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,cursor:"pointer"}}>
-                    <span style={{fontSize:12,fontWeight:700,color:TX,textTransform:"uppercase",letterSpacing:0.3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",minWidth:0,flex:1}}>{p.nickname||p.name}</span>
-                    <FD f={getSeasonForm(p.id)}/>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       )}
 
