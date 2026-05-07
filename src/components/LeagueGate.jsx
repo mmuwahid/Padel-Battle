@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { supabase } from '../supabase';
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, PU } from '../theme';
 import { PadelLogoSmall } from './icons';
@@ -68,6 +68,11 @@ export function LeagueGate({user,children,showToast}){
     }
   };
 
+  // Issue #41 (S058): users in exactly 1 league should land directly on the Leaderboard
+  // after login. The picker is only useful when 0 leagues (CTA to create/join) or 2+
+  // (need to choose). Use a ref so a manual "Switch League" returns to the picker
+  // (sets selectedLeagueId=null) without immediately auto-selecting again.
+  const autoSelectedRef = useRef(false);
   const loadUserLeagues = async () => {
     try {
       const {data,error:err} = await supabase
@@ -78,6 +83,11 @@ export function LeagueGate({user,children,showToast}){
       if (err) throw err;
       const userLeagues = data?.map(m=>({...m.leagues,_userRole:m.role})).filter(Boolean) || [];
       setLeagues(userLeagues);
+      // Auto-select the only league on first load to skip the picker for single-league users.
+      if (!autoSelectedRef.current && userLeagues.length === 1) {
+        autoSelectedRef.current = true;
+        setSelectedLeagueId(userLeagues[0].id);
+      }
       setLoading(false);
     } catch (_err) {
       setLoading(false);
