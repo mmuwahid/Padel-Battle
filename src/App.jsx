@@ -6,6 +6,7 @@ import { calcElo } from './utils/elo';
 import { RULES, ARGUED } from './data/rules';
 import { CourtIcon, PadelLogo, PadelLogoSmall } from './components/icons';
 import { NavIcon } from './components/NavIcons';
+import Icon from './components/Icon';
 import { FD } from './components/FormDots';
 import { Sidebar } from './components/Sidebar';
 import { ProfileView } from './components/ProfileView';
@@ -840,40 +841,25 @@ function AppContent({leagueId,user,onSwitchLeague}){
       {/* Issue #15 + #43 (S058): paint html/body to gradient-start color (#0d0d14) so rubber-band overscroll at the page top reveals a color identical to the header — no visible seam. The body bg paint is the actual fix; the previous `overscroll-behavior-y:none` was defensive and is now removed to restore native iOS rubber-band + momentum scrolling per #43. `-webkit-overflow-scrolling:touch` re-enables iOS momentum on legacy WebKit (no-op on iOS 13+).
           S050 .flag class: forces an emoji-priority font stack so country flag glyphs render across Windows / iOS / Android / macOS — without it, Windows may fall back to "PS"/"GB" letter blocks because the inherited Outfit font lacks emoji glyphs. */}
       <style>{`html,body{margin:0;padding:0;background:#0d0d14;-webkit-overflow-scrolling:touch;} #root{margin:0;padding:0;} .flag{font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji','Twemoji Mozilla','EmojiOne Color','Android Emoji',sans-serif;font-style:normal;font-weight:normal;} @keyframes spin{to{transform:rotate(360deg)}} @keyframes fadeIn{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}} input:focus,select:focus,textarea:focus{border-color:${A} !important;box-shadow:0 0 0 2px ${A}30 !important;}`}</style>
-      {/* HEADER — FT-12: gradient blends under status bar / dynamic island, italic uppercase wordmark, tight S044 v3 padding restored */}
-      <div style={{background:"linear-gradient(180deg,#0d0d14 0%,"+CD+" 100%)",padding:"4px 16px",paddingTop:"calc(env(safe-area-inset-top, 0px) + 0px)",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:10}}>
-        <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
-          <PadelLogoSmall size={36}/>
-          <div>
-            <div style={{display:"flex",alignItems:"center",gap:"6px"}}>
-              <h1 style={{fontSize:"14px",fontWeight:900,margin:0,letterSpacing:1,fontFamily:"'Outfit',sans-serif",textTransform:"uppercase"}}><span style={{color:TX}}>Padel</span><span style={{color:A}}>Hub</span></h1>
-            </div>
-
+      {/* HEADER — Issue #46 Phase 2: class-based markup. Logo uses PadelLogoSmall + Outfit-bold wordmark; refresh / bell / avatar use .ibtn / .av tokens. Sticky behavior unchanged so Lessons #18 / #44 still hold. */}
+      <header className="hdr">
+        <div className="hl">
+          <div className="logo">
+            <div className="lm"><PadelLogoSmall size={28}/></div>
+            <h1 className="lt"><span>Padel</span><span className="accent">Hub</span></h1>
           </div>
         </div>
-        <div style={{display:"flex",alignItems:"center",gap:8}}>
-        {/* GN-04: Refresh button */}
-        <button onClick={()=>{loadLeagueData();showToast("Refreshed!");}} style={{width:32,height:32,borderRadius:"50%",background:"transparent",border:`1px solid ${BD}`,color:MT,fontSize:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>{"\u21BB"}</button>
-        {/* Notification bell */}
-        <button onClick={()=>{setSidebarView(sidebarView==="notifications"?null:"notifications");setSidebarOpen(false);}} style={{width:32,height:32,borderRadius:"50%",background:sidebarView==="notifications"?`${A}20`:"transparent",border:`1px solid ${sidebarView==="notifications"?A+"40":BD}`,color:sidebarView==="notifications"?A:MT,fontSize:15,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,position:"relative"}}>{"\uD83D\uDD14"}{unreadNotifCount>0&&<span style={{position:"absolute",top:-4,right:-4,width:16,height:16,borderRadius:"50%",background:DG,color:"#fff",fontSize:9,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center",border:`2px solid ${BG}`}}>{unreadNotifCount>9?"9+":unreadNotifCount}</span>}</button>
-        {/* User avatar — opens sidebar */}
-        <button
-          onClick={()=>{setSidebarOpen(!sidebarOpen);setSidebarView(null);}}
-          style={{
-            width:36,height:36,borderRadius:"50%",
-            background:sidebarOpen?A:`${A}20`,
-            border:sidebarOpen?`2px solid ${A}`:`2px solid ${A}40`,
-            color:sidebarOpen?"#000":A,
-            fontSize:14,fontWeight:800,cursor:"pointer",
-            display:"flex",alignItems:"center",justifyContent:"center",
-            fontFamily:"'Outfit',sans-serif",transition:"all 0.2s",overflow:"hidden",padding:0,
-          }}
-          title="Profile & Settings"
-        >
-          {avatarUrl?<img src={avatarUrl} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:(user.user_metadata?.display_name||user.email||"U")[0].toUpperCase()}
-        </button>
+        <div className="hr">
+          <button className="ibtn" onClick={()=>{loadLeagueData();showToast("Refreshed!");}} aria-label="Refresh">{"↻"}</button>
+          <button className={"ibtn"+(sidebarView==="notifications"?" on":"")} onClick={()=>{setSidebarView(sidebarView==="notifications"?null:"notifications");setSidebarOpen(false);}} aria-label="Notifications">
+            {"🔔"}
+            {unreadNotifCount>0 && <span className="ndot">{unreadNotifCount>9?"9+":unreadNotifCount}</span>}
+          </button>
+          <button className={"av"+(sidebarOpen?" on":"")} onClick={()=>{setSidebarOpen(!sidebarOpen);setSidebarView(null);}} title="Profile & Settings" aria-label="Profile & Settings">
+            {avatarUrl ? <img src={avatarUrl} alt=""/> : (user.user_metadata?.display_name||user.email||"U")[0].toUpperCase()}
+          </button>
         </div>
-      </div>
+      </header>
 
       {/* SIDEBAR — extracted component */}
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} setSidebarView={setSidebarView} user={user} avatarUrl={avatarUrl} league={league} isAdmin={isAdmin} onSwitchLeague={onSwitchLeague} showToast={showToast} installPrompt={installPrompt} handleInstall={handleInstall}/>
@@ -1320,27 +1306,28 @@ function AppContent({leagueId,user,onSwitchLeague}){
         </div>
       )}
 
-      {/* FT-12 v2: solid pedestal behind floating nav — hides scrolled content from showing through side gutters / below nav. Issue #15: pedestal slimmed 82→68px to track tighter nav. */}
-      <div style={{position:"fixed",bottom:0,left:0,right:0,height:`calc(68px + env(safe-area-inset-bottom, 0px))`,background:BG,zIndex:99,pointerEvents:"none"}}/>
-      {/* BOTTOM NAV — FT-12: floating rounded pill with side gutters, accent-soft border, fixed at bottom. Issue #15: gap from screen bottom 14→6px, internal padding 8/6/10 → 6/6/8. Issue #42 (S058): equalized container padding to 6/6/6 + alignSelf:center on icon buttons so the active pill is vertically centered in the row (was pinned to bottom by parent alignItems:"end"). */}
-      <div style={{position:"fixed",bottom:`calc(6px + env(safe-area-inset-bottom, 0px))`,left:14,right:14,background:`${CD}f0`,backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",border:`1px solid ${A}40`,borderRadius:28,display:"grid",gridTemplateColumns:"repeat(5,1fr)",alignItems:"end",padding:"6px 6px 6px",zIndex:100,boxShadow:"0 8px 30px rgba(0,0,0,0.45)"}}>
+      {/* BOTTOM NAV — Issue #46 Phase 2: class-based markup. .bnav floating bar uses NavIcons.jsx artwork inside .nicon (S057, frozen — never migrate to the new <Icon> for nav). .npill scale-in via --ease-spring. Pedestal removed: spec's full-width nav with solid bg has no side gutters to bleed through. Lessons #15/#42/#43 still hold via the wrapper paddingBottom + body bg paint above. */}
+      <nav className="bnav">
         {TL.map(t => (
-          <button key={t.key} onClick={()=>{setTab(t.key);setSidebarOpen(false);setSidebarView(null);}} style={{alignSelf:"center",background:tab===t.key?A+"33":"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",color:tab===t.key?A:MT,cursor:"pointer",padding:"6px 4px",borderRadius:22,minHeight:44,fontWeight:tab===t.key?700:500,transition:"background 0.2s ease"}}>
-            <div style={{height:24,display:"flex",alignItems:"center",justifyContent:"center"}}><NavIcon name={t.icon} active={tab===t.key} size={22}/></div>
-            <div style={{height:12,display:"flex",alignItems:"center"}}><span style={{fontSize:9,fontWeight:"inherit"}}>{t.label}</span></div>
+          <button key={t.key} className={"ntab"+(tab===t.key?" on":"")} onClick={()=>{setTab(t.key);setSidebarOpen(false);setSidebarView(null);}} aria-label={t.label} aria-current={tab===t.key?"page":undefined}>
+            <span className="npill"/>
+            <span className="nicon"><NavIcon name={t.icon} active={tab===t.key} size={22}/></span>
+            <span className="nlbl">{t.label}</span>
           </button>
         ))}
-        <div style={{display:"flex",justifyContent:"center",alignItems:"flex-end"}}>
-          <button onClick={()=>{setEditingMatch(null);setTab("log");setSidebarOpen(false);setSidebarView(null);}} style={{width:56,height:56,borderRadius:"50%",border:"none",background:`linear-gradient(135deg,${A},${A}cc)`,color:BG,fontSize:30,fontWeight:900,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",marginTop:-20,boxShadow:`0 4px 20px ${A}40`,lineHeight:1}}>+</button>
+        <div className="fab-wrap">
+          <button className="fab" onClick={()=>{setEditingMatch(null);setTab("log");setSidebarOpen(false);setSidebarView(null);}} aria-label="Log a match">
+            <Icon name="plus" size={26} color="#080808" strokeWidth={2.5}/>
+          </button>
         </div>
         {TR.map(t => (
-          <button key={t.key} onClick={()=>{setTab(t.key);setSidebarOpen(false);setSidebarView(null);}} style={{alignSelf:"center",background:tab===t.key?A+"33":"none",border:"none",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",color:tab===t.key?A:MT,cursor:"pointer",padding:"6px 4px",borderRadius:22,minHeight:44,fontWeight:tab===t.key?700:500,transition:"background 0.2s ease"}}>
-            <div style={{height:24,display:"flex",alignItems:"center",justifyContent:"center"}}><NavIcon name={t.icon} active={tab===t.key} size={22}/></div>
-            <div style={{height:12,display:"flex",alignItems:"center"}}><span style={{fontSize:9,fontWeight:"inherit"}}>{t.label}</span></div>
+          <button key={t.key} className={"ntab"+(tab===t.key?" on":"")} onClick={()=>{setTab(t.key);setSidebarOpen(false);setSidebarView(null);}} aria-label={t.label} aria-current={tab===t.key?"page":undefined}>
+            <span className="npill"/>
+            <span className="nicon"><NavIcon name={t.icon} active={tab===t.key} size={22}/></span>
+            <span className="nlbl">{t.label}</span>
           </button>
         ))}
-      </div>
-
+      </nav>
     </div>
     </LeagueContext.Provider>
   );
