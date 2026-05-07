@@ -1,6 +1,10 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
-  background: #0a0a0f;
+  /* Bg #080808 (= var(--bg)) matches .hdr / .bnav / .lbg surfaces post-Phase-2.
+     iOS rubber-band overscroll at top/bottom edges now reveals the same dark
+     color as the floating header / nav / login backdrop — no visible seam.
+     Lessons #18 / #40 / #44 all preserved. */
+  background: #080808;
   padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
   padding-left: env(safe-area-inset-left, 0px);
