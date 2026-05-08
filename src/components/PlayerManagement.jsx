@@ -69,9 +69,28 @@ export function PlayerManagement({ memberProfiles, setSidebarView }) {
   const deletePlayer = async (playerId) => {
     setBusyId(playerId + "-del");
     try {
+      // S068 fix: if the player was claimed (has user_id), also remove the user
+      // from league_members. Otherwise they stay as a member with no claimed
+      // player → on next login the OLD inline claim-player flow short-circuits
+      // around the new approval-gated workflow. Capture user_id BEFORE delete.
+      const target = (players || []).find(p => p.id === playerId);
+      const claimedUserId = target?.user_id || null;
+
       const { error } = await supabase.from("players").delete().eq("id", playerId).eq("league_id", leagueId);
       if (error) throw error;
-      showToast("Player deleted");
+
+      if (claimedUserId) {
+        // Best-effort — if the league_members row is missing or RLS blocks,
+        // we still proceed since the player record is gone.
+        const { error: lmErr } = await supabase
+          .from("league_members")
+          .delete()
+          .eq("league_id", leagueId)
+          .eq("user_id", claimedUserId);
+        if (lmErr) console.warn("[PlayerManagement] league_members cleanup failed:", lmErr.message);
+      }
+
+      showToast(claimedUserId ? "Player deleted + user removed from league" : "Player deleted");
       await loadLeagueData();
     } catch (_err) {
       showToast("Failed to delete — they may have match history", "error");
