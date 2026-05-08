@@ -938,32 +938,46 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
             />
           )}
           {sidebarView==="rules" && (
-            <div className="fu">
-              <button onClick={()=>setSidebarView(null)} style={{marginBottom:16,background:"none",border:"none",color:A,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif",padding:0}}>← Back</button>
-              <h2 style={{fontSize:18,fontWeight:800,marginBottom:4}}>Padel Rules</h2>
-              <p style={{fontSize:11,color:MT,marginBottom:16}}>Official FIP rules summary</p>
+            <div className="rules-wrap">
+              <button onClick={()=>setSidebarView(null)} style={{marginBottom:16,background:"none",border:"none",color:"var(--accent)",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"var(--font)",padding:0,display:"flex",alignItems:"center",gap:5}}>
+                <Icon name="back" size={14}/> Back
+              </button>
+              <div className="rules-h">
+                <div className="rules-h-eyebrow">Official FIP</div>
+                <div className="rules-h-title">Padel Rules</div>
+                <div className="rules-h-sub">Match scoring, serving, walls, and the etiquette that keeps things fair.</div>
+              </div>
               {RULES.map((r,i) => (
-                <div key={i} style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:8}}>
-                  <h3 style={{fontSize:14,fontWeight:700,color:A,marginBottom:r.intro?4:6}}>{r.title}</h3>
-                  {r.intro && <p style={{fontSize:11,color:MT,marginBottom:10,fontStyle:"italic"}}>{r.intro}</p>}
+                <div key={i} className="rcard">
+                  <div className="rchd">
+                    <div className="rcico">{r.title.includes("Scoring") ? "🏆" : r.title.includes("Serve")||r.title.includes("Return") ? "🎾" : r.title.includes("Wall")||r.title.includes("Outside") ? "🧱" : r.title.includes("Net") ? "🚧" : r.title.includes("Switch") ? "🔄" : "⚖️"}</div>
+                    <div className="rct">{r.title}</div>
+                  </div>
+                  {r.intro && <div className="rcintro">{r.intro}</div>}
                   {r.subRules ? (
                     r.subRules.map((sr,j) => (
-                      <div key={j} style={{background:CD2,borderRadius:8,padding:"10px 12px",marginTop:j===0?0:6}}>
-                        <h4 style={{fontSize:12,fontWeight:700,color:GD,margin:"0 0 4px 0",letterSpacing:0.3}}>{sr.title}</h4>
-                        <p style={{fontSize:12,color:TX,lineHeight:1.5,margin:0}}>{sr.content}</p>
+                      <div key={j} className="rsub">
+                        <div className="rsub-h">{sr.title}</div>
+                        <div className="rsub-c">{sr.content}</div>
                       </div>
                     ))
                   ) : (
-                    <p style={{fontSize:13,color:TX,lineHeight:1.5}}>{r.content}</p>
+                    <div className="rcontent">{r.content}</div>
                   )}
                 </div>
               ))}
-              <h2 style={{fontSize:18,fontWeight:800,marginTop:20,marginBottom:4,color:"#f97316"}}>⚡ Most Argued Calls</h2>
-              <p style={{fontSize:11,color:MT,marginBottom:16}}>Settle it once and for all</p>
+              <div className="rules-h argued" style={{marginTop:24}}>
+                <div className="rules-h-eyebrow">Disputes</div>
+                <div className="rules-h-title">Most Argued Calls</div>
+                <div className="rules-h-sub">Settle it once and for all.</div>
+              </div>
               {ARGUED.map((r,i) => (
-                <div key={i} style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:8}}>
-                  <h3 style={{fontSize:13,fontWeight:700,color:A,marginBottom:8}}>❓ {r.q}</h3>
-                  <p style={{fontSize:13,color:TX,lineHeight:1.5,fontWeight:400}}>{r.a}</p>
+                <div key={i} className="rcard q">
+                  <div className="rchd">
+                    <div className="rcico">❓</div>
+                    <div className="rct">{r.q}</div>
+                  </div>
+                  <div className="rcontent">{r.a}</div>
                 </div>
               ))}
             </div>
@@ -1152,7 +1166,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
               <div className="lbth">
                 <div className="lbh">Rank</div>
                 <div className="lbh">Player</div>
-                <div className="lbh r"></div>{/* S066: "Ctry" word removed; column kept for layout */}
+                <div className="lbh r" style={{justifyContent:"center"}}><Icon name="globe" size={12}/></div>{/* S066: globe icon, vertically centered */}
                 <div className="lbh r">MP</div>
                 <div className="lbh r" style={{color:"var(--win)"}}>MW</div>
                 <div className="lbh r" style={{color:"var(--loss)"}}>ML</div>
