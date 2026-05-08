@@ -65,9 +65,10 @@ export function SettingsView({ user, claimedPlayer, isAdmin, pushSubscribed, sub
 
   return (
     <div style={{paddingBottom:"calc(80px + env(safe-area-inset-bottom, 0px))"}}>
-      <div style={{padding:"16px 18px 0"}}>
-        <button onClick={()=>setSidebarView(null)} className="back-btn">
-          <Icon name="back" size={14}/> Back
+      {/* S068: chevron-only back button to match all other drill-in screens */}
+      <div className="back-btn-row">
+        <button className="back-btn" onClick={()=>setSidebarView(null)}>
+          <Icon name="chevron-left" size={18} color="currentColor"/>
         </button>
       </div>
       <div className="stbody" style={{paddingTop:8}}>

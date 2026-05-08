@@ -30,9 +30,10 @@ export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, re
 
   return (
     <div style={{paddingBottom:"calc(80px + env(safe-area-inset-bottom, 0px))"}}>
-      <div style={{padding:"16px 18px 0"}}>
-        <button onClick={()=>setSidebarView(null)} style={{background:"none",border:"none",color:"var(--accent)",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"var(--font)",display:"flex",alignItems:"center",gap:5,padding:0}}>
-          <Icon name="back" size={14}/> Back
+      {/* S068: chevron-only back button to match all other drill-in screens */}
+      <div className="back-btn-row">
+        <button className="back-btn" onClick={()=>setSidebarView(null)}>
+          <Icon name="chevron-left" size={18} color="currentColor"/>
         </button>
       </div>
 
@@ -50,7 +51,7 @@ export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, re
         {avatarUploading && <div style={{fontSize:11,color:"var(--accent)",marginTop:6,fontFamily:"var(--mono)"}}>Uploading…</div>}
         {avatarUrl && (
           <button className="prorm" onClick={removeAvatar}>
-            <Icon name="trash" size={12} color="currentColor"/>Remove Photo
+            <Icon name="trash" size={12} color="currentColor"/>Delete Photo
           </button>
         )}
         <div className="proname">{userName}</div>

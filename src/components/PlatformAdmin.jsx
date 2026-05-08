@@ -30,6 +30,10 @@ export function PlatformAdmin({ onClose, showToast }) {
   const [renameId, setRenameId] = useState(null);
   const [renameDraft, setRenameDraft] = useState("");
   const [renaming, setRenaming] = useState(false);
+  // S068: edit-unlock — trash button is hidden until user taps the edit pencil.
+  // Prevents accidental tap on dangerous delete actions.
+  const [unlockedLeagueId, setUnlockedLeagueId] = useState(null);
+  const [unlockedUserId, setUnlockedUserId] = useState(null);
 
   useEffect(() => { loadData(); }, []);
 
@@ -179,13 +183,21 @@ export function PlatformAdmin({ onClose, showToast }) {
                       <div className="paim">{l.member_count} players · {l.match_count} matches · {l.invite_code}</div>
                     </div>
                     <div className="paia">
-                      {deleteConfirm !== l.id && renameId !== l.id && (
+                      {deleteConfirm !== l.id && renameId !== l.id && unlockedLeagueId !== l.id && (
+                        <button className="aib" title="Edit league" onClick={() => setUnlockedLeagueId(l.id)}>
+                          <Icon name="edit" size={13} />
+                        </button>
+                      )}
+                      {unlockedLeagueId === l.id && deleteConfirm !== l.id && renameId !== l.id && (
                         <>
-                          <button className="aib" title="Rename league" onClick={() => { setRenameId(l.id); setRenameDraft(l.name); }}>
+                          <button className="aib" title="Rename league" onClick={() => { setRenameId(l.id); setRenameDraft(l.name); setUnlockedLeagueId(null); }}>
                             <Icon name="edit" size={13} />
                           </button>
-                          <button className="aib da" title="Delete league" onClick={() => { setDeleteConfirm(l.id); setDeleteTyped(""); }}>
+                          <button className="aib da" title="Delete league" onClick={() => { setDeleteConfirm(l.id); setDeleteTyped(""); setUnlockedLeagueId(null); }}>
                             <Icon name="trash" size={13} />
+                          </button>
+                          <button className="aib" title="Lock" onClick={() => setUnlockedLeagueId(null)}>
+                            <Icon name="close" size={13} />
                           </button>
                         </>
                       )}
@@ -230,10 +242,20 @@ export function PlatformAdmin({ onClose, showToast }) {
                       <div className="paim">{u.email} · {u.league_count} league{u.league_count === 1 ? "" : "s"}</div>
                     </div>
                     <div className="paia">
-                      {deleteUserConfirm !== u.id && (
-                        <button className="aib da" title="Delete user" onClick={() => { setDeleteUserConfirm(u.id); setDeleteUserTyped(""); }}>
-                          <Icon name="trash" size={13} />
+                      {deleteUserConfirm !== u.id && unlockedUserId !== u.id && (
+                        <button className="aib" title="Edit user" onClick={() => setUnlockedUserId(u.id)}>
+                          <Icon name="edit" size={13} />
                         </button>
+                      )}
+                      {unlockedUserId === u.id && deleteUserConfirm !== u.id && (
+                        <>
+                          <button className="aib da" title="Delete user" onClick={() => { setDeleteUserConfirm(u.id); setDeleteUserTyped(""); setUnlockedUserId(null); }}>
+                            <Icon name="trash" size={13} />
+                          </button>
+                          <button className="aib" title="Lock" onClick={() => setUnlockedUserId(null)}>
+                            <Icon name="close" size={13} />
+                          </button>
+                        </>
                       )}
                     </div>
                   </div>

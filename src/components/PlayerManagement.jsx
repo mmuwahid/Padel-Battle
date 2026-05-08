@@ -28,6 +28,9 @@ export function PlayerManagement({ memberProfiles, setSidebarView }) {
   const [newNick, setNewNick] = useState("");
   const [adding, setAdding] = useState(false);
   const [confirmDel, setConfirmDel] = useState(null);
+  // S068: edit-unlock — admin actions (promote/demote, edit, delete) hidden
+  // until user taps the edit pencil. Prevents accidental tap on dangerous deletes.
+  const [unlockedId, setUnlockedId] = useState(null);
   const [busyId, setBusyId] = useState(null);
   const [confirmRole, setConfirmRole] = useState(null);
   const [roleBusy, setRoleBusy] = useState(null);
@@ -208,23 +211,37 @@ export function PlayerManagement({ memberProfiles, setSidebarView }) {
                 </div>
 
                 <div className="plmac">
-                  {showRoleControls && (
-                    role === "admin" ? (
-                      <button className="aib gd" title="Demote to member" disabled={roleBusy === memberId} onClick={() => setConfirmRole({ memberId, newRole: "member", name: p.nickname || p.name, userId: p.user_id })}>
-                        <Icon name="arrow-down" size={13} />
-                      </button>
-                    ) : (
-                      <button className="aib gd" title="Promote to admin" disabled={roleBusy === memberId} onClick={() => setConfirmRole({ memberId, newRole: "admin", name: p.nickname || p.name, userId: p.user_id })}>
-                        <Icon name="arrow-up" size={13} />
-                      </button>
-                    )
+                  {/* S068: collapsed state — only edit pencil. Tap to unlock the row's admin actions. */}
+                  {unlockedId !== p.id && (
+                    <button className="aib" title="Edit" onClick={() => setUnlockedId(p.id)}>
+                      <Icon name="edit" size={13} />
+                    </button>
                   )}
-                  <button className="aib" title="Edit" onClick={() => setEditingPlayer(p)}>
-                    <Icon name="edit" size={13} />
-                  </button>
-                  <button className="aib da" title="Delete" onClick={() => setConfirmDel(p.id)}>
-                    <Icon name="trash" size={13} />
-                  </button>
+                  {/* Unlocked state — promote/demote (if applicable), open profile, delete, lock */}
+                  {unlockedId === p.id && (
+                    <>
+                      {showRoleControls && (
+                        role === "admin" ? (
+                          <button className="aib gd" title="Demote to member" disabled={roleBusy === memberId} onClick={() => { setConfirmRole({ memberId, newRole: "member", name: p.nickname || p.name, userId: p.user_id }); setUnlockedId(null); }}>
+                            <Icon name="arrow-down" size={13} />
+                          </button>
+                        ) : (
+                          <button className="aib gd" title="Promote to admin" disabled={roleBusy === memberId} onClick={() => { setConfirmRole({ memberId, newRole: "admin", name: p.nickname || p.name, userId: p.user_id }); setUnlockedId(null); }}>
+                            <Icon name="arrow-up" size={13} />
+                          </button>
+                        )
+                      )}
+                      <button className="aib go" title="Open profile" onClick={() => { setEditingPlayer(p); setUnlockedId(null); }}>
+                        <Icon name="user" size={13} />
+                      </button>
+                      <button className="aib da" title="Delete" onClick={() => { setConfirmDel(p.id); setUnlockedId(null); }}>
+                        <Icon name="trash" size={13} />
+                      </button>
+                      <button className="aib" title="Lock" onClick={() => setUnlockedId(null)}>
+                        <Icon name="close" size={13} />
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
 
