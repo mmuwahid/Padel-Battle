@@ -757,6 +757,50 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
     return Object.values(combo).map(c=>({...c,games:c.wins+c.losses})).sort((a,b)=>b.games-a.games);
   },[matches]);
 
+  // S067: pull-to-refresh — placed BEFORE the early `if (loading)` and
+  // `if (!leagueId)` returns to satisfy Rules of Hooks (Lesson #25 BF-32).
+  const ptrStartY = useRef(null);
+  const ptrPulledRef = useRef(0);
+  const [ptrPull, setPtrPull] = useState(0);
+  const [ptrRefreshing, setPtrRefreshing] = useState(false);
+  useEffect(() => {
+    const onTouchStart = (e) => {
+      if (window.scrollY > 0) { ptrStartY.current = null; return; }
+      ptrStartY.current = e.touches[0].clientY;
+    };
+    const onTouchMove = (e) => {
+      if (ptrStartY.current == null || ptrRefreshing) return;
+      const dy = e.touches[0].clientY - ptrStartY.current;
+      if (dy > 0 && window.scrollY === 0) {
+        const damped = Math.min(dy * 0.5, 100);
+        ptrPulledRef.current = damped;
+        setPtrPull(damped);
+      }
+    };
+    const onTouchEnd = () => {
+      if (ptrStartY.current == null || ptrRefreshing) { setPtrPull(0); return; }
+      if (ptrPulledRef.current > 60) {
+        setPtrRefreshing(true);
+        setPtrPull(0);
+        Promise.all([loadLeagueData(), new Promise(r => setTimeout(r, 1000))])
+          .finally(() => setPtrRefreshing(false));
+      } else {
+        setPtrPull(0);
+      }
+      ptrStartY.current = null;
+      ptrPulledRef.current = 0;
+    };
+    document.addEventListener("touchstart", onTouchStart, { passive: true });
+    document.addEventListener("touchmove", onTouchMove, { passive: true });
+    document.addEventListener("touchend", onTouchEnd);
+    return () => {
+      document.removeEventListener("touchstart", onTouchStart);
+      document.removeEventListener("touchmove", onTouchMove);
+      document.removeEventListener("touchend", onTouchEnd);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ptrRefreshing]);
+
   if (loading) return (<div style={{background:BG,width:"100vw",height:"100vh",fontFamily:"'Outfit',sans-serif"}}>
     <style>{`@keyframes shimmer{0%{background-position:-200px 0}100%{background-position:200px 0}} .skel{background:linear-gradient(90deg,${CD} 25%,${CD2} 50%,${CD} 75%);background-size:400px 100%;animation:shimmer 1.5s infinite;border-radius:6px;}`}</style>
     {/* Skeleton header — FT-12: matches new blended header treatment with tight padding */}
@@ -853,51 +897,6 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
     elo, seasons, selectedSeason, setSelectedSeason, isAdmin, isOwner, myMemberId, leagueMembers, memberProfiles,
     getName, showToast, sendPushNotification, loadLeagueData,
   };
-
-  // S067: pull-to-refresh — long-press at scrollY=0 + drag down past 70px
-  // triggers loadLeagueData() with a 1s spinner overlay. Replaces the old
-  // header refresh button + "Refreshed!" toast.
-  const ptrStartY = useRef(null);
-  const ptrPulledRef = useRef(0);
-  const [ptrPull, setPtrPull] = useState(0);
-  const [ptrRefreshing, setPtrRefreshing] = useState(false);
-  useEffect(() => {
-    const onTouchStart = (e) => {
-      if (window.scrollY > 0) { ptrStartY.current = null; return; }
-      ptrStartY.current = e.touches[0].clientY;
-    };
-    const onTouchMove = (e) => {
-      if (ptrStartY.current == null || ptrRefreshing) return;
-      const dy = e.touches[0].clientY - ptrStartY.current;
-      if (dy > 0 && window.scrollY === 0) {
-        const damped = Math.min(dy * 0.5, 100);
-        ptrPulledRef.current = damped;
-        setPtrPull(damped);
-      }
-    };
-    const onTouchEnd = () => {
-      if (ptrStartY.current == null || ptrRefreshing) { setPtrPull(0); return; }
-      if (ptrPulledRef.current > 60) {
-        setPtrRefreshing(true);
-        setPtrPull(0);
-        Promise.all([loadLeagueData(), new Promise(r => setTimeout(r, 1000))])
-          .finally(() => setPtrRefreshing(false));
-      } else {
-        setPtrPull(0);
-      }
-      ptrStartY.current = null;
-      ptrPulledRef.current = 0;
-    };
-    document.addEventListener("touchstart", onTouchStart, { passive: true });
-    document.addEventListener("touchmove", onTouchMove, { passive: true });
-    document.addEventListener("touchend", onTouchEnd);
-    return () => {
-      document.removeEventListener("touchstart", onTouchStart);
-      document.removeEventListener("touchmove", onTouchMove);
-      document.removeEventListener("touchend", onTouchEnd);
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ptrRefreshing]);
 
   return (
     <LeagueContext.Provider value={leagueCtx}>

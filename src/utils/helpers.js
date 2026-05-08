@@ -5,6 +5,19 @@ export function win(sets){let a=0,b=0;sets.forEach(([x,y])=>{if(x>y)a++;else b++
 export function formatDate(d){const dt=new Date(d);const dd=String(dt.getDate()).padStart(2,"0");const mmm=dt.toLocaleString("en-GB",{month:"short"});const yyyy=dt.getFullYear();return `${dd} ${mmm} ${yyyy}`;}
 export function setTotals(sets){return sets.reduce(([a,b],[x,y])=>[a+x,b+y],[0,0]);}
 
+// S067: compute integer age in years from a YYYY-MM-DD date_of_birth string.
+// Returns null when input is empty/invalid so UI surfaces can hide the row.
+export function getAge(dob){
+  if(!dob)return null;
+  const d=new Date(dob);
+  if(isNaN(d.getTime()))return null;
+  const now=new Date();
+  let age=now.getFullYear()-d.getFullYear();
+  const m=now.getMonth()-d.getMonth();
+  if(m<0||(m===0&&now.getDate()<d.getDate()))age--;
+  return age>=0&&age<150?age:null;
+}
+
 // S050 expansion: ISO-3 country code → ISO-2 (used to derive the flag emoji).
 // Covers all UN member states + Palestine + Taiwan + Vatican.
 // Israel intentionally excluded per project decision.

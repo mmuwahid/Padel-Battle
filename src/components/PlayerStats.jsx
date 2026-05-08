@@ -3,7 +3,7 @@ import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, BL, PU } from '../theme';
 import { ACHS } from '../data/achievements';
 import { FD } from './FormDots';
 import Icon from './Icon';
-import { formatTeam, win, formatDate, setTotals, flagEmoji } from '../utils/helpers';
+import { formatTeam, win, formatDate, setTotals, flagEmoji, getAge } from '../utils/helpers';
 
 export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matches,supabase,leagueId,isAdmin,getName,sel,onPlayersChange,showToast,claimedPlayer,leagueMembers,league}){
   const player=sp?pm[sp]:null;
@@ -197,10 +197,16 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
               {roleLabel}
             </div>
           )}
-          {(player.country || positionLabel) && (
+          {(player.country || positionLabel || getAge(player.date_of_birth) != null) && (
             <div className="dpro-tags">
               {player.country && flagEmoji(player.country) && (
                 <div className="dpro-tag"><span className="flag">{flagEmoji(player.country)}</span>{player.country.toUpperCase()}</div>
+              )}
+              {/* S067: age tag — uses date_of_birth column added in Phase 11 */}
+              {getAge(player.date_of_birth) != null && (
+                <div className="dpro-tag">
+                  <Icon name="calendar" size={12} color="#9090a4"/>{getAge(player.date_of_birth)} yrs
+                </div>
               )}
               {positionLabel && (
                 <div className="dpro-tag">

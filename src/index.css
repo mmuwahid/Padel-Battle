@@ -1410,11 +1410,12 @@ body {
 /* Profile screen */
 .prohero{padding:24px 18px 14px;display:flex;flex-direction:column;align-items:center;text-align:center;}
 .prowrap{position:relative;}
-.propic{width:96px;height:96px;border-radius:var(--r-full);background:linear-gradient(135deg,rgba(74,222,128,.20),rgba(74,222,128,.04));border:2px solid var(--accent-glow);display:flex;align-items:center;justify-content:center;font-family:var(--font);font-size:36px;font-weight:800;color:var(--accent);overflow:hidden;}
+.propic{width:130px;height:130px;border-radius:var(--r-full);background:linear-gradient(135deg,rgba(74,222,128,.20),rgba(74,222,128,.04));border:2px solid var(--accent-glow);display:flex;align-items:center;justify-content:center;font-family:var(--font);font-size:48px;font-weight:800;color:var(--accent);overflow:hidden;}
 .propic img{width:100%;height:100%;object-fit:cover;}
 .procb{position:absolute;bottom:0;right:0;width:30px;height:30px;border-radius:var(--r-full);background:var(--accent);border:2px solid var(--bg);color:#000;display:flex;align-items:center;justify-content:center;cursor:pointer;}
-.prorm{margin-top:10px;background:none;border:none;color:#9090a4;font-family:var(--mono);font-size:10px;cursor:pointer;letter-spacing:.04em;}
-.prorm:hover{color:var(--danger);}
+/* S067: Remove Photo upgraded to a clearly-defined red action button. */
+.prorm{margin-top:12px;display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.4);color:var(--danger);font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;letter-spacing:.02em;cursor:pointer;border-radius:8px;text-transform:uppercase;}
+.prorm:active{transform:scale(.97);background:rgba(248,113,113,.16);}
 .proname{font-size:22px;font-weight:800;font-style:italic;letter-spacing:-.01em;margin-top:8px;color:var(--text);}
 .proemail{font-family:var(--mono);font-size:11px;color:#9090a4;margin-top:2px;}
 .prorole{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:var(--r-full);background:var(--accent-dim);border:1px solid var(--accent-glow);font-family:var(--mono);font-size:10px;font-weight:700;color:var(--accent);margin-top:10px;letter-spacing:.06em;text-transform:uppercase;}
@@ -1752,6 +1753,12 @@ body {
 .rtag.r{background:rgba(248,113,113,.1);color:var(--loss);border-color:rgba(248,113,113,.4);}
 .rtag.go{background:rgba(245,158,11,.1);color:var(--gold);border-color:rgba(245,158,11,.4);}
 .rules-empty{padding:20px;text-align:center;color:var(--muted);font-size:12px;}
+
+/* S067: MOTM highlight card — gold star badge + gold value */
+.hlcard.motm{position:relative;border-color:rgba(245,158,11,.4);background:linear-gradient(135deg,rgba(245,158,11,.08),var(--surface) 60%);}
+.hl-motm-badge{position:absolute;top:8px;right:8px;width:24px;height:24px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(245,158,11,.4);}
+.hlcard.motm .hll{color:var(--gold);}
+.hlv.gold{color:var(--gold);}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    S067-r1 — User feedback round 1

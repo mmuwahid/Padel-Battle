@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { formatTeam, win, formatDate, flagEmoji } from '../utils/helpers';
+import { formatTeam, win, formatDate, flagEmoji, getAge } from '../utils/helpers';
 import { calcElo } from '../utils/elo';
 import { ACHS } from '../data/achievements';
 import { EditMyProfile } from './EditMyProfile';
@@ -48,7 +48,11 @@ export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, re
           <input ref={fileInputRef} type="file" accept="image/*" onChange={(e)=>uploadAvatar(e.target.files?.[0])} style={{display:"none"}}/>
         </div>
         {avatarUploading && <div style={{fontSize:11,color:"var(--accent)",marginTop:6,fontFamily:"var(--mono)"}}>Uploading…</div>}
-        {avatarUrl && <button className="prorm" onClick={removeAvatar}>Remove photo</button>}
+        {avatarUrl && (
+          <button className="prorm" onClick={removeAvatar}>
+            <Icon name="trash" size={12} color="currentColor"/>Remove Photo
+          </button>
+        )}
         <div className="proname">{userName}</div>
         <div className="proemail">{user.email}</div>
         {claimedPlayer && (
@@ -60,6 +64,12 @@ export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, re
           <div className="protags">
             {claimedPlayer.country && (
               <div className="protag"><span className="flag">{flagEmoji(claimedPlayer.country)}</span>{claimedPlayer.country}</div>
+            )}
+            {/* S067: age tag — uses date_of_birth column added in Phase 11 */}
+            {getAge(claimedPlayer.date_of_birth) != null && (
+              <div className="protag">
+                <Icon name="calendar" size={12} color="#9090a4"/>{getAge(claimedPlayer.date_of_birth)} yrs
+              </div>
             )}
             {claimedPlayer.playing_position && (
               <div className="protag">
@@ -87,8 +97,8 @@ export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, re
       {claimedPlayer && myStat && (
         <>
           <div className="prostrip">
-            <div className="prosc"><div className="proscl">Won</div><div className="proscv win">{wins}</div></div>
-            <div className="prosc"><div className="proscl">Lost</div><div className="proscv">{losses}</div></div>
+            <div className="prosc"><div className="proscl">Match Won</div><div className="proscv win">{wins}</div></div>
+            <div className="prosc"><div className="proscl">Match Lost</div><div className="proscv">{losses}</div></div>
             <div className="prosc"><div className="proscl">ELO</div><div className="proscv elo">{myElo}</div></div>
           </div>
 
@@ -98,8 +108,12 @@ export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, re
           </div>
 
           <div className="hlrow">
-            <div className="hlcard"><div className="hll">Best Streak</div><div className="hlv">{myStreak}<span className="hlu">wins</span></div></div>
-            <div className="hlcard"><div className="hll">MOTM Awards</div><div className="hlv">{motm}<span className="hlu">{motm===1?"badge":"badges"}</span></div></div>
+            <div className="hlcard"><div className="hll">Consecutive Wins</div><div className="hlv">{myStreak}<span className="hlu">wins</span></div></div>
+            <div className="hlcard motm">
+              <div className="hl-motm-badge"><Icon name="star" size={14} color="#000"/></div>
+              <div className="hll">Man of the Match</div>
+              <div className="hlv gold">{motm}<span className="hlu">{motm===1?"award":"awards"}</span></div>
+            </div>
           </div>
 
           {/* ELO history (preserved) */}
