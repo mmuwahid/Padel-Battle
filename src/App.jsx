@@ -1180,7 +1180,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
               {/* Header row */}
               <div className="lbth">
                 <div className="lbh c">Rank</div>{/* S067: c = horizontally center to match .lbrank cells */}
-                <div className="lbh">Player</div>
+                <div className="lbh c">Player</div>{/* S068: also center the Player header text */}
                 <div className="lbh r" style={{justifyContent:"center"}}><Icon name="globe" size={12}/></div>{/* S066: globe icon, vertically centered */}
                 <div className="lbh r">MP</div>
                 <div className="lbh r" style={{color:"var(--win)"}}>MW</div>
