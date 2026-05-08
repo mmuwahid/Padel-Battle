@@ -6,6 +6,7 @@ import { calcElo } from './utils/elo';
 import { RULES, ARGUED } from './data/rules';
 import { CourtIcon, PadelLogo, PadelLogoSmall } from './components/icons';
 import { NavIcon } from './components/NavIcons';
+import Icon from './components/Icon';
 import { FD } from './components/FormDots';
 import { Sidebar } from './components/Sidebar';
 import { ProfileView } from './components/ProfileView';
@@ -858,25 +859,43 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
       {/* Issue #15 + #43 (S058): paint html/body to gradient-start color (#0d0d14) so rubber-band overscroll at the page top reveals a color identical to the header — no visible seam. The body bg paint is the actual fix; the previous `overscroll-behavior-y:none` was defensive and is now removed to restore native iOS rubber-band + momentum scrolling per #43. `-webkit-overflow-scrolling:touch` re-enables iOS momentum on legacy WebKit (no-op on iOS 13+).
           S050 .flag class: forces an emoji-priority font stack so country flag glyphs render across Windows / iOS / Android / macOS — without it, Windows may fall back to "PS"/"GB" letter blocks because the inherited Outfit font lacks emoji glyphs. */}
       <style>{`html,body{margin:0;padding:0;background:#0d0d14;-webkit-overflow-scrolling:touch;} #root{margin:0;padding:0;} .flag{font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji','Twemoji Mozilla','EmojiOne Color','Android Emoji',sans-serif;font-style:normal;font-weight:normal;} @keyframes spin{to{transform:rotate(360deg)}} @keyframes fadeIn{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}} input:focus,select:focus,textarea:focus{border-color:${A} !important;box-shadow:0 0 0 2px ${A}30 !important;}`}</style>
-      {/* HEADER — Issue #46 Phase 2: class-based markup. Logo uses PadelLogoSmall + Outfit-bold wordmark; refresh / bell / avatar use .ibtn / .av tokens. Sticky behavior unchanged so Lessons #18 / #44 still hold. */}
-      <header className="hdr">
-        <div className="hl">
-          <div className="logo">
-            <PadelLogoSmall size={36}/>
-            <h1 className="lt"><span>Padel</span><span className="accent">Hub</span></h1>
+      {/* HEADER — Issue #46 Phase 2 + Phase 6a: class-based markup. Phase 6a adds drill-in back-mode (.hdr-back) when on Players tab with a player selected; back chevron + PLAYER PROFILE title replace the logo. Sticky behavior unchanged so Lessons #18 / #44 still hold. */}
+      {tab==="stats" && selectedPlayer ? (
+        <header className="hdr-back">
+          <div className="hl">
+            <button className="ibtn" onClick={()=>setSelectedPlayer(null)} aria-label="Back to players"><Icon name="back" size={18}/></button>
+            <div className="hdr-title">Player Profile</div>
           </div>
-        </div>
-        <div className="hr">
-          <button className="ibtn" onClick={()=>{loadLeagueData();showToast("Refreshed!");}} aria-label="Refresh">{"↻"}</button>
-          <button className={"ibtn"+(sidebarView==="notifications"?" on":"")} onClick={()=>{setSidebarView(sidebarView==="notifications"?null:"notifications");setSidebarOpen(false);}} aria-label="Notifications">
-            {"🔔"}
-            {unreadNotifCount>0 && <span className="ndot">{unreadNotifCount>9?"9+":unreadNotifCount}</span>}
-          </button>
-          <button className={"av"+(sidebarOpen?" on":"")} onClick={()=>{setSidebarOpen(!sidebarOpen);setSidebarView(null);}} title="Profile & Settings" aria-label="Profile & Settings">
-            {avatarUrl ? <img src={avatarUrl} alt=""/> : (user.user_metadata?.display_name||user.email||"U")[0].toUpperCase()}
-          </button>
-        </div>
-      </header>
+          <div className="hr">
+            <button className={"ibtn"+(sidebarView==="notifications"?" on":"")} onClick={()=>{setSidebarView(sidebarView==="notifications"?null:"notifications");setSidebarOpen(false);}} aria-label="Notifications">
+              <Icon name="bell" size={16}/>
+              {unreadNotifCount>0 && <span className="ndot">{unreadNotifCount>9?"9+":unreadNotifCount}</span>}
+            </button>
+            <button className={"av"+(sidebarOpen?" on":"")} onClick={()=>{setSidebarOpen(!sidebarOpen);setSidebarView(null);}} title="Profile & Settings" aria-label="Profile & Settings">
+              {avatarUrl ? <img src={avatarUrl} alt=""/> : (user.user_metadata?.display_name||user.email||"U")[0].toUpperCase()}
+            </button>
+          </div>
+        </header>
+      ) : (
+        <header className="hdr">
+          <div className="hl">
+            <div className="logo">
+              <PadelLogoSmall size={36}/>
+              <h1 className="lt"><span>Padel</span><span className="accent">Hub</span></h1>
+            </div>
+          </div>
+          <div className="hr">
+            <button className="ibtn" onClick={()=>{loadLeagueData();showToast("Refreshed!");}} aria-label="Refresh">{"↻"}</button>
+            <button className={"ibtn"+(sidebarView==="notifications"?" on":"")} onClick={()=>{setSidebarView(sidebarView==="notifications"?null:"notifications");setSidebarOpen(false);}} aria-label="Notifications">
+              {"🔔"}
+              {unreadNotifCount>0 && <span className="ndot">{unreadNotifCount>9?"9+":unreadNotifCount}</span>}
+            </button>
+            <button className={"av"+(sidebarOpen?" on":"")} onClick={()=>{setSidebarOpen(!sidebarOpen);setSidebarView(null);}} title="Profile & Settings" aria-label="Profile & Settings">
+              {avatarUrl ? <img src={avatarUrl} alt=""/> : (user.user_metadata?.display_name||user.email||"U")[0].toUpperCase()}
+            </button>
+          </div>
+        </header>
+      )}
 
       {/* SIDEBAR — extracted component */}
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} setSidebarView={setSidebarView} user={user} avatarUrl={avatarUrl} league={league} isAdmin={isAdmin} onSwitchLeague={onSwitchLeague} showToast={showToast} installPrompt={installPrompt} handleInstall={handleInstall}/>
@@ -1285,6 +1304,8 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
           onPlayersChange={loadLeagueData}
           showToast={showToast}
           claimedPlayer={claimedPlayer}
+          leagueMembers={leagueMembers}
+          league={league}
         /></Suspense></ErrorBoundary>
       )}
 
