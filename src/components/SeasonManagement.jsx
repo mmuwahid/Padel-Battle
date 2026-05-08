@@ -1,7 +1,17 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { A, CD, CD2, BD, TX, MT, DG } from "../theme";
+import Icon from "./Icon";
 import { useLeague } from "../LeagueContext";
 
+// S067 Phase 12 PR 3: spec-faithful Season Management list + Create bsheet.
+// Class names match docs/PadelHub_Complete_v2.jsx lines 2032-2076 verbatim:
+//   .secard / .secdtop / .secname / .badgea / .badgee / .secmr / .secmi /
+//   .secft / .gbtn / .dbtn / .goldbtn — list cards
+//   .pbtn (top "+ New Season")
+//   .overlay / .bsheet / .shdl / .shhdr / .shtitle / .shclose / .shbody /
+//   .shf / .shlbl / .shi / .shsel / .inote / .inotet / .shact / .shcancel /
+//   .shsubmit — bottom-sheet create form
+// User decision S067 Q6=A: keep S055 full-screen Season Detail pattern for
+// edit (rich roster toggle UX doesn't fit a sheet). List + Create restyled.
 export function SeasonManagement({ setSidebarView }) {
   const { supabase, leagueId, players, seasons, showToast, loadLeagueData, isOwner } = useLeague();
 
@@ -179,181 +189,202 @@ export function SeasonManagement({ setSidebarView }) {
     if (isNaN(dt.getTime())) return d;
     const dd = String(dt.getDate()).padStart(2, "0");
     const mmm = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][dt.getMonth()];
-    return `${dd}/${mmm}/${dt.getFullYear()}`;
+    return `${dd} ${mmm} ${dt.getFullYear()}`;
   };
 
   const openSeason = openSeasonId ? sortedSeasons.find(s => s.id === openSeasonId) : null;
   const openRoster = openSeasonId ? (rosters[openSeasonId] || new Set()) : new Set();
 
-  const inputStyle = { width:"100%", padding:"10px 12px", background:CD2, border:`1px solid ${BD}`, borderRadius:8, color:TX, fontSize:13, fontFamily:"'Outfit',sans-serif", outline:"none", boxSizing:"border-box" };
-  const labelStyle = { display:"block", fontSize:10, color:MT, fontWeight:600, letterSpacing:1, textTransform:"uppercase", marginBottom:6 };
-
-  // ── Full-screen Season Detail ──────────────────────────────────────────────
+  // ── Full-screen Season Detail (S055 pattern preserved per Q6=A) ───────────
   if (openSeason) {
     return (
-      <div style={{padding:"20px 16px", paddingBottom:"calc(96px + env(safe-area-inset-bottom, 0px))", fontFamily:"'Outfit',sans-serif"}}>
-        <button onClick={closeEdit} style={{marginBottom:20,background:"none",border:"none",color:A,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif",padding:0}}>← Back</button>
-
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20,gap:8,flexWrap:"wrap"}}>
-          <h2 style={{fontSize:20,fontWeight:900,fontStyle:"italic",textTransform:"uppercase",letterSpacing:1,margin:0,color:TX}}>{openSeason.name}</h2>
-          <span style={{fontSize:9,fontWeight:700,padding:"4px 10px",borderRadius:4,background:openSeason.active?`${A}20`:BD,color:openSeason.active?A:MT,textTransform:"uppercase",letterSpacing:0.5}}>{openSeason.active ? "Active" : "Ended"}</span>
+      <div className="sm-screen">
+        <div className="back-btn-row">
+          <button className="back-btn" onClick={closeEdit}>
+            <Icon name="chevron-left" size={18} color="currentColor" />
+          </button>
         </div>
 
-        {/* Name */}
-        <div style={{marginBottom:12}}>
-          <label style={labelStyle}>Name</label>
-          <input type="text" value={editName} onChange={(e)=>setEditName(e.target.value)} style={inputStyle}/>
-        </div>
-
-        {/* Location */}
-        <div style={{marginBottom:12}}>
-          <label style={labelStyle}>Location</label>
-          <input type="text" value={editLocation} onChange={(e)=>setEditLocation(e.target.value)} placeholder="e.g. Sports Club A" style={inputStyle}/>
-        </div>
-
-        {/* Dates */}
-        <div style={{display:"flex",gap:8,marginBottom:16}}>
-          <div style={{flex:1,minWidth:0,overflow:"hidden"}}>
-            <label style={labelStyle}>Start</label>
-            <input type="date" value={editStart} onChange={(e)=>setEditStart(e.target.value)} style={inputStyle}/>
-          </div>
-          <div style={{flex:1,minWidth:0,overflow:"hidden"}}>
-            <label style={labelStyle}>End</label>
-            <input type="date" value={editEnd} onChange={(e)=>setEditEnd(e.target.value)} style={inputStyle}/>
+        <div className="ad-h sm-detail-h">
+          <div className="adey">Season Detail</div>
+          <div className="adh1-row">
+            <div className="adh1">{openSeason.name}</div>
+            <div className={openSeason.active ? "badgea" : "badgee"}>{openSeason.active ? "ACTIVE" : "ENDED"}</div>
           </div>
         </div>
 
-        <button onClick={saveMeta} disabled={savingMeta} style={{width:"100%",padding:"12px",background:A,border:"none",borderRadius:10,color:"#000",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"'Outfit',sans-serif",marginBottom:20,opacity:savingMeta?0.6:1,fontStyle:"italic",textTransform:"uppercase",letterSpacing:0.5}}>{savingMeta ? "Saving..." : "Save Details"}</button>
-
-        {/* Roster */}
-        <div style={{marginBottom:20}}>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-            <label style={{...labelStyle,marginBottom:0}}>Roster</label>
-            <span style={{fontSize:10,color:MT}}>{openRoster.size} / {(players||[]).length}</span>
+        <div className="sm-detail-body">
+          <div className="shf">
+            <div className="shlbl"><Icon name="hash" size={12} color="var(--muted)" />Name</div>
+            <input className="shi" type="text" value={editName} onChange={(e) => setEditName(e.target.value)} />
           </div>
-          <div style={{display:"flex",flexDirection:"column",gap:6}}>
-            {(players || []).map(p => {
-              const inRoster = openRoster.has(p.id);
-              return (
-                <button key={p.id} onClick={()=>togglePlayer(openSeasonId, p.id)} disabled={savingRoster} style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,padding:"10px 12px",background:inRoster?`${A}15`:CD2,border:`1px solid ${inRoster?`${A}40`:BD}`,borderRadius:8,color:TX,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif",textAlign:"left",opacity:savingRoster?0.6:1}}>
-                  <span>{p.name}{p.nickname ? ` (${p.nickname})` : ""}</span>
-                  <span style={{fontSize:11,color:inRoster?A:MT,fontWeight:700}}>{inRoster ? "✓ In" : "+ Add"}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
 
-        {/* End / Reactivate */}
-        <div style={{marginBottom:10}}>
+          <div className="shf">
+            <div className="shlbl"><Icon name="globe" size={12} color="var(--muted)" />Location</div>
+            <input className="shi" type="text" value={editLocation} onChange={(e) => setEditLocation(e.target.value)} placeholder="e.g. Sports Club A" />
+          </div>
+
+          <div className="shf-row">
+            <div className="shf">
+              <div className="shlbl"><Icon name="calendar" size={12} color="var(--muted)" />Start</div>
+              <input className="shi" type="date" value={editStart} onChange={(e) => setEditStart(e.target.value)} />
+            </div>
+            <div className="shf">
+              <div className="shlbl"><Icon name="calendar" size={12} color="var(--muted)" />End</div>
+              <input className="shi" type="date" value={editEnd} onChange={(e) => setEditEnd(e.target.value)} />
+            </div>
+          </div>
+
+          <button className="shsubmit sm-savemeta" onClick={saveMeta} disabled={savingMeta}>
+            {savingMeta ? "Saving…" : "Save Details"}
+          </button>
+
+          <div className="sm-roster">
+            <div className="sm-roster-h">
+              <div className="slbl">Roster</div>
+              <span className="sm-roster-ct">{openRoster.size} / {(players || []).length}</span>
+            </div>
+            <div className="sm-roster-list">
+              {(players || []).map(p => {
+                const inRoster = openRoster.has(p.id);
+                return (
+                  <button key={p.id} className={`sm-rost${inRoster ? " on" : ""}`} onClick={() => togglePlayer(openSeasonId, p.id)} disabled={savingRoster}>
+                    <span className="sm-rost-n">{p.name}{p.nickname ? ` (${p.nickname})` : ""}</span>
+                    <span className="sm-rost-s">{inRoster ? <><Icon name="check" size={12} strokeWidth={2.5} />In</> : <>+ Add</>}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {openSeason.active ? (
             confirmEnd ? (
-              <div style={{display:"flex",gap:8,alignItems:"center",padding:"12px",background:`${DG}10`,border:`1px solid ${DG}30`,borderRadius:10}}>
-                <span style={{fontSize:12,color:TX,flex:1}}>End this season?</span>
-                <button onClick={()=>endSeason(openSeasonId)} style={{padding:"8px 14px",background:DG,border:"none",borderRadius:8,color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>Yes, end</button>
-                <button onClick={()=>setConfirmEnd(false)} style={{padding:"8px 14px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:MT,fontSize:12,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>No</button>
+              <div className="sm-confirmrow danger">
+                <span>End this season?</span>
+                <button className="dbtn" onClick={() => endSeason(openSeasonId)}>Yes, end</button>
+                <button className="gbtn ghost" onClick={() => setConfirmEnd(false)}>No</button>
               </div>
             ) : (
-              <button onClick={()=>setConfirmEnd(true)} style={{width:"100%",padding:"12px",background:`${DG}12`,border:`1px solid ${DG}40`,borderRadius:10,color:DG,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>End Season</button>
+              <button className="sm-bigaction danger" onClick={() => setConfirmEnd(true)}>
+                <Icon name="close" size={14} />End Season
+              </button>
             )
           ) : (
-            <button onClick={()=>reactivateSeason(openSeasonId)} style={{width:"100%",padding:"12px",background:`${A}12`,border:`1px solid ${A}40`,borderRadius:10,color:A,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>Reactivate Season</button>
+            <button className="sm-bigaction accent" onClick={() => reactivateSeason(openSeasonId)}>
+              <Icon name="refresh" size={14} />Reactivate Season
+            </button>
           )}
-        </div>
 
-        {/* Delete */}
-        {!openSeason.active && (
-          <div style={{marginBottom:10}}>
-            {confirmDelete ? (
-              <div style={{display:"flex",gap:8,alignItems:"center",padding:"12px",background:`${DG}10`,border:`1px solid ${DG}40`,borderRadius:10}}>
-                <span style={{fontSize:12,color:TX,flex:1}}>Delete permanently? (no matches allowed)</span>
-                <button onClick={()=>deleteSeason(openSeasonId)} disabled={deleting} style={{padding:"8px 14px",background:DG,border:"none",borderRadius:8,color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif",opacity:deleting?0.6:1}}>{deleting?"...":"Delete"}</button>
-                <button onClick={()=>setConfirmDelete(false)} style={{padding:"8px 14px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:MT,fontSize:12,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>No</button>
+          {!openSeason.active && (
+            confirmDelete ? (
+              <div className="sm-confirmrow danger">
+                <span>Delete permanently? (no matches allowed)</span>
+                <button className="dbtn" onClick={() => deleteSeason(openSeasonId)} disabled={deleting}>{deleting ? "..." : "Delete"}</button>
+                <button className="gbtn ghost" onClick={() => setConfirmDelete(false)}>No</button>
               </div>
             ) : (
-              <button onClick={()=>setConfirmDelete(true)} style={{width:"100%",padding:"12px",background:"transparent",border:`1px solid ${DG}40`,borderRadius:10,color:DG,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif",opacity:0.7}}>Delete Season</button>
-            )}
-          </div>
-        )}
+              <button className="sm-bigaction danger ghost" onClick={() => setConfirmDelete(true)}>
+                <Icon name="trash" size={14} />Delete Season
+              </button>
+            )
+          )}
+        </div>
       </div>
     );
   }
 
   // ── Season List ────────────────────────────────────────────────────────────
   return (
-    <div style={{padding:"20px 16px",paddingBottom:"calc(96px + env(safe-area-inset-bottom, 0px))"}}>
-      <button onClick={()=>setSidebarView("admin")} style={{marginBottom:20,background:"none",border:"none",color:A,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif",padding:0}}>← Back</button>
+    <div className="sm-screen">
+      <div className="back-btn-row">
+        <button className="back-btn" onClick={() => setSidebarView("admin")}>
+          <Icon name="chevron-left" size={18} color="currentColor" />
+        </button>
+      </div>
 
-      <h2 style={{fontSize:20,fontWeight:900,fontStyle:"italic",textTransform:"uppercase",letterSpacing:1,marginBottom:8,color:TX}}>Season Management</h2>
-      <div style={{fontSize:11,color:MT,marginBottom:20,lineHeight:1.5}}>Create, edit, end, or reactivate seasons. Tap a season to edit its details and roster.</div>
+      <div className="ad-h">
+        <div className="adey">League</div>
+        <div className="adh1">Season Management</div>
+      </div>
 
-      {!isOwner && (
-        <div style={{padding:"12px",background:`${DG}15`,border:`1px solid ${DG}30`,borderRadius:8,fontSize:12,color:DG}}>Owner-only screen.</div>
-      )}
+      <div className="sm-body">
+        {!isOwner && (
+          <div className="sm-note">Owner-only screen.</div>
+        )}
 
-      {isOwner && (
-        <>
-          <button onClick={openCreate} style={{width:"100%",padding:"14px",background:A,border:"none",borderRadius:10,color:"#000",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"'Outfit',sans-serif",fontStyle:"italic",textTransform:"uppercase",letterSpacing:0.5,marginBottom:20}}>+ New Season</button>
+        {isOwner && (
+          <>
+            <button className="pbtn pbtn-block" onClick={openCreate}>
+              <Icon name="plus" size={16} strokeWidth={2.5} />New Season
+            </button>
 
-          {loading && <div style={{textAlign:"center",color:MT,padding:20,fontSize:12}}>Loading...</div>}
-          {!loading && sortedSeasons.length === 0 && <div style={{textAlign:"center",color:MT,padding:20,fontSize:12}}>No seasons yet. Create one above.</div>}
-          {!loading && sortedSeasons.map(s => {
-            const rosterCount = rosters[s.id] ? rosters[s.id].size : 0;
-            return (
-              <button key={s.id} onClick={()=>openEdit(s)} style={{width:"100%",padding:"14px",background:CD,border:`1px solid ${s.active ? A+"50" : BD}`,borderRadius:10,marginBottom:8,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif"}}>
-                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:14,fontWeight:800,fontStyle:"italic",textTransform:"uppercase",letterSpacing:0.5,color:TX,marginBottom:2}}>{s.name}</div>
-                    <div style={{fontSize:10,color:MT}}>
-                      {fmtDate(s.start_date)}{s.end_date ? ` → ${fmtDate(s.end_date)}` : ""}
-                      {s.location ? ` · ${s.location}` : ""}
-                      {` · ${rosterCount} player${rosterCount===1?"":"s"}`}
-                    </div>
+            {loading && <div className="sm-empty">Loading…</div>}
+            {!loading && sortedSeasons.length === 0 && <div className="sm-empty">No seasons yet. Create one above.</div>}
+
+            {!loading && sortedSeasons.map(s => {
+              const rosterCount = rosters[s.id] ? rosters[s.id].size : 0;
+              return (
+                <button key={s.id} className="secard" onClick={() => openEdit(s)}>
+                  <div className="secdtop">
+                    <div className="secname">{s.name}</div>
+                    <div className={s.active ? "badgea" : "badgee"}>{s.active ? "ACTIVE" : "ENDED"}</div>
                   </div>
-                  <span style={{fontSize:9,fontWeight:700,padding:"4px 8px",borderRadius:4,background:s.active?`${A}20`:BD,color:s.active?A:MT,textTransform:"uppercase",letterSpacing:0.5,flexShrink:0}}>{s.active ? "Active" : "Ended"}</span>
-                </div>
-              </button>
-            );
-          })}
-        </>
-      )}
+                  <div className="secmr">
+                    <div className="secmi"><Icon name="calendar" size={12} color="var(--muted)" />{fmtDate(s.start_date)}{s.end_date ? ` → ${fmtDate(s.end_date)}` : ""}</div>
+                    <div className="secmi"><Icon name="players" size={12} color="var(--muted)" />{rosterCount} player{rosterCount === 1 ? "" : "s"}</div>
+                  </div>
+                  {s.location && (
+                    <div className="secmr">
+                      <div className="secmi"><Icon name="globe" size={12} color="var(--muted)" />{s.location}</div>
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </>
+        )}
+      </div>
 
-      {/* New Season sheet */}
       {showCreate && (
-        <div onClick={()=>!creating && setShowCreate(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:200,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
-          <div onClick={(e)=>e.stopPropagation()} style={{width:"100%",maxWidth:480,background:CD,borderTopLeftRadius:20,borderTopRightRadius:20,padding:"16px 16px calc(20px + env(safe-area-inset-bottom, 0px))",fontFamily:"'Outfit',sans-serif",overflow:"hidden"}}>
-            <div style={{width:36,height:4,background:BD,borderRadius:2,margin:"0 auto 14px"}}/>
-            <h3 style={{fontSize:16,fontWeight:900,fontStyle:"italic",textTransform:"uppercase",letterSpacing:0.5,color:TX,margin:"0 0 14px"}}>New Season</h3>
-
-            <div style={{marginBottom:12}}>
-              <label style={labelStyle}>Name</label>
-              <input type="text" value={newName} onChange={(e)=>setNewName(e.target.value)} placeholder='e.g. "Season 2"' style={inputStyle}/>
+        <div className="overlay" onClick={() => !creating && setShowCreate(false)}>
+          <div className="bsheet" onClick={(e) => e.stopPropagation()}>
+            <div className="shdl" />
+            <div className="shhdr">
+              <div className="shtitle">New Season</div>
+              <button className="shclose" onClick={() => setShowCreate(false)}>
+                <Icon name="close" size={14} />
+              </button>
             </div>
-
-            <div style={{marginBottom:12}}>
-              <label style={labelStyle}>Location</label>
-              <input type="text" value={newLocation} onChange={(e)=>setNewLocation(e.target.value)} placeholder="e.g. Sports Club A" style={inputStyle}/>
+            <div className="shbody">
+              <div className="shf">
+                <div className="shlbl"><Icon name="hash" size={12} color="var(--muted)" />Name</div>
+                <input className="shi" type="text" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder='e.g. "Season 2"' />
+              </div>
+              <div className="shf">
+                <div className="shlbl"><Icon name="globe" size={12} color="var(--muted)" />Location</div>
+                <input className="shi" type="text" value={newLocation} onChange={(e) => setNewLocation(e.target.value)} placeholder="e.g. Sports Club A" />
+              </div>
+              <div className="shf">
+                <div className="shlbl"><Icon name="calendar" size={12} color="var(--muted)" />Start Date</div>
+                <input className="shi" type="date" value={newStart} onChange={(e) => setNewStart(e.target.value)} />
+              </div>
+              <div className="shf">
+                <div className="shlbl"><Icon name="players" size={12} color="var(--muted)" />Clone Roster From</div>
+                <select className="shsel" value={cloneFrom} onChange={(e) => setCloneFrom(e.target.value)}>
+                  <option value="">— Start fresh (empty roster) —</option>
+                  {sortedSeasons.map(s => (
+                    <option key={s.id} value={s.id}>{s.name} ({rosters[s.id]?.size || 0} players)</option>
+                  ))}
+                </select>
+              </div>
+              <div className="inote">
+                <Icon name="info" size={14} color="rgba(245,158,11,.85)" />
+                <div className="inotet">Active seasons will be auto-ended when this one starts.</div>
+              </div>
             </div>
-
-            <div style={{marginBottom:12}}>
-              <label style={labelStyle}>Start Date</label>
-              <input type="date" value={newStart} onChange={(e)=>setNewStart(e.target.value)} style={inputStyle}/>
-            </div>
-
-            <div style={{marginBottom:16}}>
-              <label style={labelStyle}>Clone roster from</label>
-              <select value={cloneFrom} onChange={(e)=>setCloneFrom(e.target.value)} style={{...inputStyle}}>
-                <option value="">— Start fresh (empty roster) —</option>
-                {sortedSeasons.map(s => (
-                  <option key={s.id} value={s.id}>{s.name} ({rosters[s.id]?.size || 0} players)</option>
-                ))}
-              </select>
-              <div style={{fontSize:10,color:MT,marginTop:6,lineHeight:1.4}}>Active seasons will be auto-ended when this one starts.</div>
-            </div>
-
-            <div style={{display:"flex",gap:8}}>
-              <button onClick={()=>setShowCreate(false)} disabled={creating} style={{flex:1,padding:"12px",background:CD2,border:`1px solid ${BD}`,borderRadius:10,color:MT,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>Cancel</button>
-              <button onClick={handleCreate} disabled={creating || !newName.trim()} style={{flex:1,padding:"12px",background:A,border:"none",borderRadius:10,color:"#000",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"'Outfit',sans-serif",fontStyle:"italic",textTransform:"uppercase",letterSpacing:0.5,opacity:(creating||!newName.trim())?0.6:1}}>{creating ? "..." : "Create"}</button>
+            <div className="shact">
+              <button className="shcancel" onClick={() => setShowCreate(false)} disabled={creating}>Cancel</button>
+              <button className="shsubmit" onClick={handleCreate} disabled={creating || !newName.trim()}>{creating ? "..." : "Create Season"}</button>
             </div>
           </div>
         </div>

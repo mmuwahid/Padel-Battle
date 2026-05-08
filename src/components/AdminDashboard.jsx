@@ -1,98 +1,99 @@
 import React from "react";
-import { A, CD, BD, TX, MT } from '../theme';
-import { formatTeam, win } from '../utils/helpers';
-import { useLeague } from '../LeagueContext';
-import { PLATFORM_ADMIN_ID } from './PlatformAdmin';
+import Icon from "./Icon";
+import { useLeague } from "../LeagueContext";
+import { PLATFORM_ADMIN_ID } from "./PlatformAdmin";
 
-export function AdminDashboard({ setSidebarView }) {
+// S067 Phase 12 PR 3: spec-faithful Admin Dashboard.
+// Class names match docs/PadelHub_Complete_v2.jsx lines 1977-2007 verbatim:
+//   .adey / .adh1                 — eyebrow + headline
+//   .alban / .aldot               — pending-approvals banner (dot + count)
+//   .adstats / .adsc / .adscv / .adscl — 3 live stat cards (Players/Matches/Season)
+//   .adcard / .adcico / .adcbody / .adctit / .adcdesc / .adcarr — nav row
+//   .adcard.pr                    — gold-tinted Platform Admin variant
+// User decisions S067 Q1=A (alban live count + tap-to-jump),
+//   Q2=A (live stats), Q3=drop CSV export entirely.
+export function AdminDashboard({ setSidebarView, setTab, setSidebarOpen }) {
   const {
-    user, league, getName,
-    matches,
-    isOwner,
+    user, league, players, seasons,
+    pendingMatches, approvedMatches,
+    isAdmin,
   } = useLeague();
 
-  const exportMatchesCSV = () => {
-    if (matches.length === 0) {
-      return;
-    }
-    const csv = [
-      ["Date", "Team A", "Team B", "Sets", "Winner", "Status"].join(","),
-      ...matches.map(m => {
-        const w = win(m.sets);
-        const winnerTeam = w === "A" ? formatTeam(getName(m.team_a[0]),getName(m.team_a[1])) : formatTeam(getName(m.team_b[0]),getName(m.team_b[1]));
-        return [
-          new Date(m.date).toLocaleDateString(),
-          formatTeam(getName(m.team_a[0]),getName(m.team_a[1])),
-          formatTeam(getName(m.team_b[0]),getName(m.team_b[1])),
-          m.sets.map(s => `${s[0]}-${s[1]}`).join(" "),
-          winnerTeam,
-          m.status || "approved",
-        ].map(v => {let s=String(v).replace(/"/g,'""');if(/^[=+\-@\t\r]/.test(s))s="'"+s;return `"${s}"`;}).join(",");
-      })
-    ].join("\n");
+  // Pending approvals visible to this admin (excludes self-submitted).
+  const visiblePending = (pendingMatches || []).filter(m => isAdmin && m.logged_by !== user?.id);
+  const pendingCount = visiblePending.length;
+  const activeSeason = (seasons || []).find(s => s.active);
 
-    const blob = new Blob([csv], {type: "text/csv;charset=utf-8;"});
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", `${league?.name || "matches"}-export.csv`);
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const jumpToApprovals = () => {
+    if (pendingCount === 0) return;
+    if (typeof setTab === "function") setTab("history");
+    if (typeof setSidebarOpen === "function") setSidebarOpen(false);
+    setSidebarView(null);
   };
 
-  const NavButton = ({ icon, label, onClick }) => (
-    <button onClick={onClick} style={{width:"100%",padding:"16px 14px",background:CD,border:`1px solid ${BD}`,borderRadius:12,color:TX,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
-      <span style={{display:"flex",alignItems:"center",gap:10}}>
-        <span style={{fontSize:18}}>{icon}</span>
-        <span style={{fontSize:14,fontWeight:900,textTransform:"uppercase",letterSpacing:0.5}}>{label}</span>
-      </span>
-      <span style={{fontSize:18,color:MT}}>→</span>
-    </button>
-  );
+  const stats = [
+    { v: (players || []).length, l: "Players" },
+    { v: (approvedMatches || []).length, l: "Matches" },
+    { v: activeSeason?.name ? activeSeason.name.replace(/^Season\s+/i, "S") : "—", l: "Season" },
+  ];
+
+  const cards = [
+    { t: "Player Management", d: `${(players || []).length} active`, i: "players", view: "playerManagement" },
+    { t: "League Management", d: league?.name || "—", i: "settings", view: "leagueManagement" },
+  ];
 
   return (
-    <div style={{padding:"20px 16px",paddingBottom:"calc(96px + env(safe-area-inset-bottom, 0px))"}}>
-      <button onClick={()=>setSidebarView(null)} style={{marginBottom:20,background:"none",border:"none",color:A,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>← Back</button>
-
-      <h2 style={{fontSize:20,fontWeight:900,textTransform:"uppercase",letterSpacing:1,marginBottom:8,color:TX}}>Admin Dashboard</h2>
-      <div style={{fontSize:11,color:MT,marginBottom:20,lineHeight:1.5}}>Pending match approvals appear inline at the top of the <strong style={{color:TX}}>Matches</strong> tab.</div>
-
-      {/* Players */}
-      <div style={{marginBottom:16}}>
-        <h3 style={{fontSize:13,fontWeight:700,color:A,marginBottom:12,textTransform:"uppercase",letterSpacing:1}}>Players</h3>
-        <NavButton icon="👥" label="Player Management" onClick={()=>setSidebarView("playerManagement")}/>
-      </div>
-
-      {/* League Management */}
-      <div style={{marginBottom:16}}>
-        <h3 style={{fontSize:13,fontWeight:700,color:A,marginBottom:12,textTransform:"uppercase",letterSpacing:1}}>League</h3>
-        <NavButton icon="⚙️" label="League Management" onClick={()=>setSidebarView("leagueManagement")}/>
-      </div>
-
-      {/* Data Export */}
-      <div style={{marginBottom:user?.id === PLATFORM_ADMIN_ID ? 16 : 0}}>
-        <h3 style={{fontSize:13,fontWeight:700,color:A,marginBottom:12,textTransform:"uppercase",letterSpacing:1}}>Data Export</h3>
-        <button onClick={exportMatchesCSV} style={{width:"100%",padding:"12px",background:CD,border:`1px solid ${BD}`,borderRadius:12,color:TX,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
-          <span style={{display:"flex",alignItems:"center",gap:10}}>
-            <span style={{fontSize:18}}>📥</span>
-            <span style={{fontSize:14,fontWeight:900,textTransform:"uppercase",letterSpacing:0.5}}>Export Matches (CSV)</span>
-          </span>
-          <span style={{fontSize:18,color:MT}}>↓</span>
+    <div className="ad-screen">
+      <div className="back-btn-row">
+        <button className="back-btn" onClick={() => setSidebarView(null)}>
+          <Icon name="chevron-left" size={18} color="currentColor" />
         </button>
       </div>
 
-      {/* Platform Admin — super-admin only */}
-      {user?.id === PLATFORM_ADMIN_ID && (
-        <div>
-          <h3 style={{fontSize:13,fontWeight:700,color:A,marginBottom:12,textTransform:"uppercase",letterSpacing:1}}>Platform</h3>
-          <button onClick={()=>setSidebarView("platform")} style={{width:"100%",padding:"12px",background:`${A}10`,border:`1px solid ${A}30`,borderRadius:12,color:A,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",gap:10}}>
-            <span style={{fontSize:16}}>🛡️</span>
-            <span style={{fontSize:14,fontWeight:900,textTransform:"uppercase",letterSpacing:0.5}}>Platform Admin</span>
+      <div className="ad-h">
+        <div className="adey">Admin</div>
+        <div className="adh1">Dashboard</div>
+      </div>
+
+      <div className="ad-body">
+        {pendingCount > 0 && (
+          <button className="alban" onClick={jumpToApprovals} aria-label="Jump to approvals queue">
+            <div className="aldot" />
+            <span>{pendingCount} match {pendingCount === 1 ? "result" : "results"} awaiting approval</span>
           </button>
+        )}
+
+        <div className="adstats">
+          {stats.map(s => (
+            <div key={s.l} className="adsc">
+              <div className="adscv">{s.v}</div>
+              <div className="adscl">{s.l}</div>
+            </div>
+          ))}
         </div>
-      )}
+
+        {cards.map(c => (
+          <button key={c.t} className="adcard" onClick={() => setSidebarView(c.view)}>
+            <div className="adcico"><Icon name={c.i} size={18} color="var(--muted)" /></div>
+            <div className="adcbody">
+              <div className="adctit">{c.t}</div>
+              <div className="adcdesc">{c.d}</div>
+            </div>
+            <div className="adcarr"><Icon name="chevron" size={16} color="var(--muted-2)" /></div>
+          </button>
+        ))}
+
+        {user?.id === PLATFORM_ADMIN_ID && (
+          <button className="adcard pr" onClick={() => setSidebarView("platform")}>
+            <div className="adcico"><Icon name="admin" size={18} color="var(--accent)" /></div>
+            <div className="adcbody">
+              <div className="adctit">Platform Admin</div>
+              <div className="adcdesc">Full system access</div>
+            </div>
+            <div className="adcarr"><Icon name="chevron" size={16} color="var(--accent)" /></div>
+          </button>
+        )}
+      </div>
     </div>
   );
 }

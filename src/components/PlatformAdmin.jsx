@@ -1,17 +1,27 @@
 import React, { useState, useEffect } from "react";
-import { supabase } from '../supabase';
-import { A, BG, CD, CD2, BD, TX, MT, DG } from '../theme';
+import Icon from "./Icon";
+import { supabase } from "../supabase";
 
 export const PLATFORM_ADMIN_ID = "8362be01-8e73-49c1-90c8-065fc6a09159";
 
+// S067 Phase 12 PR 3: spec-faithful Platform Admin.
+// Class names match docs/PadelHub_Complete_v2.jsx lines 2081-2132 verbatim:
+//   .pastats / .pasc / .pasch / .pascico (.g .o .gr) / .pascl / .pascv / .pascsub
+//   .pafilbar / .pafil (.on)        — filter pills (Leagues / Users)
+//   .pasrw / .pasri / .pasr         — search bar
+//   .palist / .paitem / .paavi / .paib / .pain / .paim / .paia / .aib (.da)
+// User decision S067 Q7=A: Active (7d) card dropped (3 stat cards only).
+// Type-to-confirm destructive flow preserved (typed name/email match before
+// platform_delete_league / platform_delete_user).
 export function PlatformAdmin({ onClose, showToast }) {
   const [stats, setStats] = useState(null);
   const [leagues, setLeagues] = useState([]);
   const [users, setUsers] = useState([]);
-  const [activeTab, setActiveTab] = useState("overview");
+  const [filter, setFilter] = useState("leagues");
+  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
-  const [search, setSearch] = useState("");
+
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleteTyped, setDeleteTyped] = useState("");
   const [deleteUserConfirm, setDeleteUserConfirm] = useState(null);
@@ -39,21 +49,6 @@ export function PlatformAdmin({ onClose, showToast }) {
     setLoading(false);
   };
 
-  const handleDeleteUser = async (userId, userEmail) => {
-    if (deleteUserConfirm !== userId) { setDeleteUserConfirm(userId); setDeleteUserTyped(""); return; }
-    if (deleteUserTyped.trim() !== userEmail.trim()) { if (showToast) showToast("Email didn't match", "error"); return; }
-    try {
-      const { error } = await supabase.rpc("platform_delete_user", { p_user_id: userId });
-      if (error) throw error;
-      if (showToast) showToast("User deleted");
-      setDeleteUserConfirm(null);
-      setDeleteUserTyped("");
-      await loadData();
-    } catch (err) {
-      if (showToast) showToast(err.message || "Failed to delete user", "error");
-    }
-  };
-
   const handleDeleteLeague = async (leagueId, leagueName) => {
     if (deleteConfirm !== leagueId) { setDeleteConfirm(leagueId); setDeleteTyped(""); return; }
     if (deleteTyped.trim() !== leagueName.trim()) { if (showToast) showToast("Name didn't match", "error"); return; }
@@ -61,161 +56,164 @@ export function PlatformAdmin({ onClose, showToast }) {
       const { error } = await supabase.rpc("platform_delete_league", { p_league_id: leagueId });
       if (error) throw error;
       if (showToast) showToast("League deleted");
-      setDeleteConfirm(null);
-      setDeleteTyped("");
+      setDeleteConfirm(null); setDeleteTyped("");
       await loadData();
     } catch (err) {
       if (showToast) showToast(err.message || "Failed to delete", "error");
     }
   };
 
-  const fmtDate = (d) => {
-    if (!d) return "\u2014";
-    const dt = new Date(d);
-    const dd = String(dt.getDate()).padStart(2, "0");
-    const mmm = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][dt.getMonth()];
-    return dd + "/" + mmm + "/" + dt.getFullYear();
+  const handleDeleteUser = async (userId, userEmail) => {
+    if (deleteUserConfirm !== userId) { setDeleteUserConfirm(userId); setDeleteUserTyped(""); return; }
+    if (deleteUserTyped.trim() !== userEmail.trim()) { if (showToast) showToast("Email didn't match", "error"); return; }
+    try {
+      const { error } = await supabase.rpc("platform_delete_user", { p_user_id: userId });
+      if (error) throw error;
+      if (showToast) showToast("User deleted");
+      setDeleteUserConfirm(null); setDeleteUserTyped("");
+      await loadData();
+    } catch (err) {
+      if (showToast) showToast(err.message || "Failed to delete user", "error");
+    }
   };
 
-  const tabStyle = (t) => ({
-    padding: "8px 16px", background: activeTab === t ? A + "20" : "transparent",
-    border: activeTab === t ? "1px solid " + A + "40" : "1px solid " + BD,
-    borderRadius: 8, color: activeTab === t ? A : MT, fontSize: 12, fontWeight: 700,
-    cursor: "pointer", fontFamily: "'Outfit',sans-serif",
-  });
-
-  // Strict startsWith on displayed value per user directive — same rule as
-  // PlayerStats roster search and CountrySelect: typing "a" matches only
-  // values that START with "a", not values containing "a" anywhere.
   const sQ = search.trim().toLowerCase();
-  const filteredLeagues = leagues.filter(l =>
+  const fLeagues = leagues.filter(l =>
     l.name.toLowerCase().startsWith(sQ) ||
     (l.creator_email || "").toLowerCase().startsWith(sQ)
   );
-  const filteredUsers = users.filter(u =>
+  const fUsers = users.filter(u =>
     (u.email || "").toLowerCase().startsWith(sQ) ||
     (u.display_name || "").toLowerCase().startsWith(sQ)
   );
 
   return (
-    <div style={{ padding: "20px 16px", paddingTop: "calc(env(safe-area-inset-top, 0px) + 16px)", minHeight: "100vh", background: BG }}>
-      {/* Issue #16: Back button matching SettingsView/AdminDashboard convention */}
-      <button onClick={onClose} style={{ marginBottom: 20, background: "none", border: "none", color: A, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'Outfit',sans-serif", padding: 0 }}>← Back</button>
-      {/* Header */}
-      <div style={{ marginBottom: 20 }}>
-        <div style={{ fontSize: 20, fontWeight: 900, fontStyle: "italic", textTransform: "uppercase", letterSpacing: 1, color: TX }}>Platform Admin</div>
-        <div style={{ fontSize: 10, color: MT, fontWeight: 600, marginTop: 2 }}>Super Admin Dashboard</div>
+    <div className="pa-screen">
+      <div className="back-btn-row">
+        <button className="back-btn" onClick={onClose}>
+          <Icon name="chevron-left" size={18} color="currentColor" />
+        </button>
       </div>
 
-      {loading ? (
-        <div style={{ textAlign: "center", color: MT, padding: 40, fontSize: 13 }}>Loading platform data...</div>
-      ) : loadError ? (
-        <div style={{ textAlign: "center", padding: 40 }}>
-          <div style={{ color: MT, fontSize: 13, marginBottom: 16 }}>Failed to load platform data</div>
-          <button onClick={loadData} style={{ padding: "8px 20px", background: A + "20", border: "1px solid " + A + "40", borderRadius: 8, color: A, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Outfit',sans-serif" }}>↺ Retry</button>
-        </div>
-      ) : (
-        <>
-          {/* Stats Cards */}
-          {stats && (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginBottom: 20 }}>
+      <div className="ad-h">
+        <div className="adey">Super Admin · Read+Delete</div>
+        <div className="adh1">Platform Admin</div>
+      </div>
+
+      <div className="pa-body">
+        {loading ? (
+          <div className="pa-loading">Loading platform data…</div>
+        ) : loadError ? (
+          <div className="pa-error">
+            <div>Failed to load platform data</div>
+            <button className="pbtn" onClick={loadData}><Icon name="refresh" size={14} />Retry</button>
+          </div>
+        ) : (
+          <>
+            {stats && (
+              <div className="pastats">
+                {[
+                  { l: "Total Users", v: stats.total_users ?? "—", s: stats.total_users != null ? "All time" : "—", c: "g", i: "user" },
+                  { l: "Total Leagues", v: stats.total_leagues ?? "—", s: stats.total_leagues != null ? "All time" : "—", c: "o", i: "league" },
+                  { l: "Total Matches", v: stats.total_matches ?? "—", s: stats.total_matches != null ? "All time" : "—", c: "gr", i: "racket" },
+                ].map(s => (
+                  <div key={s.l} className="pasc">
+                    <div className="pasch">
+                      <div className={`pascico ${s.c}`}><Icon name={s.i} size={14} color={s.c === "o" ? "var(--gold)" : s.c === "gr" ? "var(--muted)" : "var(--accent)"} /></div>
+                      <div className="pascl">{s.l}</div>
+                    </div>
+                    <div className={`pascv ${s.c}`}>{s.v}</div>
+                    <div className="pascsub">{s.s}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="pafilbar">
               {[
-                { label: "Total Users", value: stats.total_users, icon: "\uD83D\uDC65" },
-                { label: "Total Leagues", value: stats.total_leagues, icon: "\uD83C\uDFDF\uFE0F" },
-                { label: "Total Matches", value: stats.total_matches, icon: "\uD83C\uDFBE" },
-                { label: "Active (7d)", value: stats.active_users_7d, icon: "\uD83D\uDCCA" },
-              ].map((s, i) => (
-                <div key={i} style={{ background: CD, border: "1px solid " + BD, borderRadius: 12, padding: "14px 16px" }}>
-                  <div style={{ fontSize: 10, color: MT, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>{s.icon} {s.label}</div>
-                  <div style={{ fontSize: 22, fontWeight: 800, color: A, fontFamily: "'JetBrains Mono',monospace" }}>{s.value}</div>
-                </div>
+                { id: "leagues", l: "Leagues", n: leagues.length, i: "league" },
+                { id: "users", l: "Users", n: users.length, i: "user" },
+              ].map(f => (
+                <button key={f.id} className={`pafil${filter === f.id ? " on" : ""}`} onClick={() => { setFilter(f.id); setSearch(""); }}>
+                  <Icon name={f.i} size={13} color={filter === f.id ? "var(--accent)" : "var(--muted)"} />
+                  {f.l} ({f.n})
+                </button>
               ))}
             </div>
-          )}
 
-          {/* Tabs */}
-          <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-            <button onClick={() => { setActiveTab("leagues"); setSearch(""); }} style={tabStyle("leagues")}>Leagues ({leagues.length})</button>
-            <button onClick={() => { setActiveTab("users"); setSearch(""); }} style={tabStyle("users")}>Users ({users.length})</button>
-          </div>
+            <div className="pasrw">
+              <div className="pasri"><Icon name="search" size={16} color="var(--muted)" /></div>
+              <input className="pasr" placeholder={`Search ${filter}…`} value={search} onChange={e => setSearch(e.target.value)} />
+            </div>
 
-          {/* Search */}
-          <input
-            type="text" value={search} onChange={e => setSearch(e.target.value)}
-            placeholder={activeTab === "leagues" ? "Search leagues or creator..." : "Search email or name..."}
-            style={{ width: "100%", padding: "10px 14px", background: CD, border: "1px solid " + BD, borderRadius: 10, color: TX, fontSize: 13, fontFamily: "'Outfit',sans-serif", outline: "none", boxSizing: "border-box", marginBottom: 12 }}
-          />
-
-          {/* Leagues Tab */}
-          {activeTab === "leagues" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {filteredLeagues.length === 0 && <div style={{ color: MT, fontSize: 12, textAlign: "center", padding: 20 }}>No leagues found</div>}
-              {filteredLeagues.map(l => (
-                <div key={l.id} style={{ background: CD, border: "1px solid " + BD, borderRadius: 12, padding: "12px 16px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
-                    <div>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: TX }}>{l.name}</div>
-                      <div style={{ fontSize: 10, color: MT, marginTop: 2 }}>by {l.creator_email || "\u2014"}</div>
+            <div className="palist">
+              {filter === "leagues" && fLeagues.length === 0 && <div className="pa-empty">No leagues found</div>}
+              {filter === "leagues" && fLeagues.map(l => (
+                <div key={l.id} className="paitem-wrap">
+                  <div className="paitem">
+                    <div className="paavi">{(l.name || "?")[0].toUpperCase()}</div>
+                    <div className="paib">
+                      <div className="pain">{l.name}</div>
+                      <div className="paim">{l.member_count} players · {l.match_count} matches · {l.invite_code}</div>
                     </div>
-                    <div style={{ fontSize: 9, color: MT, textAlign: "right" }}>{fmtDate(l.created_at)}</div>
-                  </div>
-                  <div style={{ display: "flex", gap: 12, marginBottom: 8 }}>
-                    <div style={{ fontSize: 11, color: MT }}>
-                      <span style={{ color: A, fontWeight: 700, fontFamily: "'JetBrains Mono',monospace" }}>{l.member_count}</span> members
-                    </div>
-                    <div style={{ fontSize: 11, color: MT }}>
-                      <span style={{ color: A, fontWeight: 700, fontFamily: "'JetBrains Mono',monospace" }}>{l.match_count}</span> matches
-                    </div>
-                    <div style={{ fontSize: 10, color: MT, fontFamily: "'JetBrains Mono',monospace" }}>
-                      Code: {l.invite_code}
+                    <div className="paia">
+                      {deleteConfirm !== l.id && (
+                        <button className="aib da" title="Delete league" onClick={() => { setDeleteConfirm(l.id); setDeleteTyped(""); }}>
+                          <Icon name="trash" size={13} />
+                        </button>
+                      )}
                     </div>
                   </div>
-                  {deleteConfirm === l.id ? (
-                    <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
-                      <input value={deleteTyped} onChange={e => setDeleteTyped(e.target.value)} placeholder={"Type \"" + l.name + "\" to delete"} style={{ flex: 1, minWidth: 120, padding: "6px 10px", borderRadius: 6, border: "1px solid " + DG, background: CD2, color: TX, fontSize: 11, fontFamily: "'Outfit',sans-serif", outline: "none" }} />
-                      <button onClick={() => handleDeleteLeague(l.id, l.name)} style={{ padding: "6px 10px", background: DG, border: "none", borderRadius: 6, color: "#fff", fontSize: 10, fontWeight: 700, cursor: "pointer" }}>Confirm</button>
-                      <button onClick={() => { setDeleteConfirm(null); setDeleteTyped(""); }} style={{ padding: "6px 8px", background: "none", border: "1px solid " + BD, borderRadius: 6, color: MT, fontSize: 10, cursor: "pointer" }}>Cancel</button>
+                  {deleteConfirm === l.id && (
+                    <div className="pa-confirm danger">
+                      <input
+                        className="pa-confirm-input"
+                        value={deleteTyped}
+                        onChange={e => setDeleteTyped(e.target.value)}
+                        placeholder={`Type "${l.name}" to confirm`}
+                      />
+                      <button className="dbtn" onClick={() => handleDeleteLeague(l.id, l.name)}>Confirm</button>
+                      <button className="gbtn ghost" onClick={() => { setDeleteConfirm(null); setDeleteTyped(""); }}>Cancel</button>
                     </div>
-                  ) : (
-                    <button onClick={() => handleDeleteLeague(l.id, l.name)} style={{ padding: "5px 10px", background: "none", border: "1px solid " + DG + "40", borderRadius: 6, color: DG, fontSize: 10, fontWeight: 600, cursor: "pointer", fontFamily: "'Outfit',sans-serif" }}>Delete League</button>
                   )}
                 </div>
               ))}
-            </div>
-          )}
 
-          {/* Users Tab */}
-          {activeTab === "users" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {filteredUsers.length === 0 && <div style={{ color: MT, fontSize: 12, textAlign: "center", padding: 20 }}>No users found</div>}
-              {filteredUsers.map(u => (
-                <div key={u.id} style={{ background: CD, border: "1px solid " + BD, borderRadius: 10, padding: "10px 14px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: deleteUserConfirm === u.id ? 8 : 0 }}>
-                    <div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: TX }}>{u.display_name || u.email?.split("@")[0]}</div>
-                      <div style={{ fontSize: 10, color: MT, marginTop: 1 }}>{u.email}</div>
+              {filter === "users" && fUsers.length === 0 && <div className="pa-empty">No users found</div>}
+              {filter === "users" && fUsers.map(u => (
+                <div key={u.id} className="paitem-wrap">
+                  <div className="paitem">
+                    <div className="paavi">{(u.display_name || u.email || "?")[0].toUpperCase()}</div>
+                    <div className="paib">
+                      <div className="pain">{u.display_name || u.email?.split("@")[0]}</div>
+                      <div className="paim">{u.email} · {u.league_count} league{u.league_count === 1 ? "" : "s"}</div>
                     </div>
-                    <div style={{ textAlign: "right" }}>
-                      <div style={{ fontSize: 11, color: A, fontWeight: 700, fontFamily: "'JetBrains Mono',monospace" }}>{u.league_count} league{u.league_count !== 1 ? "s" : ""}</div>
-                      <div style={{ fontSize: 9, color: MT, marginBottom: 4 }}>{fmtDate(u.created_at)}</div>
+                    <div className="paia">
                       {deleteUserConfirm !== u.id && (
-                        <button onClick={() => handleDeleteUser(u.id, u.email)} style={{ padding: "4px 8px", background: "none", border: "1px solid " + DG + "40", borderRadius: 6, color: DG, fontSize: 9, fontWeight: 600, cursor: "pointer", fontFamily: "'Outfit',sans-serif" }}>Delete</button>
+                        <button className="aib da" title="Delete user" onClick={() => { setDeleteUserConfirm(u.id); setDeleteUserTyped(""); }}>
+                          <Icon name="trash" size={13} />
+                        </button>
                       )}
                     </div>
                   </div>
                   {deleteUserConfirm === u.id && (
-                    <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
-                      <input value={deleteUserTyped} onChange={e => setDeleteUserTyped(e.target.value)} placeholder={"Type email to confirm"} style={{ flex: 1, minWidth: 120, padding: "6px 10px", borderRadius: 6, border: "1px solid " + DG, background: CD2, color: TX, fontSize: 11, fontFamily: "'Outfit',sans-serif", outline: "none" }} />
-                      <button onClick={() => handleDeleteUser(u.id, u.email)} style={{ padding: "6px 10px", background: DG, border: "none", borderRadius: 6, color: "#fff", fontSize: 10, fontWeight: 700, cursor: "pointer" }}>Confirm</button>
-                      <button onClick={() => { setDeleteUserConfirm(null); setDeleteUserTyped(""); }} style={{ padding: "6px 8px", background: "none", border: "1px solid " + BD, borderRadius: 6, color: MT, fontSize: 10, cursor: "pointer" }}>Cancel</button>
+                    <div className="pa-confirm danger">
+                      <input
+                        className="pa-confirm-input"
+                        value={deleteUserTyped}
+                        onChange={e => setDeleteUserTyped(e.target.value)}
+                        placeholder="Type email to confirm"
+                      />
+                      <button className="dbtn" onClick={() => handleDeleteUser(u.id, u.email)}>Confirm</button>
+                      <button className="gbtn ghost" onClick={() => { setDeleteUserConfirm(null); setDeleteUserTyped(""); }}>Cancel</button>
                     </div>
                   )}
                 </div>
               ))}
             </div>
-          )}
-        </>
-      )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

@@ -105,7 +105,8 @@ export function EditPlayerModal({ player, onClose, onSaved }) {
             {avatarUrl ? <img src={avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (name[0] || "?").toUpperCase()}
             {uploading && <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: TX }}>...</div>}
           </div>
-          <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={e => uploadPhoto(e.target.files?.[0])} style={{ display: "none" }} />
+          {/* S067: dropped capture="environment" — that attr forced iOS to open the rear camera and skip the gallery. Without it, iOS shows the standard sheet (Photo Library / Take Photo / Choose File). */}
+          <input ref={fileRef} type="file" accept="image/*" onChange={e => uploadPhoto(e.target.files?.[0])} style={{ display: "none" }} />
           <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
             <button onClick={() => fileRef.current?.click()} disabled={uploading} style={{ padding: "8px 14px", background: `${A}15`, border: `1px solid ${A}`, borderRadius: 8, color: A, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "'Outfit',sans-serif", opacity: uploading ? 0.5 : 1 }}>📷 {avatarUrl ? "Change Photo" : "Upload Photo"}</button>
             {avatarUrl && <button onClick={removePhoto} disabled={uploading} style={{ padding: "8px 14px", background: "transparent", border: `1px solid ${BD}`, borderRadius: 8, color: MT, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "'Outfit',sans-serif", opacity: uploading ? 0.5 : 1 }}>Remove</button>}
