@@ -10,6 +10,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
   const stats=sp?ps[sp]:null;
   const [subTab,setSubTab]=useState("roster"); // roster | analytics
   const [q,setQ]=useState(""); // Phase 5 search
+  const [genderFilter,setGenderFilter]=useState("all"); // S066 Phase 8: "all" | "male" | "female"
   const [editMode,setEditMode]=useState(false);
   const [editPid,setEditPid]=useState(null);
   const [editName,setEditName]=useState("");
@@ -592,10 +593,22 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
         // Typing "a" matches only players whose displayed name starts with "a"
         // (NOT players with "a" anywhere in the name). Per user: same behavior
         // applies in every search bar in the app.
-        const filtered = q==="" ? players : players.filter(p => {
+        const searchFiltered = q==="" ? players : players.filter(p => {
           const display = (p.nickname || p.name || "").toLowerCase();
           return display.startsWith(q.toLowerCase());
         });
+        // S066 Phase 8: gender filter. Players with NULL gender are visible
+        // only when filter is "all" — they don't render in Men or Women.
+        const filtered = genderFilter === "all" ? searchFiltered :
+          searchFiltered.filter(p => p.gender === genderFilter);
+        // Counts (computed against search-filtered set so they reflect what
+        // user is currently searching for) — keeps the pills meaningful when
+        // search is also active.
+        const counts = {
+          all:    searchFiltered.length,
+          male:   searchFiltered.filter(p => p.gender === "male").length,
+          female: searchFiltered.filter(p => p.gender === "female").length,
+        };
         return (<>
           {/* Phase 5: roster header bar with edit/add controls (admin only) */}
           <div className="rbar">
@@ -616,6 +629,18 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
             <input className="srch" placeholder="Search players…" value={q} onChange={e=>setQ(e.target.value)}/>
           </div>
 
+          {/* S066 Phase 8: gender filter pills (All / Men / Women) */}
+          <div className="gfilter">
+            {[["all","All"],["male","Men"],["female","Women"]].map(([key,label])=>(
+              <button key={key}
+                className={`gfilter-pill${genderFilter===key?" on":""}`}
+                onClick={()=>setGenderFilter(key)}>
+                <span className="gfilter-lbl">{label}</span>
+                <span className="gfilter-cnt">{counts[key]}</span>
+              </button>
+            ))}
+          </div>
+
           {/* Add Player form preserved verbatim (S046 admin path) */}
           {showAddPlayer&&!editMode&&<div style={{margin:"0 18px 12px",background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14}}>
             <input placeholder="Name *" value={newName} onChange={e=>setNewName(e.target.value)} style={{...inp,marginBottom:8}}/>
@@ -625,8 +650,12 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
 
           {/* Phase 5: hybrid 2-col grid of .prow cards (Q1=C, Q2=A W-L shown, Q3=A circle avatar) */}
           <div className="plist">
-            {filtered.length===0 && q && (
-              <div className="plist-empty">No players matching "{q}"</div>
+            {filtered.length===0 && (q || genderFilter!=="all") && (
+              <div className="plist-empty">
+                {q && genderFilter!=="all" ? `No ${genderFilter==="male"?"men":"women"} matching "${q}"` :
+                 q ? `No players matching "${q}"` :
+                 `No ${genderFilter==="male"?"men":"women"} in this league yet`}
+              </div>
             )}
             {filtered.map(p=>{
               const stat = ps[p.id];

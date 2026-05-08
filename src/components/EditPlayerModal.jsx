@@ -16,6 +16,7 @@ export function EditPlayerModal({ player, onClose, onSaved }) {
   const [nickname, setNickname] = useState(player.nickname || "");
   const [country, setCountry] = useState(player.country || "");
   const [position, setPosition] = useState(player.playing_position || "");
+  const [gender, setGender] = useState(player.gender || ""); // S066 Phase 8
   const [avatarUrl, setAvatarUrl] = useState(player.avatar_url || null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -74,6 +75,7 @@ export function EditPlayerModal({ player, onClose, onSaved }) {
           nickname: nickname.trim() || null,
           country: country || null,
           playing_position: position || null,
+          gender: gender || null,
           avatar_url: avatarUrl || null,
         })
         .eq("id", player.id);
@@ -126,9 +128,17 @@ export function EditPlayerModal({ player, onClose, onSaved }) {
 
         {/* Playing position */}
         <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: MT, marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>Playing Position</label>
-        <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
+        <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
           {[["", "Not set"], ["left", "Left"], ["right", "Right"]].map(([v, l]) => (
             <button key={v || "none"} onClick={() => setPosition(v)} style={{ flex: 1, padding: "10px", background: position === v ? A : "transparent", color: position === v ? "#000" : MT, border: `1px solid ${position === v ? A : BD}`, borderRadius: 10, fontSize: 12, fontWeight: 800, cursor: "pointer", fontFamily: "'Outfit',sans-serif", fontStyle: "italic", textTransform: "uppercase", letterSpacing: 0.5 }}>{l}</button>
+          ))}
+        </div>
+
+        {/* Gender (S066 Phase 8) — 2-button toggle. Tapping the active one again clears it. */}
+        <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: MT, marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>Gender</label>
+        <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
+          {[["male", "Male"], ["female", "Female"]].map(([v, l]) => (
+            <button key={v} onClick={() => setGender(gender === v ? "" : v)} style={{ flex: 1, padding: "10px", background: gender === v ? A : "transparent", color: gender === v ? "#000" : MT, border: `1px solid ${gender === v ? A : BD}`, borderRadius: 10, fontSize: 12, fontWeight: 800, cursor: "pointer", fontFamily: "'Outfit',sans-serif", fontStyle: "italic", textTransform: "uppercase", letterSpacing: 0.5 }}>{l}</button>
           ))}
         </div>
 

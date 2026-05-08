@@ -624,11 +624,20 @@ body {
 .gbtn.on{background:rgba(74,222,128,.09);border-color:var(--accent-glow);color:var(--accent);}
 
 /* Search input */
-.srchw{padding:0 18px 12px;position:relative;}
+.srchw{padding:0 18px 10px;position:relative;}
 .srchi{position:absolute;left:30px;top:50%;transform:translateY(-50%);color:#9090a4;pointer-events:none;display:flex;}
 .srch{width:100%;padding:11px 16px 11px 42px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);color:var(--text);font-family:var(--font);font-size:14px;outline:none;transition:border-color 200ms;}
 .srch::placeholder{color:#9090a4;}
 .srch:focus{border-color:var(--accent-glow);}
+
+/* S066 Phase 8: gender filter pills (All / Men / Women) below search bar */
+.gfilter{display:flex;gap:6px;padding:0 18px 12px;}
+.gfilter-pill{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-full);padding:8px 12px;font-family:var(--font);font-size:11px;font-weight:700;letter-spacing:.04em;color:#9090a4;cursor:pointer;transition:all 150ms;text-transform:uppercase;}
+.gfilter-pill:hover{border-color:var(--accent-glow);color:var(--text);}
+.gfilter-pill.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);}
+.gfilter-lbl{font-weight:800;}
+.gfilter-cnt{font-family:var(--mono);font-size:10px;font-weight:700;background:rgba(255,255,255,.06);border-radius:var(--r-full);padding:1px 7px;}
+.gfilter-pill.on .gfilter-cnt{background:rgba(74,222,128,.18);color:var(--accent);}
 
 /* Roster: hybrid 2-col grid of .prow cards */
 .plist{padding:0 18px;display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;}
