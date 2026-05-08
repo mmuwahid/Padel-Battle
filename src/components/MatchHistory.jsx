@@ -48,11 +48,17 @@ export function MatchHistory({onEdit,shareMatch,sel,onMatchDeleted}){
   const getAvatar = (pid) => players.find(pp=>pp.id===pid)?.avatar_url;
   const getCountry = (pid) => players.find(pp=>pp.id===pid)?.country;
 
+  // Stable key so the SELECT only refires when the SET of match IDs actually changes
+  // (not on every render due to .filter() returning new array refs). Without this,
+  // a SELECT in flight at click-time could overwrite the optimistic upsert state
+  // and the reaction would visibly flash for ~1s before disappearing.
+  const matchIdsKey = matches.map(m=>m.id).join(',');
   useEffect(()=>{
-    if(!matches.length||!supabase)return;
-    const matchIds=matches.map(m=>m.id);
+    if(!matchIdsKey||!supabase)return;
+    const matchIds=matchIdsKey.split(',');
+    let cancelled = false;
     supabase.from("match_reactions").select("match_id,user_id,reaction").in("match_id",matchIds).then(({data})=>{
-      if(!data)return;
+      if(cancelled||!data)return;
       const grouped={};const mine={};
       data.forEach(r=>{
         if(!grouped[r.match_id])grouped[r.match_id]=[];
@@ -61,7 +67,8 @@ export function MatchHistory({onEdit,shareMatch,sel,onMatchDeleted}){
       });
       setReactions(grouped);setMyReactions(mine);
     });
-  },[matches,supabase,user]);
+    return ()=>{ cancelled = true; };
+  },[matchIdsKey,supabase,user?.id]);
 
   // S066: outside-click closes the picker popover
   useEffect(()=>{

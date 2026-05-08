@@ -107,14 +107,13 @@ export function PlayerManagement({ memberProfiles, setSidebarView }) {
       const { error } = await supabase.rpc("set_member_role", { p_member_id: memberId, p_role: newRole });
       if (error) throw error;
       showToast(newRole === "admin" ? "Promoted to admin" : "Demoted to member");
-      if (sendPushNotification && targetUserId && targetUserId !== user?.id) {
-        const isPromote = newRole === "admin";
-        const title = isPromote ? "You're now an admin" : "Admin access removed";
-        const body = isPromote
-          ? `You were made an admin of ${league?.name || "the league"}. You can now approve, edit, and reject match submissions.`
-          : `Your admin role in ${league?.name || "the league"} was removed.`;
-        sendPushNotification("members", title, body, [targetUserId]);
-      }
+      // S068: the set_member_role RPC already inserts the in-app notifications row
+      // (with data.kind='role_change'). Calling sendPushNotification here would
+      // route through the push-notify Edge Function which ALSO inserts a row,
+      // producing two notifications in NotificationCenter for every role change.
+      // Keep the RPC as the single source of truth for in-app; the trade-off is no
+      // separate web/PWA push for role changes — acceptable since the user lands
+      // on the in-app notification next time they open the app.
       await loadLeagueData();
     } catch (err) {
       showToast(err.message || "Failed to change role", "error");
@@ -181,7 +180,8 @@ export function PlayerManagement({ memberProfiles, setSidebarView }) {
               <div className="plmrow-main">
                 <div className="plmavi">
                   {p.avatar_url ? <img src={p.avatar_url} alt="" /> : <span>{initial}</span>}
-                  <div className={`plmavi-dot${claimed ? " claimed" : ""}`} title={claimed ? "Linked" : "Unclaimed"} />
+                  {/* Only flag UNCLAIMED players — claimed = default state, no dot needed */}
+                  {!claimed && <div className="plmavi-dot" title="Unclaimed" />}
                 </div>
 
                 <div className="plminf">

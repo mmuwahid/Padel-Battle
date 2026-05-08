@@ -737,7 +737,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                       )}
                       {(wl.w+wl.l)>0 && <>
                         <span className="pmet-sep">·</span>
-                        <span className="prec2"><span className="w">{wl.w}W</span><span>{wl.l}L</span></span>
+                        <span className="prec2"><span className={wl.w>0?"w":"z"}>{wl.w}W</span><span className={wl.l>0?"l":"z"}>{wl.l}L</span></span>
                       </>}
                     </div>
                   </div>
