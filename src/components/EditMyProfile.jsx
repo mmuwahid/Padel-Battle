@@ -81,12 +81,16 @@ export function EditMyProfile({ player, onClose }) {
           </div>
         </div>
 
-        {/* Gender (S066 Phase 8) — 2-button toggle. Tapping the active one again clears it. */}
+        {/* Gender (S066 Phase 8) — 2-button toggle. Tapping the active one again clears it.
+            Active colors match Players-screen filter pills: blue for Male, pink for Female. */}
         <div style={{marginBottom:16}}>
           <label style={{display:"block",fontSize:10,color:MT,fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>Gender</label>
           <div style={{display:"flex",gap:6}}>
-            {[["male", "Male"], ["female", "Female"]].map(([v, l]) => (
-              <button key={v} onClick={()=>setGender(gender===v?"":v)} style={{flex:1,padding:"10px",background:gender===v?A:"transparent",color:gender===v?"#000":MT,border:`1px solid ${gender===v?A:BD}`,borderRadius:10,fontSize:12,fontWeight:800,cursor:"pointer",fontFamily:"'Outfit',sans-serif",fontStyle:"italic",textTransform:"uppercase",letterSpacing:0.5}}>{l}</button>
+            {[
+              { v: "male",   l: "Male",   c: "#60a5fa", bg: "rgba(96,165,250,.10)",  bd: "rgba(96,165,250,.45)" },
+              { v: "female", l: "Female", c: "#f472b6", bg: "rgba(244,114,182,.10)", bd: "rgba(244,114,182,.45)" },
+            ].map(({ v, l, c, bg, bd }) => (
+              <button key={v} onClick={()=>setGender(gender===v?"":v)} style={{flex:1,padding:"10px",background:gender===v?bg:"transparent",color:gender===v?c:MT,border:`1px solid ${gender===v?bd:BD}`,borderRadius:10,fontSize:12,fontWeight:800,cursor:"pointer",fontFamily:"'Outfit',sans-serif",fontStyle:"italic",textTransform:"uppercase",letterSpacing:0.5}}>{l}</button>
             ))}
           </div>
         </div>
