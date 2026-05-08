@@ -4,6 +4,7 @@ import { formatDate, win, setTotals } from '../utils/helpers';
 import { TeamShuffler } from './TeamShuffler';
 import { ScoreStepper } from './ScoreStepper';
 import { validateMatch } from '../utils/scoringEngine';
+import Icon from './Icon';
 
 export function ScheduleView({challenges,players,matches,supabase,leagueId,user,getName,isAdmin,onUpdate,showToast,sendPushNotification,sel,elo,seasonId}){
   const [showForm,setShowForm]=useState(false);
@@ -194,29 +195,25 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
         <button className="sched-add" onClick={()=>setShowForm(!showForm)}>{showForm?"Cancel":"+ Schedule"}</button>
       </div>
 
-      {/* Phase 7: Multi-step schedule form, restyled to .sform component vocabulary */}
+      {/* Phase 7 (S065 spec port): Multi-step schedule form. Markup ported verbatim
+          from PadelHub_Complete_v2.jsx ScheduleScreen lines 1490-1622, with LONG
+          token names. Step 1: Players card with Team A (green) / VS / Team B (gold).
+          Step 2: summary chip + sheet-form Details card with info banner. */}
+
+      {/* ── Step 1: Select Players ── */}
       {showForm && step===1 && (
-        <div className="sform">
-          <div className="sform-steps">
-            <div className="sform-step on">1</div>
-            <div className="sform-line"/>
-            <div className="sform-step">2</div>
-            <span className="sform-step-label">Players {"\u2192"} Details</span>
+        <div style={{padding:"10px 18px 0"}}>
+          {/* Progress stepper */}
+          <div className="sch-progress">
+            <div className="sch-step-circle active">1</div>
+            <div className="sch-connector"><div className="sch-connector-fill" style={{width:"0%"}}/></div>
+            <div className="sch-step-circle idle">2</div>
+            <div className="sch-step-label">Players {"\u2192"} Details</div>
           </div>
 
-          <div className="sform-body">
-            <div className="sform-banner">
-              <span style={{fontSize:16,lineHeight:1}}>{"\uD83C\uDFBE"}</span>
-              <span>Select Players</span>
-            </div>
-
-            {/* FT-08: Shuffle entry point */}
-            {!showShuffler && (
-              <button className="sform-shuffle" onClick={()=>setShowShuffler(true)}>
-                <span style={{fontSize:15}}>{"\uD83C\uDFB2"}</span> Shuffle Teams
-              </button>
-            )}
-            {showShuffler && (
+          {/* FT-08 Shuffler renders inline above the players card when active */}
+          {showShuffler && (
+            <div style={{marginTop:10}}>
               <TeamShuffler
                 players={players}
                 getName={getName}
@@ -232,89 +229,138 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
                 }}
                 onCancel={()=>setShowShuffler(false)}
               />
-            )}
+            </div>
+          )}
 
-            <div className="sform-section">
-              <div className="sform-lbl">Team 1</div>
-              <div className="sform-grid-2">
-                {[0,1].map(i=>{const allSel=[tA[0],tA[1],tB[0],tB[1]].filter(Boolean);const others=allSel.filter(v=>v!==tA[i]);const badge=tA[i]?getEloBadge(tA[i]):null;return(
-                  <div key={i} className="sform-pcard">
-                    <div className="sform-pcard-l">Player {i+1}</div>
-                    <select className="sform-input" value={tA[i]} onChange={e=>{const n=[...tA];n[i]=e.target.value;setTA(n);}}>
-                      <option value="">Select Player...</option>
-                      {players.filter(p=>!others.includes(p.id)).map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}
-                    </select>
-                    {badge && <div className="sform-elobadge" style={{background:`${badge.color}20`,color:badge.color}}>{badge.label}</div>}
-                  </div>
-                );})}
+          {/* Teams card */}
+          {!showShuffler && (
+            <div className="tcard" style={{marginTop:10}}>
+              <div className="tcardh">
+                <div className="tcardtit">Players</div>
+                <button className="shufbtn" onClick={()=>setShowShuffler(true)}>
+                  <Icon name="shuffle" size={13}/>Shuffle
+                </button>
+              </div>
+              <div className="tinner">
+                {/* Team A (green) */}
+                <div>
+                  <div className="tcolh"><div className="tcoldot tcolha"/><div className="tcollbl tcollbla">Team A</div></div>
+                  {[0,1].map(i=>{
+                    const allSel=[tA[0],tA[1],tB[0],tB[1]].filter(Boolean);
+                    const others=allSel.filter(v=>v!==tA[i]);
+                    return (
+                      <div key={i} className="pslot">
+                        <select className={`psel af${tA[i]?" fi":""}`} value={tA[i]} onChange={e=>{const n=[...tA];n[i]=e.target.value;setTA(n);}}>
+                          <option value="">{"\u2014 Select \u2014"}</option>
+                          {players.filter(p=>!others.includes(p.id)).map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}
+                        </select>
+                        <div className="pselch"><Icon name="chevron" size={13}/></div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="tcolvs">VS</div>
+                {/* Team B (gold) */}
+                <div>
+                  <div className="tcolh" style={{justifyContent:"flex-end"}}><div className="tcollbl tcollblb">Team B</div><div className="tcoldot tcolhb"/></div>
+                  {[0,1].map(i=>{
+                    const allSel=[tA[0],tA[1],tB[0],tB[1]].filter(Boolean);
+                    const others=allSel.filter(v=>v!==tB[i]);
+                    return (
+                      <div key={i} className="pslot">
+                        <select className={`psel bf${tB[i]?" fi":""}`} value={tB[i]} onChange={e=>{const n=[...tB];n[i]=e.target.value;setTB(n);}}>
+                          <option value="">{"\u2014 Select \u2014"}</option>
+                          {players.filter(p=>!others.includes(p.id)).map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}
+                        </select>
+                        <div className="pselch"><Icon name="chevron" size={13}/></div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
+          )}
 
-            <div className="sform-section">
-              <div className="sform-lbl">Team 2</div>
-              <div className="sform-grid-2">
-                {[0,1].map(i=>{const allSel=[tA[0],tA[1],tB[0],tB[1]].filter(Boolean);const others=allSel.filter(v=>v!==tB[i]);const badge=tB[i]?getEloBadge(tB[i]):null;return(
-                  <div key={i} className="sform-pcard">
-                    <div className="sform-pcard-l">Player {i+3}</div>
-                    <select className="sform-input" value={tB[i]} onChange={e=>{const n=[...tB];n[i]=e.target.value;setTB(n);}}>
-                      <option value="">Select Player...</option>
-                      {players.filter(p=>!others.includes(p.id)).map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}
-                    </select>
-                    {badge && <div className="sform-elobadge" style={{background:`${badge.color}20`,color:badge.color}}>{badge.label}</div>}
-                  </div>
-                );})}
+          {/* Actions: 3fr / 2fr (Continue / Cancel) */}
+          {(() => {
+            const canContinue = tA[0] && tA[1] && tB[0] && tB[1];
+            return (<>
+              <div style={{display:"grid",gridTemplateColumns:"3fr 2fr",gap:8,marginTop:10}}>
+                <button className={`savebtn ${canContinue?"on":"off"}`} disabled={!canContinue} onClick={()=>canContinue && setStep(2)}>
+                  {canContinue && <Icon name="arrow-right" size={16} color="#000" strokeWidth={2}/>}Continue
+                </button>
+                <button className="shcancel" onClick={()=>{setShowForm(false);setStep(1);setTA(["",""]);setTB(["",""]);}}>Cancel</button>
               </div>
-            </div>
-          </div>
-
-          <div className="sform-actions">
-            <button className="sform-cta" onClick={()=>setStep(2)} disabled={!tA[0]}>Continue</button>
-            <button className="sform-cta sec" onClick={()=>{setShowForm(false);setStep(1);}}>Cancel</button>
-          </div>
+              {!canContinue && <div className="savehint">Select all 4 players to continue</div>}
+            </>);
+          })()}
         </div>
       )}
 
+      {/* ── Step 2: Match Details ── */}
       {showForm && step===2 && (
-        <div className="sform">
-          <div className="sform-steps">
-            <div className="sform-step done">{"\u2713"}</div>
-            <div className="sform-line on"/>
-            <div className="sform-step on">2</div>
-            <span className="sform-step-label">Players {"\u2192"} Details</span>
+        <div style={{padding:"10px 18px 0"}}>
+          {/* Progress stepper (1 done, 2 active) */}
+          <div className="sch-progress">
+            <div className="sch-step-circle done"><Icon name="check" size={14} color="#000" strokeWidth={2.5}/></div>
+            <div className="sch-connector"><div className="sch-connector-fill" style={{width:"100%"}}/></div>
+            <div className="sch-step-circle active">2</div>
+            <div className="sch-step-label">Players {"\u2192"} Details</div>
           </div>
 
-          <div className="sform-body">
-            <div className="sform-section">
-              <div className="sform-lbl">Match Date</div>
-              <div className="sform-row">
-                <input className="sform-input" type="date" value={date} min={new Date().toISOString().split("T")[0]} onChange={e=>setDate(e.target.value)}/>
-                <input className="sform-input" type="time" value={time} onChange={e=>setTime(e.target.value)}/>
+          {/* Team summary chip */}
+          <div className="svsum" style={{marginTop:10}}>
+            <span className="svsum-a">{tA.filter(Boolean).map(getName).join(" & ")}</span>
+            <span className="svsum-vs">vs</span>
+            <span className="svsum-b">{tB.filter(Boolean).map(getName).join(" & ")}</span>
+            <button className="svsum-edit" onClick={()=>setStep(1)}>Edit <Icon name="edit" size={11}/></button>
+          </div>
+
+          {/* Details card */}
+          <div className="tcard" style={{marginTop:10}}>
+            <div style={{padding:"12px 14px 0"}}>
+              {/* Match Date & Time */}
+              <div className="shlbl" style={{marginBottom:6}}><Icon name="calendar" size={12}/>Match Date {"\u0026"} Time</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}}>
+                <input type="date" className="shi" value={date} min={new Date().toISOString().split("T")[0]} onChange={e=>setDate(e.target.value)}/>
+                <input type="time" className="shi" value={time} onChange={e=>setTime(e.target.value)}/>
               </div>
-            </div>
 
-            <div className="sform-section">
-              <div className="sform-lbl">Duration</div>
-              <div className="sform-pillrow">
-                {[60,90,120].map(d=>(
-                  <button key={d} className={`sform-pill${duration===d?' on':''}`} onClick={()=>setDuration(d)}>{d} min</button>
-                ))}
+              {/* Duration — inline pillrow */}
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
+                <div className="shlbl" style={{marginBottom:0}}><Icon name="clock" size={12}/>Duration</div>
+                <div className="stog">
+                  {[60,90,120].map(d=>(
+                    <button key={d} className={`stogbtn${duration===d?' on':''}`} onClick={()=>setDuration(d)}>{d}m</button>
+                  ))}
+                </div>
               </div>
+              <div style={{height:10}}/>
+
+              {/* Court */}
+              <div className="shlbl" style={{marginBottom:6}}><Icon name="court-l" size={12}/>Court</div>
+              <input className="shi" style={{marginBottom:10}} placeholder={"e.g. Harmony 3 \u2013 Padel Court 1"} value={location} onChange={e=>setLocation(e.target.value)}/>
+
+              {/* Notes */}
+              <div className="shlbl" style={{marginBottom:6}}><Icon name="edit" size={12}/>Notes (optional)</div>
+              <input className="shi" style={{marginBottom:14}} placeholder={"Any notes for the players\u2026"} value={notes} onChange={e=>setNotes(e.target.value)}/>
             </div>
 
-            <div className="sform-section">
-              <div className="sform-lbl">Court</div>
-              <input className="sform-input" placeholder="e.g., Harmony 3 - Padel Court 1" value={location} onChange={e=>setLocation(e.target.value)}/>
-            </div>
-
-            <div className="sform-section">
-              <div className="sform-lbl">Notes</div>
-              <input className="sform-input" placeholder="Optional" value={notes} onChange={e=>setNotes(e.target.value)}/>
+            {/* Info note */}
+            <div style={{margin:"0 14px 14px"}}>
+              <div className="inote">
+                <Icon name="info" size={14} color="rgba(245,158,11,.8)"/>
+                <div className="inotet">All players will be notified when the match is scheduled.</div>
+              </div>
             </div>
           </div>
 
-          <div className="sform-actions">
-            <button className="sform-cta" onClick={createChallenge} disabled={saving}>{saving?"Scheduling...":"Schedule Match"}</button>
-            <button className="sform-cta sec" onClick={()=>setStep(1)}>Back</button>
+          {/* Actions: 3fr / 2fr (Schedule Match / Back) */}
+          <div style={{display:"grid",gridTemplateColumns:"3fr 2fr",gap:8,marginTop:10}}>
+            <button className={`savebtn ${saving?"off":"on"}`} disabled={saving} onClick={createChallenge}>
+              {!saving && <Icon name="check" size={16} color="#000" strokeWidth={2.5}/>}{saving?"Scheduling...":"Schedule Match"}
+            </button>
+            <button className="shcancel" onClick={()=>setStep(1)}>Back</button>
           </div>
         </div>
       )}
