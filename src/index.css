@@ -661,6 +661,9 @@ body {
 .prow.editing{grid-column:1 / -1;border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.04);cursor:default;}
 .prow.editing:hover{transform:none;background:rgba(245,158,11,.04);}
 .prow.editing::before{display:none;}
+/* #82: highlight the user's own player row with green border tint instead of "YOU" pill */
+.prow.me{border-color:var(--accent-glow);background:rgba(74,222,128,.04);box-shadow:inset 3px 0 0 0 var(--accent);}
+.prow.me:hover{background:rgba(74,222,128,.07);border-color:var(--accent-glow);}
 
 /* Avatar (circle, Q3=A) */
 .ravi{width:40px;height:40px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;background:linear-gradient(135deg,rgba(74,222,128,.15),rgba(74,222,128,.05));border:1.5px solid rgba(74,222,128,.3);color:var(--accent);overflow:hidden;}
@@ -703,11 +706,17 @@ body {
 .lv-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden;transition:all 200ms;}
 .lv-card.current{border-color:var(--accent-glow);box-shadow:inset 3px 0 0 0 var(--accent);}
 .lv-card-row{display:flex;align-items:center;gap:6px;padding:10px 12px;}
-.lv-card-main{display:flex;align-items:center;gap:10px;width:100%;background:transparent;border:none;padding:12px 14px;cursor:pointer;color:var(--text);font-family:var(--font);font-size:13px;font-weight:600;text-align:left;min-width:0;}
+.lv-card-main{display:flex;align-items:flex-start;gap:10px;width:100%;background:transparent;border:none;padding:12px 14px;cursor:pointer;color:var(--text);font-family:var(--font);font-size:13px;font-weight:600;text-align:left;min-width:0;}
 .lv-card-main:hover{background:var(--surface-2);}
-.lv-card-emoji{font-size:18px;flex-shrink:0;}
+.lv-card-emoji{font-size:18px;flex-shrink:0;line-height:1;margin-top:1px;}
+.lv-card-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;}
+.lv-card-row1{display:flex;align-items:center;gap:8px;min-width:0;}
 .lv-card-name{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .lv-card-fmt{font-family:var(--mono);font-size:8px;font-weight:700;color:var(--gold);background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);padding:2px 6px;border-radius:var(--r-sm);letter-spacing:.05em;flex-shrink:0;}
+/* #67: League menu status — N players · M matches */
+.lv-card-meta{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;font-weight:500;color:var(--muted);letter-spacing:.02em;}
+.lv-card-meta svg{flex-shrink:0;opacity:.85;}
+.lv-card-meta-sep{opacity:.5;}
 .lv-card-actions{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:0 12px 10px;}
 .lv-card-actions .gbtn{padding:6px 9px;font-size:11px;}
 .lv-card-actions .gbtn.danger{color:var(--danger);border-color:rgba(248,113,113,.3);}

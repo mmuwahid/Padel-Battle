@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Icon from "./Icon";
+import { supabase } from "../supabase";
 
 /**
  * S063: LeaguesView — full sidebar sub-view for league management.
@@ -38,6 +39,28 @@ export function LeaguesView({
   const [editName, setEditName] = useState("");
   const [delConfirmId, setDelConfirmId] = useState(null);
   const [delTyped, setDelTyped] = useState("");
+
+  // #67: lazy-fetch player + match counts per visible league when this view mounts.
+  // Map keyed by league_id → { players, matches }.
+  const [counts, setCounts] = useState({});
+  useEffect(() => {
+    if (!leagues || leagues.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      const results = await Promise.all(
+        leagues.map(async (l) => {
+          const [{ count: pc }, { count: mc }] = await Promise.all([
+            supabase.from("players").select("id", { count: "exact", head: true }).eq("league_id", l.id),
+            supabase.from("matches").select("id", { count: "exact", head: true }).eq("league_id", l.id).eq("status", "approved"),
+          ]);
+          return [l.id, { players: pc || 0, matches: mc || 0 }];
+        })
+      );
+      if (cancelled) return;
+      setCounts(Object.fromEntries(results));
+    })();
+    return () => { cancelled = true; };
+  }, [leagues]);
 
   const handleCreate = async (e) => {
     e?.preventDefault();
@@ -148,9 +171,20 @@ export function LeaguesView({
                         onClick={() => { handlers.switchLeague(l.id); onClose?.(); }}
                       >
                         <span className="lv-card-emoji">🏟️</span>
-                        <span className="lv-card-name">{l.name}</span>
-                        {l.format === "pairs" && <span className="lv-card-fmt">PAIRS</span>}
-                        {isCurrent && <span className="pbadge" style={{marginLeft:"auto"}}>CURRENT</span>}
+                        <div className="lv-card-body">
+                          <div className="lv-card-row1">
+                            <span className="lv-card-name">{l.name}</span>
+                            {l.format === "pairs" && <span className="lv-card-fmt">PAIRS</span>}
+                            {isCurrent && <span className="pbadge">CURRENT</span>}
+                          </div>
+                          <div className="lv-card-meta">
+                            <Icon name="users" size={11} color="currentColor" strokeWidth={2}/>
+                            <span>{counts[l.id]?.players ?? "—"} players</span>
+                            <span className="lv-card-meta-sep">·</span>
+                            <Icon name="racket" size={11} color="currentColor" strokeWidth={2}/>
+                            <span>{counts[l.id]?.matches ?? "—"} matches</span>
+                          </div>
+                        </div>
                       </button>
                       <div className="lv-card-actions">
                         {isAdminLike && (

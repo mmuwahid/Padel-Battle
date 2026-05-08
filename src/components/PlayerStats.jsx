@@ -720,7 +720,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                 </div>
               );
               return (
-                <div key={p.id} className="prow" onClick={()=>{if(!editMode)setSp(p.id);}} style={editMode?{cursor:"default"}:undefined}>
+                <div key={p.id} className={"prow"+(isMe?" me":"")} onClick={()=>{if(!editMode)setSp(p.id);}} style={editMode?{cursor:"default"}:undefined}>
                   <div className={`ravi${isMe?" me":""}`}>
                     {p.avatar_url ? <img src={p.avatar_url} alt=""/> : (p.name[0]||"?").toUpperCase()}
                   </div>
@@ -741,7 +741,6 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                       </>}
                     </div>
                   </div>
-                  {isMe && !editMode && <span className="pbadge">YOU</span>}
                   {editMode ? (
                     <div className="padmin" onClick={e=>e.stopPropagation()}>
                       <button title="Edit" onClick={()=>startEdit(p)}><Icon name="edit" size={14}/></button>
