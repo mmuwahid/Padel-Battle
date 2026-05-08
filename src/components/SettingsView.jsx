@@ -64,12 +64,14 @@ export function SettingsView({ user, claimedPlayer, isAdmin, pushSubscribed, sub
   const notifBlocked = "Notification" in window && Notification.permission === 'denied';
 
   return (
-    <div className="stbody" style={{paddingBottom:"calc(80px + env(safe-area-inset-bottom, 0px))"}}>
-      <button onClick={()=>setSidebarView(null)} style={{background:"none",border:"none",color:"var(--accent)",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"var(--font)",alignSelf:"flex-start",display:"flex",alignItems:"center",gap:5,padding:0}}>
-        <Icon name="back" size={14}/> Back
-      </button>
-
-      <h2 style={{fontSize:20,fontWeight:800,fontStyle:"italic",letterSpacing:"-.01em",color:"var(--text)",margin:0}}>Settings</h2>
+    <div style={{paddingBottom:"calc(80px + env(safe-area-inset-bottom, 0px))"}}>
+      <div style={{padding:"16px 18px 0"}}>
+        <button onClick={()=>setSidebarView(null)} className="back-btn">
+          <Icon name="back" size={14}/> Back
+        </button>
+      </div>
+      <div className="stbody" style={{paddingTop:8}}>
+        <h2 style={{fontSize:20,fontWeight:800,fontStyle:"italic",letterSpacing:"-.01em",color:"var(--text)",margin:0}}>Settings</h2>
 
       <ErrorBoundary>
 
@@ -120,7 +122,7 @@ export function SettingsView({ user, claimedPlayer, isAdmin, pushSubscribed, sub
         <div className="slbl">League</div>
         <div className="stcard">
           <div className="saar" onClick={onSwitchLeague}>
-            <div className="stico"><Icon name="league" size={16}/></div>
+            <div className="stico"><Icon name="switch" size={16}/></div>
             <div className="stbod"><div className="sttitle">Switch League</div><div className="stsub">Join a different league</div></div>
             <Icon name="chevron" size={16} color="#5a5a6a"/>
           </div>
@@ -183,6 +185,7 @@ export function SettingsView({ user, claimedPlayer, isAdmin, pushSubscribed, sub
         </div>
       )}
       </ErrorBoundary>
+      </div>
     </div>
   );
 }

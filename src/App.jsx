@@ -947,25 +947,34 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
                 <div className="rules-h-title">Padel Rules</div>
                 <div className="rules-h-sub">Match scoring, serving, walls, and the etiquette that keeps things fair.</div>
               </div>
-              {RULES.map((r,i) => (
-                <div key={i} className="rcard">
-                  <div className="rchd">
-                    <div className="rcico">{r.title.includes("Scoring") ? "🏆" : r.title.includes("Serve")||r.title.includes("Return") ? "🎾" : r.title.includes("Wall")||r.title.includes("Outside") ? "🧱" : r.title.includes("Net") ? "🚧" : r.title.includes("Switch") ? "🔄" : "⚖️"}</div>
-                    <div className="rct">{r.title}</div>
+              {RULES.map((r,i) => {
+                const icoName =
+                  r.title.includes("Scoring") ? "trophy" :
+                  r.title.includes("Serve") || r.title.includes("Return") ? "racket" :
+                  r.title.includes("Wall") || r.title.includes("Outside") ? "court-any" :
+                  r.title.includes("Net") ? "alert" :
+                  r.title.includes("Switch") ? "refresh" :
+                  "info";
+                return (
+                  <div key={i} className="rcard">
+                    <div className="rchd">
+                      <div className="rcico"><Icon name={icoName} size={16} color="var(--accent)"/></div>
+                      <div className="rct">{r.title}</div>
+                    </div>
+                    {r.intro && <div className="rcintro">{r.intro}</div>}
+                    {r.subRules ? (
+                      r.subRules.map((sr,j) => (
+                        <div key={j} className="rsub">
+                          <div className="rsub-h">{sr.title}</div>
+                          <div className="rsub-c">{sr.content}</div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="rcontent">{r.content}</div>
+                    )}
                   </div>
-                  {r.intro && <div className="rcintro">{r.intro}</div>}
-                  {r.subRules ? (
-                    r.subRules.map((sr,j) => (
-                      <div key={j} className="rsub">
-                        <div className="rsub-h">{sr.title}</div>
-                        <div className="rsub-c">{sr.content}</div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="rcontent">{r.content}</div>
-                  )}
-                </div>
-              ))}
+                );
+              })}
               <div className="rules-h argued" style={{marginTop:24}}>
                 <div className="rules-h-eyebrow">Disputes</div>
                 <div className="rules-h-title">Most Argued Calls</div>
@@ -974,7 +983,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
               {ARGUED.map((r,i) => (
                 <div key={i} className="rcard q">
                   <div className="rchd">
-                    <div className="rcico">❓</div>
+                    <div className="rcico"><Icon name="help" size={16} color="var(--gold)"/></div>
                     <div className="rct">{r.q}</div>
                   </div>
                   <div className="rcontent">{r.a}</div>
