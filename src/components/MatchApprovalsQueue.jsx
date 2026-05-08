@@ -141,7 +141,7 @@ export function MatchApprovalsQueue() {
 
                   <div className="mfinal2" style={{gridRow:'2 / span 2', gridColumn:finalCol}}>
                     <div className="mfinal2-score">{sA}–{sB}</div>
-                    <div className="mfinal2-pts">{pA}–{pB} pts</div>
+                    <div className="mfinal2-pts">{pA}–{pB}</div>
                   </div>
                 </div>
               </div>

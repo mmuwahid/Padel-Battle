@@ -195,7 +195,7 @@ export function MatchHistory({onEdit,shareMatch,sel,onMatchDeleted}){
             ) : (
               <>
                 <div className="mfinal2-score">{sA}–{sB}</div>
-                <div className="mfinal2-pts">{pA}–{pB} pts</div>
+                <div className="mfinal2-pts">{pA}–{pB}</div>
               </>
             )}
           </div>
