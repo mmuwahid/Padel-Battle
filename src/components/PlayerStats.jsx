@@ -5,7 +5,7 @@ import { FD } from './FormDots';
 import Icon from './Icon';
 import { formatTeam, win, formatDate, setTotals, flagEmoji } from '../utils/helpers';
 
-export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matches,supabase,leagueId,isAdmin,getName,sel,onPlayersChange,showToast,claimedPlayer}){
+export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matches,supabase,leagueId,isAdmin,getName,sel,onPlayersChange,showToast,claimedPlayer,leagueMembers,league}){
   const player=sp?pm[sp]:null;
   const stats=sp?ps[sp]:null;
   const [subTab,setSubTab]=useState("roster"); // roster | analytics
@@ -159,48 +159,98 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
     const e=elo[sp]||1500;
     const gd=stats.gamesWon-stats.gamesLost;
     const badges=ACHS.filter(a=>a.ck(stats));
+    // Phase 6a Q3=A: role badge — owner (gold) > admin (accent) > none.
+    // player.user_id maps to league_members.user_id when player is claimed.
+    const isPlayerOwner = !!(player.user_id && league?.created_by && player.user_id === league.created_by);
+    const isPlayerAdmin = !!(player.user_id && (leagueMembers||[]).some(m => m.user_id === player.user_id && m.role === 'admin'));
+    const roleLabel = isPlayerOwner ? 'OWNER' : isPlayerAdmin ? 'ADMIN' : null;
+    const positionLabel = player.playing_position === 'left' ? 'Left Side' : player.playing_position === 'right' ? 'Right Side' : null;
     return (
-      <div style={{padding:"20px 16px",maxWidth:"600px",margin:"0 auto"}}>
-        <button onClick={()=>setSp(null)} style={{background:"none",border:"none",color:A,fontSize:13,fontWeight:600,cursor:"pointer",marginBottom:12}}>← All Players</button>
-        <div style={{background:CD,borderRadius:16,border:`1px solid ${BD}`,padding:20,marginBottom:12,textAlign:"center"}}>
-          <div style={{width:64,height:64,borderRadius:"50%",background:`linear-gradient(135deg,${A}25,${A}08)`,border:`2px solid ${A}50`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,fontWeight:800,color:A,margin:"0 auto 10px",overflow:"hidden"}}>{player.avatar_url?<img src={player.avatar_url} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:player.name[0]}</div>
-          <h2 style={{fontSize:22,fontWeight:800}}>{player.name}</h2>
-          {player.nickname&&<p style={{fontSize:13,color:MT}}>"{player.nickname}"</p>}
-          {/* FT-12: country flag slot — empty until #11 fills players.country */}
-          {player.country && flagEmoji(player.country) && (
-            <div style={{display:"flex",justifyContent:"center",alignItems:"center",gap:6,marginTop:8}}>
-              <span className="flag" style={{fontSize:18,lineHeight:1}}>{flagEmoji(player.country)}</span>
-              <span style={{fontSize:11,color:MT,fontWeight:600,letterSpacing:0.5}}>{player.country.toUpperCase()}</span>
+      <div>
+        {/* Phase 6a hero block */}
+        <section className="dpro">
+          <div className="dpro-pic">{player.avatar_url ? <img src={player.avatar_url} alt=""/> : player.name[0]}</div>
+          <h2 className="dpro-name">{player.name}</h2>
+          {player.nickname && <p className="dpro-nick">"{player.nickname}"</p>}
+          {roleLabel && (
+            <div className={`dpro-role${isPlayerOwner ? ' gold' : ''}`}>
+              <Icon name={isPlayerOwner ? 'crown' : 'admin'} size={11}/>
+              {roleLabel}
             </div>
           )}
-          <div style={{display:"flex",justifyContent:"center",gap:20,marginTop:12}}>
-            <div><div style={{fontSize:32,fontWeight:900,color:BL,fontFamily:"'JetBrains Mono'"}}>{e}</div><p style={{fontSize:11,color:MT}}>ELO</p></div>
-            <div><div style={{fontSize:32,fontWeight:900,color:A,fontFamily:"'JetBrains Mono'"}}>{wp.toFixed(0)}%</div><p style={{fontSize:11,color:MT}}>Effectiveness</p></div>
+          {(player.country || positionLabel) && (
+            <div className="dpro-tags">
+              {player.country && flagEmoji(player.country) && (
+                <div className="dpro-tag"><span className="flag">{flagEmoji(player.country)}</span>{player.country.toUpperCase()}</div>
+              )}
+              {positionLabel && (
+                <div className="dpro-tag">
+                  <Icon name={player.playing_position === 'left' ? 'court-l' : 'court-r'} size={13} color="#9090a4"/>
+                  {positionLabel}
+                </div>
+              )}
+            </div>
+          )}
+          <div className="dpro-hero-stats">
+            <div className="dpro-hs"><div className="dpro-hs-v elo">{e}</div><div className="dpro-hs-l">ELO</div></div>
+            <div className="dpro-hs"><div className="dpro-hs-v eff">{wp.toFixed(0)}%</div><div className="dpro-hs-l">Effectiveness</div></div>
           </div>
-          <div style={{marginTop:8,display:"flex",justifyContent:"center"}}><FD f={getForm(sp)}/></div>
+          <div className="dpro-form"><FD f={getForm(sp)}/></div>
+        </section>
+
+        {/* Win-rate progress bar */}
+        <section className="dpro-wr">
+          <div className="dpro-wrh">
+            <div className="dpro-wrl">Win Rate</div>
+            <div className="dpro-wrp">{wp.toFixed(0)}%</div>
+          </div>
+          <div className="dpro-wrbg"><div className="dpro-wrf" style={{width:`${wp}%`}}/></div>
+        </section>
+
+        {/* Q4=B preserved 6-metric grid: row 1 (Match Played / Won / Lost) */}
+        <div className="dpro-grid">
+          <div className="dpro-cell"><div className="dpro-cell-v">{stats.games}</div><div className="dpro-cell-l">Match Played</div></div>
+          <div className="dpro-cell"><div className="dpro-cell-v win">{stats.wins}</div><div className="dpro-cell-l">Match Won</div></div>
+          <div className="dpro-cell"><div className="dpro-cell-v loss">{stats.losses}</div><div className="dpro-cell-l">Match Lost</div></div>
         </div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:6}}>
-          {[["Match Played",stats.games,TX],["Match Won",stats.wins,A],["Match Lost",stats.losses,DG]].map(([l,v,c])=><div key={l} style={{background:CD,borderRadius:10,border:`1px solid ${BD}`,padding:"12px 8px",textAlign:"center"}}><div style={{fontSize:26,fontWeight:800,color:c,fontFamily:"'JetBrains Mono'"}}>{v}</div><div style={{fontSize:10,color:MT,fontWeight:600,marginTop:4}}>{l}</div></div>)}
-        </div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:6}}>
-          {[["Cons. Wins",getStreak(sp),TX],["⭐ MOTM",stats.motm,GD]].map(([l,v,c])=><div key={l} style={{background:CD,borderRadius:10,border:`1px solid ${BD}`,padding:"12px 8px",textAlign:"center"}}><div style={{fontSize:26,fontWeight:800,color:c,fontFamily:"'JetBrains Mono'"}}>{v}</div><div style={{fontSize:10,color:MT,fontWeight:600,marginTop:4}}>{l}</div></div>)}
-          <div style={{background:CD,borderRadius:10,border:`1px solid ${BD}`,padding:"12px 8px",textAlign:"center"}}>
-            <div style={{fontSize:26,fontWeight:800,color:gd>=0?A:DG,fontFamily:"'JetBrains Mono'"}}>{gd>0?"+":""}{gd}</div>
-            <div style={{fontSize:10,color:MT,fontWeight:600,marginTop:4}}>Match Diff</div>
-            <div style={{fontSize:8,color:MT,marginTop:2,lineHeight:1.3}}>Matches won minus matches lost</div>
+
+        {/* Row 2 (Cons. Wins / MOTM / Match Diff) */}
+        <div className="dpro-grid" style={{paddingBottom:6}}>
+          <div className="dpro-cell"><div className="dpro-cell-v">{getStreak(sp)}</div><div className="dpro-cell-l">Cons. Wins</div></div>
+          <div className="dpro-cell"><div className="dpro-cell-v gold">{stats.motm}</div><div className="dpro-cell-l">⭐ MOTM</div></div>
+          <div className="dpro-cell">
+            <div className={`dpro-cell-v ${gd>=0?'diff-pos':'diff-neg'}`}>{gd>0?"+":""}{gd}</div>
+            <div className="dpro-cell-l">Match Diff</div>
+            <div className="dpro-cell-sub">Won minus Lost</div>
           </div>
         </div>
-        <div style={{background:CD,borderRadius:14,border:`1px solid ${BD}`,padding:14,marginBottom:12}}>
-          <h3 style={{fontSize:13,fontWeight:700,color:GD,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>🏆 Achievements ({badges.length}/{ACHS.length})</h3>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
-            {ACHS.map(a=>{const u=badges.some(b=>b.id===a.id);return (<div key={a.id} style={{background:u?`${GD}10`:BG,borderRadius:10,border:`1px solid ${u?`${GD}30`:BD}`,padding:"10px 8px",textAlign:"center",opacity:u?1:0.35}}><div style={{fontSize:22}}>{a.icon}</div><div style={{fontSize:11,fontWeight:700,color:u?GD:MT,marginTop:4}}>{a.name}</div><div style={{fontSize:9,color:MT,marginTop:2}}>{a.desc}</div></div>);})}
+
+        {/* Achievements (preserved 2-col grid markup, wrapped in Phase 6a section frame) */}
+        <section className="dpro-sec">
+          <h3 className="dpro-sectitle gold">🏆 Achievements ({badges.length}/{ACHS.length})</h3>
+          <div className="dpro-sec-card">
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+              {ACHS.map(a=>{const u=badges.some(b=>b.id===a.id);return (<div key={a.id} style={{background:u?`${GD}10`:BG,borderRadius:10,border:`1px solid ${u?`${GD}30`:BD}`,padding:"10px 8px",textAlign:"center",opacity:u?1:0.35}}><div style={{fontSize:22}}>{a.icon}</div><div style={{fontSize:11,fontWeight:700,color:u?GD:MT,marginTop:4}}>{a.name}</div><div style={{fontSize:9,color:MT,marginTop:2}}>{a.desc}</div></div>);})}
+            </div>
           </div>
-        </div>
-        <div style={{background:CD,borderRadius:14,border:`1px solid ${BD}`,padding:14}}>
-          <h3 style={{fontSize:13,fontWeight:700,color:MT,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>Head to Head</h3>
-          {h2h.length===0&&<p style={{fontSize:12,color:MT}}>No matches yet</p>}
-          {h2h.map(r=>{const opp=pm[r.pid];return (<div key={r.pid} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0",borderBottom:`1px solid ${BD}20`}}><span style={{fontSize:14,fontWeight:600}}>{opp?.nickname||opp?.name||"?"}</span><div style={{display:"flex",gap:12}}><span style={{fontSize:13,color:A,fontWeight:700,fontFamily:"'JetBrains Mono'"}}>{r.w}W</span><span style={{fontSize:13,color:DG,fontWeight:700,fontFamily:"'JetBrains Mono'"}}>{r.l}L</span></div></div>);})}
-        </div>
+        </section>
+
+        {/* Head to Head (preserved data, restyled rows) */}
+        <section className="dpro-sec" style={{paddingBottom:24}}>
+          <h3 className="dpro-sectitle">Head to Head</h3>
+          <div className="dpro-sec-card">
+            {h2h.length===0 && <p style={{fontSize:12,color:MT,padding:"4px 0"}}>No matches yet</p>}
+            {h2h.map(r=>{const opp=pm[r.pid];return (
+              <div key={r.pid} className="dpro-h2h-row">
+                <span className="dpro-h2h-name">{opp?.nickname||opp?.name||"?"}</span>
+                <div className="dpro-h2h-rec">
+                  <span className="dpro-h2h-w">{r.w}W</span>
+                  <span className="dpro-h2h-l">{r.l}L</span>
+                </div>
+              </div>
+            );})}
+          </div>
+        </section>
       </div>
     );
   }

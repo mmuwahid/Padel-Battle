@@ -701,3 +701,69 @@ body {
 .empty-leagues-title{font-family:var(--font);font-size:18px;font-weight:800;letter-spacing:-.02em;}
 .empty-leagues-sub{font-family:var(--mono);font-size:12px;color:#9090a4;line-height:1.5;max-width:280px;}
 .empty-leagues-actions{display:flex;flex-direction:column;gap:10px;width:100%;max-width:300px;margin-top:6px;}
+
+/* ─── Issue #46 Phase 6a — Drill-in Player Profile ────────────────────── */
+/* Header in back-mode (replaces .hdr when tab==="stats" && selectedPlayer).
+   Same gradient + sticky behaviour as .hdr (preserves Lessons #18 / #40 / #44).
+   Left side: back chevron + uppercase title. Right side: bell + avatar (refresh dropped — drill-in is a focused view). */
+.hdr-back{display:flex;align-items:center;justify-content:space-between;padding:4px 16px;padding-top:calc(env(safe-area-inset-top, 0px) + 0px);background:linear-gradient(180deg,#0d0d14 0%,#12121a 100%);position:sticky;top:0;z-index:10;min-height:54px;}
+.hdr-back .hl{display:flex;align-items:center;gap:10px;}
+.hdr-back .hr{display:flex;align-items:center;gap:8px;}
+.hdr-title{font-family:var(--font);font-size:16px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--text);}
+
+/* Hero block — spec .prohero */
+.dpro{display:flex;flex-direction:column;align-items:center;padding:28px 20px 18px;position:relative;}
+.dpro::before{content:'';position:absolute;top:0;left:0;right:0;height:200px;background:radial-gradient(ellipse 80% 100% at 50% 0%,rgba(74,222,128,.08),transparent 70%);pointer-events:none;}
+.dpro-pic{width:96px;height:96px;border-radius:50%;border:3px solid var(--accent-glow);background:linear-gradient(135deg,#1a3a26,#0d1f14);display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:800;color:var(--accent);overflow:hidden;position:relative;z-index:1;margin-bottom:12px;}
+.dpro-pic img{width:100%;height:100%;object-fit:cover;}
+.dpro-name{font-size:24px;font-weight:800;margin-bottom:3px;position:relative;z-index:1;color:var(--text);}
+.dpro-nick{font-size:13px;color:#9090a4;margin-bottom:10px;position:relative;z-index:1;}
+.dpro-role{display:inline-flex;align-items:center;gap:5px;background:var(--accent-dim);border:1px solid var(--accent-glow);border-radius:var(--r-full);padding:3px 10px;font-family:var(--mono);font-size:10px;color:var(--accent);margin-bottom:12px;position:relative;z-index:1;letter-spacing:.04em;}
+.dpro-role.gold{background:var(--gold-dim);border-color:var(--gold-glow);color:var(--gold);}
+.dpro-tags{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:14px;position:relative;z-index:1;}
+.dpro-tag{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-full);padding:5px 12px;font-size:12px;font-weight:600;color:var(--text);}
+.dpro-tag .flag{font-size:14px;line-height:1;}
+
+/* In-hero ELO + Effectiveness (Q4=B keeps both inside hero) */
+.dpro-hero-stats{display:flex;gap:28px;justify-content:center;align-items:baseline;margin-bottom:10px;position:relative;z-index:1;}
+.dpro-hs{text-align:center;}
+.dpro-hs-v{font-family:var(--mono);font-size:32px;font-weight:800;line-height:1;}
+.dpro-hs-v.elo{color:#60a5fa;}
+.dpro-hs-v.eff{color:var(--accent);}
+.dpro-hs-l{font-size:10px;color:#9090a4;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-top:6px;}
+
+.dpro-form{display:flex;justify-content:center;margin-top:4px;position:relative;z-index:1;}
+
+/* Win-rate progress bar */
+.dpro-wr{padding:14px 18px 12px;}
+.dpro-wrh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
+.dpro-wrl{font-size:11px;color:#9090a4;font-weight:600;text-transform:uppercase;letter-spacing:.04em;}
+.dpro-wrp{font-family:var(--mono);font-size:18px;font-weight:800;color:var(--accent);}
+.dpro-wrbg{height:6px;background:var(--surface-2);border-radius:var(--r-sm);overflow:hidden;}
+.dpro-wrf{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-glow));border-radius:var(--r-sm);transition:width 600ms var(--ease-spring);}
+
+/* 6-metric grid (Q4=B) — two 3-col rows below hero */
+.dpro-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;padding:0 18px 6px;}
+.dpro-cell{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px 8px;text-align:center;}
+.dpro-cell-v{font-family:var(--mono);font-size:26px;font-weight:800;color:var(--text);line-height:1;}
+.dpro-cell-v.win{color:var(--accent);}
+.dpro-cell-v.loss{color:var(--danger);}
+.dpro-cell-v.gold{color:var(--gold);}
+.dpro-cell-v.diff-pos{color:var(--accent);}
+.dpro-cell-v.diff-neg{color:var(--danger);}
+.dpro-cell-l{font-size:10px;color:#9090a4;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-top:6px;}
+.dpro-cell-sub{font-size:8px;color:#9090a4;margin-top:3px;line-height:1.3;}
+
+/* Sections (achievements, H2H) */
+.dpro-sec{padding:14px 18px 0;}
+.dpro-sectitle{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;color:var(--text);}
+.dpro-sectitle.gold{color:var(--gold);}
+.dpro-sec-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;}
+
+/* H2H rows */
+.dpro-h2h-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(42,42,58,.4);}
+.dpro-h2h-row:last-child{border-bottom:none;}
+.dpro-h2h-name{font-size:14px;font-weight:600;color:var(--text);}
+.dpro-h2h-rec{display:flex;gap:12px;font-family:var(--mono);font-size:13px;font-weight:700;}
+.dpro-h2h-w{color:var(--accent);}
+.dpro-h2h-l{color:var(--danger);}
