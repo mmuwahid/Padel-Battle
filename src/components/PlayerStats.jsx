@@ -150,8 +150,25 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
       const k=[pid,opp].sort().join("|");if(!seen.has(k)&&r.w+r.l>=2){seen.add(k);const total=r.w+r.l;const pct=Math.min(r.w,r.l)/total*100;matchups.push({p1:pid,p2:opp,...r,games:total,balance:pct});}
     });});
     matchups.sort((a,b)=>b.balance-a.balance);
-    const biggestWins=[...matches].map(m=>{const [gA,gB]=setTotals(m.sets);return{...m,diff:Math.abs(gA-gB),winner:win(m.sets)};}).sort((a,b)=>b.diff-a.diff).slice(0,3);
-    return {totalMatches,totalSets,mostActive,topWinRate,closeMatches,topMotm,monthlyArr,wr,partnerships,bestPartnership,worstPartnership,h2hAll,matchups:matchups.slice(0,5),biggestWins};
+    // Phase 6b (S065 Q10): longest winning + losing streaks per player.
+    // Walk matches in chronological order; track per-player current run + max run.
+    const runs={};players.forEach(p=>{runs[p.id]={curW:0,curL:0,maxW:0,maxL:0};});
+    [...matches].sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(m=>{
+      const w=win(m.sets);
+      m.team_a.forEach(pid=>{
+        if(!runs[pid])return;
+        if(w==="A"){runs[pid].curW++;runs[pid].curL=0;if(runs[pid].curW>runs[pid].maxW)runs[pid].maxW=runs[pid].curW;}
+        else if(w==="B"){runs[pid].curL++;runs[pid].curW=0;if(runs[pid].curL>runs[pid].maxL)runs[pid].maxL=runs[pid].curL;}
+      });
+      m.team_b.forEach(pid=>{
+        if(!runs[pid])return;
+        if(w==="B"){runs[pid].curW++;runs[pid].curL=0;if(runs[pid].curW>runs[pid].maxW)runs[pid].maxW=runs[pid].curW;}
+        else if(w==="A"){runs[pid].curL++;runs[pid].curW=0;if(runs[pid].curL>runs[pid].maxL)runs[pid].maxL=runs[pid].curL;}
+      });
+    });
+    const longestWinStreaks=Object.entries(runs).filter(([,r])=>r.maxW>0).map(([pid,r])=>({pid,n:r.maxW})).sort((a,b)=>b.n-a.n).slice(0,5);
+    const longestLossStreaks=Object.entries(runs).filter(([,r])=>r.maxL>0).map(([pid,r])=>({pid,n:r.maxL})).sort((a,b)=>b.n-a.n).slice(0,5);
+    return {totalMatches,totalSets,mostActive,topWinRate,closeMatches,topMotm,monthlyArr,wr,partnerships,bestPartnership,worstPartnership,h2hAll,matchups:matchups.slice(0,5),longestWinStreaks,longestLossStreaks};
   },[matches,players]);
 
   if(sp&&player&&stats){
@@ -265,163 +282,166 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
       </div>
 
       {subTab==="analytics" && analyticsData ? (
-        <div style={{padding:"20px 16px"}}>
-          {/* Analytics Section Tabs — matching mockup control panel */}
-          <div style={{display:"flex",gap:4,marginBottom:16}}>
+        <div className="an-body">
+          {/* 4-section sub-tab bar (Q6=B Phase 5 .seg/.sb 4-col variant) */}
+          <div className="seg-4">
             {[["league","📈 League"],["partnership","🤝 Partners"],["opponent","⚔️ H2H"],["insights","💡 Insights"]].map(([k,l])=>(
-              <button key={k} onClick={()=>setAnalyticsSection(k)} style={{flex:1,padding:"8px 4px",borderRadius:8,border:`1px solid ${analyticsSection===k?A:BD}`,background:analyticsSection===k?`${A}15`:"transparent",color:analyticsSection===k?A:MT,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif",textAlign:"center"}}>{l}</button>
+              <button key={k} className={`sb-4${analyticsSection===k?" on":""}`} onClick={()=>setAnalyticsSection(k)}>{l}</button>
             ))}
           </div>
 
           {/* LEAGUE-WIDE STATS */}
-          {analyticsSection==="league"&&<div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
-              <div style={{background:CD,borderRadius:12,padding:14,border:`1px solid ${BD}`}}>
-                <div style={{fontSize:10,color:MT,fontWeight:600,textTransform:"uppercase",letterSpacing:0.5,marginBottom:4}}>Total Matches</div>
-                <div style={{fontSize:24,fontWeight:800,color:A,fontFamily:"'JetBrains Mono'"}}>{analyticsData.totalMatches}</div>
+          {analyticsSection==="league"&&<>
+            <div className="an-tile-grid">
+              <div className="an-tile">
+                <div className="an-tile-l">Total Matches</div>
+                <div className="an-tile-v">{analyticsData.totalMatches}</div>
               </div>
-              <div style={{background:CD,borderRadius:12,padding:14,border:`1px solid ${BD}`}}>
-                <div style={{fontSize:10,color:MT,fontWeight:600,textTransform:"uppercase",letterSpacing:0.5,marginBottom:4}}>Close Games</div>
-                <div style={{fontSize:24,fontWeight:800,color:GD,fontFamily:"'JetBrains Mono'"}}>{analyticsData.closeMatches}</div>
+              <div className="an-tile">
+                <div className="an-tile-l">Close Games</div>
+                <div className="an-tile-v gold">{analyticsData.closeMatches}</div>
               </div>
             </div>
-            {/* Most Active */}
-            <div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:12}}>
-              <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:12,textTransform:"uppercase",letterSpacing:0.5}}>Most Active Players</div>
-              {analyticsData.mostActive.map((x,i)=>(
-                <div key={x.pid} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderBottom:i<analyticsData.mostActive.length-1?`1px solid ${BD}`:undefined}}>
-                  <div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:32,height:32,borderRadius:"50%",background:`${A}15`,border:`2px solid ${A}30`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:A,overflow:"hidden"}}>{getAvatar(x.pid)?<img src={getAvatar(x.pid)} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:getName(x.pid)[0]}</div><span style={{fontSize:12,color:TX}}>{getName(x.pid)}</span></div>
-                  <div style={{textAlign:"right"}}><span style={{fontSize:14,fontWeight:700,color:A,fontFamily:"'JetBrains Mono'"}}>{x.games}</span><span style={{fontSize:10,color:MT,marginLeft:4}}>MP</span></div>
-                </div>
-              ))}
-            </div>
-            {/* Highest Win Rates */}
-            <div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:12}}>
-              <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:12,textTransform:"uppercase",letterSpacing:0.5}}>Highest Win Rates</div>
-              {analyticsData.topWinRate.map((x,i)=>(
-                <div key={x.pid} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderBottom:i<analyticsData.topWinRate.length-1?`1px solid ${BD}`:undefined}}>
-                  <span style={{fontSize:12,color:TX}}>{getName(x.pid)}</span>
-                  <div style={{display:"flex",alignItems:"center",gap:8}}>
-                    <span style={{fontSize:11,color:MT}}>{x.w}W-{x.l}L</span>
-                    <span style={{fontSize:14,fontWeight:700,color:x.pct>=60?A:x.pct>=40?TX:DG,fontFamily:"'JetBrains Mono'"}}>{x.pct.toFixed(0)}%</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-            {/* Most Competitive Matchups */}
-            {analyticsData.matchups.length>0&&<div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:12}}>
-              <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:12,textTransform:"uppercase",letterSpacing:0.5}}>Most Competitive Matchups</div>
-              {analyticsData.matchups.map((x,i)=>(
-                <div key={i} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderBottom:i<analyticsData.matchups.length-1?`1px solid ${BD}`:undefined}}>
-                  <span style={{fontSize:12,color:TX}}>{getName(x.p1)} vs {getName(x.p2)}</span>
-                  <div><span style={{fontSize:11,color:MT}}>{x.games} MP</span><span style={{fontSize:11,color:A,marginLeft:8}}>{Math.round(x.balance*2)}% balanced</span></div>
-                </div>
-              ))}
-            </div>}
-            {/* Monthly Trend */}
-            {analyticsData.monthlyArr.length>1&&<div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:12}}>
-              <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:12,textTransform:"uppercase",letterSpacing:0.5}}>League Activity</div>
-              {(() => {
-                const max=Math.max(...analyticsData.monthlyArr.map(a=>a[1]),1);
-                const niceMax=Math.max(2,Math.ceil(max/2)*2);
-                const ticks=[niceMax,Math.round(niceMax/2),0];
-                const chartH=120;
-                return (<>
-                  <div style={{display:"flex",gap:8,alignItems:"stretch"}}>
-                    <div style={{display:"flex",flexDirection:"column",justifyContent:"space-between",height:chartH,fontSize:9,color:MT,fontFamily:"'JetBrains Mono'",textAlign:"right",minWidth:18}}>
-                      {ticks.map(t=><div key={t} style={{lineHeight:1}}>{t}</div>)}
-                    </div>
-                    <div style={{flex:1,position:"relative",height:chartH,borderLeft:`1px solid ${BD}`,borderBottom:`1px solid ${BD}`}}>
-                      {ticks.slice(0,-1).map((t,i)=>(
-                        <div key={t} style={{position:"absolute",left:0,right:0,top:`${(i/(ticks.length-1))*100}%`,borderTop:`1px dashed ${BD}40`}}/>
-                      ))}
-                      <div style={{position:"absolute",inset:0,display:"flex",alignItems:"flex-end",gap:6,padding:"0 4px"}}>
-                        {analyticsData.monthlyArr.map(([month,count])=>{
-                          const h=(count/niceMax)*chartH;
-                          return <div key={month} title={`${count} matches`} style={{flex:1,height:h,background:`linear-gradient(180deg,${A},${A}60)`,borderRadius:"4px 4px 0 0",minHeight:count>0?2:0}}/>;
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                  <div style={{display:"flex",gap:6,paddingLeft:26,marginTop:6}}>
-                    {analyticsData.monthlyArr.map(([month])=>(
-                      <div key={month} style={{flex:1,textAlign:"center",fontSize:10,color:MT,fontWeight:600}}>{new Date(month+"-01").toLocaleString("en",{month:"short"})}</div>
-                    ))}
-                  </div>
-                </>);
-              })()}
-            </div>}
-          </div>}
 
-          {/* PARTNERSHIP ANALYTICS */}
-          {analyticsSection==="partnership"&&<div>
-            {/* S053 Issue #23: both pair cards render BOTH players' avatars (L + R flanking the names),
-                Worst Pairs always shown with empty-state when there's no losing partnership yet. */}
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
-              {analyticsData.bestPartnership&&<div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14}}>
-                <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:8}}>Best Pairs</div>
-                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
-                  <div style={{width:32,height:32,borderRadius:"50%",background:`${A}15`,border:`2px solid ${A}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:A,overflow:"hidden",flexShrink:0}}>{getAvatar(analyticsData.bestPartnership.a)?<img src={getAvatar(analyticsData.bestPartnership.a)} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:getName(analyticsData.bestPartnership.a)[0]}</div>
-                  <div style={{flex:1,minWidth:0,textAlign:"center"}}>
-                    <div style={{fontSize:11,fontWeight:700,color:TX,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{getName(analyticsData.bestPartnership.a)} x {getName(analyticsData.bestPartnership.b)}</div>
-                    <div style={{fontSize:11,color:A,marginTop:2}}>{analyticsData.bestPartnership.w}W-{analyticsData.bestPartnership.l}L ({Math.round(analyticsData.bestPartnership.w/(analyticsData.bestPartnership.w+analyticsData.bestPartnership.l)*100)}%)</div>
+            <section className="dpro-sec" style={{padding:0}}>
+              <h3 className="dpro-sectitle">Most Active Players</h3>
+              <div className="dpro-sec-card">
+                {analyticsData.mostActive.map(x=>(
+                  <div key={x.pid} className="lrow">
+                    <div className="lrow-l">
+                      <div className="lrow-avi">{getAvatar(x.pid)?<img src={getAvatar(x.pid)} alt=""/>:getName(x.pid)[0]}</div>
+                      <span className="lrow-name">{getName(x.pid)}</span>
+                    </div>
+                    <div className="lrow-r"><span className="lrow-mp">{x.games}</span><span className="lrow-mpu">MP</span></div>
                   </div>
-                  <div style={{width:32,height:32,borderRadius:"50%",background:`${A}15`,border:`2px solid ${A}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:A,overflow:"hidden",flexShrink:0}}>{getAvatar(analyticsData.bestPartnership.b)?<img src={getAvatar(analyticsData.bestPartnership.b)} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:getName(analyticsData.bestPartnership.b)[0]}</div>
+                ))}
+              </div>
+            </section>
+
+            <section className="dpro-sec" style={{padding:0}}>
+              <h3 className="dpro-sectitle">Highest Win Rates</h3>
+              <div className="dpro-sec-card">
+                {analyticsData.topWinRate.map(x=>(
+                  <div key={x.pid} className="lrow">
+                    <div className="lrow-l"><span className="lrow-name">{getName(x.pid)}</span></div>
+                    <div className="lrow-r">
+                      <span className="lrow-wl">{x.w}W-{x.l}L</span>
+                      <span className={`lrow-pct${x.pct>=60?"":x.pct>=40?" mid":" lo"}`}>{x.pct.toFixed(0)}%</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {analyticsData.matchups.length>0 && <section className="dpro-sec" style={{padding:0}}>
+              <h3 className="dpro-sectitle">Most Competitive Matchups</h3>
+              <div className="dpro-sec-card">
+                {analyticsData.matchups.map((x,i)=>(
+                  <div key={i} className="lrow">
+                    <div className="lrow-l"><span className="lrow-name">{getName(x.p1)} vs {getName(x.p2)}</span></div>
+                    <div className="lrow-r">
+                      <span className="lrow-mx">{x.games} MP</span>
+                      <span className="lrow-bal">{Math.round(x.balance*2)}% balanced</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>}
+
+            {analyticsData.monthlyArr.length>1 && <section className="dpro-sec" style={{padding:0}}>
+              <h3 className="dpro-sectitle">League Activity</h3>
+              <div className="dpro-sec-card">
+                <div className="elobars">
+                  {(()=>{
+                    const max=Math.max(...analyticsData.monthlyArr.map(a=>a[1]),1);
+                    return analyticsData.monthlyArr.map(([month,count])=>{
+                      const h=(count/max)*70;
+                      return (
+                        <div key={month} className="elobar-col">
+                          <span className="elobar-val">{count}</span>
+                          <div className="elobar-fill" style={{height:`${count>0?Math.max(h,4):0}%`}}/>
+                          <span className="elobar-date">{new Date(month+"-01").toLocaleString("en",{month:"short"})}</span>
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+              </div>
+            </section>}
+          </>}
+
+          {/* PARTNERS — preserves S053 dual-avatar layout, swaps frame to Phase 6b cards */}
+          {analyticsSection==="partnership"&&<>
+            <div className="pair-grid">
+              {analyticsData.bestPartnership&&<div className="pair-card">
+                <div className="pair-title">Best Pairs</div>
+                <div className="pair-row">
+                  <div className="pair-avi">{getAvatar(analyticsData.bestPartnership.a)?<img src={getAvatar(analyticsData.bestPartnership.a)} alt=""/>:getName(analyticsData.bestPartnership.a)[0]}</div>
+                  <div className="pair-mid">
+                    <div className="pair-names">{getName(analyticsData.bestPartnership.a)} x {getName(analyticsData.bestPartnership.b)}</div>
+                    <div className="pair-rec">{analyticsData.bestPartnership.w}W-{analyticsData.bestPartnership.l}L ({Math.round(analyticsData.bestPartnership.w/(analyticsData.bestPartnership.w+analyticsData.bestPartnership.l)*100)}%)</div>
+                  </div>
+                  <div className="pair-avi">{getAvatar(analyticsData.bestPartnership.b)?<img src={getAvatar(analyticsData.bestPartnership.b)} alt=""/>:getName(analyticsData.bestPartnership.b)[0]}</div>
                 </div>
               </div>}
-              <div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14}}>
-                <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:8}}>Worst Pairs</div>
+              <div className="pair-card">
+                <div className="pair-title">Worst Pairs</div>
                 {analyticsData.worstPartnership ? (
-                  <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
-                    <div style={{width:32,height:32,borderRadius:"50%",background:`${DG}15`,border:`2px solid ${DG}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:DG,overflow:"hidden",flexShrink:0}}>{getAvatar(analyticsData.worstPartnership.a)?<img src={getAvatar(analyticsData.worstPartnership.a)} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:getName(analyticsData.worstPartnership.a)[0]}</div>
-                    <div style={{flex:1,minWidth:0,textAlign:"center"}}>
-                      <div style={{fontSize:11,fontWeight:700,color:TX,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{getName(analyticsData.worstPartnership.a)} x {getName(analyticsData.worstPartnership.b)}</div>
-                      <div style={{fontSize:11,color:DG,marginTop:2}}>{analyticsData.worstPartnership.w}W-{analyticsData.worstPartnership.l}L ({Math.round(analyticsData.worstPartnership.w/(analyticsData.worstPartnership.w+analyticsData.worstPartnership.l)*100)}%)</div>
+                  <div className="pair-row">
+                    <div className="pair-avi dg">{getAvatar(analyticsData.worstPartnership.a)?<img src={getAvatar(analyticsData.worstPartnership.a)} alt=""/>:getName(analyticsData.worstPartnership.a)[0]}</div>
+                    <div className="pair-mid">
+                      <div className="pair-names">{getName(analyticsData.worstPartnership.a)} x {getName(analyticsData.worstPartnership.b)}</div>
+                      <div className="pair-rec dg">{analyticsData.worstPartnership.w}W-{analyticsData.worstPartnership.l}L ({Math.round(analyticsData.worstPartnership.w/(analyticsData.worstPartnership.w+analyticsData.worstPartnership.l)*100)}%)</div>
                     </div>
-                    <div style={{width:32,height:32,borderRadius:"50%",background:`${DG}15`,border:`2px solid ${DG}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:DG,overflow:"hidden",flexShrink:0}}>{getAvatar(analyticsData.worstPartnership.b)?<img src={getAvatar(analyticsData.worstPartnership.b)} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:getName(analyticsData.worstPartnership.b)[0]}</div>
+                    <div className="pair-avi dg">{getAvatar(analyticsData.worstPartnership.b)?<img src={getAvatar(analyticsData.worstPartnership.b)} alt=""/>:getName(analyticsData.worstPartnership.b)[0]}</div>
                   </div>
                 ) : (
-                  <div style={{fontSize:11,color:MT,textAlign:"center",padding:"10px 0",lineHeight:1.4}}>No losing partnerships yet</div>
+                  <div className="pair-empty">No losing partnerships yet</div>
                 )}
               </div>
             </div>
-            {/* All partnerships */}
-            <div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14}}>
-              <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:12,textTransform:"uppercase",letterSpacing:0.5}}>All Partnerships</div>
-              {analyticsData.partnerships.slice(0,10).map((p,i)=>{const pct=Math.round(p.w/(p.w+p.l)*100);return(
-                <div key={i} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0",borderBottom:i<Math.min(analyticsData.partnerships.length,10)-1?`1px solid ${BD}`:undefined}}>
-                  <span style={{fontSize:12,color:TX}}>{getName(p.a)} x {getName(p.b)}</span>
-                  <div style={{display:"flex",alignItems:"center",gap:8}}>
-                    <span style={{fontSize:11,color:MT,fontFamily:"'JetBrains Mono'",whiteSpace:"nowrap"}}>{p.w+p.l} MP</span>
-                    <div style={{width:50,height:6,background:BD,borderRadius:3,overflow:"hidden"}}><div style={{width:`${pct}%`,height:"100%",background:pct>=60?A:pct>=40?BL:DG,borderRadius:3}}/></div>
-                    <span style={{fontSize:12,fontWeight:700,color:pct>=60?A:pct>=40?TX:DG,fontFamily:"'JetBrains Mono'",width:35,textAlign:"right"}}>{pct}%</span>
-                  </div>
-                </div>
-              );})}
-            </div>
-          </div>}
 
-          {/* OPPONENT ANALYSIS (H2H) */}
-          {analyticsSection==="opponent"&&<div>
-            {/* Player Selectors */}
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
+            <section className="dpro-sec" style={{padding:0}}>
+              <h3 className="dpro-sectitle">All Partnerships</h3>
+              <div className="dpro-sec-card">
+                {analyticsData.partnerships.slice(0,10).map((p,i)=>{
+                  const pct=Math.round(p.w/(p.w+p.l)*100);
+                  const mod=pct>=60?"":pct>=40?"mid":"dg";
+                  return (
+                    <div key={i} className="pp-row">
+                      <span className="pp-name">{getName(p.a)} x {getName(p.b)}</span>
+                      <div className="pp-r">
+                        <span className="pp-mp">{p.w+p.l} MP</span>
+                        <div className="pp-bar"><div className={`pp-bar-f${mod?" "+mod:""}`} style={{width:`${pct}%`}}/></div>
+                        <span className={`pp-pct${mod?" "+mod:""}`}>{pct}%</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          </>}
+
+          {/* H2H (Q9=A native select kept; refinement deferred) */}
+          {analyticsSection==="opponent"&&<>
+            <div className="h2h-sel-grid">
               <div>
-                <label style={{display:"block",fontSize:11,color:MT,fontWeight:600,marginBottom:6}}>Player 1</label>
-                <select value={h2hP1||""} onChange={e=>setH2hP1(e.target.value||null)} style={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:12,fontFamily:"'Outfit',sans-serif",outline:"none",cursor:"pointer"}}>
+                <label className="h2h-sel-l">Player 1</label>
+                <select className="h2h-sel" value={h2hP1||""} onChange={e=>setH2hP1(e.target.value||null)}>
                   <option value="">Select player</option>
-                  {players.map(p=><option key={p.id} value={p.id}>{(p.nickname||p.name)+(elo?` (${Math.round(elo[p.id]||1500)})`:"")} </option>)}
+                  {players.map(p=><option key={p.id} value={p.id}>{(p.nickname||p.name)+(elo?` (${Math.round(elo[p.id]||1500)})`:"")}</option>)}
                 </select>
               </div>
               <div>
-                <label style={{display:"block",fontSize:11,color:MT,fontWeight:600,marginBottom:6}}>Player 2</label>
-                <select value={h2hP2||""} onChange={e=>setH2hP2(e.target.value||null)} style={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:12,fontFamily:"'Outfit',sans-serif",outline:"none",cursor:"pointer"}}>
+                <label className="h2h-sel-l">Player 2</label>
+                <select className="h2h-sel" value={h2hP2||""} onChange={e=>setH2hP2(e.target.value||null)}>
                   <option value="">Select player</option>
-                  {players.filter(p=>p.id!==h2hP1).map(p=><option key={p.id} value={p.id}>{(p.nickname||p.name)+(elo?` (${Math.round(elo[p.id]||1500)})`:"")} </option>)}
+                  {players.filter(p=>p.id!==h2hP1).map(p=><option key={p.id} value={p.id}>{(p.nickname||p.name)+(elo?` (${Math.round(elo[p.id]||1500)})`:"")}</option>)}
                 </select>
               </div>
             </div>
 
-            {h2hP1&&h2hP2?(() => {
+            {h2hP1&&h2hP2?(()=>{
               const p1=players.find(p=>p.id===h2hP1);
               const p2=players.find(p=>p.id===h2hP2);
               const h2hM=matches.filter(m=>(m.team_a.includes(h2hP1)&&m.team_b.includes(h2hP2))||(m.team_a.includes(h2hP2)&&m.team_b.includes(h2hP1)));
@@ -432,112 +452,130 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
               const pW=partM.filter(m=>{const w=win(m.sets);return (m.team_a.includes(h2hP1)&&w==="A")||(m.team_b.includes(h2hP1)&&w==="B");}).length;
               const pL=partM.length-pW;
               if(h2hM.length===0 && partM.length===0) return (
-                <div style={{textAlign:"center",padding:32}}>
-                  <div style={{fontSize:48,marginBottom:12}}>⚔️</div>
-                  <div style={{fontSize:14,fontWeight:600,color:TX,marginBottom:8}}>No matches found between these two players yet</div>
-                  <div style={{fontSize:12,color:MT}}>Play a match together or against each other to see your rivalry stats</div>
+                <div className="h2h-empty">
+                  <div className="h2h-empty-icon">⚔️</div>
+                  <div className="h2h-empty-title">No matches found between these two players yet</div>
+                  <div>Play a match together or against each other to see your rivalry stats</div>
                 </div>
               );
               return (<>
-                {/* H2H Card */}
-                <div style={{background:CD2,padding:16,borderRadius:12,marginBottom:16,textAlign:"center"}}>
-                  <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:12,marginBottom:12}}>
-                    <div style={{width:48,height:48,borderRadius:"50%",background:`${A}20`,border:`2px solid ${A}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:800,color:A,overflow:"hidden"}}>{p1?.avatar_url?<img src={p1.avatar_url} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:(p1?.name||"?")[0]}</div>
-                    <div style={{fontSize:16,fontWeight:700,color:TX}}>{p1W} - {p2W}</div>
-                    <div style={{width:48,height:48,borderRadius:"50%",background:`${A}20`,border:`2px solid ${A}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:800,color:A,overflow:"hidden"}}>{p2?.avatar_url?<img src={p2.avatar_url} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:(p2?.name||"?")[0]}</div>
+                <div className="h2h-hero">
+                  <div className="h2h-row">
+                    <div className="h2h-avi">{p1?.avatar_url?<img src={p1.avatar_url} alt=""/>:(p1?.name||"?")[0]}</div>
+                    <div className="h2h-score">{p1W} - {p2W}</div>
+                    <div className="h2h-avi">{p2?.avatar_url?<img src={p2.avatar_url} alt=""/>:(p2?.name||"?")[0]}</div>
                   </div>
-                  <div style={{width:"100%",height:4,background:CD,borderRadius:2,overflow:"hidden",marginBottom:8}}>
-                    <div style={{width:`${h2hM.length>0?(p1W/h2hM.length)*100:50}%`,height:"100%",background:A}}/>
-                  </div>
-                  <div style={{fontSize:11,color:MT}}>All-time record ({h2hM.length} matches)</div>
+                  <div className="h2h-bar-bg"><div className="h2h-bar-f" style={{width:`${h2hM.length>0?(p1W/h2hM.length)*100:50}%`}}/></div>
+                  <div className="h2h-meta">All-time record · {h2hM.length} matches</div>
                 </div>
 
-                {/* As Partners / As Opponents */}
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
-                  <div style={{background:CD2,padding:12,borderRadius:8}}>
-                    <div style={{fontSize:11,color:MT,fontWeight:600,marginBottom:8}}>As Partners</div>
-                    {partM.length>0?(<div><div style={{fontSize:10,color:MT,marginBottom:4}}>{partM.length} match{partM.length===1?"":"es"} together</div><div style={{fontSize:13,fontWeight:700}}><span style={{color:A}}>{pW}W</span><span style={{color:MT}}> - </span><span style={{color:pL>0?DG:TX}}>{pL}L</span></div></div>):<div style={{fontSize:12,color:MT}}>No matches</div>}
+                <div className="h2h-split">
+                  <div className="h2h-tile">
+                    <div className="h2h-tile-l">As Partners</div>
+                    {partM.length>0?(<>
+                      <div className="h2h-tile-sub">{partM.length} match{partM.length===1?"":"es"} together</div>
+                      <div className="h2h-tile-v"><span className="w">{pW}W</span><span className="m"> - </span><span className={pL>0?"l":""}>{pL}L</span></div>
+                    </>):<div className="h2h-tile-sub">No matches</div>}
                   </div>
-                  <div style={{background:CD2,padding:12,borderRadius:8}}>
-                    <div style={{fontSize:11,color:MT,fontWeight:600,marginBottom:8}}>As Opponents</div>
-                    {oppM.length>0?(<div><div style={{fontSize:10,color:MT,marginBottom:4}}>{oppM.length} match{oppM.length===1?"":"es"} against</div><div style={{fontSize:12,fontWeight:700,lineHeight:1.4}}><div><span style={{color:A}}>{getName(h2hP1)}</span> won <span style={{color:A,fontFamily:"'JetBrains Mono'"}}>{p1W}</span></div><div><span style={{color:p2W>0?A:MT}}>{getName(h2hP2)}</span> won <span style={{color:p2W>0?A:MT,fontFamily:"'JetBrains Mono'"}}>{p2W}</span></div></div></div>):<div style={{fontSize:12,color:MT}}>No matches</div>}
+                  <div className="h2h-tile">
+                    <div className="h2h-tile-l">As Opponents</div>
+                    {oppM.length>0?(<>
+                      <div className="h2h-tile-sub">{oppM.length} match{oppM.length===1?"":"es"} against</div>
+                      <div className="h2h-tile-v">
+                        <div><span className="w">{getName(h2hP1)}</span> won <span className="w" style={{fontFamily:"var(--mono)"}}>{p1W}</span></div>
+                        <div><span className={p2W>0?"w":"m"}>{getName(h2hP2)}</span> won <span className={p2W>0?"w":"m"} style={{fontFamily:"var(--mono)"}}>{p2W}</span></div>
+                      </div>
+                    </>):<div className="h2h-tile-sub">No matches</div>}
                   </div>
                 </div>
 
-                {/* Last 5 Encounters */}
-                {h2hM.length>0&&<div>
-                  <h3 style={{fontSize:13,fontWeight:700,color:TX,marginBottom:12}}>Last 5 Encounters</h3>
-                  <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                {h2hM.length>0&&<section className="dpro-sec" style={{padding:0}}>
+                  <h3 className="dpro-sectitle">Last 5 Encounters</h3>
+                  <div>
                     {h2hM.sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5).map(m=>{
                       const w=win(m.sets);
                       const p1Won=(m.team_a.includes(h2hP1)&&w==="A")||(m.team_b.includes(h2hP1)&&w==="B");
-                      return (<div key={m.id} style={{padding:10,background:CD,borderRadius:8}}>
-                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
-                          <span style={{fontSize:11,fontWeight:600,color:p1Won?A:DG}}>{p1Won?"\u2713 "+getName(h2hP1)+" won":"\u2717 "+getName(h2hP2)+" won"}</span>
-                          <span style={{fontSize:10,color:MT}}>{formatDate(m.date)}</span>
+                      return (
+                        <div key={m.id} className="enc-row">
+                          <div className="enc-top">
+                            <span className={`enc-result ${p1Won?"win":"loss"}`}>{p1Won?"\u2713 "+getName(h2hP1)+" won":"\u2717 "+getName(h2hP2)+" won"}</span>
+                            <span className="enc-date">{formatDate(m.date)}</span>
+                          </div>
+                          <div className="enc-sets">
+                            {m.sets.map((s,i)=>{const isA=m.team_a.includes(h2hP1);const pWon=isA?s[0]>s[1]:s[1]>s[0];return <span key={i} className={pWon?"w":"l"}>{s[0]}-{s[1]}</span>;})}
+                          </div>
                         </div>
-                        <div style={{fontSize:10,display:"flex",gap:4}}>
-                          {m.sets.map((s,i)=>{const isA=m.team_a.includes(h2hP1);const pWon=isA?s[0]>s[1]:s[1]>s[0];return <span key={i} style={{color:pWon?A:DG}}>{s[0]}-{s[1]}</span>;})}
-                        </div>
-                      </div>);
+                      );
                     })}
                   </div>
-                </div>}
+                </section>}
               </>);
-            })():<div style={{textAlign:"center",padding:24,color:MT,fontSize:12}}>Select two players to compare their head-to-head record</div>}
-          </div>}
+            })():<div className="h2h-empty">Select two players to compare their head-to-head record</div>}
+          </>}
 
-          {/* MATCH INSIGHTS */}
-          {analyticsSection==="insights"&&<div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
-              <div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14}}>
-                <div style={{fontSize:10,color:MT,fontWeight:600,textTransform:"uppercase",marginBottom:4}}>MOTM Awards</div>
-                <div style={{fontSize:20,fontWeight:800,color:GD,fontFamily:"'JetBrains Mono'"}}>{analyticsData.topMotm.reduce((s,x)=>s+x.count,0)}</div>
-                <div style={{fontSize:10,color:MT,marginTop:4}}>across all players</div>
+          {/* INSIGHTS — Q10 hybrid: cut Biggest Wins, add Longest Win + Loss Streaks */}
+          {analyticsSection==="insights"&&<>
+            <div className="an-tile-grid">
+              <div className="an-tile">
+                <div className="an-tile-l">MOTM Awards</div>
+                <div className="an-tile-v gold">{analyticsData.topMotm.reduce((s,x)=>s+x.count,0)}</div>
+                <div className="an-tile-sub">across all players</div>
               </div>
-              <div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14}}>
-                <div style={{fontSize:10,color:MT,fontWeight:600,textTransform:"uppercase",marginBottom:4}}>Closest Matches</div>
-                <div style={{fontSize:20,fontWeight:800,color:A,fontFamily:"'JetBrains Mono'"}}>{analyticsData.closeMatches}</div>
-                <div style={{fontSize:10,color:MT,marginTop:4}}>decided by 1 point</div>
+              <div className="an-tile">
+                <div className="an-tile-l">Closest Matches</div>
+                <div className="an-tile-v">{analyticsData.closeMatches}</div>
+                <div className="an-tile-sub">decided by 1 game</div>
               </div>
             </div>
-            {/* MOTM Leaderboard */}
-            {analyticsData.topMotm.length>0&&<div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:12}}>
-              <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:12,textTransform:"uppercase",letterSpacing:0.5}}>⭐ MOTM Ranking</div>
-              {analyticsData.topMotm.map((x,i)=>(
-                <div key={x.pid} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:i<analyticsData.topMotm.length-1?`1px solid ${BD}`:undefined}}>
-                  <div style={{display:"flex",alignItems:"center",gap:8,minWidth:0,flex:1}}>
-                    <span style={{fontSize:12,color:MT,fontWeight:700,fontFamily:"'JetBrains Mono'",minWidth:14,textAlign:"right"}}>{i+1}.</span>
-                    <div style={{width:28,height:28,borderRadius:"50%",background:`${GD}15`,border:`2px solid ${GD}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:GD,overflow:"hidden",flexShrink:0}}>{getAvatar(x.pid)?<img src={getAvatar(x.pid)} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:getName(x.pid)[0]}</div>
-                    <span style={{fontSize:12,color:TX,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{getName(x.pid)}</span>
-                  </div>
-                  <span style={{fontSize:12,fontWeight:700,color:GD,fontFamily:"'JetBrains Mono'",flexShrink:0}}>{x.count}× ⭐</span>
-                </div>
-              ))}
-            </div>}
-            {/* Biggest Wins */}
-            {analyticsData.biggestWins.length>0&&<div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14}}>
-              <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:12,textTransform:"uppercase",letterSpacing:0.5}}>Biggest Wins</div>
-              {analyticsData.biggestWins.map((m,i)=>{
-                const winnerTeam=m.winner==="A"?m.team_a:m.winner==="B"?m.team_b:m.team_a;
-                const loserTeam=m.winner==="A"?m.team_b:m.winner==="B"?m.team_a:m.team_b;
-                return (
-                <div key={i} style={{padding:"10px 0",borderBottom:i<analyticsData.biggestWins.length-1?`1px solid ${BD}`:undefined}}>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8,marginBottom:4}}>
-                    <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontSize:12,fontWeight:700,color:A,lineHeight:1.3}}>{formatTeam(getName(winnerTeam[0]),getName(winnerTeam[1]))}</div>
-                      <div style={{fontSize:10,color:MT,margin:"2px 0"}}>vs</div>
-                      <div style={{fontSize:12,fontWeight:600,color:DG,lineHeight:1.3}}>{formatTeam(getName(loserTeam[0]),getName(loserTeam[1]))}</div>
+
+            {analyticsData.topMotm.length>0&&<section className="dpro-sec" style={{padding:0}}>
+              <h3 className="dpro-sectitle gold">⭐ MOTM Ranking</h3>
+              <div className="dpro-sec-card">
+                {analyticsData.topMotm.map((x,i)=>(
+                  <div key={x.pid} className="lrow">
+                    <div className="lrow-l">
+                      <span className="lrow-rank">{i+1}.</span>
+                      <div className="lrow-avi gold">{getAvatar(x.pid)?<img src={getAvatar(x.pid)} alt=""/>:getName(x.pid)[0]}</div>
+                      <span className="lrow-name">{getName(x.pid)}</span>
                     </div>
-                    <div style={{textAlign:"right",flexShrink:0}}>
-                      <div style={{fontSize:12,fontWeight:700,fontFamily:"'JetBrains Mono'"}}>{m.sets.map((set,si)=>{const winnerScore=m.winner==="A"?set[0]:set[1];const loserScore=m.winner==="A"?set[1]:set[0];return (<span key={si}>{si>0&&<span style={{color:MT}}>, </span>}<span style={{color:A}}>{winnerScore}</span><span style={{color:MT}}>-</span><span style={{color:DG}}>{loserScore}</span></span>);})}</div>
-                      <div style={{fontSize:10,color:MT,marginTop:4}}>{formatDate(m.date)}</div>
-                    </div>
+                    <span className="lrow-gold">{x.count}× ⭐</span>
                   </div>
-                </div>
-              );})}
-            </div>}
-          </div>}
+                ))}
+              </div>
+            </section>}
+
+            {analyticsData.longestWinStreaks.length>0&&<section className="dpro-sec" style={{padding:0}}>
+              <h3 className="dpro-sectitle">Longest Winning Streak</h3>
+              <div className="dpro-sec-card">
+                {analyticsData.longestWinStreaks.map((x,i)=>(
+                  <div key={x.pid} className="lrow">
+                    <div className="lrow-l">
+                      <span className="lrow-rank">{i+1}.</span>
+                      <div className="lrow-avi">{getAvatar(x.pid)?<img src={getAvatar(x.pid)} alt=""/>:getName(x.pid)[0]}</div>
+                      <span className="lrow-name">{getName(x.pid)}</span>
+                    </div>
+                    <div className="streak-r"><span className="streak-v win">{x.n}</span><span className="streak-u">in a row</span></div>
+                  </div>
+                ))}
+              </div>
+            </section>}
+
+            {analyticsData.longestLossStreaks.length>0&&<section className="dpro-sec" style={{padding:0}}>
+              <h3 className="dpro-sectitle">Longest Losing Streak</h3>
+              <div className="dpro-sec-card">
+                {analyticsData.longestLossStreaks.map((x,i)=>(
+                  <div key={x.pid} className="lrow">
+                    <div className="lrow-l">
+                      <span className="lrow-rank">{i+1}.</span>
+                      <div className="lrow-avi">{getAvatar(x.pid)?<img src={getAvatar(x.pid)} alt=""/>:getName(x.pid)[0]}</div>
+                      <span className="lrow-name">{getName(x.pid)}</span>
+                    </div>
+                    <div className="streak-r"><span className="streak-v loss">{x.n}</span><span className="streak-u">in a row</span></div>
+                  </div>
+                ))}
+              </div>
+            </section>}
+          </>}
         </div>
       ) : subTab==="analytics" ? (
         <div style={{textAlign:"center",padding:"40px 20px"}}>
