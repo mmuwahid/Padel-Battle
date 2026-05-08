@@ -120,7 +120,7 @@ export function SettingsView({ user, claimedPlayer, isAdmin, pushSubscribed, sub
         <div className="slbl">League</div>
         <div className="stcard">
           <div className="saar" onClick={onSwitchLeague}>
-            <div className="stico"><Icon name="league" size={16}/></div>
+            <div className="stico"><Icon name="switch" size={16}/></div>
             <div className="stbod"><div className="sttitle">Switch League</div><div className="stsub">Join a different league</div></div>
             <Icon name="chevron" size={16} color="#5a5a6a"/>
           </div>
