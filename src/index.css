@@ -1836,7 +1836,9 @@ body {
 /* S068: Achievements section — spec port per iPhone mockup */
 .ach-sec{padding:0 18px 18px;}
 .ach-h{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
-.ach-h-tit{font-size:22px;font-weight:900;letter-spacing:-.01em;color:var(--text);margin:0;text-transform:none;}
+.ach-h.center{justify-content:center;}
+.ach-h-tit{font-size:18px;font-weight:900;letter-spacing:.04em;color:var(--text);margin:0;text-transform:uppercase;}
+.ach-h.gold .ach-h-tit{color:var(--gold);}
 .ach-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .ach-card{position:relative;padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);display:flex;flex-direction:column;gap:6px;min-height:120px;}
 .ach-card .ach-ico{width:34px;height:34px;border-radius:8px;background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.4);display:flex;align-items:center;justify-content:center;margin-bottom:4px;}

@@ -159,9 +159,10 @@ export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, re
               icon + "Locked" pill at the bottom; unlocked cards get the green
               accent chip. */}
           <div className="ach-sec">
-            <div className="ach-h">
-              <Icon name="award" size={14} color="var(--gold)"/>
-              <h3 className="ach-h-tit">Achievements</h3>
+            {/* S068 user feedback: title centered + (earned/total) count badge per JSX spec */}
+            <div className="ach-h center gold">
+              <Icon name="trophy" size={14} color="var(--gold)"/>
+              <h3 className="ach-h-tit">Achievements ({ACHS.filter(a => a.ck(myStat)).length}/{ACHS.length})</h3>
             </div>
             <div className="ach-grid">
               {ACHS.map(a => {
