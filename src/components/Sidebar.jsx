@@ -1,105 +1,140 @@
 import React from "react";
 import { supabase } from '../supabase';
-import { A, CD, CD2, BD, TX, MT, DG, BL } from '../theme';
 import Icon from './Icon';
 
-// Phase 6c: shared inline-flex pattern for sidebar nav buttons.
-// Adds a 9px gap between the leading <Icon> and the button label, while
-// preserving every prior padding/typography token used by the emoji-prefixed
-// buttons.
-const navBtnStyle = {
-  width:"100%",padding:"12px 16px",background:"transparent",border:"none",
-  color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",
-  fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s",
-  display:"flex",alignItems:"center",gap:9,
-};
+// S066 Phase 12: spec-faithful restyle. Slide-in right drawer (.ssheet) with
+// .sbprof header (clickable to open My Profile), .sbsec sections containing
+// .sbitem rows, .sbdiv divider, .sbfoot with .signout. Spec lines 2174-2196.
+export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, user, avatarUrl, league, isAdmin, onSwitchLeague, showToast, installPrompt, handleInstall, playerCount, activeSeasonName }) {
+  if (!sidebarOpen) return null;
 
-export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, user, avatarUrl, league, isAdmin, onSwitchLeague, showToast, installPrompt, handleInstall }) {
+  const userInitial = (user.user_metadata?.display_name || user.email || "U")[0].toUpperCase();
+  const userName = user.user_metadata?.display_name || user.email?.split("@")[0] || "User";
+
+  const handleInvite = () => {
+    const code = league?.invite_code;
+    if (!code) return;
+    const url = `${window.location.origin}${window.location.pathname}?invite=${code}`;
+    if (navigator.share) {
+      navigator.share({ title: "Join my PadelHub league", text: `Join "${league?.name}" on PadelHub!`, url });
+    } else {
+      navigator.clipboard.writeText(url);
+      if (showToast) showToast("Invite link copied!");
+    }
+  };
+
+  const isIos = /iPhone|iPad/i.test(navigator.userAgent);
+  const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
+
   return (
-    <>
-      {/* SIDEBAR OVERLAY */}
-      {sidebarOpen && (
-        <div
-          onClick={()=>setSidebarOpen(false)}
-          style={{
-            position:"fixed",top:0,left:0,right:0,bottom:0,
-            background:"rgba(0,0,0,0.5)",zIndex:98,
-          }}
-        />
-      )}
+    <div className="overlay" onClick={()=>setSidebarOpen(false)}>
+      <div className="ssheet" onClick={e=>e.stopPropagation()}>
+        <div className="shdl"/>
+        <button onClick={()=>setSidebarOpen(false)} aria-label="Close" style={{position:"absolute",top:12,right:14,width:30,height:30,borderRadius:"var(--r-full)",background:"var(--surface-2)",border:"1px solid var(--border)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"#9090a4"}}>
+          <Icon name="close" size={14}/>
+        </button>
 
-      {/* SIDEBAR */}
-      <div style={{
-        position:"fixed",top:0,right:0,width:Math.min(320,window.innerWidth),height:"100vh",
-        background:CD,borderLeft:`1px solid ${BD}`,
-        zIndex:99,
-        transform:sidebarOpen?"translateX(0)":"translateX(100%)",
-        transition:"transform 0.3s ease-in-out",
-        display:"flex",flexDirection:"column",
-        boxShadow:sidebarOpen?"0 0 20px rgba(0,0,0,0.5)":"none",
-        overflow:"auto",
-      }}>
-        {/* Header with user info — Issue #21: clickable to open My Profile */}
-        <div style={{padding:"20px 16px",paddingTop:"calc(env(safe-area-inset-top, 0px) + 20px)",borderBottom:`1px solid ${BD}`}}>
-          <div style={{display:"flex",justifyContent:"flex-end",marginBottom:8}}>
-            <button onClick={()=>setSidebarOpen(false)} style={{background:"none",border:"none",color:MT,cursor:"pointer",padding:"4px 8px",lineHeight:1,display:"flex",alignItems:"center"}} aria-label="Close sidebar"><Icon name="close" size={18}/></button>
+        {/* User profile header — click opens My Profile (Issue #21) */}
+        <div className="sbprof" onClick={()=>{setSidebarView("profile"); setSidebarOpen(false);}}>
+          <div className="sbav">
+            {avatarUrl
+              ? <img src={avatarUrl} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+              : <div className="sbavi">{userInitial}</div>}
           </div>
-          <button onClick={()=>{setSidebarView("profile");setSidebarOpen(false);}} style={{display:"flex",alignItems:"center",gap:12,marginBottom:12,width:"100%",background:"transparent",border:"none",padding:0,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif"}} aria-label="Open my profile">
-            <div style={{width:56,height:56,borderRadius:"50%",background:`${A}20`,border:`2px solid ${A}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,fontWeight:800,color:A,overflow:"hidden",flexShrink:0}}>
-              {avatarUrl?<img src={avatarUrl} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:(user.user_metadata?.display_name||user.email||"U")[0].toUpperCase()}
+          <div style={{flex:1,minWidth:0}}>
+            <div className="sbn">{userName}</div>
+            <div className="sbe" style={{whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{user.email}</div>
+          </div>
+          <div style={{color:"#5a5a6a",marginLeft:"auto",display:"flex"}}>
+            <Icon name="chevron" size={16}/>
+          </div>
+        </div>
+
+        {/* League section */}
+        <div className="sbsec">
+          <div className="sbsl">League</div>
+          {league ? (
+            <div className="sbitem" onClick={()=>{setSidebarView("leagues"); setSidebarOpen(false);}}>
+              <div className="sbico"><Icon name="league" size={16}/></div>
+              <div className="sbibd">
+                <div className="sbit">{league.name}</div>
+                {(playerCount != null || activeSeasonName) && (
+                  <div className="sbis">
+                    {playerCount != null && `${playerCount} player${playerCount===1?"":"s"}`}
+                    {playerCount != null && activeSeasonName && " · "}
+                    {activeSeasonName}
+                  </div>
+                )}
+              </div>
+              {isAdmin && <div className="sbbadge">Admin</div>}
+              <span className="sb-chev"><Icon name="chevron" size={16} color="currentColor"/></span>
             </div>
-            <div style={{flex:1,minWidth:0}}>
-              <div style={{fontSize:14,fontWeight:700,color:TX}}>{user.user_metadata?.display_name||user.email?.split("@")[0]||"User"}</div>
-              <div style={{fontSize:10,color:MT,marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{user.email}</div>
+          ) : (
+            <div className="sbitem" onClick={()=>{setSidebarView("leagues"); setSidebarOpen(false);}}>
+              <div className="sbico"><Icon name="league" size={16}/></div>
+              <div className="sbibd">
+                <div className="sbit">Join or create</div>
+                <div className="sbis">No league selected</div>
+              </div>
+              <span className="sb-chev"><Icon name="chevron" size={16} color="currentColor"/></span>
             </div>
-            <span style={{color:MT,paddingRight:4,display:"flex",alignItems:"center"}} aria-hidden="true"><Icon name="chevron" size={14}/></span>
+          )}
+          {league && isAdmin && (
+            <div className="sbitem" onClick={handleInvite}>
+              <div className="sbico"><Icon name="user-plus" size={16}/></div>
+              <div className="sbibd">
+                <div className="sbit">Invite Players</div>
+              </div>
+              <span className="sb-chev"><Icon name="chevron" size={16} color="currentColor"/></span>
+            </div>
+          )}
+        </div>
+
+        <div className="sbdiv"/>
+
+        {/* App section */}
+        <div className="sbsec">
+          <div className="sbsl">App</div>
+          <div className="sbitem" onClick={()=>{setSidebarView("rules"); setSidebarOpen(false);}}>
+            <div className="sbico"><Icon name="book" size={16}/></div>
+            <div className="sbibd">
+              <div className="sbit">Official Rules</div>
+            </div>
+            <span className="sb-chev"><Icon name="chevron" size={16} color="currentColor"/></span>
+          </div>
+          <div className="sbitem" onClick={()=>{setSidebarView("settings"); setSidebarOpen(false);}}>
+            <div className="sbico"><Icon name="settings" size={16}/></div>
+            <div className="sbibd">
+              <div className="sbit">Settings</div>
+            </div>
+            <span className="sb-chev"><Icon name="chevron" size={16} color="currentColor"/></span>
+          </div>
+          {installPrompt ? (
+            <div className="sbitem" onClick={handleInstall}>
+              <div className="sbico"><Icon name="share" size={16}/></div>
+              <div className="sbibd">
+                <div className="sbit" style={{color:"var(--accent)"}}>Install App</div>
+              </div>
+              <span className="sb-chev"><Icon name="chevron" size={16} color="currentColor"/></span>
+            </div>
+          ) : (isIos && !isStandalone) ? (
+            <div className="sbitem" style={{cursor:"default"}}>
+              <div className="sbico"><Icon name="share" size={16}/></div>
+              <div className="sbibd">
+                <div className="sbit">Install App</div>
+                <div className="sbis">Tap Share → Add to Home Screen</div>
+              </div>
+            </div>
+          ) : null}
+        </div>
+
+        {/* Sign out footer */}
+        <div className="sbfoot">
+          <button className="signout" onClick={async()=>{await supabase.auth.signOut();}}>
+            <Icon name="close" size={15} color="var(--danger)"/>Sign Out
           </button>
         </div>
-
-        {/* Sidebar content — NAVIGATION ONLY, closes on selection */}
-          <style>{`
-            .sidebar-nav button:active { background: ${CD2} !important; }
-          `}</style>
-        <div className="sidebar-nav" style={{flex:1,padding:"16px",overflow:"auto"}}>
-
-          <div style={{marginBottom:12}}>
-            <div style={{fontSize:10,color:MT,fontWeight:600,letterSpacing:1,textTransform:"uppercase",paddingLeft:16,marginBottom:8}}>League</div>
-            <div style={{padding:"12px 16px",background:CD2,borderRadius:8,marginBottom:8}}>
-              <div style={{fontSize:13,fontWeight:600,color:TX,display:"flex",alignItems:"center",gap:6}}>
-                {league?.name || <span style={{color:MT,fontStyle:"italic"}}>No league selected</span>}
-                {league && isAdmin && <span style={{fontSize:9,color:A,fontWeight:700,background:`${A}20`,padding:"2px 6px",borderRadius:4}}>Admin</span>}
-              </div>
-            </div>
-            {/* S063: full league management — switch / create / join */}
-            <button onClick={()=>{setSidebarView("leagues");setSidebarOpen(false);}} style={navBtnStyle}><Icon name="league" size={15}/>Leagues</button>
-            {league && isAdmin && (
-              <button onClick={()=>{const code=league?.invite_code;if(code){const url=`${window.location.origin}${window.location.pathname}?invite=${code}`;if(navigator.share)navigator.share({title:"Join my PadelHub league",text:`Join "${league?.name}" on PadelHub!`,url});else{navigator.clipboard.writeText(url);showToast("Invite link copied!");}}}} style={navBtnStyle}><Icon name="user-plus" size={15}/>Invite Players</button>
-            )}
-          </div>
-
-          <div style={{height:"1px",background:BD,margin:"12px 0"}} />
-
-          <div>
-            <div style={{fontSize:10,color:MT,fontWeight:600,letterSpacing:1,textTransform:"uppercase",paddingLeft:16,marginBottom:8}}>App</div>
-            <button onClick={()=>{setSidebarView("rules");setSidebarOpen(false);}} style={navBtnStyle}><Icon name="book" size={15}/>Official Rules</button>
-            <button onClick={()=>{setSidebarView("settings");setSidebarOpen(false);}} style={navBtnStyle}><Icon name="settings" size={15}/>Settings</button>
-            {installPrompt ? (
-              <button onClick={handleInstall} style={{width:"100%",padding:"12px 16px",background:`${A}15`,border:`1px solid ${A}40`,borderRadius:8,color:A,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",transition:"all 0.2s",display:"flex",alignItems:"center",gap:9}}><Icon name="share" size={15}/>Install App</button>
-            ) : !window.matchMedia("(display-mode: standalone)").matches && /iPhone|iPad/i.test(navigator.userAgent) ? (
-              <div style={{padding:"12px 16px",background:`${BL}10`,border:`1px solid ${BL}30`,borderRadius:8,fontSize:11,color:MT,lineHeight:1.4,display:"flex",alignItems:"flex-start",gap:9}}>
-                <Icon name="share" size={14}/>
-                <span>To install: tap <span style={{color:BL}}>Share</span> → <span style={{color:BL}}>Add to Home Screen</span></span>
-              </div>
-            ) : null}
-          </div>
-
-          <div style={{padding:"16px 0",borderTop:`1px solid ${BD}`,marginTop:12}}>
-            <button onClick={async()=>{await supabase.auth.signOut();}} style={{width:"100%",padding:"12px",background:`${DG}15`,border:`1px solid ${DG}40`,borderRadius:8,color:DG,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
-              Sign Out
-            </button>
-          </div>
-        </div>
       </div>
-    </>
+    </div>
   );
 }

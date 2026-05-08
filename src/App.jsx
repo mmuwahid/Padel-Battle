@@ -898,7 +898,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
       )}
 
       {/* SIDEBAR — extracted component */}
-      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} setSidebarView={setSidebarView} user={user} avatarUrl={avatarUrl} league={league} isAdmin={isAdmin} onSwitchLeague={onSwitchLeague} showToast={showToast} installPrompt={installPrompt} handleInstall={handleInstall}/>
+      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} setSidebarView={setSidebarView} user={user} avatarUrl={avatarUrl} league={league} isAdmin={isAdmin} onSwitchLeague={onSwitchLeague} showToast={showToast} installPrompt={installPrompt} handleInstall={handleInstall} playerCount={players.length} activeSeasonName={seasons.find(s=>s.id===selectedSeason)?.name||seasons.find(s=>s.active)?.name||null}/>
 
       {/* SIDEBAR VIEWS — render in main content area */}
       {sidebarView && (

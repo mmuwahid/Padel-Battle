@@ -111,7 +111,7 @@ export function OnboardingScreen({ user, handlers, onComplete, showToast }) {
               <div className="ocard-lbl">New profile</div>
 
               <div className="fgrp">
-                <div className="fl2"><Icon name="players" size={12}/>Display Name<span className="req">*</span></div>
+                <div className="fl2"><Icon name="user" size={12}/>Display Name<span className="req">*</span></div>
                 <input className="fi2" placeholder="How you appear on the leaderboard" value={name} onChange={e=>setName(e.target.value)} maxLength={40}/>
               </div>
 
@@ -133,6 +133,22 @@ export function OnboardingScreen({ user, handlers, onComplete, showToast }) {
             <div className="oth1">Complete your profile</div>
             <div className="osub">All fields are required before you can join.</div>
 
+            {/* Photo placeholder (visual only — actual upload deferred per Phase 11 Q3) */}
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8,marginBottom:18}}>
+              <div style={{width:80,height:80,borderRadius:"50%",background:"var(--surface)",border:"2px dashed var(--border)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,color:"#9090a4",cursor:"default"}}>
+                <Icon name="camera" size={20}/>
+                <div style={{fontFamily:"var(--mono)",fontSize:9,letterSpacing:".04em"}}>Tap to add</div>
+              </div>
+              <div style={{fontFamily:"var(--mono)",fontSize:10,color:"#9090a4"}}>Skip for now</div>
+            </div>
+
+            {/* Display Name (pre-filled from step 1, editable) */}
+            <div className="fgrp">
+              <div className="fl2"><Icon name="user" size={12}/>Display Name<span className="req">*</span></div>
+              <input className="fi2" placeholder="How you appear on the leaderboard" value={name} onChange={e=>setName(e.target.value)} maxLength={40}/>
+              {attempted && name.trim().length<2 && <div className="ferr">Min 2 characters required</div>}
+            </div>
+
             {/* DOB */}
             <div className="fgrp">
               <div className="fl2"><Icon name="calendar" size={12}/>Date of Birth<span className="req">*</span></div>
@@ -140,7 +156,14 @@ export function OnboardingScreen({ user, handlers, onComplete, showToast }) {
               {attempted && !dob && <div className="ferr">Date of birth is required</div>}
             </div>
 
-            {/* Gender — same blue/pink semantic as Phase 8 */}
+            {/* Country (pre-filled from step 1, editable) */}
+            <div className="fgrp">
+              <div className="fl2"><Icon name="globe" size={12}/>Country<span className="req">*</span></div>
+              <CountrySelect value={country} onChange={setCountry}/>
+              {attempted && !country && <div className="ferr">Country is required</div>}
+            </div>
+
+            {/* Gender — blue/pink active per Phase 8 */}
             <div className="fgrp">
               <div className="fl2"><Icon name="male" size={12}/>Gender<span className="req">*</span></div>
               <div className="gtog">
@@ -154,7 +177,7 @@ export function OnboardingScreen({ user, handlers, onComplete, showToast }) {
               {attempted && !gender && <div className="ferr">Please select your gender</div>}
             </div>
 
-            {/* Playing Side — Left / Right / Any */}
+            {/* Playing Side */}
             <div className="fgrp">
               <div className="fl2"><Icon name="court-l" size={12}/>Playing Side<span className="req">*</span></div>
               <div className="stog2">
