@@ -16,6 +16,7 @@ import { SeasonManagement } from './components/SeasonManagement';
 import { LeagueManagement } from './components/LeagueManagement';
 import { PlatformAdmin } from './components/PlatformAdmin';
 import { SettingsView } from './components/SettingsView';
+import { RulesView } from './components/RulesView';
 import { NotificationCenter } from './components/NotificationCenter';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { LeagueContext } from './LeagueContext';
@@ -937,60 +938,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
               showToast={showToast}
             />
           )}
-          {sidebarView==="rules" && (
-            <div className="rules-wrap">
-              <button onClick={()=>setSidebarView(null)} style={{marginBottom:16,background:"none",border:"none",color:"var(--accent)",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"var(--font)",padding:0,display:"flex",alignItems:"center",gap:5}}>
-                <Icon name="back" size={14}/> Back
-              </button>
-              <div className="rules-h">
-                <div className="rules-h-eyebrow">Official FIP</div>
-                <div className="rules-h-title">Padel Rules</div>
-                <div className="rules-h-sub">Match scoring, serving, walls, and the etiquette that keeps things fair.</div>
-              </div>
-              {RULES.map((r,i) => {
-                const icoName =
-                  r.title.includes("Scoring") ? "trophy" :
-                  r.title.includes("Serve") || r.title.includes("Return") ? "racket" :
-                  r.title.includes("Wall") || r.title.includes("Outside") ? "court-any" :
-                  r.title.includes("Net") ? "alert" :
-                  r.title.includes("Switch") ? "refresh" :
-                  "info";
-                return (
-                  <div key={i} className="rcard">
-                    <div className="rchd">
-                      <div className="rcico"><Icon name={icoName} size={16} color="var(--accent)"/></div>
-                      <div className="rct">{r.title}</div>
-                    </div>
-                    {r.intro && <div className="rcintro">{r.intro}</div>}
-                    {r.subRules ? (
-                      r.subRules.map((sr,j) => (
-                        <div key={j} className="rsub">
-                          <div className="rsub-h">{sr.title}</div>
-                          <div className="rsub-c">{sr.content}</div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="rcontent">{r.content}</div>
-                    )}
-                  </div>
-                );
-              })}
-              <div className="rules-h argued" style={{marginTop:24}}>
-                <div className="rules-h-eyebrow">Disputes</div>
-                <div className="rules-h-title">Most Argued Calls</div>
-                <div className="rules-h-sub">Settle it once and for all.</div>
-              </div>
-              {ARGUED.map((r,i) => (
-                <div key={i} className="rcard q">
-                  <div className="rchd">
-                    <div className="rcico"><Icon name="help" size={16} color="var(--gold)"/></div>
-                    <div className="rct">{r.q}</div>
-                  </div>
-                  <div className="rcontent">{r.a}</div>
-                </div>
-              ))}
-            </div>
-          )}
+          {sidebarView==="rules" && <RulesView setSidebarView={setSidebarView}/>}
         </div>
       )}
 

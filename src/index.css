@@ -1469,3 +1469,55 @@ body {
 .rsub-h{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--gold);letter-spacing:.04em;margin-bottom:4px;}
 .rsub-c{font-family:var(--font);font-size:12px;color:var(--text);line-height:1.55;}
 .rcontent{font-family:var(--font);font-size:13px;color:var(--text);line-height:1.55;}
+
+
+/* ─── S066 Phase 12 PR 3: Rules — spec class names + collapse + press state ─── */
+
+/* Header block (.rtb / .rtbey / .rtbh1 / .rtbsub) — replaces .rules-h family */
+.rtb{padding:18px 18px 4px;}
+.rtbey{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:6px;}
+.rtbh1{font-family:var(--font);font-size:24px;font-weight:800;font-style:italic;letter-spacing:-.01em;color:var(--text);margin-bottom:4px;}
+.rtbsub{font-family:var(--mono);font-size:11px;color:#9090a4;line-height:1.5;}
+.rtbey.gold{color:var(--gold);}
+
+/* Search bar */
+.rtsrchw{padding:8px 18px 10px;position:relative;}
+.rtsrchi{position:absolute;left:30px;top:50%;transform:translateY(-50%);color:#9090a4;pointer-events:none;display:flex;}
+.rtsrch{width:100%;padding:11px 16px 11px 42px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);color:var(--text);font-family:var(--font);font-size:13px;outline:none;transition:border-color 200ms;}
+.rtsrch::placeholder{color:#5a5a6a;}
+.rtsrch:focus{border-color:var(--accent-glow);}
+
+/* Filter pill bar */
+.rtfbar{display:flex;gap:7px;padding:0 18px 12px;overflow-x:auto;scrollbar-width:none;}
+.rtfbar::-webkit-scrollbar{display:none;}
+.rtfpill{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--r-full);background:var(--surface);border:1px solid var(--border);font-family:var(--font);font-size:11px;font-weight:600;color:#9090a4;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all 150ms;}
+.rtfpill:hover{border-color:var(--accent-glow);color:var(--text);}
+.rtfpill.fg{background:var(--accent-dim);border-color:var(--accent-glow);color:var(--accent);}
+.rtfpill.fo{background:var(--gold-dim);border-color:var(--gold-glow);color:var(--gold);}
+.pillct{font-family:var(--mono);font-size:10px;background:rgba(255,255,255,.06);border-radius:var(--r-full);padding:1px 7px;font-weight:700;}
+.rtfpill.fg .pillct{background:rgba(74,222,128,.18);color:var(--accent);}
+.rtfpill.fo .pillct{background:rgba(245,158,11,.18);color:var(--gold);}
+
+/* Rule body wrapper */
+.rtbody{padding:0 18px 40px;}
+
+/* Card title-wrapper for preview */
+.rctw{flex:1;min-width:0;}
+.rcprev{font-family:var(--mono);font-size:11px;color:#9090a4;margin-top:4px;line-height:1.4;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+
+/* Chevron (rotates on open) */
+.rcchev{display:flex;align-items:center;justify-content:center;color:#5a5a6a;flex-shrink:0;transition:color 150ms,transform 200ms var(--ease-spring);margin-left:8px;}
+.rcard.open .rcchev{transform:rotate(90deg);color:var(--accent);}
+.rcard.open.q .rcchev{color:var(--gold);}
+
+/* Collapse animation */
+.rcbody{overflow:hidden;transition:max-height 280ms cubic-bezier(.4,0,.2,1),opacity 200ms ease;}
+.rcbody.cl{max-height:0;opacity:0;}
+.rcbody.op{max-height:1200px;opacity:1;}
+.rccont{padding-top:6px;}
+
+/* Card press state — accent feedback when tapped */
+.rcard{cursor:pointer;}
+.rcard:active{transform:scale(.99);transition:transform 100ms;border-color:var(--accent-glow);background:rgba(74,222,128,.04);}
+.rcard.q:active{border-color:var(--gold-glow);background:rgba(245,158,11,.04);}
+.rchd{align-items:center !important;}
