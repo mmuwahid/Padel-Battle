@@ -94,10 +94,10 @@ export function MatchApprovalsQueue() {
           const [sA, sB] = setsWonCount(sets);
           const [pA, pB] = pointsCount(sets);
           const tbIdx = numSets === 3 ? 2 : -1;
-          const setColTemplate = Array.from({length:numSets}, ()=>'40px').join(' ');
+          const setColTemplate = Array.from({length:numSets}, ()=>'30px').join(' ');
           const gridStyle = numSets > 0
-            ? { gridTemplateColumns: `36px 1fr ${setColTemplate} 78px` }
-            : { gridTemplateColumns: `36px 1fr 78px` };
+            ? { gridTemplateColumns: `32px minmax(0,1fr) ${setColTemplate} 64px` }
+            : { gridTemplateColumns: `32px minmax(0,1fr) 64px` };
           const finalCol = 3 + numSets;
 
           return (
