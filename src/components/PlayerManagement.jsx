@@ -116,7 +116,7 @@ export function PlayerManagement({ memberProfiles, setSidebarView }) {
 
       <div className="plmhr">
         <div>
-          <div className="plmtit">Roster</div>
+          <div className="plmtit">Players</div>
           <div className="plmct">{filtered.length} player{filtered.length === 1 ? "" : "s"}</div>
         </div>
         <button className="pbtn" onClick={() => setShowAdd(s => !s)}>

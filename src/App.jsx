@@ -854,9 +854,65 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
     getName, showToast, sendPushNotification, loadLeagueData,
   };
 
+  // S067: pull-to-refresh — long-press at scrollY=0 + drag down past 70px
+  // triggers loadLeagueData() with a 1s spinner overlay. Replaces the old
+  // header refresh button + "Refreshed!" toast.
+  const ptrStartY = useRef(null);
+  const ptrPulledRef = useRef(0);
+  const [ptrPull, setPtrPull] = useState(0);
+  const [ptrRefreshing, setPtrRefreshing] = useState(false);
+  useEffect(() => {
+    const onTouchStart = (e) => {
+      if (window.scrollY > 0) { ptrStartY.current = null; return; }
+      ptrStartY.current = e.touches[0].clientY;
+    };
+    const onTouchMove = (e) => {
+      if (ptrStartY.current == null || ptrRefreshing) return;
+      const dy = e.touches[0].clientY - ptrStartY.current;
+      if (dy > 0 && window.scrollY === 0) {
+        const damped = Math.min(dy * 0.5, 100);
+        ptrPulledRef.current = damped;
+        setPtrPull(damped);
+      }
+    };
+    const onTouchEnd = () => {
+      if (ptrStartY.current == null || ptrRefreshing) { setPtrPull(0); return; }
+      if (ptrPulledRef.current > 60) {
+        setPtrRefreshing(true);
+        setPtrPull(0);
+        Promise.all([loadLeagueData(), new Promise(r => setTimeout(r, 1000))])
+          .finally(() => setPtrRefreshing(false));
+      } else {
+        setPtrPull(0);
+      }
+      ptrStartY.current = null;
+      ptrPulledRef.current = 0;
+    };
+    document.addEventListener("touchstart", onTouchStart, { passive: true });
+    document.addEventListener("touchmove", onTouchMove, { passive: true });
+    document.addEventListener("touchend", onTouchEnd);
+    return () => {
+      document.removeEventListener("touchstart", onTouchStart);
+      document.removeEventListener("touchmove", onTouchMove);
+      document.removeEventListener("touchend", onTouchEnd);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ptrRefreshing]);
+
   return (
     <LeagueContext.Provider value={leagueCtx}>
     <div style={{background:BG,minHeight:"100vh",paddingBottom:"calc(82px + env(safe-area-inset-bottom, 0px))",fontFamily:"'Outfit',sans-serif",color:TX}}>
+      {ptrRefreshing && (
+        <div className="ptr-overlay">
+          <div className="ptr-spinner" />
+        </div>
+      )}
+      {ptrPull > 20 && !ptrRefreshing && (
+        <div className={`ptr-pull visible`} style={{transform:`translateX(-50%) translateY(${ptrPull * 0.4}px)`}}>
+          <Icon name={ptrPull > 60 ? "refresh" : "chevron-d"} size={14} color="currentColor" />
+          {ptrPull > 60 ? "Release to refresh" : "Pull to refresh"}
+        </div>
+      )}
       {/* Issue #15 + #43 (S058): paint html/body to gradient-start color (#0d0d14) so rubber-band overscroll at the page top reveals a color identical to the header — no visible seam. The body bg paint is the actual fix; the previous `overscroll-behavior-y:none` was defensive and is now removed to restore native iOS rubber-band + momentum scrolling per #43. `-webkit-overflow-scrolling:touch` re-enables iOS momentum on legacy WebKit (no-op on iOS 13+).
           S050 .flag class: forces an emoji-priority font stack so country flag glyphs render across Windows / iOS / Android / macOS — without it, Windows may fall back to "PS"/"GB" letter blocks because the inherited Outfit font lacks emoji glyphs. */}
       <style>{`html,body{margin:0;padding:0;background:#0d0d14;-webkit-overflow-scrolling:touch;} #root{margin:0;padding:0;} .flag{font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji','Twemoji Mozilla','EmojiOne Color','Android Emoji',sans-serif;font-style:normal;font-weight:normal;} @keyframes spin{to{transform:rotate(360deg)}} @keyframes fadeIn{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}} input:focus,select:focus,textarea:focus{border-color:${A} !important;box-shadow:0 0 0 2px ${A}30 !important;}`}</style>
@@ -886,7 +942,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
             </div>
           </div>
           <div className="hr">
-            <button className="ibtn" onClick={()=>{loadLeagueData();showToast("Refreshed!");}} aria-label="Refresh"><Icon name="refresh" size={16}/></button>
+            {/* S067: refresh button removed — pull-to-refresh covers manual reload now. */}
             <button className={"ibtn"+(sidebarView==="notifications"?" on":"")} onClick={()=>{setSidebarView(sidebarView==="notifications"?null:"notifications");setSidebarOpen(false);}} aria-label="Notifications">
               <Icon name="bell" size={16}/>
               {unreadNotifCount>0 && <span className="ndot">{unreadNotifCount>9?"9+":unreadNotifCount}</span>}

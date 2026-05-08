@@ -1,4 +1,5 @@
 import React, { useState, useRef } from "react";
+import Icon from "./Icon";
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, BL } from "../theme";
 import { flagEmoji, decodeImageFile } from "../utils/helpers";
 import { useLeague } from "../LeagueContext";
@@ -127,30 +128,46 @@ export function EditPlayerModal({ player, onClose, onSaved }) {
           <CountrySelect value={country} onChange={setCountry}/>
         </div>
 
-        {/* Playing position */}
-        <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: MT, marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>Playing Position</label>
-        <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
-          {[["", "Not set"], ["left", "Left"], ["right", "Right"]].map(([v, l]) => (
-            <button key={v || "none"} onClick={() => setPosition(v)} style={{ flex: 1, padding: "10px", background: position === v ? A : "transparent", color: position === v ? "#000" : MT, border: `1px solid ${position === v ? A : BD}`, borderRadius: 10, fontSize: 12, fontWeight: 800, cursor: "pointer", fontFamily: "'Outfit',sans-serif", fontStyle: "italic", textTransform: "uppercase", letterSpacing: 0.5 }}>{l}</button>
-          ))}
+        {/* S067: Gender + Playing-side now use the same .gtog/.gbtn2/.stog2/.ssbtn2
+            spec vocab as EditMyProfile so admin and self-edit screens match. */}
+
+        {/* Gender */}
+        <div className="fgrp">
+          <div className="fl2"><Icon name="male" size={12} />Gender</div>
+          <div className="gtog">
+            <button className={`gbtn2 gm${gender === "male" ? " on" : ""}`} onClick={() => setGender(gender === "male" ? "" : "male")}>
+              <Icon name="male" size={16} color={gender === "male" ? "#60a5fa" : "#9090a4"} />Male
+            </button>
+            <button className={`gbtn2 gf${gender === "female" ? " on" : ""}`} onClick={() => setGender(gender === "female" ? "" : "female")}>
+              <Icon name="female" size={16} color={gender === "female" ? "#f472b6" : "#9090a4"} />Female
+            </button>
+          </div>
         </div>
 
-        {/* Gender (S066 Phase 8) — 2-button toggle. Tapping the active one again clears it.
-            Active colors match Players-screen filter pills: blue for Male, pink for Female. */}
-        <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: MT, marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>Gender</label>
-        <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
-          {[
-            { v: "male",   l: "Male",   c: "#60a5fa", bg: "rgba(96,165,250,.10)",  bd: "rgba(96,165,250,.45)" },
-            { v: "female", l: "Female", c: "#f472b6", bg: "rgba(244,114,182,.10)", bd: "rgba(244,114,182,.45)" },
-          ].map(({ v, l, c, bg, bd }) => (
-            <button key={v} onClick={() => setGender(gender === v ? "" : v)} style={{ flex: 1, padding: "10px", background: gender === v ? bg : "transparent", color: gender === v ? c : MT, border: `1px solid ${gender === v ? bd : BD}`, borderRadius: 10, fontSize: 12, fontWeight: 800, cursor: "pointer", fontFamily: "'Outfit',sans-serif", fontStyle: "italic", textTransform: "uppercase", letterSpacing: 0.5 }}>{l}</button>
-          ))}
+        {/* Playing Side */}
+        <div className="fgrp" style={{ marginBottom: 18 }}>
+          <div className="fl2"><Icon name="court-l" size={12} />Playing Side</div>
+          <div className="stog2">
+            {[
+              { v: "left",  l: "Left Side",  i: "court-l" },
+              { v: "right", l: "Right Side", i: "court-r" },
+              { v: "any",   l: "Any",        i: "court-any" },
+            ].map(({ v, l, i }) => (
+              <button key={v} className={`ssbtn2${position === v ? " on" : ""}`} onClick={() => setPosition(position === v ? "" : v)}>
+                <Icon name={i} size={20} color={position === v ? "#000" : "#9090a4"} />
+                {l}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Actions */}
+        {/* Actions — :active press-state added via .savebtn / .shcancel CSS in S067-r1 */}
         <div style={{ display: "flex", gap: 8 }}>
-          <button onClick={onClose} disabled={saving} style={{ flex: 1, padding: "12px", background: "transparent", border: `1px solid ${BD}`, borderRadius: 10, color: MT, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Outfit',sans-serif" }}>Cancel</button>
-          <button onClick={handleSave} disabled={saving || !name.trim()} style={{ flex: 1, padding: "12px", background: A, border: "none", borderRadius: 10, color: "#000", fontSize: 13, fontWeight: 800, cursor: "pointer", fontFamily: "'Outfit',sans-serif", fontStyle: "italic", textTransform: "uppercase", letterSpacing: 0.5, opacity: saving ? 0.6 : 1 }}>{saving ? "Saving..." : "Save"}</button>
+          <button onClick={onClose} disabled={saving} className="shcancel" style={{ flex: 1, height: 44 }}>Cancel</button>
+          <button onClick={handleSave} disabled={saving || !name.trim()} className={`savebtn${name.trim() && !saving ? " on" : " off"}`} style={{ flex: 1.4, padding: "12px 0", fontSize: 13 }}>
+            {name.trim() && !saving && <Icon name="check" size={14} color="#000" strokeWidth={2.5} />}
+            {saving ? "Saving…" : "Save"}
+          </button>
         </div>
       </div>
     </div>

@@ -1468,7 +1468,8 @@ body {
 .rsub{background:var(--surface-2);border-radius:var(--r-sm);padding:10px 12px;margin-top:6px;border:1px solid var(--border);}
 .rsub-h{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--gold);letter-spacing:.04em;margin-bottom:4px;}
 .rsub-c{font-family:var(--font);font-size:12px;color:var(--text);line-height:1.55;}
-.rcontent{font-family:var(--font);font-size:13px;color:var(--text);line-height:1.55;}
+/* S067 user feedback: rule body text uses spec mono font + softer color (matches JSX verbatim — easier on the eyes when expanded). */
+.rcontent{font-family:var(--mono);font-size:13px;color:#c9c9d4;line-height:1.7;letter-spacing:.01em;}
 
 
 /* ─── S066 Phase 12 PR 3: Rules — spec class names + collapse + press state ─── */
@@ -1533,7 +1534,7 @@ body {
 .ad-screen,.lm-screen,.sm-screen,.plm-screen,.pa-screen{padding:0 0 calc(96px + env(safe-area-inset-bottom,0px));font-family:'Outfit',sans-serif;}
 .ad-h{padding:8px 18px 0;display:flex;flex-direction:column;gap:2px;}
 .adey{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);}
-.adh1{font-size:26px;font-weight:800;letter-spacing:-.02em;text-transform:uppercase;font-style:italic;color:var(--text);}
+.adh1{font-size:26px;font-weight:800;letter-spacing:-.02em;text-transform:uppercase;color:var(--text);}
 .adh1-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
 .ad-body,.lm-body,.sm-body,.pa-body{padding:14px 18px;display:flex;flex-direction:column;gap:14px;}
 .sm-detail-h{margin-bottom:6px;}
@@ -1598,7 +1599,10 @@ body {
 .secard{display:flex;flex-direction:column;gap:8px;padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);text-align:left;width:100%;font-family:'Outfit',sans-serif;cursor:pointer;color:var(--text);}
 .secard:active{transform:scale(.995);border-color:var(--accent-glow);}
 .secdtop{display:flex;align-items:center;justify-content:space-between;gap:8px;}
-.secname{font-size:15px;font-weight:800;font-style:italic;text-transform:uppercase;letter-spacing:.04em;color:var(--text);}
+.secname{font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--text);}
+.secft{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:4px;}
+.secft-meta{font-family:var(--mono);font-size:10px;color:var(--muted);}
+.secft-acts{display:flex;gap:6px;}
 .badgea{font-family:var(--mono);font-size:9px;font-weight:700;padding:3px 8px;border-radius:4px;background:rgba(74,222,128,.16);color:var(--accent);text-transform:uppercase;letter-spacing:.08em;border:1px solid rgba(74,222,128,.3);}
 .badgee{font-family:var(--mono);font-size:9px;font-weight:700;padding:3px 8px;border-radius:4px;background:var(--surface-2);color:var(--muted);text-transform:uppercase;letter-spacing:.08em;border:1px solid var(--border);}
 .secmr{display:flex;flex-wrap:wrap;gap:10px;align-items:center;}
@@ -1610,7 +1614,7 @@ body {
 @keyframes bsheetUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
 .shdl{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 12px;}
 .shhdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
-.shtitle{font-size:16px;font-weight:900;font-style:italic;text-transform:uppercase;letter-spacing:.04em;color:var(--text);}
+.shtitle{font-size:16px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:var(--text);}
 .shclose{width:30px;height:30px;background:var(--surface-2);border:1px solid var(--border);border-radius:50%;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;}
 .shbody{display:flex;flex-direction:column;gap:12px;}
 .shf{display:flex;flex-direction:column;gap:6px;}
@@ -1623,7 +1627,9 @@ body {
 .inotet{font-family:var(--mono);font-size:10px;color:var(--gold);line-height:1.5;}
 .shact{display:flex;gap:10px;margin-top:14px;}
 .shcancel{flex:1;padding:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;}
-.shsubmit{flex:2;padding:12px;background:var(--accent);border:none;border-radius:10px;color:#000;font-size:13px;font-weight:800;cursor:pointer;font-family:'Outfit',sans-serif;font-style:italic;text-transform:uppercase;letter-spacing:.04em;}
+.shsubmit{flex:2;padding:12px;background:var(--accent);border:none;border-radius:10px;color:#000;font-size:13px;font-weight:800;cursor:pointer;font-family:'Outfit',sans-serif;text-transform:uppercase;letter-spacing:.04em;}
+.shsubmit:active{transform:scale(.97);box-shadow:0 4px 12px rgba(74,222,128,.45);}
+.shcancel:active{transform:scale(.97);background:rgba(255,255,255,.04);}
 .shsubmit:disabled,.shcancel:disabled{opacity:.55;cursor:default;}
 
 /* Season detail full-screen */
@@ -1648,7 +1654,7 @@ body {
 
 /* PlayerManagement */
 .plmhr{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 18px 10px;}
-.plmtit{font-size:18px;font-weight:900;font-style:italic;text-transform:uppercase;letter-spacing:.04em;color:var(--text);}
+.plmtit{font-size:18px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:var(--text);}
 .plmct{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:2px;}
 .plm-addform{margin:0 18px 12px;padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);display:flex;flex-direction:column;gap:8px;}
 .plmsrw{position:relative;margin:0 18px 12px;}
@@ -1737,8 +1743,8 @@ body {
 .rsec-argued .rsec-tit{color:var(--gold);}
 .rsec-sub{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.06em;}
 .rsec-body{display:flex;flex-direction:column;gap:8px;border-left:2px solid transparent;padding-left:0;}
-.rsec-rules .rsec-body{border-left-color:rgba(74,222,128,.2);padding-left:6px;}
-.rsec-argued .rsec-body{border-left-color:rgba(245,158,11,.25);padding-left:6px;}
+/* S067 user feedback: drop persistent green/gold left-border. Press state below now provides per-card vertical accent instead. */
+.rsec-rules .rsec-body,.rsec-argued .rsec-body{border-left:none;padding-left:0;}
 
 .rtags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
 .rtag{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.04em;line-height:1;border:1px solid transparent;}
@@ -1746,3 +1752,81 @@ body {
 .rtag.r{background:rgba(248,113,113,.1);color:var(--loss);border-color:rgba(248,113,113,.4);}
 .rtag.go{background:rgba(245,158,11,.1);color:var(--gold);border-color:rgba(245,158,11,.4);}
 .rules-empty{padding:20px;text-align:center;color:var(--muted);font-size:12px;}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   S067-r1 — User feedback round 1
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Back-button row — was rendering at edge with no padding, hard to tap and visually missing. */
+.back-btn-row{padding:14px 18px 0;display:flex;align-items:center;}
+.back-btn{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;background:transparent;border:1px solid var(--border);border-radius:50%;color:var(--accent);cursor:pointer;padding:0;transition:transform 100ms,background 150ms;}
+.back-btn:active{transform:scale(.92);background:rgba(74,222,128,.08);}
+
+/* Press-state — left vertical accent line on tappable cards (rule cards, admin cards, season cards, crow nav rows). */
+.rcard,.adcard,.crow,.secard{position:relative;overflow:hidden;}
+.rcard::before,.adcard::before,.crow::before,.secard::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:transparent;
+  transition:background 120ms;
+}
+.rcard:active::before,.adcard:active::before,.crow:active::before,.secard:active::before{background:var(--accent);}
+.rcard.q:active::before{background:var(--gold);}
+.adcard.pr:active::before{background:var(--gold);}
+
+/* Chevron color shift on press */
+.rcard:active .rcchev{color:var(--accent);}
+.rcard.q:active .rcchev{color:var(--gold);}
+.adcard:active .adcarr,.crow:active .crchev{color:var(--accent);}
+
+/* Open-state shows the accent permanently (already-clicked card) */
+.rcard.open::before{background:var(--accent);}
+.rcard.q.open::before{background:var(--gold);}
+
+/* DOB / native date input overflow fix — iOS expands beyond container without box-sizing. */
+.fi2,.shi,.shsel{box-sizing:border-box;min-width:0;max-width:100%;}
+
+/* Save / Cancel buttons — active press state was missing in EditMyProfile. */
+.savebtn:active{transform:scale(.97);}
+.savebtn.on:active{box-shadow:0 4px 12px rgba(74,222,128,.45);}
+.shcancel:active{transform:scale(.97);background:rgba(255,255,255,.04);}
+
+/* Notification Center — emoji-free icon chips */
+.nc-screen{padding:0 0 calc(96px + env(safe-area-inset-bottom,0px));font-family:'Outfit',sans-serif;}
+.nc-h{padding:6px 18px 14px;display:flex;align-items:center;justify-content:space-between;}
+.nc-h-l{display:flex;align-items:center;gap:10px;}
+.nc-h-ico{width:36px;height:36px;border-radius:9px;background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.3);display:flex;align-items:center;justify-content:center;}
+.nc-h-tw{display:flex;flex-direction:column;gap:2px;}
+.nc-h-tit{font-size:18px;font-weight:800;text-transform:uppercase;letter-spacing:.02em;color:var(--text);}
+.nc-h-sub{font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:.06em;}
+.nc-close{width:32px;height:32px;border-radius:50%;background:var(--surface-2);border:1px solid var(--border);color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;}
+.nc-actions{display:flex;gap:8px;padding:0 18px 12px;}
+.nc-act{padding:7px 13px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:11px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;}
+.nc-act.acc{color:var(--accent);border-color:rgba(74,222,128,.4);}
+.nc-list{padding:0 18px;display:flex;flex-direction:column;gap:6px;}
+.nc-item{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 14px;cursor:pointer;transition:border-color 150ms;}
+.nc-item.unread{background:rgba(74,222,128,.04);border-color:rgba(74,222,128,.25);}
+.nc-item-row{display:flex;align-items:flex-start;gap:10px;}
+.nc-ico{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.nc-ico.green{background:rgba(74,222,128,.15);}
+.nc-ico.gold{background:rgba(245,158,11,.15);}
+.nc-ico.danger{background:rgba(248,113,113,.15);}
+.nc-ico.blue{background:rgba(96,165,250,.15);}
+.nc-ico.muted{background:var(--surface-2);}
+.nc-body-w{flex:1;min-width:0;}
+.nc-line1{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:2px;}
+.nc-title{font-size:13px;font-weight:700;color:var(--text);}
+.nc-item:not(.unread) .nc-title{font-weight:400;color:var(--muted);}
+.nc-time{font-family:var(--mono);font-size:9px;color:var(--muted);white-space:nowrap;}
+.nc-msg{font-size:12px;color:var(--muted);line-height:1.45;margin:0;}
+.nc-unread-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:8px;}
+.nc-empty{padding:50px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px;}
+.nc-empty-ico{width:50px;height:50px;border-radius:14px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;color:var(--muted);}
+.nc-empty-tit{font-size:14px;font-weight:600;color:var(--text);}
+.nc-empty-sub{font-size:11px;color:var(--muted);line-height:1.5;}
+.nc-loading{padding:40px 20px;text-align:center;color:var(--muted);font-size:12px;}
+
+/* Pull-to-refresh — overlay shown during reload */
+.ptr-overlay{position:fixed;top:env(safe-area-inset-top,0);left:0;right:0;height:42px;display:flex;align-items:center;justify-content:center;z-index:50;background:linear-gradient(180deg,rgba(13,13,20,.95),rgba(13,13,20,0));pointer-events:none;}
+.ptr-spinner{width:22px;height:22px;border-radius:50%;border:2px solid rgba(74,222,128,.25);border-top-color:var(--accent);animation:ptrSpin 700ms linear infinite;}
+.ptr-pull{position:fixed;top:env(safe-area-inset-top,0);left:50%;transform:translateX(-50%);z-index:49;color:var(--accent);opacity:0;transition:opacity 150ms;pointer-events:none;display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding-top:8px;}
+.ptr-pull.visible{opacity:1;}
+@keyframes ptrSpin{to{transform:rotate(360deg);}}

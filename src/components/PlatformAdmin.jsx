@@ -26,6 +26,10 @@ export function PlatformAdmin({ onClose, showToast }) {
   const [deleteTyped, setDeleteTyped] = useState("");
   const [deleteUserConfirm, setDeleteUserConfirm] = useState(null);
   const [deleteUserTyped, setDeleteUserTyped] = useState("");
+  // S067: rename-league inline editor.
+  const [renameId, setRenameId] = useState(null);
+  const [renameDraft, setRenameDraft] = useState("");
+  const [renaming, setRenaming] = useState(false);
 
   useEffect(() => { loadData(); }, []);
 
@@ -47,6 +51,22 @@ export function PlatformAdmin({ onClose, showToast }) {
       setLoadError(true);
     }
     setLoading(false);
+  };
+
+  const handleRenameLeague = async (leagueId) => {
+    const trimmed = renameDraft.trim();
+    if (!trimmed) { if (showToast) showToast("Name required", "error"); return; }
+    setRenaming(true);
+    try {
+      const { error } = await supabase.rpc("update_league_name", { p_league_id: leagueId, p_name: trimmed });
+      if (error) throw error;
+      if (showToast) showToast("League renamed");
+      setRenameId(null); setRenameDraft("");
+      await loadData();
+    } catch (err) {
+      if (showToast) showToast(err.message || "Failed to rename", "error");
+    }
+    setRenaming(false);
   };
 
   const handleDeleteLeague = async (leagueId, leagueName) => {
@@ -157,13 +177,32 @@ export function PlatformAdmin({ onClose, showToast }) {
                       <div className="paim">{l.member_count} players · {l.match_count} matches · {l.invite_code}</div>
                     </div>
                     <div className="paia">
-                      {deleteConfirm !== l.id && (
-                        <button className="aib da" title="Delete league" onClick={() => { setDeleteConfirm(l.id); setDeleteTyped(""); }}>
-                          <Icon name="trash" size={13} />
-                        </button>
+                      {deleteConfirm !== l.id && renameId !== l.id && (
+                        <>
+                          <button className="aib" title="Rename league" onClick={() => { setRenameId(l.id); setRenameDraft(l.name); }}>
+                            <Icon name="edit" size={13} />
+                          </button>
+                          <button className="aib da" title="Delete league" onClick={() => { setDeleteConfirm(l.id); setDeleteTyped(""); }}>
+                            <Icon name="trash" size={13} />
+                          </button>
+                        </>
                       )}
                     </div>
                   </div>
+                  {renameId === l.id && (
+                    <div className="pa-confirm">
+                      <input
+                        className="pa-confirm-input"
+                        value={renameDraft}
+                        onChange={e => setRenameDraft(e.target.value)}
+                        placeholder="New league name"
+                        autoFocus
+                        style={{borderColor:"var(--border)"}}
+                      />
+                      <button className="goldbtn" disabled={renaming || !renameDraft.trim()} onClick={() => handleRenameLeague(l.id)}>{renaming ? "…" : "Save"}</button>
+                      <button className="gbtn ghost" onClick={() => { setRenameId(null); setRenameDraft(""); }}>Cancel</button>
+                    </div>
+                  )}
                   {deleteConfirm === l.id && (
                     <div className="pa-confirm danger">
                       <input

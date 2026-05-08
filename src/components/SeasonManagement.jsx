@@ -323,8 +323,10 @@ export function SeasonManagement({ setSidebarView }) {
 
             {!loading && sortedSeasons.map(s => {
               const rosterCount = rosters[s.id] ? rosters[s.id].size : 0;
+              // Per spec lines 2042-2054 each card carries its own inline
+              // Edit / End / Reactivate buttons in a footer row.
               return (
-                <button key={s.id} className="secard" onClick={() => openEdit(s)}>
+                <div key={s.id} className="secard" onClick={() => openEdit(s)}>
                   <div className="secdtop">
                     <div className="secname">{s.name}</div>
                     <div className={s.active ? "badgea" : "badgee"}>{s.active ? "ACTIVE" : "ENDED"}</div>
@@ -338,7 +340,25 @@ export function SeasonManagement({ setSidebarView }) {
                       <div className="secmi"><Icon name="globe" size={12} color="var(--muted)" />{s.location}</div>
                     </div>
                   )}
-                </button>
+                  <div className="secft">
+                    <span className="secft-meta">{rosterCount} player{rosterCount === 1 ? "" : "s"}</span>
+                    <div className="secft-acts" onClick={(e) => e.stopPropagation()}>
+                      <button className="gbtn" onClick={() => openEdit(s)}>
+                        <Icon name="edit" size={12} />Edit
+                      </button>
+                      {s.active && (
+                        <button className="dbtn" onClick={() => endSeason(s.id)}>
+                          <Icon name="close" size={12} />End
+                        </button>
+                      )}
+                      {!s.active && (
+                        <button className="goldbtn" onClick={() => reactivateSeason(s.id)}>
+                          <Icon name="refresh" size={12} />Reactivate
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
               );
             })}
           </>

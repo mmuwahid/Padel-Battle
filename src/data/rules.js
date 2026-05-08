@@ -117,7 +117,7 @@ export const SECTIONS = [
     title: "Most Argued Calls",
     subtitle: "Settle it once and for all",
     accent: "argued",  // gold section accent
-    icon: "alert-octagon",
+    icon: "zap",       // S067 user feedback: lightning icon for argued section
     rules: [
       { id: "a1", isArgued: true, title: "Serve hits net → bounces in box → goes out door?", icon: "help", preview: "Depends on out-of-court rule",
         content: "With out-of-court play: LET (replay). Without: FAULT. Agree before match." },
