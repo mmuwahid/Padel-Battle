@@ -19,6 +19,7 @@ export function EditMyProfile({ player, onClose }) {
   const [nickname, setNickname] = useState(player.nickname || "");
   const [country, setCountry] = useState(player.country || "");
   const [position, setPosition] = useState(player.playing_position || "");
+  const [gender, setGender] = useState(player.gender || ""); // S066 Phase 8
   const [saving, setSaving] = useState(false);
 
   const save = async () => {
@@ -32,6 +33,7 @@ export function EditMyProfile({ player, onClose }) {
           nickname: (nickname || "").trim() || null,
           country: country || null,
           playing_position: position || null,
+          gender: gender || null,
         })
         .eq("id", player.id);
       if (error) throw error;
@@ -70,11 +72,25 @@ export function EditMyProfile({ player, onClose }) {
         </div>
 
         {/* Playing Position */}
-        <div style={{marginBottom:16}}>
+        <div style={{marginBottom:12}}>
           <label style={{display:"block",fontSize:10,color:MT,fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>Playing Side</label>
           <div style={{display:"flex",gap:6}}>
             {[["", "Not set"], ["left", "Left"], ["right", "Right"]].map(([v, l]) => (
               <button key={v || "none"} onClick={()=>setPosition(v)} style={{flex:1,padding:"10px",background:position===v?A:"transparent",color:position===v?"#000":MT,border:`1px solid ${position===v?A:BD}`,borderRadius:10,fontSize:12,fontWeight:800,cursor:"pointer",fontFamily:"'Outfit',sans-serif",fontStyle:"italic",textTransform:"uppercase",letterSpacing:0.5}}>{l}</button>
+            ))}
+          </div>
+        </div>
+
+        {/* Gender (S066 Phase 8) — 2-button toggle. Tapping the active one again clears it.
+            Active colors match Players-screen filter pills: blue for Male, pink for Female. */}
+        <div style={{marginBottom:16}}>
+          <label style={{display:"block",fontSize:10,color:MT,fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>Gender</label>
+          <div style={{display:"flex",gap:6}}>
+            {[
+              { v: "male",   l: "Male",   c: "#60a5fa", bg: "rgba(96,165,250,.10)",  bd: "rgba(96,165,250,.45)" },
+              { v: "female", l: "Female", c: "#f472b6", bg: "rgba(244,114,182,.10)", bd: "rgba(244,114,182,.45)" },
+            ].map(({ v, l, c, bg, bd }) => (
+              <button key={v} onClick={()=>setGender(gender===v?"":v)} style={{flex:1,padding:"10px",background:gender===v?bg:"transparent",color:gender===v?c:MT,border:`1px solid ${gender===v?bd:BD}`,borderRadius:10,fontSize:12,fontWeight:800,cursor:"pointer",fontFamily:"'Outfit',sans-serif",fontStyle:"italic",textTransform:"uppercase",letterSpacing:0.5}}>{l}</button>
             ))}
           </div>
         </div>

@@ -578,7 +578,7 @@ body {
 .lbth{display:grid;grid-template-columns:36px 1fr 28px 28px 28px 28px 30px 38px;gap:4px;padding:9px 10px;border-bottom:1px solid var(--border);background:var(--surface-2);}
 .lbh{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#9090a4;display:flex;align-items:center;}
 .lbh.r{justify-content:flex-end;}
-.lbrow{display:grid;grid-template-columns:36px 1fr 28px 28px 28px 28px 30px 38px;gap:4px;padding:9px 10px;border-bottom:1px solid rgba(42,42,58,.4);align-items:start;cursor:pointer;transition:background 150ms;}
+.lbrow{display:grid;grid-template-columns:36px 1fr 28px 28px 28px 28px 30px 38px;gap:4px;padding:9px 10px;border-bottom:1px solid rgba(42,42,58,.4);align-items:center;cursor:pointer;transition:background 150ms;}
 .lbrow:last-child{border-bottom:none;}
 .lbrow:hover{background:var(--surface-2);}
 .lbrow.me{background:rgba(74,222,128,.04);}
@@ -588,8 +588,8 @@ body {
 .lbrank.num{font-size:12px;}
 /* S066: country flag cell vertically centered (was top-pinned via .lbrow align-items:start) */
 .lbflag{display:flex;align-items:center;justify-content:center;align-self:stretch;font-size:16px;line-height:1;}
-.lbply{display:flex;align-items:flex-start;gap:7px;min-width:0;}
-.lbavi{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;background:linear-gradient(135deg,rgba(74,222,128,.15),rgba(74,222,128,.05));border:1.5px solid rgba(74,222,128,.3);color:var(--accent);flex-shrink:0;margin-top:1px;overflow:hidden;}
+.lbply{display:flex;align-items:center;gap:7px;min-width:0;}
+.lbavi{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;background:linear-gradient(135deg,rgba(74,222,128,.15),rgba(74,222,128,.05));border:1.5px solid rgba(74,222,128,.3);color:var(--accent);flex-shrink:0;overflow:hidden;}
 .lbrow.me .lbavi{border-color:var(--accent-glow);}
 .lbpinfo{display:flex;flex-direction:column;gap:4px;min-width:0;}
 .lbn{font-family:var(--mono);font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -597,7 +597,7 @@ body {
 .fdot{width:7px;height:7px;border-radius:50%;}
 .fdot.w{background:rgba(74,222,128,.75);}
 .fdot.l{background:rgba(248,113,113,.5);}
-.lbc{font-family:var(--mono);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:flex-end;padding-top:3px;}
+.lbc{font-family:var(--mono);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:flex-end;}
 .lbc.w{color:var(--win);}
 .lbc.l{color:var(--loss);}
 .lbc.hi{color:var(--accent);font-weight:800;}
@@ -624,11 +624,28 @@ body {
 .gbtn.on{background:rgba(74,222,128,.09);border-color:var(--accent-glow);color:var(--accent);}
 
 /* Search input */
-.srchw{padding:0 18px 12px;position:relative;}
+.srchw{padding:0 18px 10px;position:relative;}
 .srchi{position:absolute;left:30px;top:50%;transform:translateY(-50%);color:#9090a4;pointer-events:none;display:flex;}
 .srch{width:100%;padding:11px 16px 11px 42px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);color:var(--text);font-family:var(--font);font-size:14px;outline:none;transition:border-color 200ms;}
 .srch::placeholder{color:#9090a4;}
 .srch:focus{border-color:var(--accent-glow);}
+
+/* S066 Phase 8: sliders-icon toggle button + gender filter bar (per spec).
+   Auto-width pills with gender symbols, color-coded active states:
+   All = accent green, Men = blue, Women = pink. */
+.fbtn{width:34px;height:34px;border-radius:var(--r-full);background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all 150ms;}
+.fbtn:hover{border-color:var(--accent-glow);}
+.fbtn.on{background:var(--accent-dim);border-color:var(--accent);}
+
+.gfilter-bar{display:flex;gap:7px;padding:0 18px 10px;overflow-x:auto;scrollbar-width:none;align-items:center;animation:fdIn 200ms ease both;}
+.gfilter-bar::-webkit-scrollbar{display:none;}
+@keyframes fdIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
+.gfpill{flex-shrink:0;display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:var(--r-full);background:var(--surface);border:1px solid var(--border);font-family:var(--font);font-size:11px;font-weight:600;color:#9090a4;cursor:pointer;white-space:nowrap;transition:all 150ms;}
+.gfpill:hover{border-color:var(--accent-glow);color:var(--text);}
+.gfpill.fa{background:var(--accent-dim);border-color:var(--accent-glow);color:var(--accent);}
+.gfpill.fm{background:rgba(96,165,250,.10);border-color:rgba(96,165,250,.32);color:#60a5fa;}
+.gfpill.ff{background:rgba(244,114,182,.10);border-color:rgba(244,114,182,.32);color:#f472b6;}
+.gfilter-count{font-family:var(--mono);font-size:10px;color:#9090a4;display:flex;align-items:center;flex-shrink:0;}
 
 /* Roster: hybrid 2-col grid of .prow cards */
 .plist{padding:0 18px;display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;}
