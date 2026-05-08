@@ -250,15 +250,36 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
           </div>
         </div>
 
-        {/* Achievements (preserved 2-col grid markup, wrapped in Phase 6a section frame) */}
-        <section className="dpro-sec">
-          <h3 className="dpro-sectitle gold">🏆 Achievements ({badges.length}/{ACHS.length})</h3>
-          <div className="dpro-sec-card">
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
-              {ACHS.map(a=>{const u=badges.some(b=>b.id===a.id);return (<div key={a.id} style={{background:u?`${GD}10`:BG,borderRadius:10,border:`1px solid ${u?`${GD}30`:BD}`,padding:"10px 8px",textAlign:"center",opacity:u?1:0.35}}><div style={{fontSize:22}}>{a.icon}</div><div style={{fontSize:11,fontWeight:700,color:u?GD:MT,marginTop:4}}>{a.name}</div><div style={{fontSize:9,color:MT,marginTop:2}}>{a.desc}</div></div>);})}
-            </div>
+        {/* S068: Achievements — same .ach-* class system as ProfileView so the
+            drill-in matches My Profile. Was rendering a.icon as plain text
+            ("zap", "flame", etc.) because a.icon is now an Icon SVG name (was
+            an emoji pre-S067). Centered title with (earned/total) count badge. */}
+        <div className="ach-sec">
+          <div className="ach-h center gold">
+            <Icon name="trophy" size={14} color="var(--gold)"/>
+            <h3 className="ach-h-tit">Achievements ({badges.length}/{ACHS.length})</h3>
           </div>
-        </section>
+          <div className="ach-grid">
+            {ACHS.map(a => {
+              const earned = badges.some(b => b.id === a.id);
+              return (
+                <div key={a.id} className={`ach-card${earned ? "" : " locked"}`}>
+                  <div className="ach-ico">
+                    <Icon name={a.icon} size={18} color={earned ? "var(--accent)" : "#5a5a6a"} strokeWidth={earned ? 2 : 1.5}/>
+                  </div>
+                  <div className="ach-name">{a.name}</div>
+                  <div className="ach-desc">{a.desc}</div>
+                  {!earned && (
+                    <div className="ach-locked-pill">
+                      <Icon name="lock" size={10} color="#5a5a6a"/>
+                      Locked
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
         {/* Head to Head (preserved data, restyled rows) */}
         <section className="dpro-sec" style={{paddingBottom:24}}>
