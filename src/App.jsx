@@ -67,9 +67,6 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
   const [challenges,setChallenges]=useState([]);
   const [matchSubTab,setMatchSubTab]=useState(()=>{const h=window.location.hash.replace("#","");return h==="schedule"?"schedule":"history";}); // history | schedule
   const [claimedPlayer,setClaimedPlayer]=useState(undefined); // undefined=loading, null=unclaimed, object=claimed
-  const [newPlayerName,setNewPlayerName]=useState("");
-  const [newPlayerNick,setNewPlayerNick]=useState("");
-  const [claimError,setClaimError]=useState("");
   // Sidebar and view management
   const [sidebarOpen,setSidebarOpen]=useState(false);
   const [sidebarView,setSidebarView]=useState(null); // null | "profile" | "settings" | "admin" | "leagues"
@@ -829,69 +826,32 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
     </div>
   );
 
-  // CLAIM PLAYER SCREEN — shown if user hasn't claimed a player in this league
-  const claimPlayer = async (playerId) => {
-    try {
-      setClaimError("");
-      const {error:err} = await supabase.from("players").update({user_id:user.id}).eq("id",playerId).is("user_id",null);
-      if(err) throw err;
-      await loadLeagueData();
-    } catch(err) { setClaimError(err.message||"Failed to claim player"); }
-  };
-
-  const createAndClaimPlayer = async () => {
-    if(!newPlayerName.trim()) { setClaimError("Name required"); return; }
-    try {
-      setClaimError("");
-      const {error:err} = await supabase.from("players").insert({league_id:leagueId,name:newPlayerName.trim(),nickname:newPlayerNick.trim()||null,user_id:user.id});
-      if(err) throw err;
-      setNewPlayerName("");setNewPlayerNick("");
-      await loadLeagueData();
-    } catch(err) { setClaimError(err.message||"Failed to create player"); }
-  };
-
+  // S068 follow-up: orphaned league_member without a claimed player → show
+  // a locked "pending review" screen instead of the legacy inline claim form.
+  // The legacy form would have let users bypass the approval queue (Lesson #92).
+  // PlayerMgmt.deletePlayer (S067) closed the source of new orphans; this
+  // closes the bypass for any pre-S068 orphans still in the DB.
   if (claimedPlayer === null) {
-    const unclaimed = players.filter(p => !p.user_id);
     return (
-      <div style={{background:BG,minHeight:"100vh",padding:20,fontFamily:"'Outfit',sans-serif",color:TX}}>
-        <div style={{maxWidth:420,margin:"0 auto",paddingTop:20}}>
-          <div style={{textAlign:"center",marginBottom:24}}>
-            <PadelLogoSmall/>
-            <h1 style={{fontSize:20,fontWeight:900,letterSpacing:2,marginTop:8}}><span style={{color:A}}>Padel</span>Hub</h1>
-            <p style={{color:MT,fontSize:11,fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginTop:6}}>Welcome to {league?.name}</p>
+      <div className="pend-screen">
+        <div className="pend-brand">
+          <div className="pend-brand-ico"><PadelLogoSmall size={28}/></div>
+          <div className="pend-brand-tx">Padel<span className="accent">Hub</span></div>
+        </div>
+        <div className="pend-wrap">
+          <div className="pend-bg-g"/>
+          <div className="pend-ico g"><Icon name="clock" size={32} color="var(--accent)"/></div>
+          <div className="pend-title">Pending Review</div>
+          <div className="pend-sub">
+            Your access to <strong>{league?.name || "this league"}</strong> is being reviewed. Your league admin will set up your player profile shortly.
           </div>
-
-          <h2 style={{fontSize:16,fontWeight:700,marginBottom:4}}>Who are you?</h2>
-          <p style={{fontSize:12,color:MT,marginBottom:16,lineHeight:1.5}}>Select your player name to link your account, or create a new one if you're not listed.</p>
-
-          {/* Unclaimed players */}
-          {unclaimed.length > 0 && (
-            <div style={{marginBottom:20}}>
-              <div style={{fontSize:11,color:MT,fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Existing Players</div>
-              <div style={{display:"flex",flexDirection:"column",gap:6}}>
-                {unclaimed.map(p=>(
-                  <button key={p.id} onClick={()=>claimPlayer(p.id)} style={{padding:"12px 16px",background:CD,border:`1px solid ${BD}`,borderRadius:12,color:TX,fontSize:14,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                    <span>{p.nickname||p.name}{p.nickname?` (${p.name})`:""}</span>
-                    <span style={{fontSize:11,color:A,fontWeight:700}}>That's me →</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Create new player */}
-          <div style={{padding:16,background:CD,border:`1px solid ${BD}`,borderRadius:14}}>
-            <div style={{fontSize:11,color:MT,fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>I'm not listed — create my profile</div>
-            <div style={{display:"flex",flexDirection:"column",gap:8}}>
-              <input value={newPlayerName} onChange={e=>setNewPlayerName(e.target.value)} placeholder="Full name" style={{padding:"10px 14px",background:CD2,border:`1px solid ${BD}`,borderRadius:10,color:TX,fontSize:13,fontFamily:"'Outfit',sans-serif",outline:"none"}}/>
-              <input value={newPlayerNick} onChange={e=>setNewPlayerNick(e.target.value)} placeholder="Nickname (optional)" style={{padding:"10px 14px",background:CD2,border:`1px solid ${BD}`,borderRadius:10,color:TX,fontSize:13,fontFamily:"'Outfit',sans-serif",outline:"none"}}/>
-              <button onClick={createAndClaimPlayer} style={{padding:"12px",background:`linear-gradient(135deg,${A},${A}cc)`,border:"none",borderRadius:12,color:"#000",fontWeight:800,fontSize:14,cursor:"pointer",fontFamily:"'Outfit',sans-serif",textTransform:"uppercase",letterSpacing:1}}>Join as New Player</button>
-            </div>
+          <div className="pend-ctabtn">
+            <Icon name="bell" size={15} color="var(--accent)"/>
+            You'll be notified once approved
           </div>
-
-          {claimError && <div style={{marginTop:14,color:DG,fontSize:12,padding:"10px 14px",background:`${DG}15`,borderRadius:10,border:`1px solid ${DG}30`}}>{claimError}</div>}
-
-          <button onClick={onSwitchLeague} style={{marginTop:16,width:"100%",padding:"10px",background:"transparent",border:`1px solid ${BD}`,borderRadius:10,color:MT,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>← Back to Leagues</button>
+          <button className="pend-signout" onClick={async ()=>{ await supabase.auth.signOut(); }}>
+            Sign out
+          </button>
         </div>
       </div>
     );
