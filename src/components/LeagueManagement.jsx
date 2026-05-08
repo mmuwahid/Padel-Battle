@@ -11,7 +11,7 @@ import { useLeague } from "../LeagueContext";
 //   .invcb / .invcv / .invreb / .pbtn   — invite code row (code chip + regen + copy)
 //   .crow / .cricon / .crbody / .crtitle / .crsub / .crchev — Season Mgmt row
 // User decision S067 Q4=A: dropped the bottom Scoring Rules row entirely.
-export function LeagueManagement({ setSidebarView }) {
+export function LeagueManagement({ setSidebarView, goBack }) {
   const {
     supabase, league, leagueId,
     showToast, loadLeagueData,
@@ -76,7 +76,7 @@ export function LeagueManagement({ setSidebarView }) {
   return (
     <div className="lm-screen">
       <div className="back-btn-row">
-        <button className="back-btn" onClick={() => setSidebarView("admin")}>
+        <button className="back-btn" onClick={() => goBack ? goBack() : setSidebarView("admin")}>
           <Icon name="chevron-left" size={18} color="currentColor" />
         </button>
       </div>

@@ -5,7 +5,10 @@ import Icon from './Icon';
 // S066 Phase 12: spec-faithful restyle. Slide-in right drawer (.ssheet) with
 // .sbprof header (clickable to open My Profile), .sbsec sections containing
 // .sbitem rows, .sbdiv divider, .sbfoot with .signout. Spec lines 2174-2196.
-export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, user, avatarUrl, league, isAdmin, onSwitchLeague, showToast, installPrompt, handleInstall, playerCount, activeSeasonName }) {
+export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, navigateSidebar, user, avatarUrl, league, isAdmin, onSwitchLeague, showToast, installPrompt, handleInstall, playerCount, activeSeasonName }) {
+  // S068: drawer entry clicks must push history so the drill-down can incrementally
+  // back out to the drawer. navigateSidebar handles drawer-close + history push.
+  const go = navigateSidebar || ((v)=>{ setSidebarView(v); setSidebarOpen(false); });
   if (!sidebarOpen) return null;
 
   const userInitial = (user.user_metadata?.display_name || user.email || "U")[0].toUpperCase();
@@ -35,7 +38,7 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, user, ava
         </button>
 
         {/* User profile header — click opens My Profile (Issue #21) */}
-        <div className="sbprof" onClick={()=>{setSidebarView("profile"); setSidebarOpen(false);}}>
+        <div className="sbprof" onClick={()=>go("profile")}>
           <div className="sbav">
             {avatarUrl
               ? <img src={avatarUrl} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
@@ -54,7 +57,7 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, user, ava
         <div className="sbsec">
           <div className="sbsl">League</div>
           {league ? (
-            <div className="sbitem" onClick={()=>{setSidebarView("leagues"); setSidebarOpen(false);}}>
+            <div className="sbitem" onClick={()=>go("leagues")}>
               <div className="sbico"><Icon name="league" size={16}/></div>
               <div className="sbibd">
                 <div className="sbit">{league.name}</div>
@@ -70,7 +73,7 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, user, ava
               <span className="sb-chev"><Icon name="chevron" size={16} color="currentColor"/></span>
             </div>
           ) : (
-            <div className="sbitem" onClick={()=>{setSidebarView("leagues"); setSidebarOpen(false);}}>
+            <div className="sbitem" onClick={()=>go("leagues")}>
               <div className="sbico"><Icon name="league" size={16}/></div>
               <div className="sbibd">
                 <div className="sbit">Join or create</div>
@@ -95,14 +98,14 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, user, ava
         {/* App section */}
         <div className="sbsec">
           <div className="sbsl">App</div>
-          <div className="sbitem" onClick={()=>{setSidebarView("rules"); setSidebarOpen(false);}}>
+          <div className="sbitem" onClick={()=>go("rules")}>
             <div className="sbico"><Icon name="book" size={16}/></div>
             <div className="sbibd">
               <div className="sbit">Official Rules</div>
             </div>
             <span className="sb-chev"><Icon name="chevron" size={16} color="currentColor"/></span>
           </div>
-          <div className="sbitem" onClick={()=>{setSidebarView("settings"); setSidebarOpen(false);}}>
+          <div className="sbitem" onClick={()=>go("settings")}>
             <div className="sbico"><Icon name="settings" size={16}/></div>
             <div className="sbibd">
               <div className="sbit">Settings</div>

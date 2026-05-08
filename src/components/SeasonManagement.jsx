@@ -12,7 +12,7 @@ import { useLeague } from "../LeagueContext";
 //   .shsubmit — bottom-sheet create form
 // User decision S067 Q6=A: keep S055 full-screen Season Detail pattern for
 // edit (rich roster toggle UX doesn't fit a sheet). List + Create restyled.
-export function SeasonManagement({ setSidebarView }) {
+export function SeasonManagement({ setSidebarView, goBack }) {
   const { supabase, leagueId, players, seasons, showToast, loadLeagueData, isOwner } = useLeague();
 
   const [rosters, setRosters] = useState({});
@@ -297,7 +297,7 @@ export function SeasonManagement({ setSidebarView }) {
   return (
     <div className="sm-screen">
       <div className="back-btn-row">
-        <button className="back-btn" onClick={() => setSidebarView("admin")}>
+        <button className="back-btn" onClick={() => goBack ? goBack() : setSidebarView("admin")}>
           <Icon name="chevron-left" size={18} color="currentColor" />
         </button>
       </div>

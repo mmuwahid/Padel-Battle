@@ -12,7 +12,8 @@ import { PLATFORM_ADMIN_ID } from "./PlatformAdmin";
 //   .adcard.pr                    — gold-tinted Platform Admin variant
 // User decisions S067 Q1=A (alban live count + tap-to-jump),
 //   Q2=A (live stats), Q3=drop CSV export entirely.
-export function AdminDashboard({ setSidebarView, setTab, setSidebarOpen }) {
+export function AdminDashboard({ setSidebarView, navigateSidebar, goBack, setTab, setSidebarOpen }) {
+  const navTo = navigateSidebar || setSidebarView;
   const {
     supabase, user, league, leagueId, players, seasons,
     pendingMatches, approvedMatches,
@@ -69,7 +70,7 @@ export function AdminDashboard({ setSidebarView, setTab, setSidebarOpen }) {
   return (
     <div className="ad-screen">
       <div className="back-btn-row">
-        <button className="back-btn" onClick={() => setSidebarView(null)}>
+        <button className="back-btn" onClick={() => goBack ? goBack() : setSidebarView(null)}>
           <Icon name="chevron-left" size={18} color="currentColor" />
         </button>
       </div>
@@ -97,7 +98,7 @@ export function AdminDashboard({ setSidebarView, setTab, setSidebarOpen }) {
         </div>
 
         {cards.map(c => (
-          <button key={c.t} className="adcard" onClick={() => setSidebarView(c.view)}>
+          <button key={c.t} className="adcard" onClick={() => navTo(c.view)}>
             <div className="adcico"><Icon name={c.i} size={18} color="var(--muted)" /></div>
             <div className="adcbody">
               <div className="adctit">{c.t}</div>
@@ -108,7 +109,7 @@ export function AdminDashboard({ setSidebarView, setTab, setSidebarOpen }) {
         ))}
 
         {user?.id === PLATFORM_ADMIN_ID && (
-          <button className="adcard pr" onClick={() => setSidebarView("platform")}>
+          <button className="adcard pr" onClick={() => navTo("platform")}>
             <div className="adcico"><Icon name="admin" size={18} color="var(--accent)" /></div>
             <div className="adcbody">
               <div className="adctit">Platform Admin</div>

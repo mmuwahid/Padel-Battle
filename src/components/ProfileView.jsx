@@ -12,7 +12,7 @@ import Icon from './Icon';
 // Highlights use .hlrow/.hlcard/.hll/.hlv/.hlu
 // Deeper sections (ELO history, achievements, recent matches) preserved with
 // minor token cleanup but still render below the spec header.
-export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, removeAvatar, claimedPlayer, ps, elo, matches, players, isAdmin, getName, getStreak, setSidebarView, setTab, setSidebarOpen }) {
+export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, removeAvatar, claimedPlayer, ps, elo, matches, players, isAdmin, getName, getStreak, setSidebarView, navigateSidebar, goBack, setTab, setSidebarOpen }) {
   const [editingMyProfile, setEditingMyProfile] = useState(false);
   const fileInputRef = React.useRef(null);
 
@@ -32,7 +32,7 @@ export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, re
     <div style={{paddingBottom:"calc(80px + env(safe-area-inset-bottom, 0px))"}}>
       {/* S068: chevron-only back button to match all other drill-in screens */}
       <div className="back-btn-row">
-        <button className="back-btn" onClick={()=>setSidebarView(null)}>
+        <button className="back-btn" onClick={()=>goBack ? goBack() : setSidebarView(null)}>
           <Icon name="chevron-left" size={18} color="currentColor"/>
         </button>
       </div>

@@ -105,6 +105,9 @@ body {
 .hl { display: flex; align-items: center; }
 .hr { display: flex; align-items: center; gap: 8px; }
 .logo { display: flex; align-items: center; gap: 10px; }
+/* S068: PadelHub logo is a clickable home link — strip button defaults */
+.logo-home{background:transparent;border:none;padding:0;margin:0;cursor:pointer;color:inherit;font:inherit;}
+.logo-home:active{transform:scale(.96);transition:transform 120ms;}
 /* .lm intentionally NOT used in restored header — PadelLogoSmall renders bare
    next to the wordmark, matching S058. Class kept defined in case a future
    phase wants to opt into the spec's tinted logo box. */

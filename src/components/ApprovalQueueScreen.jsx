@@ -7,7 +7,7 @@ import { useLeague } from "../LeagueContext";
 // Lists all pending join_requests for the active league. Admin can Approve (immediate access)
 // or Reject (with optional free-text reason, max 120 chars). Approved/rejected items collapse
 // to a single-line summary. Reachable from AdminDashboard nav card and Matches-tab inline banner.
-export function ApprovalQueueScreen({ setSidebarView }) {
+export function ApprovalQueueScreen({ setSidebarView, goBack }) {
   const { supabase, leagueId, league, showToast, loadLeagueData, isAdmin } = useLeague();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -90,7 +90,7 @@ export function ApprovalQueueScreen({ setSidebarView }) {
     return (
       <div className="ad-screen">
         <div className="back-btn-row">
-          <button className="back-btn" onClick={() => setSidebarView("admin")}>
+          <button className="back-btn" onClick={() => goBack ? goBack() : setSidebarView("admin")}>
             <Icon name="chevron-left" size={18} color="currentColor"/>
           </button>
         </div>
@@ -105,7 +105,7 @@ export function ApprovalQueueScreen({ setSidebarView }) {
   return (
     <div className="ad-screen aq-screen">
       <div className="back-btn-row">
-        <button className="back-btn" onClick={() => setSidebarView("admin")}>
+        <button className="back-btn" onClick={() => goBack ? goBack() : setSidebarView("admin")}>
           <Icon name="chevron-left" size={18} color="currentColor"/>
         </button>
       </div>

@@ -74,10 +74,39 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
   // Sidebar and view management
   const [sidebarOpen,setSidebarOpen]=useState(false);
   const [sidebarView,setSidebarView]=useState(null); // null | "profile" | "settings" | "admin" | "leagues"
+  // S068: history stack so drill-down chains (drawer → settings → admin → playerMgmt)
+  // can incrementally back-out one level at a time. Each navigateSidebar push the
+  // CURRENT view onto the stack; goBackSidebar pops it. Empty stack + back == reopen
+  // the drawer (since the user originally entered from the drawer).
+  const [sidebarHistory,setSidebarHistory]=useState([]);
+  const navigateSidebar = useCallback((next) => {
+    setSidebarHistory(prev => [...prev, sidebarView]);
+    setSidebarView(next);
+    setSidebarOpen(false);
+  }, [sidebarView]);
+  const goBackSidebar = useCallback(() => {
+    setSidebarHistory(prev => {
+      if (prev.length === 0) {
+        setSidebarView(null);
+        setSidebarOpen(true);
+        return prev;
+      }
+      const top = prev[prev.length - 1];
+      setSidebarView(top);
+      if (top === null) setSidebarOpen(true);
+      return prev.slice(0, -1);
+    });
+  }, []);
+  // Avatar click should reset the chain — opening the drawer fresh.
+  const openSidebar = useCallback(() => {
+    setSidebarOpen(true);
+    setSidebarView(null);
+    setSidebarHistory([]);
+  }, []);
   // S063: "Switch League" / "Back to Leagues" now open the in-app Leagues
   // sub-view in the sidebar instead of nulling out the leagueId. Replaces
   // the old LeagueGate full-screen picker.
-  const onSwitchLeague = () => setSidebarView("leagues");
+  const onSwitchLeague = () => navigateSidebar("leagues");
   const [avatarUrl,setAvatarUrl]=useState(null);
   const [avatarUploading,setAvatarUploading]=useState(false);
 
@@ -892,55 +921,70 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
           consistent with every other drill-down. */}
       <header className="hdr">
         <div className="hl">
-          <div className="logo">
+          {/* S068: PadelHub logo is now a home link — clicking returns to the
+              Ranking (home) tab and clears any drill-in / sidebar view. */}
+          <button className="logo logo-home" onClick={()=>{
+            setSelectedPlayer(null);
+            setDrillInOrigin(null);
+            setSidebarView(null);
+            setSidebarOpen(false);
+            setSidebarHistory([]);
+            setTab("board");
+          }} aria-label="Go to Ranking">
             <PadelLogoSmall size={36}/>
             <h1 className="lt"><span>Padel</span><span className="accent">Hub</span></h1>
-          </div>
+          </button>
         </div>
         <div className="hr">
           {/* S067: refresh button removed — pull-to-refresh covers manual reload now. */}
-          <button className={"ibtn"+(sidebarView==="notifications"?" on":"")} onClick={()=>{setSidebarView(sidebarView==="notifications"?null:"notifications");setSidebarOpen(false);}} aria-label="Notifications">
+          <button className={"ibtn"+(sidebarView==="notifications"?" on":"")} onClick={()=>{
+            if (sidebarView==="notifications") { goBackSidebar(); }
+            else { navigateSidebar("notifications"); }
+          }} aria-label="Notifications">
             <Icon name="bell" size={16}/>
             {unreadNotifCount>0 && <span className="ndot">{unreadNotifCount>9?"9+":unreadNotifCount}</span>}
           </button>
-          <button className={"av"+(sidebarOpen?" on":"")} onClick={()=>{setSidebarOpen(!sidebarOpen);setSidebarView(null);}} title="Profile & Settings" aria-label="Profile & Settings">
+          <button className={"av"+(sidebarOpen?" on":"")} onClick={()=>{
+            if (sidebarOpen) { setSidebarOpen(false); }
+            else { openSidebar(); }
+          }} title="Profile & Settings" aria-label="Profile & Settings">
             {avatarUrl ? <img src={avatarUrl} alt=""/> : (user.user_metadata?.display_name||user.email||"U")[0].toUpperCase()}
           </button>
         </div>
       </header>
 
       {/* SIDEBAR — extracted component */}
-      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} setSidebarView={setSidebarView} user={user} avatarUrl={avatarUrl} league={league} isAdmin={isAdmin} onSwitchLeague={onSwitchLeague} showToast={showToast} installPrompt={installPrompt} handleInstall={handleInstall} playerCount={players.length} activeSeasonName={seasons.find(s=>s.id===selectedSeason)?.name||seasons.find(s=>s.active)?.name||null}/>
+      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} setSidebarView={setSidebarView} navigateSidebar={navigateSidebar} user={user} avatarUrl={avatarUrl} league={league} isAdmin={isAdmin} onSwitchLeague={onSwitchLeague} showToast={showToast} installPrompt={installPrompt} handleInstall={handleInstall} playerCount={players.length} activeSeasonName={seasons.find(s=>s.id===selectedSeason)?.name||seasons.find(s=>s.active)?.name||null}/>
 
       {/* SIDEBAR VIEWS — render in main content area */}
       {sidebarView && (
         <div style={{padding:"0"}}>
           {sidebarView==="profile" && (
-            <ProfileView user={user} avatarUrl={avatarUrl} avatarUploading={avatarUploading} uploadAvatar={uploadAvatar} removeAvatar={removeAvatar} claimedPlayer={claimedPlayer} ps={ps} elo={elo} matches={approvedMatches} players={players} isAdmin={isAdmin} getName={getName} getStreak={getStreak} setSidebarView={setSidebarView} setTab={setTab} setSidebarOpen={setSidebarOpen}/>
+            <ProfileView user={user} avatarUrl={avatarUrl} avatarUploading={avatarUploading} uploadAvatar={uploadAvatar} removeAvatar={removeAvatar} claimedPlayer={claimedPlayer} ps={ps} elo={elo} matches={approvedMatches} players={players} isAdmin={isAdmin} getName={getName} getStreak={getStreak} setSidebarView={setSidebarView} navigateSidebar={navigateSidebar} goBack={goBackSidebar} setTab={setTab} setSidebarOpen={setSidebarOpen}/>
           )}
           {sidebarView==="admin" && (
-            <AdminDashboard memberProfiles={memberProfiles} setSidebarView={setSidebarView} setTab={setTab} setSidebarOpen={setSidebarOpen}/>
+            <AdminDashboard memberProfiles={memberProfiles} setSidebarView={setSidebarView} navigateSidebar={navigateSidebar} goBack={goBackSidebar} setTab={setTab} setSidebarOpen={setSidebarOpen}/>
           )}
           {sidebarView==="approvalQueue" && (
-            <ApprovalQueueScreen setSidebarView={setSidebarView}/>
+            <ApprovalQueueScreen setSidebarView={setSidebarView} goBack={goBackSidebar}/>
           )}
           {sidebarView==="playerManagement" && (
-            <PlayerManagement memberProfiles={memberProfiles} setSidebarView={setSidebarView}/>
+            <PlayerManagement memberProfiles={memberProfiles} setSidebarView={setSidebarView} goBack={goBackSidebar}/>
           )}
           {sidebarView==="seasonManagement" && (
-            <SeasonManagement setSidebarView={setSidebarView}/>
+            <SeasonManagement setSidebarView={setSidebarView} goBack={goBackSidebar}/>
           )}
           {sidebarView==="leagueManagement" && (
-            <LeagueManagement setSidebarView={setSidebarView}/>
+            <LeagueManagement setSidebarView={setSidebarView} goBack={goBackSidebar}/>
           )}
           {sidebarView==="settings" && (
-            <SettingsView user={user} claimedPlayer={claimedPlayer} isAdmin={isAdmin} pushSubscribed={pushSubscribed} subscribeToPush={subscribeToPush} unsubscribeFromPush={unsubscribeFromPush} notifNewMatch={notifNewMatch} notifRankingChange={notifRankingChange} notifNewMembers={notifNewMembers} notifChallenges={notifChallenges} toggleNotification={toggleNotification} onSwitchLeague={onSwitchLeague} setSidebarView={setSidebarView} showToast={showToast} loadLeagueData={loadLeagueData} testPushNotification={testPushNotification}/>
+            <SettingsView user={user} claimedPlayer={claimedPlayer} isAdmin={isAdmin} pushSubscribed={pushSubscribed} subscribeToPush={subscribeToPush} unsubscribeFromPush={unsubscribeFromPush} notifNewMatch={notifNewMatch} notifRankingChange={notifRankingChange} notifNewMembers={notifNewMembers} notifChallenges={notifChallenges} toggleNotification={toggleNotification} onSwitchLeague={onSwitchLeague} setSidebarView={setSidebarView} navigateSidebar={navigateSidebar} goBack={goBackSidebar} showToast={showToast} loadLeagueData={loadLeagueData} testPushNotification={testPushNotification}/>
           )}
           {sidebarView==="platform" && (
-            <PlatformAdmin onClose={()=>setSidebarView("admin")} showToast={showToast}/>
+            <PlatformAdmin onClose={goBackSidebar} showToast={showToast}/>
           )}
           {sidebarView==="notifications" && (
-            <NotificationCenter onClose={()=>{setSidebarView(null);loadLeagueData();}}/>
+            <NotificationCenter onClose={()=>{goBackSidebar();loadLeagueData();}}/>
           )}
           {sidebarView==="leagues" && (
             <LeaguesView
@@ -948,11 +992,11 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
               leagues={leagues || []}
               leagueId={leagueId}
               handlers={leagueHandlers}
-              onClose={()=>setSidebarView(null)}
+              onClose={goBackSidebar}
               showToast={showToast}
             />
           )}
-          {sidebarView==="rules" && <RulesView setSidebarView={setSidebarView}/>}
+          {sidebarView==="rules" && <RulesView setSidebarView={setSidebarView} goBack={goBackSidebar}/>}
         </div>
       )}
 

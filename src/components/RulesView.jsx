@@ -43,7 +43,7 @@ function RuleCard({ rule, sectionAccent }) {
   );
 }
 
-export function RulesView({ setSidebarView }) {
+export function RulesView({ setSidebarView, goBack }) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all"); // "all" | "rules" | "argued"
 
@@ -78,7 +78,7 @@ export function RulesView({ setSidebarView }) {
     <div className="rules-screen rtb">
       {setSidebarView && (
         <div className="back-btn-row">
-          <button className="back-btn" onClick={() => setSidebarView(null)}>
+          <button className="back-btn" onClick={() => goBack ? goBack() : setSidebarView(null)}>
             <Icon name="chevron-left" size={18} color="currentColor" />
           </button>
         </div>

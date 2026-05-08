@@ -15,7 +15,7 @@ import { EditPlayerModal } from "./EditPlayerModal";
 //   Q5=A preserve all current UX (claim dot, Owner/Admin/You badges, confirm
 //        strips, country+position pills, '+ Add' inline form). Restyle only.
 //   Q8=A icon-button promote/demote, opens existing confirm strip.
-export function PlayerManagement({ memberProfiles, setSidebarView }) {
+export function PlayerManagement({ memberProfiles, setSidebarView, goBack }) {
   const {
     supabase, user, league, leagueId, players,
     showToast, loadLeagueData, sendPushNotification,
@@ -125,7 +125,7 @@ export function PlayerManagement({ memberProfiles, setSidebarView }) {
   return (
     <div className="plm-screen">
       <div className="back-btn-row">
-        <button className="back-btn" onClick={() => setSidebarView("admin")}>
+        <button className="back-btn" onClick={() => goBack ? goBack() : setSidebarView("admin")}>
           <Icon name="chevron-left" size={18} color="currentColor" />
         </button>
       </div>
