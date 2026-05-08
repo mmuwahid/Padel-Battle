@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, BL, PU } from '../theme';
-import { formatDate, win, setTotals } from '../utils/helpers';
+import { formatDate, win, setTotals, formatTeam } from '../utils/helpers';
 import { TeamShuffler } from './TeamShuffler';
 import { ScoreStepper } from './ScoreStepper';
 import { validateMatch } from '../utils/scoringEngine';
@@ -308,11 +308,11 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
             <div className="sch-step-label">Players {"\u2192"} Details</div>
           </div>
 
-          {/* Team summary chip */}
+          {/* Team summary chip — Premier Padel "/" format via formatTeam helper */}
           <div className="svsum" style={{marginTop:10}}>
-            <span className="svsum-a">{tA.filter(Boolean).map(getName).join(" & ")}</span>
+            <span className="svsum-a">{formatTeam(getName(tA[0]), getName(tA[1]))}</span>
             <span className="svsum-vs">vs</span>
-            <span className="svsum-b">{tB.filter(Boolean).map(getName).join(" & ")}</span>
+            <span className="svsum-b">{formatTeam(getName(tB[0]), getName(tB[1]))}</span>
             <button className="svsum-edit" onClick={()=>setStep(1)}>Edit <Icon name="edit" size={11}/></button>
           </div>
 
