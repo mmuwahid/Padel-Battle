@@ -885,9 +885,9 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
             </div>
           </div>
           <div className="hr">
-            <button className="ibtn" onClick={()=>{loadLeagueData();showToast("Refreshed!");}} aria-label="Refresh">{"↻"}</button>
+            <button className="ibtn" onClick={()=>{loadLeagueData();showToast("Refreshed!");}} aria-label="Refresh"><Icon name="refresh" size={16}/></button>
             <button className={"ibtn"+(sidebarView==="notifications"?" on":"")} onClick={()=>{setSidebarView(sidebarView==="notifications"?null:"notifications");setSidebarOpen(false);}} aria-label="Notifications">
-              {"🔔"}
+              <Icon name="bell" size={16}/>
               {unreadNotifCount>0 && <span className="ndot">{unreadNotifCount>9?"9+":unreadNotifCount}</span>}
             </button>
             <button className={"av"+(sidebarOpen?" on":"")} onClick={()=>{setSidebarOpen(!sidebarOpen);setSidebarView(null);}} title="Profile & Settings" aria-label="Profile & Settings">
