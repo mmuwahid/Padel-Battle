@@ -131,15 +131,11 @@ export function PlayerManagement({ memberProfiles, setSidebarView }) {
       </div>
 
       <div className="ad-h">
-        <div className="adey">League</div>
         <div className="adh1">Player Management</div>
+        <div className="adsub">{filtered.length} player{filtered.length === 1 ? "" : "s"}</div>
       </div>
 
       <div className="plmhr">
-        <div>
-          <div className="plmtit">Players</div>
-          <div className="plmct">{filtered.length} player{filtered.length === 1 ? "" : "s"}</div>
-        </div>
         <button className="pbtn" onClick={() => setShowAdd(s => !s)}>
           {showAdd ? <><Icon name="close" size={14} />Cancel</> : <><Icon name="user-plus" size={14} />Add Player</>}
         </button>

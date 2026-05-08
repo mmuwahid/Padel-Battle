@@ -110,7 +110,7 @@ export function EditPlayerModal({ player, onClose, onSaved }) {
         <div style={{ width: 40, height: 4, background: BD, borderRadius: 2, margin: "0 auto 16px" }} />
 
         {/* Title */}
-        <h2 style={{ fontSize: 18, fontWeight: 900, fontStyle: "italic", textTransform: "uppercase", letterSpacing: 1, margin: "0 0 18px", textAlign: "center" }}>Edit Player</h2>
+        <h2 style={{ fontSize: 18, fontWeight: 900, textTransform: "uppercase", letterSpacing: 1, margin: "0 0 18px", textAlign: "center" }}>Edit Player</h2>
 
         {/* Photo */}
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 18 }}>

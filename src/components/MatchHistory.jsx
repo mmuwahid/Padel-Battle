@@ -193,7 +193,7 @@ export function MatchHistory({onEdit,shareMatch,sel,onMatchDeleted}){
           {/* FINAL spans rows 2-3 */}
           <div className="mfinal2" style={{gridRow:'2 / span 2', gridColumn:finalCol}}>
             {isIncomplete ? (
-              <div className="mfinal2-pts" style={{fontStyle:'italic',textAlign:'center'}}>Not<br/>counted</div>
+              <div className="mfinal2-pts" style={{textAlign:'center'}}>Not<br/>counted</div>
             ) : isPending ? (
               <>
                 <div className="mfinal2-score" style={{fontSize:22}}>{sA}–{sB}</div>

@@ -356,7 +356,6 @@ export function CountrySelect({ value, onChange, placeholder = "Select country..
                 borderBottom: `1px solid ${BD}`,
                 color: !value ? A : MT,
                 fontSize: 12,
-                fontStyle: "italic",
                 cursor: "pointer",
                 textAlign: "left",
                 fontFamily: "'Outfit',sans-serif",
@@ -366,7 +365,7 @@ export function CountrySelect({ value, onChange, placeholder = "Select country..
             </button>
 
             {filtered.length === 0 && (
-              <div style={{ padding: "16px 12px", color: MT, fontSize: 12, textAlign: "center", fontStyle: "italic" }}>
+              <div style={{ padding: "16px 12px", color: MT, fontSize: 12, textAlign: "center" }}>
                 No matches
               </div>
             )}

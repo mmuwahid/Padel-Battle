@@ -72,7 +72,7 @@ export function SettingsView({ user, claimedPlayer, isAdmin, pushSubscribed, sub
         </button>
       </div>
       <div className="stbody" style={{paddingTop:8}}>
-        <h2 style={{fontSize:20,fontWeight:800,fontStyle:"italic",letterSpacing:"-.01em",color:"var(--text)",margin:0}}>Settings</h2>
+        <h2 style={{fontSize:20,fontWeight:800,letterSpacing:"-.01em",color:"var(--text)",margin:0}}>Settings</h2>
 
       <ErrorBoundary>
 

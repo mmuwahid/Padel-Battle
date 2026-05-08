@@ -61,6 +61,10 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
   const [myMemberId,setMyMemberId]=useState(null);
   const [editingMatch,setEditingMatch]=useState(null);
   const [selectedPlayer,setSelectedPlayer]=useState(null);
+  // S068: track origin tab when a drill-in is opened from a non-Players tab
+  // (e.g. Ranking podium → drill-in). On back chevron, restore origin tab so
+  // user lands where they came from instead of always landing on Players grid.
+  const [drillInOrigin,setDrillInOrigin]=useState(null);
   const [selectedSeason,setSelectedSeason]=useState(null);
   const [tournament,setTournament]=useState(null);
   // FT-05: Challenges/Scheduling
@@ -882,43 +886,28 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
       {/* Issue #15 + #43 (S058): paint html/body to gradient-start color (#0d0d14) so rubber-band overscroll at the page top reveals a color identical to the header — no visible seam. The body bg paint is the actual fix; the previous `overscroll-behavior-y:none` was defensive and is now removed to restore native iOS rubber-band + momentum scrolling per #43. `-webkit-overflow-scrolling:touch` re-enables iOS momentum on legacy WebKit (no-op on iOS 13+).
           S050 .flag class: forces an emoji-priority font stack so country flag glyphs render across Windows / iOS / Android / macOS — without it, Windows may fall back to "PS"/"GB" letter blocks because the inherited Outfit font lacks emoji glyphs. */}
       <style>{`html,body{margin:0;padding:0;background:#0d0d14;-webkit-overflow-scrolling:touch;} #root{margin:0;padding:0;} .flag{font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji','Twemoji Mozilla','EmojiOne Color','Android Emoji',sans-serif;font-style:normal;font-weight:normal;} @keyframes spin{to{transform:rotate(360deg)}} @keyframes fadeIn{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}} input:focus,select:focus,textarea:focus{border-color:${A} !important;box-shadow:0 0 0 2px ${A}30 !important;}`}</style>
-      {/* HEADER — Issue #46 Phase 2 + Phase 6a: class-based markup. Phase 6a adds drill-in back-mode (.hdr-back) when on Players tab with a player selected; back chevron + PLAYER PROFILE title replace the logo. Sticky behavior unchanged so Lessons #18 / #44 still hold. */}
-      {tab==="stats" && selectedPlayer ? (
-        <header className="hdr-back">
-          <div className="hl">
-            <button className="ibtn" onClick={()=>setSelectedPlayer(null)} aria-label="Back to players"><Icon name="back" size={18}/></button>
-            <div className="hdr-title">Player Profile</div>
+      {/* HEADER — Issue #46 Phase 2: class-based markup. Header is ALWAYS the
+          standard PadelHub bar (logo + bell + avatar). Drill-down screens render
+          their own .back-btn-row chevron at the top of their content area —
+          consistent with every other drill-down. */}
+      <header className="hdr">
+        <div className="hl">
+          <div className="logo">
+            <PadelLogoSmall size={36}/>
+            <h1 className="lt"><span>Padel</span><span className="accent">Hub</span></h1>
           </div>
-          <div className="hr">
-            <button className={"ibtn"+(sidebarView==="notifications"?" on":"")} onClick={()=>{setSidebarView(sidebarView==="notifications"?null:"notifications");setSidebarOpen(false);}} aria-label="Notifications">
-              <Icon name="bell" size={16}/>
-              {unreadNotifCount>0 && <span className="ndot">{unreadNotifCount>9?"9+":unreadNotifCount}</span>}
-            </button>
-            <button className={"av"+(sidebarOpen?" on":"")} onClick={()=>{setSidebarOpen(!sidebarOpen);setSidebarView(null);}} title="Profile & Settings" aria-label="Profile & Settings">
-              {avatarUrl ? <img src={avatarUrl} alt=""/> : (user.user_metadata?.display_name||user.email||"U")[0].toUpperCase()}
-            </button>
-          </div>
-        </header>
-      ) : (
-        <header className="hdr">
-          <div className="hl">
-            <div className="logo">
-              <PadelLogoSmall size={36}/>
-              <h1 className="lt"><span>Padel</span><span className="accent">Hub</span></h1>
-            </div>
-          </div>
-          <div className="hr">
-            {/* S067: refresh button removed — pull-to-refresh covers manual reload now. */}
-            <button className={"ibtn"+(sidebarView==="notifications"?" on":"")} onClick={()=>{setSidebarView(sidebarView==="notifications"?null:"notifications");setSidebarOpen(false);}} aria-label="Notifications">
-              <Icon name="bell" size={16}/>
-              {unreadNotifCount>0 && <span className="ndot">{unreadNotifCount>9?"9+":unreadNotifCount}</span>}
-            </button>
-            <button className={"av"+(sidebarOpen?" on":"")} onClick={()=>{setSidebarOpen(!sidebarOpen);setSidebarView(null);}} title="Profile & Settings" aria-label="Profile & Settings">
-              {avatarUrl ? <img src={avatarUrl} alt=""/> : (user.user_metadata?.display_name||user.email||"U")[0].toUpperCase()}
-            </button>
-          </div>
-        </header>
-      )}
+        </div>
+        <div className="hr">
+          {/* S067: refresh button removed — pull-to-refresh covers manual reload now. */}
+          <button className={"ibtn"+(sidebarView==="notifications"?" on":"")} onClick={()=>{setSidebarView(sidebarView==="notifications"?null:"notifications");setSidebarOpen(false);}} aria-label="Notifications">
+            <Icon name="bell" size={16}/>
+            {unreadNotifCount>0 && <span className="ndot">{unreadNotifCount>9?"9+":unreadNotifCount}</span>}
+          </button>
+          <button className={"av"+(sidebarOpen?" on":"")} onClick={()=>{setSidebarOpen(!sidebarOpen);setSidebarView(null);}} title="Profile & Settings" aria-label="Profile & Settings">
+            {avatarUrl ? <img src={avatarUrl} alt=""/> : (user.user_metadata?.display_name||user.email||"U")[0].toUpperCase()}
+          </button>
+        </div>
+      </header>
 
       {/* SIDEBAR — extracted component */}
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} setSidebarView={setSidebarView} user={user} avatarUrl={avatarUrl} league={league} isAdmin={isAdmin} onSwitchLeague={onSwitchLeague} showToast={showToast} installPrompt={installPrompt} handleInstall={handleInstall} playerCount={players.length} activeSeasonName={seasons.find(s=>s.id===selectedSeason)?.name||seasons.find(s=>s.active)?.name||null}/>
@@ -1106,7 +1095,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
           {seasonLb.length>=3&&(
             <div className="pod-wrap">
               {/* 2nd place */}
-              <div className="pod p2" onClick={()=>{setSelectedPlayer(seasonLb[1].id);setTab("stats");}}>
+              <div className="pod p2" onClick={()=>{setDrillInOrigin(tab);setSelectedPlayer(seasonLb[1].id);setTab("stats");}}>
                 <div className="pmedal">🥈</div>
                 <div className="pname">{seasonLb[1].nickname||seasonLb[1].name}</div>
                 <div className="prec">
@@ -1117,7 +1106,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
                 <div className="pelo">{Math.round(seasonElo[seasonLb[1].id]||1500)} ELO</div>
               </div>
               {/* 1st place */}
-              <div className="pod p1" onClick={()=>{setSelectedPlayer(seasonLb[0].id);setTab("stats");}}>
+              <div className="pod p1" onClick={()=>{setDrillInOrigin(tab);setSelectedPlayer(seasonLb[0].id);setTab("stats");}}>
                 <div className="pmedal">🥇</div>
                 <div className="pname">{seasonLb[0].nickname||seasonLb[0].name}</div>
                 <div className="prec">
@@ -1128,7 +1117,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
                 <div className="pelo">{Math.round(seasonElo[seasonLb[0].id]||1500)} ELO</div>
               </div>
               {/* 3rd place */}
-              <div className="pod p3" onClick={()=>{setSelectedPlayer(seasonLb[2].id);setTab("stats");}}>
+              <div className="pod p3" onClick={()=>{setDrillInOrigin(tab);setSelectedPlayer(seasonLb[2].id);setTab("stats");}}>
                 <div className="pmedal">🥉</div>
                 <div className="pname">{seasonLb[2].nickname||seasonLb[2].name}</div>
                 <div className="prec">
@@ -1166,7 +1155,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
                 const isMe = claimedPlayer?.id === p.id;
                 return (
                   <div key={p.id} className={`lbrow${isMe?" me":""}`}
-                    onClick={()=>{setSelectedPlayer(p.id);setTab("stats");}}>
+                    onClick={()=>{setDrillInOrigin(tab);setSelectedPlayer(p.id);setTab("stats");}}>
                     <div className={`lbrank ${idx<3?"medal":"num"}`} style={{color:idx===0?"#facc15":idx===1?"#94a3b8":idx===2?"#c97b2e":"#9090a4"}}>
                       {idx===0?"🥇":idx===1?"🥈":idx===2?"🥉":idx+1}
                     </div>
@@ -1292,7 +1281,13 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
           elo={elo}
               seasonId={selectedSeason}
           sp={selectedPlayer}
-          setSp={setSelectedPlayer}
+          setSp={(id)=>{
+            setSelectedPlayer(id);
+            // S068: when closing the drill-in (id===null) and an origin tab was
+            // captured at open-time, restore it so e.g. Ranking → drill-in →
+            // back returns to Ranking instead of Players grid.
+            if(id===null && drillInOrigin){ setTab(drillInOrigin); setDrillInOrigin(null); }
+          }}
           matches={approvedMatches}
           supabase={supabase}
           leagueId={leagueId}
@@ -1323,7 +1318,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
         {RULES.map((r,i) => (
           <div key={i} style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:8}}>
             <h3 style={{fontSize:14,fontWeight:700,color:A,marginBottom:r.intro?4:6}}>{r.title}</h3>
-            {r.intro && <p style={{fontSize:11,color:MT,marginBottom:10,fontStyle:"italic"}}>{r.intro}</p>}
+            {r.intro && <p style={{fontSize:11,color:MT,marginBottom:10}}>{r.intro}</p>}
             {r.subRules ? (
               r.subRules.map((sr,j) => (
                 <div key={j} style={{background:CD2,borderRadius:8,padding:"10px 12px",marginTop:j===0?0:6}}>
@@ -1363,7 +1358,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
           <div key={i} style={{background:CD,borderRadius:12,border:`1px solid ${PU}25`,padding:14,marginBottom:8}}>
             <h3 style={{fontSize:14,fontWeight:700,color:PU,marginBottom:6}}>⚡ {title}</h3>
             <p style={{fontSize:13,color:TX,lineHeight:1.5,marginBottom:8}}>{desc}</p>
-            <p style={{fontSize:12,color:MT,lineHeight:1.5,fontStyle:"italic"}}>{detail}</p>
+            <p style={{fontSize:12,color:MT,lineHeight:1.5}}>{detail}</p>
           </div>
         ))}
       </div>}

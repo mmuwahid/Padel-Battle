@@ -440,7 +440,7 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
                   {(ch.location || ch.notes) && (
                     <div className="scard-meta">
                       {ch.location && <span className="scard-meta-item">{"\uD83D\uDCCD"} {ch.location}</span>}
-                      {ch.notes && <span className="scard-meta-item" style={{fontStyle:'italic'}}>{ch.notes}</span>}
+                      {ch.notes && <span className="scard-meta-item">{ch.notes}</span>}
                     </div>
                   )}
                   {isPending && imIn && myResponse==='accepted' && (

@@ -186,6 +186,16 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
     const positionLabel = player.playing_position === 'left' ? 'Left Side' : player.playing_position === 'right' ? 'Right Side' : null;
     return (
       <div>
+        {/* S068: unified back-chevron pattern — same .back-btn-row as every
+            other drill-down (Admin/LeagueMgmt/PlayerMgmt/Settings/Profile/etc).
+            Replaces the previous .hdr-back conditional in App.jsx that swapped
+            the app header logo for a back button. App header now stays
+            consistent across all screens. */}
+        <div className="back-btn-row">
+          <button className="back-btn" onClick={()=>setSp(null)} aria-label="Back">
+            <Icon name="chevron-left" size={18} color="currentColor"/>
+          </button>
+        </div>
         {/* Phase 6a hero block */}
         <section className="dpro">
           <div className="dpro-pic">{player.avatar_url ? <img src={player.avatar_url} alt=""/> : player.name[0]}</div>

@@ -71,7 +71,7 @@ export function EditMyProfile({ player, onClose }) {
     <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.65)",zIndex:200,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
       <div onClick={(e)=>e.stopPropagation()} style={{width:"100%",maxWidth:480,maxHeight:"92vh",overflowY:"auto",background:"var(--bg)",borderTopLeftRadius:24,borderTopRightRadius:24,padding:"16px 18px calc(20px + env(safe-area-inset-bottom, 0px))",fontFamily:"var(--font)",border:"1px solid var(--border)",borderBottom:"none"}}>
         <div style={{width:40,height:4,background:"var(--border)",borderRadius:2,margin:"0 auto 16px"}}/>
-        <h3 style={{fontSize:18,fontWeight:900,fontStyle:"italic",textTransform:"uppercase",letterSpacing:".04em",color:"var(--text)",margin:"0 0 6px",textAlign:"center"}}>Edit My Profile</h3>
+        <h3 style={{fontSize:18,fontWeight:900,textTransform:"uppercase",letterSpacing:".04em",color:"var(--text)",margin:"0 0 6px",textAlign:"center"}}>Edit My Profile</h3>
         <div style={{fontFamily:"var(--mono)",fontSize:10,color:"#9090a4",marginBottom:14,display:"flex",alignItems:"center",gap:5,justifyContent:"center"}}>
           <span style={{color:"var(--danger)",fontWeight:700}}>*</span> All fields are required
         </div>

@@ -79,7 +79,7 @@ export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, re
               </div>
             )}
             {claimedPlayer.nickname && (
-              <div className="protag" style={{fontStyle:"italic"}}>"{claimedPlayer.nickname}"</div>
+              <div className="protag">"{claimedPlayer.nickname}"</div>
             )}
           </div>
         )}
