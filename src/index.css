@@ -1153,3 +1153,123 @@ body {
 .svsum-b{color:var(--gold);}
 .svsum-vs{color:#3a3a3a;}
 .svsum-edit{margin-left:auto;background:none;border:none;cursor:pointer;color:#9090a4;font-family:var(--mono);font-size:10px;display:flex;align-items:center;gap:3px;}
+
+/* ─── Issue #46 Phase 9 (S066) — LogMatch + EditMatchModal restyle ─── */
+
+/* Manual / LIVE mode bar */
+.modebar{display:grid;grid-template-columns:1fr 1fr;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:4px;margin:14px 16px 0;}
+.modebtn{padding:10px;border-radius:var(--r-md);border:none;background:none;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;color:#9090a4;transition:all 200ms;display:flex;align-items:center;justify-content:center;gap:7px;}
+.modebtn.man{background:var(--surface-2);color:var(--text);border:1px solid var(--border);}
+.modebtn.live{background:linear-gradient(135deg,rgba(74,222,128,.15),rgba(74,222,128,.04));color:var(--accent);border:1px solid var(--accent-glow);}
+.livedot{width:7px;height:7px;border-radius:var(--r-full);background:var(--accent);animation:lp 1.4s ease-in-out infinite;flex-shrink:0;}
+@keyframes lp{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(.65);}}
+
+/* Body wrapper for the page */
+.logbody{padding:16px 18px;display:flex;flex-direction:column;gap:16px;}
+
+/* Score card (manual entry) */
+.sccard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;}
+.sccardh{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 10px;border-bottom:1px solid var(--border);}
+.sccardhT{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#9090a4;}
+.sctbody{padding:10px 14px 14px;display:flex;flex-direction:column;gap:8px;}
+.scrow{display:grid;grid-template-columns:28px 1fr 14px 1fr;gap:6px;align-items:center;}
+.scrowl{font-family:var(--mono);font-size:10px;color:#9090a4;}
+.scrows{text-align:center;font-family:var(--mono);font-size:12px;color:#5a5a6a;}
+
+/* Score-stepper card (counter) */
+.cstep{display:flex;align-items:center;background:var(--surface-2);border-radius:var(--r-sm);overflow:hidden;border:1px solid var(--border);height:40px;}
+.cstep.a{border-color:rgba(74,222,128,.16);}
+.cstep.b{border-color:rgba(245,158,11,.16);}
+.cstep.invalid{border-color:rgba(248,113,113,.5);}
+.csbtn{width:34px;height:40px;border:none;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 150ms;flex-shrink:0;}
+.csbtn:hover{background:var(--surface-3);}
+.csbtn:active{transform:scale(.85);}
+.cstep.a .csbtn{color:var(--accent);}
+.cstep.b .csbtn{color:var(--gold);}
+.csval{flex:1;text-align:center;font-family:var(--mono);font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;}
+
+/* Result row (sets summary at bottom of score card) */
+.scrrow{display:flex;align-items:center;justify-content:center;gap:14px;padding:10px 14px;border-top:1px solid var(--border);background:var(--surface-2);}
+.scrteam{font-size:12px;font-weight:700;}
+.scrteam.a{color:var(--accent);}
+.scrteam.b{color:var(--gold);}
+.scrscore{font-family:var(--mono);font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;}
+.scrscore.a{color:var(--accent);}
+.scrscore.b{color:var(--gold);}
+.scrdash{font-family:var(--mono);font-size:14px;color:#5a5a6a;}
+
+/* LIVE mode body */
+.livebi{padding:14px 14px 4px;}
+.liveh{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;margin-bottom:14px;gap:8px;}
+.livetn{font-size:13px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.livetn.a{color:var(--accent);}
+.livetn.b{color:var(--gold);text-align:right;}
+.livevsp{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-full);padding:3px 8px;font-family:var(--mono);font-size:9px;color:#9090a4;}
+.liverws{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden;margin-bottom:12px;}
+.liverow{display:grid;grid-template-columns:1fr 80px 1fr;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);}
+.liverow:last-child{border-bottom:none;}
+.livenum{font-family:var(--mono);font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1;}
+.livenum.a{color:var(--accent);}
+.livenum.b{color:var(--gold);text-align:right;}
+.liverl{text-align:center;font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#9090a4;}
+
+/* LIVE +1 action buttons */
+.liveacs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+.acbtn{height:68px;border-radius:var(--r-md);border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;transition:all 180ms var(--ease-spring);}
+.acbtn:active{transform:scale(.93);}
+.acbtn.a{background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.25);}
+.acbtn.a:hover{background:rgba(74,222,128,.2);}
+.acbtn.b{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.25);}
+.acbtn.b:hover{background:rgba(245,158,11,.2);}
+.acval{font-family:var(--mono);font-size:20px;font-weight:800;}
+.acbtn.a .acval{color:var(--accent);}
+.acbtn.b .acval{color:var(--gold);}
+.aclbl{font-family:var(--mono);font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:90%;}
+.acbtn.a .aclbl{color:rgba(74,222,128,.6);}
+.acbtn.b .aclbl{color:rgba(245,158,11,.6);}
+
+/* Undo button */
+.undorow{display:flex;justify-content:center;margin-bottom:10px;}
+.undobtn{display:flex;align-items:center;gap:5px;padding:6px 14px;border-radius:var(--r-full);border:1px solid var(--border);background:none;font-family:var(--mono);font-size:10px;color:#9090a4;cursor:pointer;transition:all 150ms;}
+.undobtn:hover{border-color:var(--accent-glow);color:var(--text);}
+
+/* MOTM picker card */
+.mvpcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:12px 14px;display:flex;align-items:center;gap:12px;}
+.mvpiw{width:36px;height:36px;border-radius:var(--r-sm);background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.mvpsw{flex:1;position:relative;}
+.mvplbl{font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#9090a4;}
+.mvpsel{width:100%;padding:9px 28px 9px 0;background:none;border:none;color:var(--text);font-family:var(--font);font-size:14px;font-weight:600;outline:none;cursor:pointer;appearance:none;-webkit-appearance:none;}
+.mvpch{position:absolute;right:0;top:50%;transform:translateY(-50%);pointer-events:none;display:flex;color:#9090a4;}
+
+/* Validation error banner (FIP shape error) */
+.lmerr{margin-top:6px;padding:8px 12px;background:rgba(248,113,113,.10);border:1px solid rgba(248,113,113,.32);border-radius:var(--r-md);font-family:var(--mono);font-size:11px;color:var(--danger);font-weight:600;display:flex;align-items:center;gap:6px;}
+
+/* ─── S066 Phase 9: TeamShuffler restyle ─── */
+.shuf-card{padding-bottom:14px;}
+.shuf-meta{font-family:var(--mono);font-size:10px;color:#9090a4;letter-spacing:.04em;}
+
+.shuf-pool{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px 12px;}
+.shuf-chip{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:var(--r-full);background:var(--surface-2);border:1px solid var(--border);font-family:var(--font);font-size:11px;font-weight:600;color:var(--text);cursor:pointer;transition:all 150ms;white-space:nowrap;}
+.shuf-chip:hover{border-color:var(--accent-glow);}
+.shuf-chip.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);}
+
+.shuf-info{display:flex;justify-content:space-between;align-items:center;padding:0 14px 10px;font-family:var(--mono);font-size:11px;color:#9090a4;font-weight:600;}
+.shuf-info .on{color:var(--accent);}
+.shuf-info-r{color:#9090a4;font-weight:500;}
+
+.shuf-list{padding:4px 14px;display:flex;flex-direction:column;gap:8px;}
+.shuf-match{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px;}
+.shuf-match-h{font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#9090a4;margin-bottom:6px;}
+.shuf-match-row{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;}
+.shuf-match-team{min-width:0;}
+.shuf-match-team.r{text-align:right;}
+.shuf-match-tlbl{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:3px;}
+.shuf-match-tlbl.r{justify-content:flex-end;color:var(--gold);}
+.shuf-match-tnames{font-family:var(--font);font-size:12px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.shuf-match-vs{font-family:var(--mono);font-size:10px;font-weight:700;color:#5a5a6a;padding:0 4px;}
+
+.shuf-sitouts{padding:8px 14px 12px;}
+.shuf-sitouts-lbl{font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#9090a4;margin-bottom:6px;}
+.shuf-sitouts-list{display:flex;flex-wrap:wrap;gap:6px;}
+
+.shuf-actions{display:flex;gap:8px;padding:8px 14px 0;}
