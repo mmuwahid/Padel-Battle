@@ -194,93 +194,127 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
         <button className="sched-add" onClick={()=>setShowForm(!showForm)}>{showForm?"Cancel":"+ Schedule"}</button>
       </div>
 
-      {/* New Challenge Form — Multi-step */}
-      {showForm&&step===1&&(
-        <div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:12}}>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:12}}>
-            <div style={{width:24,height:24,borderRadius:"50%",background:A,color:BG,fontSize:11,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>1</div>
-            <div style={{width:32,height:2,background:`${BD}`}}/>
-            <div style={{width:24,height:24,borderRadius:"50%",background:BD,color:MT,fontSize:11,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>2</div>
-            <span style={{fontSize:10,color:MT,marginLeft:4}}>Players → Details</span>
-          </div>
-          <div style={{background:`${A}12`,border:`1px solid ${A}`,borderRadius:10,padding:12,marginBottom:14,display:"flex",alignItems:"center",gap:10}}>
-            <span style={{fontSize:16}}>🎾</span>
-            <span style={{fontSize:12,fontWeight:600,color:TX}}>Select Players</span>
+      {/* Phase 7: Multi-step schedule form, restyled to .sform component vocabulary */}
+      {showForm && step===1 && (
+        <div className="sform">
+          <div className="sform-steps">
+            <div className="sform-step on">1</div>
+            <div className="sform-line"/>
+            <div className="sform-step">2</div>
+            <span className="sform-step-label">Players {"\u2192"} Details</span>
           </div>
 
-          {/* FT-08: Shuffle entry point for scheduling */}
-          {!showShuffler && (
-            <button onClick={()=>setShowShuffler(true)} style={{width:"100%",padding:"10px",borderRadius:10,border:`1px dashed ${A}`,background:`${A}10`,color:A,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif",marginBottom:12}}>🎲 Shuffle Teams</button>
-          )}
-          {showShuffler && (
-            <TeamShuffler
-              players={players}
-              getName={getName}
-              singleMatchMode={true}
-              onAccept={({matches})=>{
-                if(matches.length>0){
-                  const first=matches[0];
-                  setTA([...first.team_a]);
-                  setTB([...first.team_b]);
-                  if(showToast)showToast("Teams locked in — pick a date next.");
-                }
-                setShowShuffler(false);
-              }}
-              onCancel={()=>setShowShuffler(false)}
-            />
-          )}
+          <div className="sform-body">
+            <div className="sform-banner">
+              <span style={{fontSize:16,lineHeight:1}}>{"\uD83C\uDFBE"}</span>
+              <span>Select Players</span>
+            </div>
 
-          <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:8,textTransform:"uppercase",letterSpacing:0.5}}>Team 1</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}}>
-            {[0,1].map(i=>{const allSel=[tA[0],tA[1],tB[0],tB[1]].filter(Boolean);const others=allSel.filter(v=>v!==tA[i]);const badge=tA[i]?getEloBadge(tA[i]):null;return(
-              <div key={i} style={{padding:12,background:CD2,border:`1px solid ${BD}`,borderRadius:8}}>
-                <div style={{fontSize:11,fontWeight:700,color:MT,textTransform:"uppercase",letterSpacing:0.5,marginBottom:8}}>Player {i+1}</div>
-                <select value={tA[i]} onChange={e=>{const n=[...tA];n[i]=e.target.value;setTA(n);}} style={{...sel,marginBottom:badge?6:0}}><option value="">Select Player...</option>{players.filter(p=>!others.includes(p.id)).map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}</select>
-                {badge&&<div style={{display:"inline-block",padding:"3px 8px",borderRadius:4,fontSize:10,fontWeight:700,background:`${badge.color}20`,color:badge.color,marginTop:4}}>{badge.label}</div>}
+            {/* FT-08: Shuffle entry point */}
+            {!showShuffler && (
+              <button className="sform-shuffle" onClick={()=>setShowShuffler(true)}>
+                <span style={{fontSize:15}}>{"\uD83C\uDFB2"}</span> Shuffle Teams
+              </button>
+            )}
+            {showShuffler && (
+              <TeamShuffler
+                players={players}
+                getName={getName}
+                singleMatchMode={true}
+                onAccept={({matches})=>{
+                  if(matches.length>0){
+                    const first=matches[0];
+                    setTA([...first.team_a]);
+                    setTB([...first.team_b]);
+                    if(showToast)showToast("Teams locked in — pick a date next.");
+                  }
+                  setShowShuffler(false);
+                }}
+                onCancel={()=>setShowShuffler(false)}
+              />
+            )}
+
+            <div className="sform-section">
+              <div className="sform-lbl">Team 1</div>
+              <div className="sform-grid-2">
+                {[0,1].map(i=>{const allSel=[tA[0],tA[1],tB[0],tB[1]].filter(Boolean);const others=allSel.filter(v=>v!==tA[i]);const badge=tA[i]?getEloBadge(tA[i]):null;return(
+                  <div key={i} className="sform-pcard">
+                    <div className="sform-pcard-l">Player {i+1}</div>
+                    <select className="sform-input" value={tA[i]} onChange={e=>{const n=[...tA];n[i]=e.target.value;setTA(n);}}>
+                      <option value="">Select Player...</option>
+                      {players.filter(p=>!others.includes(p.id)).map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}
+                    </select>
+                    {badge && <div className="sform-elobadge" style={{background:`${badge.color}20`,color:badge.color}}>{badge.label}</div>}
+                  </div>
+                );})}
               </div>
-            );})}
-          </div>
-          <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:8,textTransform:"uppercase",letterSpacing:0.5}}>Team 2</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}}>
-            {[0,1].map(i=>{const allSel=[tA[0],tA[1],tB[0],tB[1]].filter(Boolean);const others=allSel.filter(v=>v!==tB[i]);const badge=tB[i]?getEloBadge(tB[i]):null;return(
-              <div key={i} style={{padding:12,background:CD2,border:`1px solid ${BD}`,borderRadius:8}}>
-                <div style={{fontSize:11,fontWeight:700,color:MT,textTransform:"uppercase",letterSpacing:0.5,marginBottom:8}}>Player {i+3}</div>
-                <select value={tB[i]} onChange={e=>{const n=[...tB];n[i]=e.target.value;setTB(n);}} style={{...sel,marginBottom:badge?6:0}}><option value="">Select Player...</option>{players.filter(p=>!others.includes(p.id)).map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}</select>
-                {badge&&<div style={{display:"inline-block",padding:"3px 8px",borderRadius:4,fontSize:10,fontWeight:700,background:`${badge.color}20`,color:badge.color,marginTop:4}}>{badge.label}</div>}
+            </div>
+
+            <div className="sform-section">
+              <div className="sform-lbl">Team 2</div>
+              <div className="sform-grid-2">
+                {[0,1].map(i=>{const allSel=[tA[0],tA[1],tB[0],tB[1]].filter(Boolean);const others=allSel.filter(v=>v!==tB[i]);const badge=tB[i]?getEloBadge(tB[i]):null;return(
+                  <div key={i} className="sform-pcard">
+                    <div className="sform-pcard-l">Player {i+3}</div>
+                    <select className="sform-input" value={tB[i]} onChange={e=>{const n=[...tB];n[i]=e.target.value;setTB(n);}}>
+                      <option value="">Select Player...</option>
+                      {players.filter(p=>!others.includes(p.id)).map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}
+                    </select>
+                    {badge && <div className="sform-elobadge" style={{background:`${badge.color}20`,color:badge.color}}>{badge.label}</div>}
+                  </div>
+                );})}
               </div>
-            );})}
+            </div>
           </div>
-          <div style={{display:"flex",gap:8}}>
-            <button onClick={()=>setStep(2)} disabled={!tA[0]} style={{flex:1,padding:12,borderRadius:8,border:"none",background:tA[0]?A:BD,color:tA[0]?BG:MT,fontSize:13,fontWeight:700,cursor:tA[0]?"pointer":"not-allowed",textTransform:"uppercase",letterSpacing:0.5}}>Continue</button>
-            <button onClick={()=>{setShowForm(false);setStep(1);}} style={{flex:1,padding:12,borderRadius:8,border:`1px solid ${BD}`,background:CD2,color:TX,fontSize:13,fontWeight:700,cursor:"pointer",textTransform:"uppercase",letterSpacing:0.5}}>Cancel</button>
+
+          <div className="sform-actions">
+            <button className="sform-cta" onClick={()=>setStep(2)} disabled={!tA[0]}>Continue</button>
+            <button className="sform-cta sec" onClick={()=>{setShowForm(false);setStep(1);}}>Cancel</button>
           </div>
         </div>
       )}
-      {showForm&&step===2&&(
-        <div style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:12}}>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:12}}>
-            <div style={{width:24,height:24,borderRadius:"50%",background:`${A}30`,color:A,fontSize:11,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>✓</div>
-            <div style={{width:32,height:2,background:A}}/>
-            <div style={{width:24,height:24,borderRadius:"50%",background:A,color:BG,fontSize:11,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>2</div>
-            <span style={{fontSize:10,color:MT,marginLeft:4}}>Players → Details</span>
+
+      {showForm && step===2 && (
+        <div className="sform">
+          <div className="sform-steps">
+            <div className="sform-step done">{"\u2713"}</div>
+            <div className="sform-line on"/>
+            <div className="sform-step on">2</div>
+            <span className="sform-step-label">Players {"\u2192"} Details</span>
           </div>
-          <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:8,textTransform:"uppercase",letterSpacing:0.5}}>Match Date</div>
-          <div style={{display:"flex",gap:8,marginBottom:14}}>
-            <input type="date" value={date} min={new Date().toISOString().split("T")[0]} onChange={e=>setDate(e.target.value)} style={{...inp,flex:1}}/>
-            <input type="time" value={time} onChange={e=>setTime(e.target.value)} style={{...inp,flex:1}}/>
+
+          <div className="sform-body">
+            <div className="sform-section">
+              <div className="sform-lbl">Match Date</div>
+              <div className="sform-row">
+                <input className="sform-input" type="date" value={date} min={new Date().toISOString().split("T")[0]} onChange={e=>setDate(e.target.value)}/>
+                <input className="sform-input" type="time" value={time} onChange={e=>setTime(e.target.value)}/>
+              </div>
+            </div>
+
+            <div className="sform-section">
+              <div className="sform-lbl">Duration</div>
+              <div className="sform-pillrow">
+                {[60,90,120].map(d=>(
+                  <button key={d} className={`sform-pill${duration===d?' on':''}`} onClick={()=>setDuration(d)}>{d} min</button>
+                ))}
+              </div>
+            </div>
+
+            <div className="sform-section">
+              <div className="sform-lbl">Court</div>
+              <input className="sform-input" placeholder="e.g., Harmony 3 - Padel Court 1" value={location} onChange={e=>setLocation(e.target.value)}/>
+            </div>
+
+            <div className="sform-section">
+              <div className="sform-lbl">Notes</div>
+              <input className="sform-input" placeholder="Optional" value={notes} onChange={e=>setNotes(e.target.value)}/>
+            </div>
           </div>
-          <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:8,textTransform:"uppercase",letterSpacing:0.5}}>Duration</div>
-          <div style={{display:"flex",gap:8,marginBottom:14}}>
-            {[60,90,120].map(d=>(
-              <button key={d} onClick={()=>setDuration(d)} style={{flex:1,padding:"10px 12px",borderRadius:20,border:`1px solid ${duration===d?A:BD}`,background:duration===d?A:"transparent",color:duration===d?"#000":TX,fontSize:13,fontWeight:600,cursor:"pointer"}}>{d} min</button>
-            ))}
-          </div>
-          <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:8,textTransform:"uppercase",letterSpacing:0.5}}>Court</div>
-          <input placeholder="e.g., Harmony 3 - Padel Court 1" value={location} onChange={e=>setLocation(e.target.value)} style={{...inp,marginBottom:10}}/>
-          <input placeholder="Notes (optional)" value={notes} onChange={e=>setNotes(e.target.value)} style={{...inp,marginBottom:14}}/>
-          <div style={{display:"flex",gap:8}}>
-            <button onClick={createChallenge} disabled={saving} style={{flex:1,padding:12,borderRadius:8,border:"none",background:A,color:BG,fontSize:13,fontWeight:700,cursor:"pointer",opacity:saving?0.6:1,textTransform:"uppercase",letterSpacing:0.5}}>{saving?"Scheduling...":"Schedule Match"}</button>
-            <button onClick={()=>setStep(1)} style={{flex:1,padding:12,borderRadius:8,border:`1px solid ${BD}`,background:CD2,color:TX,fontSize:13,fontWeight:700,cursor:"pointer",textTransform:"uppercase",letterSpacing:0.5}}>Back</button>
+
+          <div className="sform-actions">
+            <button className="sform-cta" onClick={createChallenge} disabled={saving}>{saving?"Scheduling...":"Schedule Match"}</button>
+            <button className="sform-cta sec" onClick={()=>setStep(1)}>Back</button>
           </div>
         </div>
       )}
@@ -440,6 +474,6 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
           })}
         </div>
       )}
-    </div>
-  );
+    </div>
+  );
 }
