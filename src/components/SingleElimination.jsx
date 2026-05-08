@@ -160,7 +160,7 @@ export function SingleElimination({ players, getName, supabase, leagueId, tourna
 
         <div style={{ marginBottom: 18 }}>
           <label style={{ fontSize: 11, fontWeight: 600, color: MT, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8, display: "block" }}>Tournament Name</label>
-          <input type="text" value={tournamentName} onChange={e => setTournamentName(e.target.value)} placeholder="Friday Night Showdown" style={{ width: "100%", padding: "12px 16px", background: CD, border: `1px solid ${BD}`, borderRadius: 12, color: TX, fontFamily: "Outfit, sans-serif", fontSize: 14, outline: "none" }} />
+          <input type="text" value={tournamentName} onChange={e => setTournamentName(e.target.value)} placeholder="Friday Night Showdown" style={{ width: "100%", padding: "12px 16px", background: CD, border: `1px solid ${BD}`, borderRadius: 12, color: TX, fontFamily: "var(--font)", fontSize: 14, outline: "none" }} />
         </div>
 
         <div style={{ marginBottom: 18 }}>

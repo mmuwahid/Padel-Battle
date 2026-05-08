@@ -900,7 +900,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
 
   return (
     <LeagueContext.Provider value={leagueCtx}>
-    <div style={{background:BG,minHeight:"100vh",paddingBottom:"calc(82px + env(safe-area-inset-bottom, 0px))",fontFamily:"'Outfit',sans-serif",color:TX}}>
+    <div style={{background:BG,minHeight:"100vh",paddingBottom:"calc(82px + env(safe-area-inset-bottom, 0px))",fontFamily: "var(--font)",color:TX}}>
       {ptrRefreshing && (
         <div className="ptr-overlay">
           <div className="ptr-spinner" />
@@ -1249,7 +1249,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
           em={editingMatch}
           setEm={setEditingMatch}
           goBack={()=>setTab("history")}
-          sel={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:13,fontFamily:"Outfit"}}
+          sel={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:13,fontFamily: "var(--font)"}}
           lbl={{fontSize:12,color:MT,fontWeight:600,marginBottom:8}}
           getName={getName}
           seasonId={selectedSeason}
@@ -1270,7 +1270,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
           {/* FT-05: Sub-tab toggle */}
           <div style={{display:"flex",gap:4,marginBottom:16,background:CD,borderRadius:10,padding:3}}>
             {["history","schedule"].map(t=>(
-              <button key={t} onClick={()=>setMatchSubTab(t)} style={{flex:1,padding:"8px 12px",borderRadius:8,border:"none",background:matchSubTab===t?A:"transparent",color:matchSubTab===t?"#000":MT,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif",textTransform:"capitalize"}}>{t}</button>
+              <button key={t} onClick={()=>setMatchSubTab(t)} style={{flex:1,padding:"8px 12px",borderRadius:8,border:"none",background:matchSubTab===t?A:"transparent",color:matchSubTab===t?"#000":MT,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily: "var(--font)",textTransform:"capitalize"}}>{t}</button>
             ))}
           </div>
 
@@ -1278,7 +1278,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
             <MatchHistory
               onEdit={(m)=>{setEditingMatch(m);setTab("log");}}
               shareMatch={shareMatch}
-              sel={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:13,fontFamily:"Outfit"}}
+              sel={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:13,fontFamily: "var(--font)"}}
               onMatchDeleted={loadLeagueData}
             />
           </div>
@@ -1297,7 +1297,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
               sendPushNotification={sendPushNotification}
               elo={elo}
               seasonId={selectedSeason}
-              sel={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:13,fontFamily:"Outfit"}}
+              sel={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:13,fontFamily: "var(--font)"}}
             />
           </div>
         </div>
@@ -1337,7 +1337,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
           leagueId={leagueId}
           isAdmin={isAdmin}
           getName={getName}
-          sel={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:13,fontFamily:"Outfit"}}
+          sel={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:13,fontFamily: "var(--font)"}}
           onPlayersChange={loadLeagueData}
           showToast={showToast}
           claimedPlayer={claimedPlayer}
@@ -1351,7 +1351,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
         <ErrorBoundary><Suspense fallback={<LazyFallback/>}><GameMode
           tournament={tournament}
           setTournament={setTournament}
-          sel={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:13,fontFamily:"Outfit"}}
+          sel={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:13,fontFamily: "var(--font)"}}
         /></Suspense></ErrorBoundary>
       )}
 
@@ -1409,7 +1409,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
 
       {/* TOAST NOTIFICATION */}
       {toast && (
-        <div style={{position:"fixed",top:"calc(env(safe-area-inset-top, 20px) + 12px)",left:"50%",transform:"translateX(-50%)",zIndex:200,padding:"12px 24px",borderRadius:12,background:toast.type==="success"?A:DG,color:toast.type==="success"?"#000":"#fff",fontSize:13,fontWeight:700,fontFamily:"'Outfit',sans-serif",boxShadow:"0 4px 20px rgba(0,0,0,0.3)",animation:"fadeIn 0.2s ease-out",maxWidth:"90%",textAlign:"center"}}>
+        <div style={{position:"fixed",top:"calc(env(safe-area-inset-top, 20px) + 12px)",left:"50%",transform:"translateX(-50%)",zIndex:200,padding:"12px 24px",borderRadius:12,background:toast.type==="success"?A:DG,color:toast.type==="success"?"#000":"#fff",fontSize:13,fontWeight:700,fontFamily: "var(--font)",boxShadow:"0 4px 20px rgba(0,0,0,0.3)",animation:"fadeIn 0.2s ease-out",maxWidth:"90%",textAlign:"center"}}>
           {toast.msg}
         </div>
       )}

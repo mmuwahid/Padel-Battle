@@ -82,7 +82,7 @@ export function BracketSVG({ bracket, getName, scores, onSaveScore }) {
     const labelColor = isFinal ? GD : MT;
 
     elements.push(
-      <text key={`rl-${ri}`} x={x + matchW / 2} y={positions[ri][0] - 10} fill={labelColor} fontFamily="Outfit" fontSize={9} fontWeight={isFinal ? 700 : 600} textAnchor="middle">
+      <text key={`rl-${ri}`} x={x + matchW / 2} y={positions[ri][0] - 10} fill={labelColor} fontFamily="var(--font)" fontSize={9} fontWeight={isFinal ? 700 : 600} textAnchor="middle">
         {roundLabels[ri]}
       </text>
     );
@@ -105,7 +105,7 @@ export function BracketSVG({ bracket, getName, scores, onSaveScore }) {
         <rect key={`ra-${ri}-${mi}`} x={x} y={y} width={matchW} height={slotH} rx={slotR} fill={CD} stroke={strokeA} strokeWidth={inProgress || isFinal ? 1.5 : 1} />
       );
       elements.push(
-        <text key={`ta-${ri}-${mi}`} x={x + 8} y={y + 15} fill={aWins ? A : bWins ? DG : TX} fontFamily="Outfit" fontSize={10} fontWeight={600} opacity={bWins ? 0.6 : 1}>
+        <text key={`ta-${ri}-${mi}`} x={x + 8} y={y + 15} fill={aWins ? A : bWins ? DG : TX} fontFamily="var(--font)" fontSize={10} fontWeight={600} opacity={bWins ? 0.6 : 1}>
           {teamAName}
         </text>
       );
@@ -127,7 +127,7 @@ export function BracketSVG({ bracket, getName, scores, onSaveScore }) {
         <rect key={`rb-${ri}-${mi}`} x={x} y={y + slotH + 2} width={matchW} height={slotH} rx={slotR} fill={CD} stroke={strokeB} strokeWidth={inProgress || isFinal ? 1.5 : 1} />
       );
       elements.push(
-        <text key={`tb-${ri}-${mi}`} x={x + 8} y={y + slotH + 17} fill={bWins ? A : aWins ? DG : TX} fontFamily="Outfit" fontSize={10} fontWeight={600} opacity={aWins ? 0.6 : 1}>
+        <text key={`tb-${ri}-${mi}`} x={x + 8} y={y + slotH + 17} fill={bWins ? A : aWins ? DG : TX} fontFamily="var(--font)" fontSize={10} fontWeight={600} opacity={aWins ? 0.6 : 1}>
           {isBye ? "BYE" : teamBName}
         </text>
       );

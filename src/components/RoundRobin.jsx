@@ -112,7 +112,7 @@ export function RoundRobin({ players, getName, supabase, leagueId, tournament, s
         <button onClick={() => setScreen("selector")} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: MT, fontSize: 12, fontWeight: 600, cursor: "pointer", marginBottom: 12, padding: 0 }}>{"\u2190"} Back to formats</button>
         <div style={{ marginBottom: 18 }}>
           <label style={{ fontSize: 11, fontWeight: 600, color: MT, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8, display: "block" }}>Tournament Name</label>
-          <input type="text" value={rrTournamentName} onChange={e => setRrTournamentName(e.target.value)} placeholder="Round Robin League" style={{ width: "100%", padding: "12px 16px", background: CD, border: "1px solid " + BD, borderRadius: 12, color: TX, fontFamily: "Outfit, sans-serif", fontSize: 14, outline: "none" }} />
+          <input type="text" value={rrTournamentName} onChange={e => setRrTournamentName(e.target.value)} placeholder="Round Robin League" style={{ width: "100%", padding: "12px 16px", background: CD, border: "1px solid " + BD, borderRadius: 12, color: TX, fontFamily: "var(--font)", fontSize: 14, outline: "none" }} />
         </div>
         <div style={{ marginBottom: 18 }}>
           <label style={{ fontSize: 11, fontWeight: 600, color: MT, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8, display: "block" }}>Format</label>

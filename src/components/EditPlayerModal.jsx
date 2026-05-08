@@ -23,7 +23,7 @@ export function EditPlayerModal({ player, onClose, onSaved }) {
   const [saving, setSaving] = useState(false);
   const fileRef = useRef(null);
 
-  const inp = { background: CD2, color: TX, border: `1px solid ${BD}`, borderRadius: 10, padding: "10px 12px", fontSize: 14, width: "100%", outline: "none", fontWeight: 400, fontFamily: "'Outfit',sans-serif" };
+  const inp = { background: CD2, color: TX, border: `1px solid ${BD}`, borderRadius: 10, padding: "10px 12px", fontSize: 14, width: "100%", outline: "none", fontWeight: 400, fontFamily: "var(--font)" };
 
   // Resize + upload (mirrors App.jsx uploadAvatar pattern; player path: players/{playerId}.jpg).
   // S051 Issue #20: switched to decodeImageFile() — fixes iOS first-attempt failure.
@@ -121,8 +121,8 @@ export function EditPlayerModal({ player, onClose, onSaved }) {
           {/* S067: dropped capture="environment" — that attr forced iOS to open the rear camera and skip the gallery. Without it, iOS shows the standard sheet (Photo Library / Take Photo / Choose File). */}
           <input ref={fileRef} type="file" accept="image/*" onChange={e => uploadPhoto(e.target.files?.[0])} style={{ display: "none" }} />
           <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-            <button onClick={() => fileRef.current?.click()} disabled={uploading} style={{ padding: "8px 14px", background: `${A}15`, border: `1px solid ${A}`, borderRadius: 8, color: A, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "'Outfit',sans-serif", opacity: uploading ? 0.5 : 1 }}>📷 {avatarUrl ? "Change Photo" : "Upload Photo"}</button>
-            {avatarUrl && <button onClick={removePhoto} disabled={uploading} style={{ padding: "8px 14px", background: "transparent", border: `1px solid ${BD}`, borderRadius: 8, color: MT, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "'Outfit',sans-serif", opacity: uploading ? 0.5 : 1 }}>Remove</button>}
+            <button onClick={() => fileRef.current?.click()} disabled={uploading} style={{ padding: "8px 14px", background: `${A}15`, border: `1px solid ${A}`, borderRadius: 8, color: A, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font)", opacity: uploading ? 0.5 : 1 }}>📷 {avatarUrl ? "Change Photo" : "Upload Photo"}</button>
+            {avatarUrl && <button onClick={removePhoto} disabled={uploading} style={{ padding: "8px 14px", background: "transparent", border: `1px solid ${BD}`, borderRadius: 8, color: MT, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font)", opacity: uploading ? 0.5 : 1 }}>Remove</button>}
           </div>
         </div>
 

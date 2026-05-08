@@ -264,7 +264,7 @@ export function CountrySelect({ value, onChange, placeholder = "Select country..
   };
 
   return (
-    <div ref={wrapRef} style={{ position: "relative", fontFamily: "'Outfit',sans-serif" }}>
+    <div ref={wrapRef} style={{ position: "relative", fontFamily: "var(--font)" }}>
       {/* Trigger — styled like the prior select */}
       <button
         type="button"
@@ -277,7 +277,7 @@ export function CountrySelect({ value, onChange, placeholder = "Select country..
           borderRadius: 8,
           color: selected ? TX : MT,
           fontSize: 13,
-          fontFamily: "'Outfit',sans-serif",
+          fontFamily: "var(--font)",
           textAlign: "left",
           cursor: "pointer",
           display: "flex",
@@ -331,7 +331,7 @@ export function CountrySelect({ value, onChange, placeholder = "Select country..
                 borderRadius: 6,
                 color: TX,
                 fontSize: 13,
-                fontFamily: "'Outfit',sans-serif",
+                fontFamily: "var(--font)",
                 outline: "none",
                 boxSizing: "border-box",
               }}
@@ -358,7 +358,7 @@ export function CountrySelect({ value, onChange, placeholder = "Select country..
                 fontSize: 12,
                 cursor: "pointer",
                 textAlign: "left",
-                fontFamily: "'Outfit',sans-serif",
+                fontFamily: "var(--font)",
               }}
             >
               — Not set —
@@ -387,7 +387,7 @@ export function CountrySelect({ value, onChange, placeholder = "Select country..
                     fontWeight: isSelected ? 700 : 500,
                     cursor: "pointer",
                     textAlign: "left",
-                    fontFamily: "'Outfit',sans-serif",
+                    fontFamily: "var(--font)",
                     display: "flex",
                     alignItems: "center",
                     gap: 8,

@@ -79,8 +79,8 @@ export function GameMode({ tournament, setTournament, sel }) {
 
       {/* Top Toggle: Casual Play | Competitive Tournament */}
       <div style={{ display: "flex", margin: "0 0 16px", background: CD, borderRadius: 12, padding: 4, border: `1px solid ${BD}` }}>
-        <button onClick={() => setTopTab("casual")} style={{ flex: 1, padding: "10px 0", fontFamily: "Outfit, sans-serif", fontSize: 13, fontWeight: 600, border: "none", borderRadius: 9, cursor: "pointer", transition: "all 0.2s", background: topTab === "casual" ? A : "transparent", color: topTab === "casual" ? BG : MT }}>Casual Play</button>
-        <button onClick={() => setTopTab("competitive")} style={{ flex: 1, padding: "10px 0", fontFamily: "Outfit, sans-serif", fontSize: 13, fontWeight: 600, border: "none", borderRadius: 9, cursor: "pointer", transition: "all 0.2s", background: topTab === "competitive" ? A : "transparent", color: topTab === "competitive" ? BG : MT }}>Competitive Tournament</button>
+        <button onClick={() => setTopTab("casual")} style={{ flex: 1, padding: "10px 0", fontFamily: "var(--font)", fontSize: 13, fontWeight: 600, border: "none", borderRadius: 9, cursor: "pointer", transition: "all 0.2s", background: topTab === "casual" ? A : "transparent", color: topTab === "casual" ? BG : MT }}>Casual Play</button>
+        <button onClick={() => setTopTab("competitive")} style={{ flex: 1, padding: "10px 0", fontFamily: "var(--font)", fontSize: 13, fontWeight: 600, border: "none", borderRadius: 9, cursor: "pointer", transition: "all 0.2s", background: topTab === "competitive" ? A : "transparent", color: topTab === "competitive" ? BG : MT }}>Competitive Tournament</button>
       </div>
 
       {/* ── Casual Play Sub-Content ── */}

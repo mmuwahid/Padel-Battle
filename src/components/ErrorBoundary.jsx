@@ -5,7 +5,7 @@ export class ErrorBoundary extends React.Component{
   static getDerivedStateFromError(error){return{hasError:true,error};}
   render(){
     if(this.state.hasError)return(
-      <div style={{padding:20,textAlign:"center",color:"#e4e4ef",fontFamily:"'Outfit',sans-serif"}}>
+      <div style={{padding:20,textAlign:"center",color:"#e4e4ef",fontFamily: "var(--font)"}}>
         <div style={{fontSize:24,marginBottom:8}}>⚠️</div>
         <div style={{fontSize:14,fontWeight:600,marginBottom:8}}>Something went wrong</div>
         <div style={{fontSize:11,color:"#7a7a8e",marginBottom:16}}>{this.state.error?.message||"Unknown error"}</div>
