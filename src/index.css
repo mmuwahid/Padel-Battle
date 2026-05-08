@@ -969,8 +969,8 @@ body {
 .msc{font-family:var(--mono);font-size:16px;font-weight:800;text-align:center;align-self:stretch;justify-self:stretch;display:flex;align-items:center;justify-content:center;border-radius:var(--r-sm);position:relative;min-height:38px;}
 .msc.win{color:var(--win);background:rgba(74,222,128,.10);}
 .msc.los{color:var(--loss);background:rgba(248,113,113,.08);}
-.msc.tb{color:var(--gold);background:rgba(245,158,11,.10);}
-.msc.tb::after{content:"TB";position:absolute;bottom:3px;right:5px;font-size:7px;font-weight:700;letter-spacing:.05em;opacity:.8;}
+/* S066: TB cells reuse .win/.los colors; .tb only adds the "TB" subscript */
+.msc.tb::after{content:"TB";position:absolute;bottom:3px;right:5px;font-size:7px;font-weight:700;letter-spacing:.05em;opacity:.7;}
 
 .mfinal2{display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.25);border-radius:var(--r-md);padding:8px 4px;gap:4px;align-self:stretch;}
 .mfinal2-score{font-family:var(--mono);font-size:24px;font-weight:800;line-height:1;color:var(--accent);letter-spacing:-.02em;}

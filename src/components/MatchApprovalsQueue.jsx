@@ -124,7 +124,7 @@ export function MatchApprovalsQueue() {
                   {sets.map((set,i)=>{
                     const aWonSet = set[0]>set[1];
                     const isTb = i===tbIdx;
-                    const cls = isTb ? 'tb' : (aWonSet ? 'win' : 'los');
+                    const cls = `${aWonSet ? 'win' : 'los'}${isTb ? ' tb' : ''}`;
                     return <div key={`a${i}`} className={`msc ${cls} row-a`} style={{gridRow:2, gridColumn:3+i}}>{set[0]}</div>;
                   })}
 
@@ -135,7 +135,7 @@ export function MatchApprovalsQueue() {
                   {sets.map((set,i)=>{
                     const bWonSet = set[1]>set[0];
                     const isTb = i===tbIdx;
-                    const cls = isTb ? 'tb' : (bWonSet ? 'win' : 'los');
+                    const cls = `${bWonSet ? 'win' : 'los'}${isTb ? ' tb' : ''}`;
                     return <div key={`b${i}`} className={`msc ${cls} row-b`} style={{gridRow:3, gridColumn:3+i}}>{set[1]}</div>;
                   })}
 
