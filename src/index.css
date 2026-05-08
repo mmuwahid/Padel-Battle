@@ -198,6 +198,7 @@ body {
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
 }
 .ntab {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -209,25 +210,40 @@ body {
   color: #9090a4;
   font-family: 'Outfit', sans-serif;
   cursor: pointer;
-  transition: background 200ms ease, color 200ms ease;
+  transition: color 200ms ease;
   align-self: center;
   border-radius: 22px;
   font-weight: 500;
 }
-.ntab.on {
-  color: #4ADE80;
+.ntab.on { color: #4ADE80; font-weight: 700; }
+/* iOS-18 spring bounce restored S065 — Phase 2 (PR #48) original system reinstated
+   on top of S060-PR#51 saturation. The pill scales in from 0.6 with cubic-bezier
+   spring, the icon scale-bounces to 1.12 on activation and 0.85 on press. */
+.npill {
+  position: absolute;
+  inset: 0;
+  border-radius: 22px;
   background: rgba(74, 222, 128, 0.20);
-  font-weight: 700;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 250ms ease, transform 350ms var(--ease-spring);
+  pointer-events: none;
 }
-/* .npill kept defined but unused after revert — direct .ntab.on bg is the active treatment now. */
-.npill { display: none; }
+.ntab.on .npill { opacity: 1; transform: scale(1); }
 .nicon {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   height: 24px;
+  transition: transform 300ms var(--ease-spring);
 }
+.ntab.on .nicon { transform: scale(1.12); }
+.ntab:active .nicon { transform: scale(0.85); }
 .nlbl {
+  position: relative;
+  z-index: 1;
   font-size: 9px;
   font-weight: inherit;
   line-height: 1;
@@ -767,3 +783,125 @@ body {
 .dpro-h2h-rec{display:flex;gap:12px;font-family:var(--mono);font-size:13px;font-weight:700;}
 .dpro-h2h-w{color:var(--accent);}
 .dpro-h2h-l{color:var(--danger);}
+
+/* ─── Issue #46 Phase 6b — Analytics Views (League / Partners / H2H / Insights) ─ */
+
+/* Q6=B: 4-col sub-tab segmented control (sibling of existing .seg/.sb 2-col). */
+.seg-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:4px;margin:14px 18px 0;}
+.sb-4{padding:9px 4px;border-radius:var(--r-md);border:none;background:none;font-family:var(--font);font-size:11px;font-weight:700;cursor:pointer;color:#9090a4;transition:all 200ms;text-transform:uppercase;letter-spacing:.04em;display:flex;align-items:center;justify-content:center;gap:4px;}
+.sb-4.on{background:var(--accent);color:#000;}
+
+/* Wrapper around the active sub-view body. */
+.an-body{padding:14px 18px 0;display:flex;flex-direction:column;gap:14px;}
+
+/* 2-col stat tiles (League view summary, Insights summary). */
+.an-tile-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.an-tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;}
+.an-tile-l{font-size:10px;color:#9090a4;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
+.an-tile-v{font-family:var(--mono);font-size:24px;font-weight:800;color:var(--accent);line-height:1;}
+.an-tile-v.gold{color:var(--gold);}
+.an-tile-sub{font-size:10px;color:#9090a4;margin-top:4px;}
+
+/* Generic list row inside .dpro-sec-card (Most Active, Win Rates, Matchups, MOTM Ranking, Streaks). */
+.lrow{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(42,42,58,.4);gap:8px;}
+.lrow:last-child{border-bottom:none;}
+.lrow-l{display:flex;align-items:center;gap:9px;min-width:0;flex:1;}
+.lrow-rank{font-family:var(--mono);font-size:12px;font-weight:700;color:#9090a4;min-width:14px;text-align:right;flex-shrink:0;}
+.lrow-avi{width:30px;height:30px;border-radius:50%;background:var(--accent-dim);border:2px solid var(--accent-glow);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--accent);flex-shrink:0;overflow:hidden;}
+.lrow-avi.gold{background:var(--gold-dim);border-color:var(--gold-glow);color:var(--gold);}
+.lrow-avi img{width:100%;height:100%;object-fit:cover;}
+.lrow-name{font-size:13px;color:var(--text);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lrow-r{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.lrow-mp{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--accent);}
+.lrow-mpu{font-size:9px;color:#9090a4;margin-left:3px;text-transform:uppercase;letter-spacing:.04em;}
+.lrow-pct{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--accent);width:40px;text-align:right;}
+.lrow-pct.mid{color:var(--text);}
+.lrow-pct.lo{color:var(--danger);}
+.lrow-wl{font-family:var(--mono);font-size:11px;color:#9090a4;}
+.lrow-mx{font-size:11px;color:#9090a4;}
+.lrow-bal{font-size:11px;color:var(--accent);margin-left:6px;}
+.lrow-gold{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--gold);}
+
+/* Q8=B: spec .elobars-style monthly activity chart. No axis, gradient bars, dates below, value above. */
+.elobars{display:flex;align-items:flex-end;gap:6px;height:90px;padding:6px 0 0;}
+.elobar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;justify-content:flex-end;height:100%;}
+.elobar-fill{width:100%;background:linear-gradient(180deg,var(--accent),var(--accent-glow));border-radius:var(--r-sm) var(--r-sm) 0 0;min-height:2px;}
+.elobar-date{font-family:var(--mono);font-size:9px;color:#9090a4;text-transform:uppercase;}
+.elobar-val{font-family:var(--mono);font-size:10px;color:var(--accent);font-weight:700;}
+
+/* Best/Worst pair cards (preserve S053 dual-avatar layout, swap visual frame to surface card). */
+.pair-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.pair-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;}
+.pair-title{font-size:12px;font-weight:800;color:var(--text);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px;}
+.pair-row{display:flex;align-items:center;gap:6px;}
+.pair-avi{width:32px;height:32px;border-radius:50%;background:var(--accent-dim);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--accent);flex-shrink:0;overflow:hidden;}
+.pair-avi.dg{background:rgba(248,113,113,.10);border-color:var(--danger);color:var(--danger);}
+.pair-avi img{width:100%;height:100%;object-fit:cover;}
+.pair-mid{flex:1;min-width:0;text-align:center;}
+.pair-names{font-size:11px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pair-rec{font-family:var(--mono);font-size:11px;color:var(--accent);margin-top:2px;}
+.pair-rec.dg{color:var(--danger);}
+.pair-empty{font-size:11px;color:#9090a4;text-align:center;padding:14px 0;line-height:1.4;}
+
+/* All Partnerships row with progress bar. */
+.pp-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(42,42,58,.4);gap:10px;}
+.pp-row:last-child{border-bottom:none;}
+.pp-name{font-size:12px;color:var(--text);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pp-r{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.pp-mp{font-family:var(--mono);font-size:11px;color:#9090a4;white-space:nowrap;}
+.pp-bar{width:50px;height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;flex-shrink:0;}
+.pp-bar-f{height:100%;border-radius:3px;background:var(--accent);}
+.pp-bar-f.mid{background:#60a5fa;}
+.pp-bar-f.dg{background:var(--danger);}
+.pp-pct{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--accent);width:36px;text-align:right;}
+.pp-pct.mid{color:var(--text);}
+.pp-pct.dg{color:var(--danger);}
+
+/* H2H hero card. */
+.h2h-hero{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:18px;text-align:center;}
+.h2h-row{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:12px;}
+.h2h-avi{width:52px;height:52px;border-radius:50%;background:var(--accent-dim);border:2px solid var(--accent-glow);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:var(--accent);overflow:hidden;}
+.h2h-avi img{width:100%;height:100%;object-fit:cover;}
+.h2h-score{font-family:var(--mono);font-size:22px;font-weight:800;color:var(--text);}
+.h2h-bar-bg{height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;margin-bottom:8px;}
+.h2h-bar-f{height:100%;background:var(--accent);}
+.h2h-meta{font-size:11px;color:#9090a4;}
+
+/* H2H As Partners / As Opponents split. */
+.h2h-split{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.h2h-tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;}
+.h2h-tile-l{font-size:10px;color:#9090a4;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;}
+.h2h-tile-sub{font-size:10px;color:#9090a4;margin-bottom:4px;}
+.h2h-tile-v{font-size:13px;font-weight:700;line-height:1.5;}
+.h2h-tile-v .w{color:var(--accent);}
+.h2h-tile-v .l{color:var(--danger);}
+.h2h-tile-v .m{color:#9090a4;}
+
+/* H2H Last 5 encounter rows. */
+.enc-row{padding:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);margin-bottom:6px;}
+.enc-row:last-child{margin-bottom:0;}
+.enc-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;gap:8px;}
+.enc-result{font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.enc-result.win{color:var(--accent);}
+.enc-result.loss{color:var(--danger);}
+.enc-date{font-size:10px;color:#9090a4;flex-shrink:0;}
+.enc-sets{font-family:var(--mono);font-size:11px;display:flex;gap:8px;}
+.enc-sets .w{color:var(--accent);}
+.enc-sets .l{color:var(--danger);}
+
+/* Native H2H select pair (Q9=A). */
+.h2h-sel-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.h2h-sel-l{display:block;font-size:11px;color:#9090a4;font-weight:600;margin-bottom:6px;}
+.h2h-sel{width:100%;padding:11px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-size:12px;font-family:var(--font);outline:none;cursor:pointer;}
+
+/* H2H empty state. */
+.h2h-empty{text-align:center;padding:32px 16px;color:#9090a4;font-size:12px;}
+.h2h-empty-icon{font-size:48px;margin-bottom:12px;line-height:1;}
+.h2h-empty-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px;}
+
+/* Insights Longest Win/Loss Streak row (variant of .lrow). */
+.streak-r{display:flex;align-items:baseline;gap:0;flex-shrink:0;}
+.streak-v{font-family:var(--mono);font-size:14px;font-weight:800;}
+.streak-v.win{color:var(--accent);}
+.streak-v.loss{color:var(--danger);}
+.streak-u{font-size:9px;color:#9090a4;margin-left:4px;text-transform:uppercase;letter-spacing:.04em;}
