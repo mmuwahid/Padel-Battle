@@ -69,9 +69,11 @@ export function PlatformAdmin({ onClose, showToast }) {
     setRenaming(false);
   };
 
+  // S068: simplified destructive-confirm — type "DELETE" instead of the full
+  // league name / user email. User direction: easier + still requires intent.
   const handleDeleteLeague = async (leagueId, leagueName) => {
     if (deleteConfirm !== leagueId) { setDeleteConfirm(leagueId); setDeleteTyped(""); return; }
-    if (deleteTyped.trim() !== leagueName.trim()) { if (showToast) showToast("Name didn't match", "error"); return; }
+    if (deleteTyped.trim().toUpperCase() !== "DELETE") { if (showToast) showToast('Type DELETE in capitals to confirm', "error"); return; }
     try {
       const { error } = await supabase.rpc("platform_delete_league", { p_league_id: leagueId });
       if (error) throw error;
@@ -85,7 +87,7 @@ export function PlatformAdmin({ onClose, showToast }) {
 
   const handleDeleteUser = async (userId, userEmail) => {
     if (deleteUserConfirm !== userId) { setDeleteUserConfirm(userId); setDeleteUserTyped(""); return; }
-    if (deleteUserTyped.trim() !== userEmail.trim()) { if (showToast) showToast("Email didn't match", "error"); return; }
+    if (deleteUserTyped.trim().toUpperCase() !== "DELETE") { if (showToast) showToast('Type DELETE in capitals to confirm', "error"); return; }
     try {
       const { error } = await supabase.rpc("platform_delete_user", { p_user_id: userId });
       if (error) throw error;
@@ -209,7 +211,7 @@ export function PlatformAdmin({ onClose, showToast }) {
                         className="pa-confirm-input"
                         value={deleteTyped}
                         onChange={e => setDeleteTyped(e.target.value)}
-                        placeholder={`Type "${l.name}" to confirm`}
+                        placeholder='Type DELETE to confirm'
                       />
                       <button className="dbtn" onClick={() => handleDeleteLeague(l.id, l.name)}>Confirm</button>
                       <button className="gbtn ghost" onClick={() => { setDeleteConfirm(null); setDeleteTyped(""); }}>Cancel</button>
@@ -241,7 +243,7 @@ export function PlatformAdmin({ onClose, showToast }) {
                         className="pa-confirm-input"
                         value={deleteUserTyped}
                         onChange={e => setDeleteUserTyped(e.target.value)}
-                        placeholder="Type email to confirm"
+                        placeholder='Type DELETE to confirm'
                       />
                       <button className="dbtn" onClick={() => handleDeleteUser(u.id, u.email)}>Confirm</button>
                       <button className="gbtn ghost" onClick={() => { setDeleteUserConfirm(null); setDeleteUserTyped(""); }}>Cancel</button>
