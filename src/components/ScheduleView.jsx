@@ -17,7 +17,6 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
   const [tB,setTB]=useState(["",""]);
   const [notes,setNotes]=useState("");
   const [saving,setSaving]=useState(false);
-  const [viewTab,setViewTab]=useState("upcoming");
   const [loggingMatch,setLoggingMatch]=useState(null);
   const [cancelConfirmId,setCancelConfirmId]=useState(null);
   const [logSets,setLogSets]=useState([[0,0],[0,0],[0,0]]);
@@ -184,17 +183,15 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
     setLogSaving(false);
   }
 
+  // Phase 7 (S065 Q9): Past tab dropped — once played, matches surface in MatchHistory.
   const upcoming=challenges.filter(c=>c.status==="open"||c.status==="pending"||c.status==="confirmed");
-  const past=challenges.filter(c=>c.status==="played");
 
   return (
     <div>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-        <div style={{display:"flex",gap:6}}>
-          <button onClick={()=>setViewTab("upcoming")} style={{padding:"5px 12px",borderRadius:8,border:`1px solid ${viewTab==="upcoming"?A:BD}`,background:viewTab==="upcoming"?`${A}15`:"transparent",color:viewTab==="upcoming"?A:MT,fontSize:11,fontWeight:600,cursor:"pointer"}}>{upcoming.length} Upcoming</button>
-          <button onClick={()=>setViewTab("past")} style={{padding:"5px 12px",borderRadius:8,border:`1px solid ${viewTab==="past"?MT:BD}`,background:viewTab==="past"?`${MT}15`:"transparent",color:MT,fontSize:11,fontWeight:600,cursor:"pointer"}}>{past.length} Past</button>
-        </div>
-        <button onClick={()=>setShowForm(!showForm)} style={{padding:"6px 14px",borderRadius:8,border:`1px solid ${A}`,background:`${A}15`,color:A,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>{showForm?"Cancel":"+ Schedule"}</button>
+      {/* Phase 7: sched-bar replaces Upcoming/Past tab toggle (Q9 dropped Past) */}
+      <div className="sched-bar">
+        <div className="sched-title">Scheduled</div>
+        <button className="sched-add" onClick={()=>setShowForm(!showForm)}>{showForm?"Cancel":"+ Schedule"}</button>
       </div>
 
       {/* New Challenge Form — Multi-step */}
@@ -288,107 +285,154 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
         </div>
       )}
 
-      {/* UPCOMING Tab */}
-      {viewTab==="upcoming"&&(
-        <div>
-          {upcoming.length===0&&!showForm&&(
-            <div style={{textAlign:"center",padding:"40px 20px"}}>
-              <div style={{fontSize:40,marginBottom:12}}>📅</div>
-              <div style={{fontSize:15,fontWeight:600,color:TX,marginBottom:6}}>No matches scheduled</div>
-              <div style={{fontSize:12,color:MT}}>Tap "+ Schedule" to set up your next game.</div>
-            </div>
-          )}
+      {/* Phase 7 (S065 Q9): Upcoming-only list (Past tab dropped — once played,
+          matches surface in MatchHistory automatically). Empty state when no upcoming
+          challenges and no schedule form open. */}
+      {upcoming.length===0 && !showForm && (
+        <div className="sched-empty">
+          <div className="sched-empty-icon">{"\uD83D\uDCC5"}</div>
+          <div className="sched-empty-title">No matches scheduled</div>
+          <div className="sched-empty-sub">Tap "+ Schedule" to set up your next game.</div>
+        </div>
+      )}
 
+      {upcoming.length > 0 && (
+        <div className="mlist">
           {upcoming.map(ch=>{
-            const isCreator=ch.created_by===user.id;
-            const myPid=claimedP?.id;
-            const imInA=ch.team_a.includes(myPid);
-            const imInB=ch.team_b.includes(myPid);
-            const imIn=imInA||imInB;
-            const canJoinA=!imIn&&ch.team_a.length<2&&ch.status==="open";
-            const canJoinB=!imIn&&ch.team_b.length<2&&ch.status==="open";
-            const isConfirmed=ch.status==="confirmed";
-            const isPending=ch.status==="pending";
-            const myResponse=myPid?(ch.responses||{})[myPid]:null;
-            const needsMyResponse=isPending&&imIn&&!myResponse;
-            const statusBg=isConfirmed?`${A}20`:isPending?`${GD}20`:`${MT}20`;
-            const statusColor=isConfirmed?A:isPending?GD:MT;
-            const statusText=isConfirmed?"Confirmed":isPending?"Pending":"Open";
+            const isCreator = ch.created_by===user.id;
+            const myPid = claimedP?.id;
+            const imInA = ch.team_a.includes(myPid);
+            const imInB = ch.team_b.includes(myPid);
+            const imIn = imInA || imInB;
+            const canJoinA = !imIn && ch.team_a.length<2 && ch.status==="open";
+            const canJoinB = !imIn && ch.team_b.length<2 && ch.status==="open";
+            const isConfirmed = ch.status==="confirmed";
+            const isPending = ch.status==="pending";
+            const myResponse = myPid ? (ch.responses||{})[myPid] : null;
+            const needsMyResponse = isPending && imIn && !myResponse;
+            const acceptedCount = isPending ? Object.values(ch.responses||{}).filter(v=>v==='accepted').length : 0;
+            const totalSlots = (ch.team_a||[]).length + (ch.team_b||[]).length;
+            const statusClass = isConfirmed ? 'confirmed' : isPending ? 'pending' : 'open';
+            const statusText = isConfirmed
+              ? 'Confirmed'
+              : isPending
+                ? `${acceptedCount}/${totalSlots} Confirmed`
+                : `Open \u00B7 ${4-totalSlots} Slot${(4-totalSlots)===1?'':'s'}`;
+            const dateShort = formatDate(ch.date);
+            const renderTeam = (team, side) => (
+              <div className={`scard-team${side==='r'?' r':''}`}>
+                {[0,1].map(i=>{
+                  const pid = team[i];
+                  if(!pid) return (
+                    <div key={'empty-'+i} className="scard-team-pl">
+                      <div className="scard-pavi empty">?</div>
+                      <span className="scard-pname empty">Open</span>
+                    </div>
+                  );
+                  const av = players.find(p=>p.id===pid)?.avatar_url;
+                  const r = (ch.responses||{})[pid];
+                  const indicator = isPending && r==='accepted' ? '\u2713' : isPending && r==='declined' ? '\u2717' : isPending && !r ? '\u23F3' : '';
+                  return (
+                    <div key={pid} className="scard-team-pl">
+                      <div className="scard-pavi">{av?<img src={av} alt=""/>:(getName(pid)[0]||'?').toUpperCase()}</div>
+                      <span className="scard-pname">{getName(pid)}{indicator?` ${indicator}`:''}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            );
             return (
-              <div key={ch.id} style={{background:CD,borderRadius:12,border:`1px solid ${isConfirmed?`${A}40`:isPending?`${GD}40`:BD}`,padding:14,marginBottom:8}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                  <div>
-                    <span style={{fontSize:12,fontWeight:700,color:TX}}>{formatDate(ch.date)}</span>
-                    {ch.time&&<span style={{fontSize:11,color:MT,marginLeft:6}}>{ch.time}</span>}
+              <div key={ch.id} className="scard">
+                <div className="scard-hd">
+                  <div className="scard-when">
+                    <span className="scard-date">{dateShort}</span>
+                    {ch.time && <span className="scard-time">{ch.time}{ch.duration?` \u00B7 ${ch.duration} min`:''}</span>}
                   </div>
-                  <span style={{fontSize:10,fontWeight:700,padding:"3px 8px",borderRadius:6,background:statusBg,color:statusColor}}>{statusText}</span>
+                  <span className={`scard-status ${statusClass}`}>{statusText}</span>
                 </div>
-                {ch.location&&<div style={{fontSize:11,color:MT,marginBottom:8}}>📍 {ch.location}</div>}
-                <div style={{display:"flex",gap:8,marginBottom:8}}>
-                  <div style={{flex:1,background:CD2,borderRadius:8,padding:8,textAlign:"center"}}>
-                    <div style={{fontSize:10,color:MT,fontWeight:600,marginBottom:4}}>Team A</div>
-                    {ch.team_a.map(pid=>{const r=(ch.responses||{})[pid];return <div key={pid} style={{fontSize:12,color:TX,fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>{getName(pid)}{isPending&&r==="accepted"&&<span style={{fontSize:9,color:A}}>{"\u2713"}</span>}{isPending&&r==="declined"&&<span style={{fontSize:9,color:DG}}>{"\u2717"}</span>}{isPending&&!r&&<span style={{fontSize:9,color:GD}}>{"\u23F3"}</span>}</div>;})}
-                    {ch.team_a.length<2&&<div style={{fontSize:11,color:MT,fontStyle:"italic"}}>Needs player</div>}
-                    {canJoinA&&<button onClick={()=>joinChallenge(ch,"a")} style={{marginTop:4,padding:"4px 10px",borderRadius:6,border:`1px solid ${A}`,background:"transparent",color:A,fontSize:10,fontWeight:700,cursor:"pointer"}}>Join Team A</button>}
+
+                <div className="scard-body">
+                  <div className="scard-teams">
+                    {renderTeam(ch.team_a, 'l')}
+                    <span className="scard-vs">VS</span>
+                    {renderTeam(ch.team_b, 'r')}
                   </div>
-                  <div style={{display:"flex",alignItems:"center",color:MT,fontSize:12,fontWeight:800}}>vs</div>
-                  <div style={{flex:1,background:CD2,borderRadius:8,padding:8,textAlign:"center"}}>
-                    <div style={{fontSize:10,color:MT,fontWeight:600,marginBottom:4}}>Team B</div>
-                    {ch.team_b.map(pid=>{const r=(ch.responses||{})[pid];return <div key={pid} style={{fontSize:12,color:TX,fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>{getName(pid)}{isPending&&r==="accepted"&&<span style={{fontSize:9,color:A}}>{"\u2713"}</span>}{isPending&&r==="declined"&&<span style={{fontSize:9,color:DG}}>{"\u2717"}</span>}{isPending&&!r&&<span style={{fontSize:9,color:GD}}>{"\u23F3"}</span>}</div>;})}
-                    {ch.team_b.length<2&&<div style={{fontSize:11,color:MT,fontStyle:"italic"}}>Needs player</div>}
-                    {canJoinB&&<button onClick={()=>joinChallenge(ch,"b")} style={{marginTop:4,padding:"4px 10px",borderRadius:6,border:`1px solid ${A}`,background:"transparent",color:A,fontSize:10,fontWeight:700,cursor:"pointer"}}>Join Team B</button>}
-                  </div>
-                </div>
-                {/* Accept/Decline buttons for pending challenges */}
-                {needsMyResponse&&(
-                  <div style={{display:"flex",gap:8,marginBottom:8}}>
-                    <button onClick={()=>respondToChallenge(ch,"accepted")} style={{flex:1,padding:"10px",borderRadius:8,border:"none",background:A,color:BG,fontSize:12,fontWeight:700,cursor:"pointer"}}>Accept</button>
-                    <button onClick={()=>respondToChallenge(ch,"declined")} style={{flex:1,padding:"10px",borderRadius:8,border:`1px solid ${DG}`,background:"transparent",color:DG,fontSize:12,fontWeight:700,cursor:"pointer"}}>Decline</button>
-                  </div>
-                )}
-                {isPending&&imIn&&myResponse==="accepted"&&(
-                  <div style={{fontSize:11,color:A,fontWeight:600,textAlign:"center",marginBottom:8}}>{"\u2713"} You accepted — waiting for others</div>
-                )}
-                {isPending&&imIn&&myResponse==="declined"&&(
-                  <div style={{fontSize:11,color:DG,fontWeight:600,textAlign:"center",marginBottom:8}}>{"\u2717"} You declined this match</div>
-                )}
-                {ch.notes&&<div style={{fontSize:11,color:MT,fontStyle:"italic",marginBottom:8}}>{ch.notes}</div>}
-                {loggingMatch===ch.id&&(<div style={{background:CD2,borderRadius:10,border:`1px solid ${A}40`,padding:12,marginBottom:8}}>
-                  <div style={{fontSize:13,fontWeight:700,color:A,marginBottom:10}}>🎾 Log Match Result</div>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                    <div style={{fontSize:11,color:MT,fontWeight:600}}>Sets</div>
-                    <div style={{display:"flex",gap:4}}>{[2,3].map(n=>(<button key={n} onClick={()=>setLogNs(n)} style={{padding:"3px 8px",borderRadius:6,border:`1px solid ${logNs===n?A:BD}`,background:logNs===n?`${A}15`:"transparent",color:logNs===n?A:MT,fontSize:10,fontWeight:600,cursor:"pointer"}}>{n}</button>))}</div>
-                  </div>
-                  {logSets.slice(0,logNs).map((s,i)=>(<div key={i} style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
-                    <span style={{fontSize:10,color:MT,width:32,fontWeight:600}}>Set {i+1}</span>
-                    <ScoreStepper value={s[0]} max={7} aColor={A} ariaLabel={`Set ${i+1} Team A`} invalid={logInvalidIdx.includes(i)} onChange={(n)=>{const x=logSets.map(y=>[...y]);x[i]=[n,x[i][1]];setLogSets(x);if(logInvalidIdx.length)setLogInvalidIdx([]);if(logValidationError)setLogValidationError("");}}/>
-                    <span style={{color:MT,fontWeight:700}}>-</span>
-                    <ScoreStepper value={s[1]} max={7} aColor={DG} ariaLabel={`Set ${i+1} Team B`} invalid={logInvalidIdx.includes(i)} onChange={(n)=>{const x=logSets.map(y=>[...y]);x[i]=[x[i][0],n];setLogSets(x);if(logInvalidIdx.length)setLogInvalidIdx([]);if(logValidationError)setLogValidationError("");}}/>
-                  </div>))}
-                  {logValidationError&&(
-                    <div style={{marginTop:8,padding:"6px 10px",background:`${DG}15`,border:`1px solid ${DG}40`,borderRadius:6,fontSize:11,color:DG,fontWeight:600}}>
-                      ⚠️ {logValidationError}
+                  {(ch.location || ch.notes) && (
+                    <div className="scard-meta">
+                      {ch.location && <span className="scard-meta-item">{"\uD83D\uDCCD"} {ch.location}</span>}
+                      {ch.notes && <span className="scard-meta-item" style={{fontStyle:'italic'}}>{ch.notes}</span>}
                     </div>
                   )}
-                  <div style={{marginTop:8,marginBottom:10}}>
-                    <div style={{fontSize:10,color:MT,fontWeight:600,marginBottom:4}}>⭐ Man of the Match</div>
-                    <select value={logMotm} onChange={e=>setLogMotm(e.target.value)} style={{...sel,fontSize:12}}><option value="">Select MVP</option>{[...(ch.team_a||[]),...(ch.team_b||[])].map(pid=>(<option key={pid} value={pid}>{getName(pid)}</option>))}</select>
-                  </div>
-                  <div style={{display:"flex",gap:6}}>
-                    <button onClick={saveLoggedMatch} disabled={logSaving} style={{flex:1,padding:"8px",borderRadius:8,border:"none",background:A,color:BG,fontSize:12,fontWeight:700,cursor:"pointer",opacity:logSaving?0.6:1}}>{logSaving?"Saving...":"Save Match"}</button>
-                    <button onClick={()=>setLoggingMatch(null)} style={{flex:1,padding:"8px",borderRadius:8,border:`1px solid ${BD}`,background:CD,color:TX,fontSize:12,fontWeight:700,cursor:"pointer"}}>Cancel</button>
-                  </div>
-                </div>)}
-                {/* Action buttons */}
-                <div style={{display:"flex",gap:6}}>
-                  {imIn&&!isCreator&&ch.status==="open"&&(
-                    <button onClick={()=>leaveChallenge(ch)} style={{flex:1,padding:"6px",borderRadius:6,border:`1px solid ${DG}40`,background:"transparent",color:DG,fontSize:10,fontWeight:600,cursor:"pointer"}}>Leave</button>
+                  {isPending && imIn && myResponse==='accepted' && (
+                    <div style={{fontSize:11,color:'var(--accent)',fontWeight:600,textAlign:'center',marginTop:8}}>{"\u2713"} You accepted \u2014 waiting for others</div>
                   )}
-                  {isConfirmed&&!loggingMatch&&(
-                    <button onClick={()=>openLogMatch(ch)} style={{flex:1,padding:"8px",borderRadius:6,border:"none",background:`${A}15`,color:A,fontSize:11,fontWeight:700,cursor:"pointer"}}>🎾 Log Match</button>
+                  {isPending && imIn && myResponse==='declined' && (
+                    <div style={{fontSize:11,color:'var(--danger)',fontWeight:600,textAlign:'center',marginTop:8}}>{"\u2717"} You declined this match</div>
                   )}
-                  {(isCreator||isAdmin)&&(
-                    cancelConfirmId===ch.id?<div style={{display:"flex",gap:4,flex:1}}><button onClick={()=>{cancelChallenge(ch.id);setCancelConfirmId(null);}} style={{flex:1,padding:"6px",borderRadius:6,background:DG,border:"none",color:"#fff",fontSize:10,fontWeight:600,cursor:"pointer"}}>Yes</button><button onClick={()=>setCancelConfirmId(null)} style={{flex:1,padding:"6px",borderRadius:6,border:`1px solid ${BD}`,background:"transparent",color:MT,fontSize:10,cursor:"pointer"}}>No</button></div>:<button onClick={()=>setCancelConfirmId(ch.id)} style={{flex:1,padding:"6px",borderRadius:6,border:`1px solid ${DG}40`,background:"transparent",color:DG,fontSize:10,fontWeight:600,cursor:"pointer"}}>Cancel</button>
+                </div>
+
+                {/* Inline log-match form (preserved verbatim — out of Phase 7 scope) */}
+                {loggingMatch===ch.id && (
+                  <div style={{padding:'12px 14px',background:'var(--surface-2)',borderTop:'1px solid var(--border)'}}>
+                    <div style={{fontSize:13,fontWeight:700,color:'var(--accent)',marginBottom:10}}>{"\uD83C\uDFBE"} Log Match Result</div>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+                      <div style={{fontSize:11,color:'#9090a4',fontWeight:600}}>Sets</div>
+                      <div style={{display:'flex',gap:4}}>{[2,3].map(n=>(
+                        <button key={n} onClick={()=>setLogNs(n)} style={{padding:'3px 8px',borderRadius:6,border:`1px solid ${logNs===n?'var(--accent)':'var(--border)'}`,background:logNs===n?'var(--accent-dim)':'transparent',color:logNs===n?'var(--accent)':'#9090a4',fontSize:10,fontWeight:600,cursor:'pointer'}}>{n}</button>
+                      ))}</div>
+                    </div>
+                    {logSets.slice(0,logNs).map((sset,i)=>(
+                      <div key={i} style={{display:'flex',alignItems:'center',gap:6,marginBottom:4}}>
+                        <span style={{fontSize:10,color:'#9090a4',width:32,fontWeight:600}}>Set {i+1}</span>
+                        <ScoreStepper value={sset[0]} max={7} aColor={A} ariaLabel={`Set ${i+1} Team A`} invalid={logInvalidIdx.includes(i)} onChange={(n)=>{const x=logSets.map(y=>[...y]);x[i]=[n,x[i][1]];setLogSets(x);if(logInvalidIdx.length)setLogInvalidIdx([]);if(logValidationError)setLogValidationError("");}}/>
+                        <span style={{color:'#9090a4',fontWeight:700}}>-</span>
+                        <ScoreStepper value={sset[1]} max={7} aColor={DG} ariaLabel={`Set ${i+1} Team B`} invalid={logInvalidIdx.includes(i)} onChange={(n)=>{const x=logSets.map(y=>[...y]);x[i]=[x[i][0],n];setLogSets(x);if(logInvalidIdx.length)setLogInvalidIdx([]);if(logValidationError)setLogValidationError("");}}/>
+                      </div>
+                    ))}
+                    {logValidationError && (
+                      <div style={{marginTop:8,padding:'6px 10px',background:'rgba(248,113,113,.08)',border:'1px solid rgba(248,113,113,.3)',borderRadius:6,fontSize:11,color:'var(--danger)',fontWeight:600}}>
+                        {"\u26A0\uFE0F"} {logValidationError}
+                      </div>
+                    )}
+                    <div style={{marginTop:8,marginBottom:10}}>
+                      <div style={{fontSize:10,color:'#9090a4',fontWeight:600,marginBottom:4}}>{"\u2B50"} Man of the Match</div>
+                      <select value={logMotm} onChange={e=>setLogMotm(e.target.value)} style={{...sel,fontSize:12}}>
+                        <option value="">Select MVP</option>
+                        {[...(ch.team_a||[]),...(ch.team_b||[])].map(pid=>(<option key={pid} value={pid}>{getName(pid)}</option>))}
+                      </select>
+                    </div>
+                    <div style={{display:'flex',gap:6}}>
+                      <button onClick={saveLoggedMatch} disabled={logSaving} style={{flex:1,padding:'8px',borderRadius:8,border:'none',background:'var(--accent)',color:'#000',fontSize:12,fontWeight:700,cursor:'pointer',opacity:logSaving?0.6:1}}>{logSaving?'Saving...':'Save Match'}</button>
+                      <button onClick={()=>setLoggingMatch(null)} style={{flex:1,padding:'8px',borderRadius:8,border:'1px solid var(--border)',background:'var(--surface)',color:'var(--text)',fontSize:12,fontWeight:700,cursor:'pointer'}}>Cancel</button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Action buttons — restyled to .sab (Q9-derived) */}
+                <div className="scard-actions">
+                  {needsMyResponse && (
+                    <>
+                      <button className="sab accept" onClick={()=>respondToChallenge(ch,'accepted')}>Accept</button>
+                      <button className="sab decline" onClick={()=>respondToChallenge(ch,'declined')}>Decline</button>
+                    </>
+                  )}
+                  {canJoinA && <button className="sab accept" onClick={()=>joinChallenge(ch,'a')}>Join Team A</button>}
+                  {canJoinB && <button className="sab accept" onClick={()=>joinChallenge(ch,'b')}>Join Team B</button>}
+                  {imIn && !isCreator && ch.status==='open' && (
+                    <button className="sab decline" onClick={()=>leaveChallenge(ch)}>Leave</button>
+                  )}
+                  {isConfirmed && !loggingMatch && (
+                    <button className="sab log" onClick={()=>openLogMatch(ch)}>{"\uD83C\uDFBE"} Log Match</button>
+                  )}
+                  {(isCreator || isAdmin) && (
+                    cancelConfirmId===ch.id ? (
+                      <>
+                        <button className="sab decline" onClick={()=>{cancelChallenge(ch.id);setCancelConfirmId(null);}}>Yes, cancel</button>
+                        <button className="sab cancel" onClick={()=>setCancelConfirmId(null)}>No</button>
+                      </>
+                    ) : (
+                      <button className="sab cancel" onClick={()=>setCancelConfirmId(ch.id)}>Cancel</button>
+                    )
                   )}
                 </div>
               </div>
@@ -396,53 +440,6 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
           })}
         </div>
       )}
-
-      {/* PAST Tab */}
-      {viewTab==="past"&&(
-        <div>
-          {past.length===0&&(
-            <div style={{textAlign:"center",padding:"40px 20px"}}>
-              <div style={{fontSize:40,marginBottom:12}}>📋</div>
-              <div style={{fontSize:15,fontWeight:600,color:TX,marginBottom:6}}>No past matches</div>
-              <div style={{fontSize:12,color:MT}}>Completed and cancelled matches will appear here.</div>
-            </div>
-          )}
-          {past.map(ch=>{
-            const lm=ch.match_id?(matches||[]).find(m=>m.id===ch.match_id):null;
-            const w=lm?win(lm.sets):null;
-            const [tA,tB]=lm?setTotals(lm.sets):[0,0];
-            return (
-            <div key={ch.id} style={{background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14,marginBottom:8}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                <div>
-                  <span style={{fontSize:12,fontWeight:700,color:TX}}>{formatDate(ch.date)}</span>
-                  {ch.time&&<span style={{fontSize:11,color:MT,marginLeft:6}}>{ch.time}</span>}
-                </div>
-                <span style={{fontSize:10,fontWeight:700,padding:"3px 8px",borderRadius:6,background:`${A}20`,color:A}}>📅 Played</span>
-              </div>
-              {ch.location&&<div style={{fontSize:11,color:MT,marginBottom:6}}>📍 {ch.location}</div>}
-              <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",gap:8,alignItems:"center"}}>
-                <div style={{textAlign:"center"}}>
-                  {ch.team_a.map(pid=><div key={pid} style={{fontSize:13,fontWeight:700,color:w==="A"?A:w==="B"?DG:TX}}>{getName(pid)}</div>)}
-                  {w==="A"&&<div style={{fontSize:10,color:A,fontWeight:700,marginTop:3}}>WIN</div>}
-                  {w==="B"&&<div style={{fontSize:10,color:DG,fontWeight:700,marginTop:3}}>LOSS</div>}
-                </div>
-                <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-                  {lm?<><div style={{display:"flex",gap:6,fontFamily:"JetBrains Mono",fontWeight:700,fontSize:16}}>
-                    {lm.sets.map((s,i)=><span key={i} style={{color:s[0]>s[1]?A:DG}}>{s[0]}-{s[1]}</span>)}
-                  </div><span style={{fontSize:10,color:MT,fontFamily:"JetBrains Mono"}}>{tA}-{tB}</span></>:<span style={{color:MT,fontSize:11}}>No scores</span>}
-                </div>
-                <div style={{textAlign:"center"}}>
-                  {ch.team_b.map(pid=><div key={pid} style={{fontSize:13,fontWeight:700,color:w==="B"?A:w==="A"?DG:TX}}>{getName(pid)}</div>)}
-                  {w==="B"&&<div style={{fontSize:10,color:A,fontWeight:700,marginTop:3}}>WIN</div>}
-                  {w==="A"&&<div style={{fontSize:10,color:DG,fontWeight:700,marginTop:3}}>LOSS</div>}
-                </div>
-              </div>
-              {lm&&lm.motm&&<div style={{textAlign:"center",fontSize:10,color:GD,marginTop:6}}>⭐ MVP: {getName(lm.motm)}</div>}
-            </div>);
-          })}
-        </div>
-      )}
-    </div>
-  );
+    </div>
+  );
 }

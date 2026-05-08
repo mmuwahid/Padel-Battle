@@ -1,19 +1,28 @@
 import React, { useState } from "react";
-import { A, CD, CD2, BD, TX, MT, DG, GD, BL } from '../theme';
-import { formatTeam, win, formatDate } from '../utils/helpers';
+import { win, formatDate } from '../utils/helpers';
 import { useLeague } from '../LeagueContext';
 import { EditMatchModal } from './EditMatchModal';
+import Icon from './Icon';
+
+// Phase 7 (S065 Q4=A): set count "Final 2-1" instead of cumulative game total.
+function setsWonCount(sets){
+  return sets.reduce((acc,s)=>{
+    if(s[0]>s[1]) acc[0]++;
+    else if(s[1]>s[0]) acc[1]++;
+    return acc;
+  },[0,0]);
+}
 
 // FT-09 / S044: Admin-facing approval queue.
-// Renders a section with the count badge + per-match Approve/Edit/Reject controls.
-// Used inline on the Matches tab (visible only to admins/owners with non-empty queue).
+// Phase 7: refactored to .mcard.pending frame + .mapprove-row footer (Q7=B keep text labels).
 export function MatchApprovalsQueue() {
-  const { supabase, pendingMatches, getName, showToast, loadLeagueData, isAdmin } = useLeague();
+  const { supabase, pendingMatches, players, getName, showToast, loadLeagueData, isAdmin } = useLeague();
   const [confirmReject, setConfirmReject] = useState(null);
   const [editingMatch, setEditingMatch] = useState(null);
   const [actionBusy, setActionBusy] = useState(null);
 
-  // Don't render at all for non-admins or when nothing pending.
+  const getAvatar = (pid) => players.find(pp=>pp.id===pid)?.avatar_url;
+
   if (!isAdmin || !pendingMatches || pendingMatches.length === 0) return null;
 
   const approveMatch = async (matchId) => {
@@ -45,54 +54,92 @@ export function MatchApprovalsQueue() {
     setConfirmReject(null);
   };
 
+  const renderPlayer = (pid, sideClass) => {
+    const av = getAvatar(pid);
+    const name = getName(pid);
+    return (
+      <div key={pid} className="mplyr">
+        <div className={`mplavi${sideClass==='win-side'?' win':''}`}>{av?<img src={av} alt=""/>:(name[0]||'?').toUpperCase()}</div>
+        <div className="mplname-block">
+          <div className={`mplnam ${sideClass}`}>{name}</div>
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div style={{ marginBottom: 14 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-        <h3 style={{ fontSize: 13, fontWeight: 700, color: GD, margin: 0, display: "flex", alignItems: "center", gap: 8, letterSpacing: 0.5, textTransform: "uppercase" }}>
-          <span>⏳ Approvals Queue</span>
-          <span style={{ background: GD, color: "#000", fontSize: 10, fontWeight: 800, padding: "2px 7px", borderRadius: 8, letterSpacing: 0.5 }}>{pendingMatches.length}</span>
+    <div>
+      <div style={{padding:"14px 18px 4px"}}>
+        <h3 style={{fontSize:12,fontWeight:800,color:"var(--gold)",textTransform:"uppercase",letterSpacing:".06em",margin:0,display:"flex",alignItems:"center",gap:8}}>
+          <span>{"\u23F3"} Approvals Queue</span>
+          <span style={{background:"var(--gold)",color:"#000",fontSize:10,fontWeight:800,padding:"1px 7px",borderRadius:6}}>{pendingMatches.length}</span>
         </h3>
       </div>
 
-      {pendingMatches.map(m => {
-        const submitterName = m.logged_by ? getName(m.logged_by) : "Unknown";
-        return (
-          <div key={m.id} style={{ background: CD2, border: `1px solid ${BD}`, borderLeft: `3px solid ${GD}`, borderRadius: 10, padding: 12, marginBottom: 8 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-              <span style={{ fontSize: 11, color: MT }}>Submitted by <strong style={{ color: TX, fontWeight: 600 }}>{submitterName}</strong></span>
-              <span style={{ fontSize: 10, color: MT, fontFamily: "'JetBrains Mono',monospace" }}>{formatDate(m.date)}</span>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 8, alignItems: "center", marginBottom: 8 }}>
-              <div style={{ textAlign: "center", color: BL, fontSize: 12, fontWeight: 600 }}>{formatTeam(getName(m.team_a?.[0]), getName(m.team_a?.[1]))}</div>
-              <div style={{ fontSize: 10, color: MT, fontWeight: 700 }}>vs</div>
-              <div style={{ textAlign: "center", color: GD, fontSize: 12, fontWeight: 600 }}>{formatTeam(getName(m.team_b?.[0]), getName(m.team_b?.[1]))}</div>
-            </div>
-            <div style={{ display: "flex", justifyContent: "center", gap: 8, background: CD, borderRadius: 8, padding: 6, marginBottom: 10 }}>
-              {(m.sets || []).map((s, i) => {
-                const wn = (s[0] > s[1]) ? "A" : (s[1] > s[0] ? "B" : null);
-                const col = wn === "A" ? BL : (wn === "B" ? GD : TX);
-                return <span key={i} style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 13, fontWeight: 700, color: col, letterSpacing: 1 }}>{s[0]}–{s[1]}</span>;
-              })}
-            </div>
-            {m.motm && <div style={{ textAlign: "center", fontSize: 10, color: MT, marginBottom: 8 }}>⭐ MOTM: <strong style={{ color: GD }}>{getName(m.motm)}</strong></div>}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
-              {confirmReject === m.id ? (
-                <div style={{ gridColumn: "1 / -1", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-                  <span style={{ fontSize: 11, color: DG }}>Reject permanently?</span>
-                  <button onClick={() => rejectMatch(m.id)} disabled={actionBusy === m.id + "-reject"} style={{ background: DG, color: "#fff", border: 0, borderRadius: 6, padding: "6px 10px", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "'Outfit',sans-serif", opacity: actionBusy === m.id + "-reject" ? 0.5 : 1 }}>{actionBusy === m.id + "-reject" ? "..." : "Yes"}</button>
-                  <button onClick={() => setConfirmReject(null)} style={{ background: "none", border: `1px solid ${BD}`, color: MT, borderRadius: 6, padding: "6px 10px", fontSize: 11, cursor: "pointer", fontFamily: "'Outfit',sans-serif" }}>No</button>
+      <div className="mlist" style={{paddingTop:0}}>
+        {pendingMatches.map(m => {
+          const submitterName = m.logged_by ? getName(m.logged_by) : "Unknown";
+          const w = win(m.sets);
+          const aSide = w==='A' ? 'win-side' : (w==='B' ? 'los-side' : 'nd-side');
+          const bSide = w==='B' ? 'win-side' : (w==='A' ? 'los-side' : 'nd-side');
+          const aLabel = w==='A' ? 'WIN' : (w==='B' ? 'LOSS' : 'PENDING');
+          const bLabel = w==='B' ? 'WIN' : (w==='A' ? 'LOSS' : 'PENDING');
+          const aClass = w==='A' ? 'win' : (w==='B' ? 'los' : 'nd');
+          const bClass = w==='B' ? 'win' : (w==='A' ? 'los' : 'nd');
+          const [sA, sB] = setsWonCount(m.sets || []);
+          return (
+            <div key={m.id} className="mcard pending">
+              <div className="mhd2">
+                <div className="mdate2">Submitted by <strong style={{color:"var(--text)",fontWeight:600}}>{submitterName}</strong></div>
+                <div className="macts">
+                  <span style={{fontFamily:"var(--mono)",fontSize:10,color:"#9090a4"}}>{formatDate(m.date)}</span>
                 </div>
-              ) : (
-                <>
-                  <button onClick={() => approveMatch(m.id)} disabled={actionBusy === m.id + "-approve"} style={{ background: A, color: "#000", border: 0, borderRadius: 8, padding: "10px 0", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "'Outfit',sans-serif", height: 38, opacity: actionBusy === m.id + "-approve" ? 0.6 : 1 }}>{actionBusy === m.id + "-approve" ? "..." : "✓ Approve"}</button>
-                  <button onClick={() => setEditingMatch(m)} style={{ background: CD, color: TX, border: `1px solid ${BD}`, borderRadius: 8, padding: "10px 0", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "'Outfit',sans-serif", height: 38 }}>✎ Edit</button>
-                  <button onClick={() => setConfirmReject(m.id)} style={{ background: CD, color: DG, border: `1px solid ${DG}40`, borderRadius: 8, padding: "10px 0", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "'Outfit',sans-serif", height: 38 }}>✕ Reject</button>
-                </>
+              </div>
+              <div className="mbody2">
+                <div className="mgrid2">
+                  <div className="mteamcol">
+                    <div className={`mresl ${aClass}`}>{aLabel}</div>
+                    {(m.team_a||[]).map(pid=>renderPlayer(pid, aSide))}
+                  </div>
+                  <div className="mscols2">
+                    {(m.sets||[]).map((set,i)=>{
+                      const aWonSet = set[0]>set[1];
+                      const bWonSet = set[1]>set[0];
+                      const winClass = (w==='A' && aWonSet) || (w==='B' && bWonSet) ? ' win' : '';
+                      return <div key={i} className={`mscpill2${winClass}`}>{set[0]}-{set[1]}</div>;
+                    })}
+                    <div className="mtotal2">Sets {sA}-{sB}</div>
+                  </div>
+                  <div className="mteamcol r">
+                    <div className={`mresl ${bClass}`}>{bLabel}</div>
+                    {(m.team_b||[]).map(pid=>renderPlayer(pid, bSide))}
+                  </div>
+                </div>
+              </div>
+              {m.motm && (
+                <div className="mapprove-meta">
+                  <Icon name="star" size={11} color="var(--gold)"/> MOTM: <strong style={{color:"var(--gold)"}}>{getName(m.motm)}</strong>
+                </div>
               )}
+              <div className="mapprove-row">
+                {confirmReject === m.id ? (
+                  <div className="mreject-confirm">
+                    <span>Reject permanently?</span>
+                    <button className="mab reject" onClick={()=>rejectMatch(m.id)} disabled={actionBusy === m.id + "-reject"}>{actionBusy === m.id + "-reject" ? "..." : "Yes, reject"}</button>
+                    <button className="mab edit" onClick={()=>setConfirmReject(null)}>No</button>
+                  </div>
+                ) : (
+                  <>
+                    <button className="mab approve" onClick={()=>approveMatch(m.id)} disabled={actionBusy === m.id + "-approve"}>{actionBusy === m.id + "-approve" ? "..." : "\u2713 Approve"}</button>
+                    <button className="mab edit" onClick={()=>setEditingMatch(m)}>{"\u270E"} Edit</button>
+                    <button className="mab reject" onClick={()=>setConfirmReject(m.id)}>{"\u2715"} Reject</button>
+                  </>
+                )}
+              </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
 
       {editingMatch && (
         <EditMatchModal
