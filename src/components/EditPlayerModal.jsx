@@ -42,7 +42,19 @@ export function EditPlayerModal({ player, onClose, onSaved }) {
       if (img.close) img.close();
       const blob = await new Promise(r => canvas.toBlob(r, "image/jpeg", 0.85));
       const path = `players/${player.id}.jpg`;
-      const { error: upErr } = await supabase.storage.from("avatars").upload(path, blob, { upsert: true, contentType: "image/jpeg" });
+      // S067 fix: iOS PWA storage upload intermittently fails on first try
+      // (likely SW cold-start latency vs upload race). Single auto-retry after
+      // 250ms makes the user-visible failure rate effectively zero. Replaces
+      // the user's previous "tap upload twice" workaround.
+      let upErr = null;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const { error } = await supabase.storage.from("avatars").upload(path, blob, { upsert: true, contentType: "image/jpeg" });
+        if (!error) { upErr = null; break; }
+        upErr = error;
+        // eslint-disable-next-line no-console
+        console.warn(`[EditPlayerModal] upload attempt ${attempt + 1} failed:`, error?.message || error);
+        if (attempt === 0) await new Promise(r => setTimeout(r, 250));
+      }
       if (upErr) throw upErr;
       const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(path);
       const url = publicUrl + "?t=" + Date.now();

@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from '../supabase';
 import { PadelLogoSmall } from './icons';
 import { OnboardingScreen } from './OnboardingScreen';
+import { PendingApprovalScreen } from './PendingApprovalScreen';
+import { RejectedScreen } from './RejectedScreen';
 
 /**
  * S063 redesign: LeagueGate is now a slim state shell, NOT a full-screen
@@ -31,6 +33,10 @@ export function LeagueGate({ user, children }) {
   const [leagues, setLeagues] = useState([]);
   const [selectedLeagueId, setSelectedLeagueIdRaw] = useState(null);
   const [loading, setLoading] = useState(true);
+  // S068 Issue #46: track latest join_request per league so 0-membership users
+  // can see PendingApprovalScreen / RejectedScreen instead of restarting Onboarding.
+  const [joinRequest, setJoinRequest] = useState(null); // { ...latest non-superseded request, league: {name,...} }
+  const [retrying, setRetrying] = useState(false); // user tapped Try Again on RejectedScreen → show Onboarding
   const initRef = useRef(false);
 
   // Wrapper around setSelectedLeagueId that persists to localStorage.
@@ -99,9 +105,26 @@ export function LeagueGate({ user, children }) {
         window.history.replaceState(null, "", window.location.pathname);
       }
       resolveSelectedLeague(userLeagues);
+      // Load any open join_request so the 0-leagues branch knows whether to show
+      // Onboarding vs Pending vs Rejected.
+      if (userLeagues.length === 0) await loadJoinRequest();
       setLoading(false);
     })();
-  }, [loadUserLeagues, resolveSelectedLeague]);
+  }, [loadUserLeagues, loadJoinRequest, resolveSelectedLeague]);
+
+  // S068: poll join_request every 8s while on the Pending screen so the user sees
+  // the approval transition without manually refreshing. Realtime channel would be
+  // ideal but RLS-filtered subscriptions are heavier; polling is cheap here.
+  useEffect(() => {
+    if (leagues.length > 0) return;
+    if (!joinRequest || joinRequest.status !== "pending") return;
+    const t = setInterval(() => {
+      loadJoinRequest().then(j => {
+        if (j && j.status === "approved") loadUserLeagues();
+      });
+    }, 8000);
+    return () => clearInterval(t);
+  }, [leagues.length, joinRequest, loadJoinRequest, loadUserLeagues]);
 
   // ── Handlers exposed to children ──
   const tryAutoJoin = async (code, currentLeagues) => {
@@ -124,10 +147,29 @@ export function LeagueGate({ user, children }) {
     } catch { return null; }
   };
 
+  // S068 Issue #46: load this user's most-recent join_request that has not yet
+  // been superseded. Used by the 0-leagues branch to route to Pending/Rejected.
+  const loadJoinRequest = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("join_requests")
+      .select("id, league_id, type, player_id, display_name, country, gender, playing_position, status, reject_reason, created_at, leagues(id, name)")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1);
+    if (error) { setJoinRequest(null); return null; }
+    const top = (data || [])[0];
+    if (!top) { setJoinRequest(null); return null; }
+    const shaped = { ...top, league: top.leagues || null };
+    delete shaped.leagues;
+    setJoinRequest(shaped);
+    return shaped;
+  }, [user.id]);
+
   const refreshLeagues = useCallback(async () => {
     const userLeagues = await loadUserLeagues();
+    await loadJoinRequest();
     return userLeagues;
-  }, [loadUserLeagues]);
+  }, [loadUserLeagues, loadJoinRequest]);
 
   // S063: createLeague accepts {name, format, autoSeason} — format defaults
   // to 'singles' for backward compat. autoSeason creates "Season 1" with the
@@ -222,13 +264,11 @@ export function LeagueGate({ user, children }) {
     deleteLeague,
   };
 
-  // S066 Phase 11: brand-new user with 0 leagues → run the 3-step onboarding
-  // wizard. Once they create or join a league, leagues.length > 0 and we fall
-  // through to render the children (AppContent).
+  // S066 Phase 11 + S068 Issue #46: brand-new user with 0 leagues → either run
+  // the 3-step Onboarding wizard, OR (if they have an open join_request) route
+  // to PendingApprovalScreen / RejectedScreen.
   if (leagues.length === 0) {
     const showToast = (msg, kind) => {
-      // Light toast for onboarding flow only — AppContent's useToast isn't
-      // mounted yet. Falls back to console + alert for errors.
       if (kind === "error") {
         console.error(msg);
         try { window.alert(msg); } catch { /* noop */ }
@@ -236,7 +276,38 @@ export function LeagueGate({ user, children }) {
         console.log("[onboarding]", msg);
       }
     };
-    return <OnboardingScreen user={user} handlers={handlers} showToast={showToast} onComplete={refreshLeagues}/>;
+    const onSignOut = async () => { await supabase.auth.signOut(); };
+
+    // Pending: show waiting screen (Q2=A — locked, no app access).
+    if (!retrying && joinRequest && joinRequest.status === "pending") {
+      return (
+        <PendingApprovalScreen
+          leagueName={joinRequest.league?.name}
+          request={joinRequest}
+          onSignOut={onSignOut}
+        />
+      );
+    }
+    // Rejected (with no newer pending): show rejected screen + Try Again.
+    if (!retrying && joinRequest && joinRequest.status === "rejected") {
+      return (
+        <RejectedScreen
+          leagueName={joinRequest.league?.name}
+          request={joinRequest}
+          onTryAgain={() => setRetrying(true)}
+          onSignOut={onSignOut}
+        />
+      );
+    }
+    // Default / Try Again: run Onboarding.
+    return (
+      <OnboardingScreen
+        user={user}
+        handlers={handlers}
+        showToast={showToast}
+        onComplete={async () => { await refreshLeagues(); setRetrying(false); }}
+      />
+    );
   }
 
   return children({ leagueId: selectedLeagueId, leagues, handlers });

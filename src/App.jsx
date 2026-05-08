@@ -12,6 +12,7 @@ import { Sidebar } from './components/Sidebar';
 import { ProfileView } from './components/ProfileView';
 import { AdminDashboard } from './components/AdminDashboard';
 import { PlayerManagement } from './components/PlayerManagement';
+import { ApprovalQueueScreen } from './components/ApprovalQueueScreen';
 import { SeasonManagement } from './components/SeasonManagement';
 import { LeagueManagement } from './components/LeagueManagement';
 import { PlatformAdmin } from './components/PlatformAdmin';
@@ -108,7 +109,14 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
       if(img.close)img.close();
       const blob=await new Promise(r=>canvas.toBlob(r,"image/jpeg",0.85));
       const path=`${user.id}/avatar.jpg`;
-      const {error:upErr}=await supabase.storage.from("avatars").upload(path,blob,{upsert:true,contentType:"image/jpeg"});
+      // S067: 1-retry upload pattern (iOS PWA storage cold-start race)
+      let upErr=null;
+      for(let attempt=0;attempt<2;attempt++){
+        const {error}=await supabase.storage.from("avatars").upload(path,blob,{upsert:true,contentType:"image/jpeg"});
+        if(!error){upErr=null;break;}
+        upErr=error;
+        if(attempt===0)await new Promise(r=>setTimeout(r,250));
+      }
       if(upErr)throw upErr;
       const {data:{publicUrl}}=supabase.storage.from("avatars").getPublicUrl(path);
       const url=publicUrl+"?t="+Date.now();
@@ -161,6 +169,8 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
     })();
   },[]);
   const [unreadNotifCount,setUnreadNotifCount]=useState(0);
+  // S068 Issue #46: pending join-request count for Matches-tab banner + AdminDashboard card
+  const [pendingJoinCount,setPendingJoinCount]=useState(0);
   // Admin Management state
   const [leagueMembers,setLeagueMembers]=useState([]);
   const [memberProfiles,setMemberProfiles]=useState({});
@@ -244,6 +254,8 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
       .on("postgres_changes",{event:"*",schema:"public",table:"challenges",filter:`league_id=eq.${leagueId}`},()=>debouncedReload())
       .on("postgres_changes",{event:"*",schema:"public",table:"notifications",filter:`user_id=eq.${user.id}`},()=>{
         supabase.from("notifications").select("id",{count:"exact",head:true}).eq("league_id",leagueId).eq("user_id",user.id).eq("read",false).then(({count})=>setUnreadNotifCount(count||0));
+      // S068: refresh pending join-request count alongside notifications
+      supabase.from("join_requests").select("id",{count:"exact",head:true}).eq("league_id",leagueId).eq("status","pending").then(({count})=>setPendingJoinCount(count||0));
       })
       .subscribe();
 
@@ -314,6 +326,8 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
 
       // Fetch unread notification count
       supabase.from("notifications").select("id",{count:"exact",head:true}).eq("league_id",leagueId).eq("user_id",user.id).eq("read",false).then(({count})=>setUnreadNotifCount(count||0));
+      // S068: refresh pending join-request count alongside notifications
+      supabase.from("join_requests").select("id",{count:"exact",head:true}).eq("league_id",leagueId).eq("status","pending").then(({count})=>setPendingJoinCount(count||0));
 
       // Auto-expire stale challenges (48h) — lightweight, runs on each load
       supabase.rpc("expire_stale_challenges").then(()=>{});
@@ -965,6 +979,9 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
           {sidebarView==="admin" && (
             <AdminDashboard memberProfiles={memberProfiles} setSidebarView={setSidebarView} setTab={setTab} setSidebarOpen={setSidebarOpen}/>
           )}
+          {sidebarView==="approvalQueue" && (
+            <ApprovalQueueScreen setSidebarView={setSidebarView}/>
+          )}
           {sidebarView==="playerManagement" && (
             <PlayerManagement memberProfiles={memberProfiles} setSidebarView={setSidebarView}/>
           )}
@@ -1261,6 +1278,18 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
       {/* MATCHES TAB — with History | Schedule sub-tabs */}
       {!sidebarView && tab==="history"&&(
         <div style={{padding:"20px 16px",maxWidth:"600px",margin:"0 auto"}}>
+          {/* S068 Issue #46: pending join-request banner inline at top of Matches tab.
+              Mirrors the FT-09 match-approvals pattern. Tap routes admin to ApprovalQueueScreen. */}
+          {isAdmin && pendingJoinCount > 0 && (
+            <button
+              className="alban"
+              style={{marginBottom:12,width:"100%"}}
+              onClick={()=>{setSidebarView("approvalQueue");setSidebarOpen(false);}}
+            >
+              <div className="aldot"/>
+              <span>{pendingJoinCount} join request{pendingJoinCount===1?"":"s"} awaiting approval</span>
+            </button>
+          )}
           {/* FT-05: Sub-tab toggle */}
           <div style={{display:"flex",gap:4,marginBottom:16,background:CD,borderRadius:10,padding:3}}>
             {["history","schedule"].map(t=>(

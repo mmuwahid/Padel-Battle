@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Icon from "./Icon";
 import { useLeague } from "../LeagueContext";
 import { PLATFORM_ADMIN_ID } from "./PlatformAdmin";
@@ -14,10 +14,28 @@ import { PLATFORM_ADMIN_ID } from "./PlatformAdmin";
 //   Q2=A (live stats), Q3=drop CSV export entirely.
 export function AdminDashboard({ setSidebarView, setTab, setSidebarOpen }) {
   const {
-    user, league, players, seasons,
+    supabase, user, league, leagueId, players, seasons,
     pendingMatches, approvedMatches,
     isAdmin,
   } = useLeague();
+
+  // S068 Issue #46: pending join-request count for the new Approval Queue card.
+  const [pendingJoinCount, setPendingJoinCount] = useState(0);
+  useEffect(() => {
+    if (!leagueId || !isAdmin) { setPendingJoinCount(0); return; }
+    let cancelled = false;
+    supabase
+      .from("join_requests")
+      .select("id", { count: "exact", head: true })
+      .eq("league_id", leagueId)
+      .eq("status", "pending")
+      .then(({ count, error }) => {
+        if (cancelled) return;
+        if (error) { setPendingJoinCount(0); return; }
+        setPendingJoinCount(count || 0);
+      });
+    return () => { cancelled = true; };
+  }, [supabase, leagueId, isAdmin]);
 
   // Pending approvals visible to this admin (excludes self-submitted).
   const visiblePending = (pendingMatches || []).filter(m => isAdmin && m.logged_by !== user?.id);
@@ -40,6 +58,12 @@ export function AdminDashboard({ setSidebarView, setTab, setSidebarOpen }) {
   const cards = [
     { t: "Player Management", d: `${(players || []).length} active`, i: "players", view: "playerManagement" },
     { t: "League Management", d: league?.name || "—", i: "settings", view: "leagueManagement" },
+    {
+      t: "Approval Queue",
+      d: pendingJoinCount > 0 ? `${pendingJoinCount} request${pendingJoinCount === 1 ? "" : "s"} pending` : "No pending requests",
+      i: "user-plus",
+      view: "approvalQueue",
+    },
   ];
 
   return (

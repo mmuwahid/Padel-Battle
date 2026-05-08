@@ -37,15 +37,44 @@ export function OnboardingScreen({ user, handlers, onComplete, showToast }) {
 
   const today = new Date().toISOString().split("T")[0];
 
+  // S068 Issue #46: invite-code submit now creates a join_request (pending) instead of
+  // immediately joining. Admin must approve before user gets league access. Owner-creates-
+  // new-league path still bypasses the queue (creator IS the admin — see handleCreate).
   const handleJoin = async () => {
     if (!code.trim() || busy) return;
     setBusy(true); setBusyAction('join');
     try {
-      await handlers.joinLeague(code.trim());
-      if (showToast) showToast("Joined league! Ask the admin to claim your player profile.");
+      // 1. Look up league by invite code (RLS allows reading invite codes for membership lookup)
+      const { data: lg, error: lgErr } = await supabase
+        .from("leagues")
+        .select("id, name")
+        .eq("invite_code", code.trim().toUpperCase())
+        .maybeSingle();
+      if (lgErr || !lg) throw new Error("Invalid invite code");
+
+      // 2. Submit a new_profile join request. The data captured in step 1+2 becomes the
+      //    snapshot the admin reviews. Claim-during-onboarding (picking an unclaimed
+      //    player at this point) is a follow-up; for now requests are always new_profile.
+      const { error: rqErr } = await supabase.rpc("create_join_request", {
+        p_league_id: lg.id,
+        p_type: "new_profile",
+        p_player_id: null,
+        p_display_name: name.trim(),
+        p_country: country || null,
+        p_dob: dob || null,
+        p_gender: gender || null,
+        p_position: side || null,
+      });
+      if (rqErr) throw rqErr;
+
+      if (showToast) showToast(`Request sent to ${lg.name}. Waiting for admin approval.`);
+      // LeagueGate will detect the new pending request on next render via loadLeagueData
+      // and route to PendingApprovalScreen.
       if (onComplete) onComplete();
     } catch (err) {
-      if (showToast) showToast(err.message || "Invalid invite code", "error");
+      // eslint-disable-next-line no-console
+      console.error("[OnboardingScreen] join request failed:", err);
+      if (showToast) showToast(err.message || "Failed to submit request", "error");
     }
     setBusy(false); setBusyAction(null);
   };
