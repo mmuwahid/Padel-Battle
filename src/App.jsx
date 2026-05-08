@@ -908,7 +908,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
             <ProfileView user={user} avatarUrl={avatarUrl} avatarUploading={avatarUploading} uploadAvatar={uploadAvatar} removeAvatar={removeAvatar} claimedPlayer={claimedPlayer} ps={ps} elo={elo} matches={approvedMatches} players={players} isAdmin={isAdmin} getName={getName} getStreak={getStreak} setSidebarView={setSidebarView} setTab={setTab} setSidebarOpen={setSidebarOpen}/>
           )}
           {sidebarView==="admin" && (
-            <AdminDashboard memberProfiles={memberProfiles} setSidebarView={setSidebarView}/>
+            <AdminDashboard memberProfiles={memberProfiles} setSidebarView={setSidebarView} setTab={setTab} setSidebarOpen={setSidebarOpen}/>
           )}
           {sidebarView==="playerManagement" && (
             <PlayerManagement memberProfiles={memberProfiles} setSidebarView={setSidebarView}/>
@@ -1121,7 +1121,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
             <div className="lbtable">
               {/* Header row */}
               <div className="lbth">
-                <div className="lbh">Rank</div>
+                <div className="lbh c">Rank</div>{/* S067: c = horizontally center to match .lbrank cells */}
                 <div className="lbh">Player</div>
                 <div className="lbh r" style={{justifyContent:"center"}}><Icon name="globe" size={12}/></div>{/* S066: globe icon, vertically centered */}
                 <div className="lbh r">MP</div>

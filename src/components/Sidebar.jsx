@@ -130,8 +130,9 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, user, ava
 
         {/* Sign out footer */}
         <div className="sbfoot">
+          {/* S067: dropped the close-X icon — red text alone is sufficient signal. */}
           <button className="signout" onClick={async()=>{await supabase.auth.signOut();}}>
-            <Icon name="close" size={15} color="var(--danger)"/>Sign Out
+            Sign Out
           </button>
         </div>
       </div>
