@@ -275,7 +275,7 @@ export function LeagueGate({ user, children }) {
       <div className="lscreen">
         <div className="lbg" />
         <div className="lhero">
-          <div className="llogobox"><PadelLogoSmall size={42} /></div>
+          <div className="llogobox"><PadelLogoSmall size={84} /></div>
           <div className="ltag">Loading…</div>
         </div>
       </div>

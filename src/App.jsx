@@ -815,26 +815,19 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ptrRefreshing]);
 
-  if (loading) return (<div style={{background:BG,width:"100vw",height:"100vh",fontFamily:"'Outfit',sans-serif"}}>
-    <style>{`@keyframes shimmer{0%{background-position:-200px 0}100%{background-position:200px 0}} .skel{background:linear-gradient(90deg,${CD} 25%,${CD2} 50%,${CD} 75%);background-size:400px 100%;animation:shimmer 1.5s infinite;border-radius:6px;}`}</style>
-    {/* Skeleton header — FT-12: matches new blended header treatment with tight padding */}
-    <div style={{background:"linear-gradient(180deg,#0d0d14 0%,"+CD+" 100%)",padding:"4px 16px",paddingTop:"calc(env(safe-area-inset-top, 0px) + 0px)",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-      <div style={{display:"flex",alignItems:"center",gap:10}}>
-        <div className="skel" style={{width:32,height:32,borderRadius:"50%"}}/>
-        <div><div className="skel" style={{width:80,height:14,marginBottom:4}}/><div className="skel" style={{width:140,height:10}}/></div>
+  // S068 Issue #54: unified loading screen — matches AuthGate + LeagueGate
+  // .lscreen design so the user sees ONE continuous splash from app cold-start
+  // through login → leagues fetch → match data fetch, instead of three flashes
+  // (auth lscreen → leagues lscreen → full-screen shimmer skeleton).
+  if (loading) return (
+    <div className="lscreen">
+      <div className="lbg"/>
+      <div className="lhero">
+        <div className="llogobox"><PadelLogoSmall size={84}/></div>
+        <div className="ltag">Loading…</div>
       </div>
-      <div className="skel" style={{width:32,height:32,borderRadius:"50%"}}/>
     </div>
-    {/* Skeleton leaderboard rows */}
-    <div style={{padding:"20px 16px"}}>
-      <div className="skel" style={{width:120,height:18,marginBottom:20}}/>
-      {[...Array(5)].map((_,i)=><div key={i} style={{display:"flex",alignItems:"center",padding:12,background:CD,borderRadius:6,border:`1px solid ${BD}`,marginBottom:8,gap:12}}>
-        <div className="skel" style={{width:32,height:32,borderRadius:"50%"}}/>
-        <div style={{flex:1}}><div className="skel" style={{width:100,height:13,marginBottom:4}}/><div className="skel" style={{width:60,height:10}}/></div>
-        <div className="skel" style={{width:40,height:13}}/>
-      </div>)}
-    </div>
-  </div>);
+  );
 
   // CLAIM PLAYER SCREEN — shown if user hasn't claimed a player in this league
   const claimPlayer = async (playerId) => {

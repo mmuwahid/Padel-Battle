@@ -313,16 +313,18 @@ body {
   position: relative;
   z-index: 1;
 }
+/* S068 Issue #54: opening-screen logo — border/container removed,
+   doubled in display size. Glow + pulse retained as a soft halo. */
 .llogobox {
-  width: 72px; height: 72px;
-  border-radius: 22px;
-  background: linear-gradient(135deg, rgba(74, 222, 128, 0.14), rgba(74, 222, 128, 0.04));
-  border: 1px solid var(--accent-glow);
+  width: auto; height: auto;
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 0 40px rgba(74, 222, 128, 0.15);
+  filter: drop-shadow(0 0 28px rgba(74, 222, 128, 0.30));
   animation: pg 3s ease-in-out infinite;
   margin-bottom: 18px;
-  overflow: hidden;
+  overflow: visible;
+  background: none;
+  border: none;
+  box-shadow: none;
 }
 .lbrand {
   font-size: 32px;
