@@ -1150,9 +1150,9 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
             <div className="lbtable">
               {/* Header row */}
               <div className="lbth">
-                <div className="lbh">#</div>
+                <div className="lbh">Rank</div>
                 <div className="lbh">Player</div>
-                <div className="lbh r">Ctry</div>
+                <div className="lbh r"></div>{/* S066: "Ctry" word removed; column kept for layout */}
                 <div className="lbh r">MP</div>
                 <div className="lbh r" style={{color:"var(--win)"}}>MW</div>
                 <div className="lbh r" style={{color:"var(--loss)"}}>ML</div>
@@ -1171,7 +1171,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
                 return (
                   <div key={p.id} className={`lbrow${isMe?" me":""}`}
                     onClick={()=>{setSelectedPlayer(p.id);setTab("stats");}}>
-                    <div className="lbrank" style={{color:idx===0?"#facc15":idx===1?"#94a3b8":idx===2?"#c97b2e":"#9090a4"}}>
+                    <div className={`lbrank ${idx<3?"medal":"num"}`} style={{color:idx===0?"#facc15":idx===1?"#94a3b8":idx===2?"#c97b2e":"#9090a4"}}>
                       {idx===0?"🥇":idx===1?"🥈":idx===2?"🥉":idx+1}
                     </div>
                     <div className="lbply">
@@ -1189,9 +1189,9 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
                         )}
                       </div>
                     </div>
-                    <div style={{display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    <div className="lbflag">{/* S066: vertically centered via .lbflag */}
                       {flag
-                        ? <span className="flag" style={{fontSize:16,lineHeight:1}}>{flag}</span>
+                        ? <span className="flag">{flag}</span>
                         : <span style={{fontSize:11,color:"#9090a4",opacity:.4}}>—</span>}
                     </div>
                     <div className="lbc">{p.games}</div>
