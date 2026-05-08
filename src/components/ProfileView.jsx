@@ -153,26 +153,44 @@ export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, re
             </div>
           )}
 
-          {/* Achievements */}
-          <div style={{padding:"0 18px 18px"}}>
-            <h3 style={{fontFamily:"var(--mono)",fontSize:10,fontWeight:700,letterSpacing:".14em",textTransform:"uppercase",color:"#9090a4",margin:"0 0 10px"}}>Achievements</h3>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-              {ACHS.map(a=>{
-                const earned=a.ck(myStat);
+          {/* S068: Achievements — spec port to .ach-* class system per
+              iPhone-mockup screenshot. Each card has a top-left rounded icon
+              chip + title + descriptor; locked cards are dimmed with an outline
+              icon + "Locked" pill at the bottom; unlocked cards get the green
+              accent chip. */}
+          <div className="ach-sec">
+            <div className="ach-h">
+              <Icon name="award" size={14} color="var(--gold)"/>
+              <h3 className="ach-h-tit">Achievements</h3>
+            </div>
+            <div className="ach-grid">
+              {ACHS.map(a => {
+                const earned = a.ck(myStat);
                 return (
-                  <div key={a.id} style={{padding:12,background:"var(--surface)",border:"1px solid var(--border)",borderRadius:"var(--r-md)",opacity:earned?1:.45}}>
-                    <div style={{fontSize:22,marginBottom:6}}>{a.icon}</div>
-                    <div style={{fontSize:12,fontWeight:700,color:"var(--text)"}}>{a.name}</div>
-                    <div style={{fontFamily:"var(--mono)",fontSize:9,color:"#9090a4",marginTop:2}}>{a.desc}</div>
+                  <div key={a.id} className={`ach-card${earned ? "" : " locked"}`}>
+                    <div className="ach-ico">
+                      <Icon name={a.icon} size={18} color={earned ? "var(--accent)" : "#5a5a6a"} strokeWidth={earned ? 2 : 1.5}/>
+                    </div>
+                    <div className="ach-name">{a.name}</div>
+                    <div className="ach-desc">{a.desc}</div>
+                    {!earned && (
+                      <div className="ach-locked-pill">
+                        <Icon name="lock" size={10} color="#5a5a6a"/>
+                        Locked
+                      </div>
+                    )}
                   </div>
                 );
               })}
             </div>
           </div>
 
-          {/* Recent matches */}
-          <div style={{padding:"0 18px 18px"}}>
-            <h3 style={{fontFamily:"var(--mono)",fontSize:10,fontWeight:700,letterSpacing:".14em",textTransform:"uppercase",color:"#9090a4",margin:"0 0 10px"}}>Recent Matches</h3>
+          {/* Recent matches — spec header now uses .ach-h pattern with magnifier icon */}
+          <div className="ach-sec">
+            <div className="ach-h">
+              <Icon name="search" size={14} color="var(--accent)"/>
+              <h3 className="ach-h-tit">Recent Matches</h3>
+            </div>
             <div style={{display:"flex",flexDirection:"column",gap:8}}>
               {matches.filter(m=>m.team_a.includes(myStat.id)||m.team_b.includes(myStat.id)).sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5).map(m=>{
                 const w=win(m.sets);

@@ -1833,6 +1833,21 @@ body {
 .aq-rejected-n{font-size:13px;font-weight:700;color:var(--danger);}
 .aq-rejected-sub{font-family:var(--mono);font-size:10px;color:rgba(248,113,113,.6);}
 
+/* S068: Achievements section — spec port per iPhone mockup */
+.ach-sec{padding:0 18px 18px;}
+.ach-h{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+.ach-h-tit{font-size:22px;font-weight:900;letter-spacing:-.01em;color:var(--text);margin:0;text-transform:none;}
+.ach-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.ach-card{position:relative;padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);display:flex;flex-direction:column;gap:6px;min-height:120px;}
+.ach-card .ach-ico{width:34px;height:34px;border-radius:8px;background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.4);display:flex;align-items:center;justify-content:center;margin-bottom:4px;}
+.ach-card.locked{opacity:.6;}
+.ach-card.locked .ach-ico{background:transparent;border-color:rgba(90,90,106,.45);}
+.ach-name{font-size:14px;font-weight:800;color:var(--text);letter-spacing:-.01em;}
+.ach-card.locked .ach-name{color:#7a7a8e;}
+.ach-desc{font-family:var(--mono);font-size:10px;color:var(--muted);line-height:1.4;}
+.ach-card.locked .ach-desc{color:#5a5a6a;}
+.ach-locked-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;background:transparent;border:1px solid rgba(90,90,106,.4);border-radius:999px;font-family:var(--mono);font-size:9px;color:#7a7a8e;letter-spacing:.04em;align-self:flex-start;margin-top:4px;}
+
 /* S067: MOTM highlight card — gold star badge + gold value */
 .hlcard.motm{position:relative;border-color:rgba(245,158,11,.4);background:linear-gradient(135deg,rgba(245,158,11,.08),var(--surface) 60%);}
 .hl-motm-badge{position:absolute;top:8px;right:8px;width:24px;height:24px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(245,158,11,.4);}
