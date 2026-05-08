@@ -794,6 +794,12 @@ body {
 /* Wrapper around the active sub-view body. */
 .an-body{padding:14px 18px 0;display:flex;flex-direction:column;gap:14px;}
 
+/* When .seg-4 is nested inside .an-body, .an-body already provides the 18px
+   horizontal padding — drop seg-4's own horizontal margin so the pill aligns
+   flush with the cards below. (S065 hotfix: stacked margin+padding squished
+   the pill 36px from screen edge while cards sat at 18px.) */
+.an-body > .seg-4{margin:0;}
+
 /* 2-col stat tiles (League view summary, Insights summary). */
 .an-tile-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .an-tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;}

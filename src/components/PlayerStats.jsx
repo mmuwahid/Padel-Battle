@@ -597,7 +597,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
         return (<>
           {/* Phase 5: roster header bar with edit/add controls (admin only) */}
           <div className="rbar">
-            <div className="rbar-t">Roster<span className="rbar-count">({filtered.length})</span></div>
+            <div className="rbar-t">Players<span className="rbar-count">({filtered.length})</span></div>
             {isAdmin && <div style={{display:"flex",gap:6,alignItems:"center"}}>
               <button className={`gbtn${editMode?" on":""}`} onClick={()=>{setEditMode(!editMode);setEditPid(null);setConfirmDel(null);setShowAddPlayer(false);}}>
                 <Icon name="edit" size={12}/>{editMode?"Done":"Edit"}
@@ -667,14 +667,14 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                   {isMe && !editMode && <span className="pbadge">YOU</span>}
                   {editMode ? (
                     <div className="padmin" onClick={e=>e.stopPropagation()}>
-                      <button title="Edit" onClick={()=>startEdit(p)}>✏️</button>
+                      <button title="Edit" onClick={()=>startEdit(p)}><Icon name="edit" size={14}/></button>
                       {isAdmin && (confirmDel===p.id ? (
                         <div className="yn">
                           <button className="y" onClick={()=>{deletePlayer(p.id);setConfirmDel(null);}}>Yes</button>
                           <button className="n" onClick={()=>setConfirmDel(null)}>No</button>
                         </div>
                       ) : (
-                        <button title="Delete" onClick={()=>setConfirmDel(p.id)}>🗑️</button>
+                        <button title="Delete" onClick={()=>setConfirmDel(p.id)}><Icon name="trash" size={14} color="var(--danger)"/></button>
                       ))}
                     </div>
                   ) : (
