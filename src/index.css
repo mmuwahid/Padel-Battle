@@ -1458,6 +1458,9 @@ body {
 .rcard.q{border-color:rgba(245,158,11,.15);}
 .rcard.q:hover{border-color:rgba(245,158,11,.32);}
 .rchd{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;}
+/* Shared back button style — used in Settings/Profile/Rules sub-screens */
+.back-btn{background:none;border:none;color:var(--accent);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);padding:0;display:flex;align-items:center;gap:5px;}
+
 .rcico{display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:var(--r-sm);background:var(--accent-dim);border:1px solid var(--accent-glow);color:var(--accent);flex-shrink:0;}
 .rcard.q .rcico{background:var(--gold-dim);border-color:var(--gold-glow);color:var(--gold);}
 .rct{font-family:var(--font);font-size:14px;font-weight:700;color:var(--text);line-height:1.3;}
