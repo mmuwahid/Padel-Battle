@@ -44,12 +44,13 @@ export function OnboardingScreen({ user, handlers, onComplete, showToast }) {
     if (!code.trim() || busy) return;
     setBusy(true); setBusyAction('join');
     try {
-      // 1. Look up league by invite code (RLS allows reading invite codes for membership lookup)
-      const { data: lg, error: lgErr } = await supabase
-        .from("leagues")
-        .select("id, name")
-        .eq("invite_code", code.trim().toUpperCase())
-        .maybeSingle();
+      // 1. Look up league by invite code via the existing SECURITY DEFINER RPC.
+      // Direct .from("leagues") would fail because non-members can't read the
+      // leagues table under current RLS. lookup_league_by_invite bypasses that.
+      // Code stored as-mixed-case in DB; preserve the user's input casing.
+      const { data: rpcData, error: lgErr } = await supabase
+        .rpc("lookup_league_by_invite", { code: code.trim() });
+      const lg = rpcData?.[0] || null;
       if (lgErr || !lg) throw new Error("Invalid invite code");
 
       // 2. Submit a new_profile join request. The data captured in step 1+2 becomes the
