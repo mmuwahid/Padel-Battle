@@ -5,7 +5,7 @@
 export const ACHS = [
   { id: "w1", icon: "zap",     name: "First Blood",  desc: "Win your first match",        ck: s => s.wins >= 1 },
   { id: "s3", icon: "flame",   name: "Hot Streak",    desc: "3 consecutive wins",          ck: s => { let m=0,c=0; s.streak.forEach(r=>{if(r==="W"){c++;m=Math.max(m,c);}else c=0;}); return m>=3; } },
-  { id: "s5", icon: "trophy",  name: "Unstoppable",   desc: "5 consecutive wins",          ck: s => { let m=0,c=0; s.streak.forEach(r=>{if(r==="W"){c++;m=Math.max(m,c);}else c=0;}); return m>=5; } },
+  { id: "s5", icon: "muscle",  name: "Unstoppable",   desc: "5 consecutive wins",          ck: s => { let m=0,c=0; s.streak.forEach(r=>{if(r==="W"){c++;m=Math.max(m,c);}else c=0;}); return m>=5; } },
   { id: "m3", icon: "star",    name: "MVP Machine",   desc: "3+ MOTM awards",              ck: s => s.motm >= 3 },
   { id: "m5", icon: "crown",   name: "Legend",        desc: "5+ MOTM awards",              ck: s => s.motm >= 5 },
   { id: "cb", icon: "refresh", name: "Comeback",      desc: "Win after losing S1",         ck: s => s.comebacks >= 1 },
