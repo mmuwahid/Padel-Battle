@@ -1,4 +1,4 @@
-const CACHE_NAME = 'padelhub-v122';
+const CACHE_NAME = 'padelhub-v123';
 const STATIC_ASSETS = [
   '/',
   '/index.html',

@@ -245,8 +245,8 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
         {/* Q4=B preserved 6-metric grid: row 1 (Match Played / Won / Lost) */}
         <div className="dpro-grid">
           <div className="dpro-cell"><div className="dpro-cell-v">{stats.games}</div><div className="dpro-cell-l">Match Played</div></div>
-          <div className="dpro-cell"><div className="dpro-cell-v win">{stats.wins}</div><div className="dpro-cell-l">Match Won</div></div>
-          <div className="dpro-cell"><div className="dpro-cell-v loss">{stats.losses}</div><div className="dpro-cell-l">Match Lost</div></div>
+          <div className="dpro-cell"><div className={`dpro-cell-v ${stats.wins>0?'win':'zero'}`}>{stats.wins}</div><div className="dpro-cell-l">Match Won</div></div>
+          <div className="dpro-cell"><div className={`dpro-cell-v ${stats.losses>0?'loss':'zero'}`}>{stats.losses}</div><div className="dpro-cell-l">Match Lost</div></div>
         </div>
 
         {/* Row 2 (Cons. Wins / MOTM / Match Diff) */}
