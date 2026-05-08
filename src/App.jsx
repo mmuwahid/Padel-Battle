@@ -1278,18 +1278,9 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
       {/* MATCHES TAB — with History | Schedule sub-tabs */}
       {!sidebarView && tab==="history"&&(
         <div style={{padding:"20px 16px",maxWidth:"600px",margin:"0 auto"}}>
-          {/* S068 Issue #46: pending join-request banner inline at top of Matches tab.
-              Mirrors the FT-09 match-approvals pattern. Tap routes admin to ApprovalQueueScreen. */}
-          {isAdmin && pendingJoinCount > 0 && (
-            <button
-              className="alban"
-              style={{marginBottom:12,width:"100%"}}
-              onClick={()=>{setSidebarView("approvalQueue");setSidebarOpen(false);}}
-            >
-              <div className="aldot"/>
-              <span>{pendingJoinCount} join request{pendingJoinCount===1?"":"s"} awaiting approval</span>
-            </button>
-          )}
+          {/* S068: per user direction, the join-request banner was removed from the
+              Matches tab. The AdminDashboard's "Approval Queue" card is the single
+              entry point for pending join requests. */}
           {/* FT-05: Sub-tab toggle */}
           <div style={{display:"flex",gap:4,marginBottom:16,background:CD,borderRadius:10,padding:3}}>
             {["history","schedule"].map(t=>(

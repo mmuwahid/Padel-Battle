@@ -155,13 +155,21 @@ export function LeagueGate({ user, children }) {
   useEffect(() => {
     if (leagues.length > 0) return;
     if (!joinRequest || joinRequest.status !== "pending") return;
-    const t = setInterval(() => {
-      loadJoinRequest().then(j => {
-        if (j && j.status === "approved") loadUserLeagues();
-      });
+    const t = setInterval(async () => {
+      const j = await loadJoinRequest();
+      if (j && j.status === "approved") {
+        // S068 fix: after approval, refresh leagues AND auto-select the
+        // newly-joined league. Without resolveSelectedLeague the user
+        // landed in AppContent's 0-leagueId empty-state ("You're not in a
+        // league yet") even though leagues.length had become 1.
+        const updated = await loadUserLeagues();
+        if (updated && updated.length > 0) {
+          setSelectedLeagueId(updated[0].id);
+        }
+      }
     }, 8000);
     return () => clearInterval(t);
-  }, [leagues.length, joinRequest, loadJoinRequest, loadUserLeagues]);
+  }, [leagues.length, joinRequest, loadJoinRequest, loadUserLeagues, setSelectedLeagueId]);
 
   // ── Handlers exposed to children ──
   const tryAutoJoin = async (code, currentLeagues) => {
