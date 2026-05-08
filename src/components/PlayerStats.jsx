@@ -285,8 +285,10 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
         <div className="an-body">
           {/* 4-section sub-tab bar (Q6=B Phase 5 .seg/.sb 4-col variant) */}
           <div className="seg-4">
-            {[["league","📈 League"],["partnership","🤝 Partners"],["opponent","⚔️ H2H"],["insights","💡 Insights"]].map(([k,l])=>(
-              <button key={k} className={`sb-4${analyticsSection===k?" on":""}`} onClick={()=>setAnalyticsSection(k)}>{l}</button>
+            {[["league","trending-up","League"],["partnership","users","Partners"],["opponent","swords","H2H"],["insights","bulb","Insights"]].map(([k,ic,l])=>(
+              <button key={k} className={`sb-4${analyticsSection===k?" on":""}`} onClick={()=>setAnalyticsSection(k)}>
+                <Icon name={ic} size={13}/>{l}
+              </button>
             ))}
           </div>
 

@@ -1189,10 +1189,9 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
                         )}
                       </div>
                     </div>
-                    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:1,paddingTop:2}}>
+                    <div style={{display:"flex",alignItems:"center",justifyContent:"center"}}>
                       {flag
-                        ? <><span className="flag" style={{fontSize:13,lineHeight:1}}>{flag}</span>
-                           <span style={{fontSize:8,color:"#9090a4",fontWeight:700,letterSpacing:.3,fontFamily:"var(--mono)"}}>{ctry}</span></>
+                        ? <span className="flag" style={{fontSize:16,lineHeight:1}}>{flag}</span>
                         : <span style={{fontSize:11,color:"#9090a4",opacity:.4}}>—</span>}
                     </div>
                     <div className="lbc">{p.games}</div>
