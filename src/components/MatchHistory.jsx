@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, BL, PU } from '../theme';
-import { win, formatDate, setTotals } from '../utils/helpers';
+import { win, formatDate } from '../utils/helpers';
 import { useLeague } from '../LeagueContext';
 import { MatchApprovalsQueue } from './MatchApprovalsQueue';
+import Icon from './Icon';
 
 const REACTIONS = [
   { key: "fire", emoji: "\uD83D\uDD25" },
@@ -12,21 +12,33 @@ const REACTIONS = [
   { key: "shock", emoji: "\uD83D\uDE31" },
 ];
 
+// Phase 7 (S065 Q4=A): vertical score column. Total chip shows "Final 2-1"
+// (sets won by each team), not the cumulative game total.
+function setsWonCount(sets){
+  return sets.reduce((acc,s)=>{
+    if(s[0]>s[1]) acc[0]++;
+    else if(s[1]>s[0]) acc[1]++;
+    return acc;
+  },[0,0]);
+}
+
 export function MatchHistory({onEdit,shareMatch,sel,onMatchDeleted}){
   const { supabase, user, players, approvedMatches, pendingMatches, incompleteMatches, isAdmin, getName, showToast, seasons, selectedSeason, setSelectedSeason } = useLeague();
   // FT-09: existing list reads approved-only. My-pending section reads pending submitted by current user.
-  // FT-09b / S045: incomplete matches are merged into the timeline with grey styling + "Incomplete" badge.
+  // FT-09b / S045: incomplete matches are merged into the timeline with greyed styling + "Incomplete" badge.
   // Issue #40: season selector synced via LeagueContext (same source as Ranking screen).
   const seasonFilter = (m) => !selectedSeason || m.season_id === selectedSeason;
   const matches = approvedMatches.filter(seasonFilter);
   const myPendingMatches = (pendingMatches || []).filter(m => m.logged_by === user?.id).filter(seasonFilter);
   const incompleteList = (incompleteMatches || []).filter(seasonFilter);
   const [pendingExpanded, setPendingExpanded] = useState(true);
-  const [fp,setFp]=useState("");
   const [cd,setCd]=useState(null);
   const [deleting,setDeleting]=useState(false);
   const [reactions,setReactions]=useState({});// {matchId: [{user_id,reaction},...]}
   const [myReactions,setMyReactions]=useState({});// {matchId: "fire"|null}
+
+  // S052 helper: avatar lookup by player id
+  const getAvatar = (pid) => players.find(pp=>pp.id===pid)?.avatar_url;
 
   useEffect(()=>{
     if(!matches.length||!supabase)return;
@@ -47,12 +59,10 @@ export function MatchHistory({onEdit,shareMatch,sel,onMatchDeleted}){
     if(!user)return;
     const current=myReactions[matchId];
     if(current===reactionKey){
-      // Remove reaction
       await supabase.from("match_reactions").delete().eq("match_id",matchId).eq("user_id",user.id);
       setMyReactions(prev=>({...prev,[matchId]:undefined}));
       setReactions(prev=>({...prev,[matchId]:(prev[matchId]||[]).filter(r=>r.user_id!==user.id)}));
     }else{
-      // Upsert reaction
       await supabase.from("match_reactions").upsert({match_id:matchId,user_id:user.id,reaction:reactionKey},{onConflict:"match_id,user_id"});
       setMyReactions(prev=>({...prev,[matchId]:reactionKey}));
       setReactions(prev=>{
@@ -61,12 +71,14 @@ export function MatchHistory({onEdit,shareMatch,sel,onMatchDeleted}){
       });
     }
   }
-  // Merge approved + incomplete for timeline display. Incomplete renders with grey styling + badge.
+
+  // Merge approved + incomplete for timeline display.
   const timeline = [...matches, ...incompleteList];
   const s = [...timeline].sort((a,b)=>new Date(b.date)-new Date(a.date));
 
   async function deleteMatch(matchId){
     if(!isAdmin)return;
+    setDeleting(true);
     try{
       const {error}=await supabase.from("matches").delete().eq("id",matchId);
       if(error)throw error;
@@ -76,114 +88,165 @@ export function MatchHistory({onEdit,shareMatch,sel,onMatchDeleted}){
     }catch(_err){
       if(showToast)showToast("Failed to delete match","error");
     }
+    setDeleting(false);
   }
+
+  // Render a player row inside .mteamcol
+  const renderPlayer = (pid, sideClass) => {
+    const av = getAvatar(pid);
+    const name = getName(pid);
+    return (
+      <div key={pid} className="mplyr">
+        <div className={`mplavi${sideClass==='win-side'?' win':''}`}>{av?<img src={av} alt=""/>:(name[0]||'?').toUpperCase()}</div>
+        <div className="mplname-block">
+          <div className={`mplnam ${sideClass}`}>{name}</div>
+        </div>
+      </div>
+    );
+  };
+
+  // Render the match-card body grid (used by both approved and pending cards)
+  const renderBody = (m, mode) => {
+    // mode: 'approved' | 'incomplete' | 'pending'
+    const isIncomplete = mode === 'incomplete';
+    const isPending = mode === 'pending';
+    const w = isIncomplete || isPending ? null : win(m.sets);
+    const aSide = w==='A' ? 'win-side' : (w==='B' ? 'los-side' : 'nd-side');
+    const bSide = w==='B' ? 'win-side' : (w==='A' ? 'los-side' : 'nd-side');
+    const aLabel = w==='A' ? 'WIN' : (w==='B' ? 'LOSS' : (isPending ? 'PENDING' : '—'));
+    const bLabel = w==='B' ? 'WIN' : (w==='A' ? 'LOSS' : (isPending ? 'PENDING' : '—'));
+    const aClass = w==='A' ? 'win' : (w==='B' ? 'los' : 'nd');
+    const bClass = w==='B' ? 'win' : (w==='A' ? 'los' : 'nd');
+    const [sA, sB] = setsWonCount(m.sets || []);
+    return (
+      <div className="mbody2">
+        <div className="mgrid2">
+          <div className="mteamcol">
+            <div className={`mresl ${aClass}`}>{aLabel}</div>
+            {(m.team_a||[]).map(pid=>renderPlayer(pid, aSide))}
+          </div>
+          <div className="mscols2">
+            {(m.sets||[]).map((set,i)=>{
+              const aWonSet = set[0]>set[1];
+              const bWonSet = set[1]>set[0];
+              const winClass = (w==='A' && aWonSet) || (w==='B' && bWonSet) ? ' win' : '';
+              return <div key={i} className={`mscpill2${winClass}`}>{set[0]}-{set[1]}</div>;
+            })}
+            {!isPending && !isIncomplete && <div className="mtotal2">Final {sA}-{sB}</div>}
+            {isPending && <div className="mtotal2">Sets {sA}-{sB}</div>}
+            {isIncomplete && <div className="mtotal2" style={{fontStyle:'italic'}}>Not counted</div>}
+          </div>
+          <div className="mteamcol r">
+            <div className={`mresl ${bClass}`}>{bLabel}</div>
+            {(m.team_b||[]).map(pid=>renderPlayer(pid, bSide))}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div>
-      {/* Issue #40: Season selector — synced with Ranking screen via LeagueContext */}
-      {seasons && seasons.length > 0 && (
-        <div style={{display:"flex",justifyContent:"flex-end",marginBottom:10}}>
-          <select value={selectedSeason||""} onChange={e=>setSelectedSeason(e.target.value)} style={{background:CD2,color:TX,border:`1px solid ${BD}`,borderRadius:10,padding:"6px 10px",fontSize:12,fontWeight:700,fontFamily:"'Outfit',sans-serif",cursor:"pointer",outline:"none"}}>
-            {seasons.map(s=><option key={s.id} value={s.id}>{s.name}{s.active?" (active)":""}</option>)}
+      {/* Top bar: season meta + .spill selector */}
+      <div className="mtbar">
+        <div className="mtmeta">{s.length} match{s.length===1?'':'es'}{seasons && seasons.length>0 && selectedSeason ? ` \u00B7 ${seasons.find(ss=>ss.id===selectedSeason)?.name||''}`:''}</div>
+        {seasons && seasons.length > 0 && (
+          <select className="spill" value={selectedSeason||""} onChange={e=>setSelectedSeason(e.target.value)}>
+            {seasons.map(sn=><option key={sn.id} value={sn.id}>{sn.name}{sn.active?" (active)":""}</option>)}
           </select>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* FT-09: Admin Approvals Queue — visible only to admins/owners with non-empty queue */}
       <MatchApprovalsQueue />
 
-      {/* FT-09: My Pending Submissions — shown only when current user has pending matches they submitted */}
+      {/* FT-09: My Pending Submissions — collapsible (Q6=C) */}
       {myPendingMatches.length > 0 && (
-        <div style={{ marginBottom: 14 }}>
-          <div onClick={() => setPendingExpanded(v => !v)} style={{ background: CD, border: `1px solid ${GD}4d`, borderRadius: pendingExpanded ? "12px 12px 0 0" : 12, padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", userSelect: "none" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: 14 }}>⏳</span>
-              <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: 0.5, color: GD, textTransform: "uppercase" }}>My Pending</span>
-              <span style={{ background: GD, color: "#000", fontSize: 10, fontWeight: 800, padding: "1px 6px", borderRadius: 6, marginLeft: 4 }}>{myPendingMatches.length}</span>
+        <div className="mlist" style={{paddingBottom:0}}>
+          <div>
+            <div className={`mp-head${pendingExpanded?'':' collapsed'}`} onClick={()=>setPendingExpanded(v=>!v)}>
+              <div className="mp-head-l">
+                <span style={{fontSize:14,lineHeight:1}}>{"\u23F3"}</span>
+                <span className="mp-head-title">My Pending</span>
+                <span className="mp-head-count">{myPendingMatches.length}</span>
+              </div>
+              <span className={`mp-head-chev${pendingExpanded?' open':''}`}>{"\u203A"}</span>
             </div>
-            <span style={{ color: MT, fontSize: 14, transform: pendingExpanded ? "rotate(90deg)" : "none", transition: "transform 0.18s" }}>›</span>
+            {pendingExpanded && (
+              <div className="mp-body">
+                {myPendingMatches.map(m=>(
+                  <div key={m.id} className="mcard pending">
+                    <div className="mhd2">
+                      <div className="mdate2">{formatDate(m.date)}</div>
+                      <span className="pending-tag">{"\u23F3"} Awaiting approval</span>
+                    </div>
+                    {renderBody(m, 'pending')}
+                  </div>
+                ))}
+                <div className="mp-foot">Won't count until an admin approves.</div>
+              </div>
+            )}
           </div>
-          {pendingExpanded && (
-            <div style={{ background: CD, border: `1px solid ${GD}4d`, borderTop: 0, borderRadius: "0 0 12px 12px", padding: 8 }}>
-              {myPendingMatches.map(m => (
-                <div key={m.id} style={{ background: CD2, border: `1px solid ${BD}`, borderLeft: `3px solid ${GD}`, borderRadius: 10, padding: 12, marginBottom: 6, opacity: 0.92 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                    <span style={{ fontSize: 11, color: MT, fontFamily: "'JetBrains Mono',monospace" }}>{formatDate(m.date)}</span>
-                    <span style={{ background: `${GD}2e`, color: GD, border: `1px solid ${GD}4d`, fontSize: 9, fontWeight: 700, letterSpacing: 0.8, padding: "2px 6px", borderRadius: 4, textTransform: "uppercase" }}>⏳ Awaiting approval</span>
+        </div>
+      )}
+
+      {/* Match list */}
+      {s.length===0 && (
+        <div style={{textAlign:"center",padding:"40px 20px"}}>
+          <div style={{fontSize:40,marginBottom:12}}>{"\uD83C\uDFBE"}</div>
+          <div style={{fontSize:15,fontWeight:600,marginBottom:6}}>No matches yet</div>
+          <div style={{fontSize:12,color:"#9090a4",lineHeight:1.5}}>Tap the + button to log your first match.</div>
+        </div>
+      )}
+
+      {s.length > 0 && (
+        <div className="mlist">
+          {s.map(m=>{
+            const isIncomplete = m.status === 'incomplete';
+            const mode = isIncomplete ? 'incomplete' : 'approved';
+            return (
+              <div key={m.id} className={`mcard${isIncomplete?' inc':''}`}>
+                <div className="mhd2">
+                  <div className="mdate2">{formatDate(m.date)}</div>
+                  {/* MOTM pill: absolute-centered (Q1=A). Incomplete card shows muted "Incomplete" pill instead. */}
+                  {isIncomplete
+                    ? <div className="motm-pill muted">Incomplete</div>
+                    : (m.motm && <div className="motm-pill"><Icon name="star" size={12}/>{getName(m.motm)}</div>)
+                  }
+                  <div className="macts">
+                    <button className="mact" onClick={()=>shareMatch(m)} aria-label="Share"><Icon name="share" size={14}/></button>
+                    <button className="mact" onClick={()=>onEdit(m)} aria-label="Edit"><Icon name="edit" size={14}/></button>
+                    {isAdmin && (cd===m.id ? (
+                      <>
+                        <button onClick={()=>deleteMatch(m.id)} disabled={deleting} style={{background:'var(--danger)',border:'none',color:'#fff',fontSize:9,fontWeight:700,padding:'4px 7px',borderRadius:6,cursor:'pointer',opacity:deleting?.6:1}}>{deleting?'…':'Yes'}</button>
+                        <button onClick={()=>setCd(null)} style={{background:'var(--surface-2)',border:'1px solid var(--border)',color:'var(--text)',fontSize:9,fontWeight:700,padding:'4px 7px',borderRadius:6,cursor:'pointer'}}>No</button>
+                      </>
+                    ) : (
+                      <button className="mact da" onClick={()=>setCd(m.id)} aria-label="Delete"><Icon name="trash" size={14}/></button>
+                    ))}
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 8, alignItems: "center", marginBottom: 8 }}>
-                    <div style={{ textAlign: "center", color: BL, fontSize: 12, fontWeight: 600 }}>{getName(m.team_a?.[0])} & {getName(m.team_a?.[1])}</div>
-                    <div style={{ fontSize: 10, color: MT, fontWeight: 700 }}>vs</div>
-                    <div style={{ textAlign: "center", color: GD, fontSize: 12, fontWeight: 600 }}>{getName(m.team_b?.[0])} & {getName(m.team_b?.[1])}</div>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "center", gap: 8, background: BG, borderRadius: 8, padding: 6, marginBottom: 6, fontFamily: "'JetBrains Mono',monospace", fontSize: 13, fontWeight: 700, color: TX, letterSpacing: 1 }}>
-                    {(m.sets || []).map((s, i) => {
-                      const wn = s[0] > s[1] ? "A" : (s[1] > s[0] ? "B" : null);
-                      const col = wn === "A" ? BL : (wn === "B" ? GD : TX);
-                      return <span key={i} style={{ color: col }}>{s[0]}–{s[1]}</span>;
+                </div>
+                {renderBody(m, mode)}
+                {/* Reactions only on approved matches (incomplete are visually faded) */}
+                {!isIncomplete && (
+                  <div className="mreact">
+                    {REACTIONS.map(r=>{
+                      const count = (reactions[m.id]||[]).filter(x=>x.reaction===r.key).length;
+                      const mine = myReactions[m.id]===r.key;
+                      return (
+                        <button key={r.key} className={`rxpill${mine?' on':''}`} onClick={()=>toggleReaction(m.id, r.key)}>
+                          <span>{r.emoji}</span>
+                          {count>0 && <span className="rxn">{count}</span>}
+                        </button>
+                      );
                     })}
                   </div>
-                  <div style={{ textAlign: "center", fontSize: 10, color: MT }}>Won't count until an admin approves.</div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-
-      <div style={{fontSize:11,color:MT,marginBottom:8,fontWeight:400}}>{s.length} matches</div>
-      {s.length===0&&(
-        <div style={{textAlign:"center",padding:"40px 20px"}}>
-          <div style={{fontSize:40,marginBottom:12}}>🎾</div>
-          <div style={{fontSize:15,fontWeight:600,color:TX,marginBottom:6}}>No matches yet</div>
-          <div style={{fontSize:12,color:MT,lineHeight:1.5}}>Tap the + button to log your first match.</div>
-        </div>
-      )}
-      {s.map(m=>{const isIncomplete=m.status==='incomplete';const w=isIncomplete?null:win(m.sets);const [tA,tB]=setTotals(m.sets);
-        return (<div key={m.id} style={{background:CD,borderRadius:12,border:`1px solid ${isIncomplete?MT+"40":BD}`,padding:14,marginBottom:8,opacity:isIncomplete?0.7:1}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-            <div style={{display:"flex",alignItems:"center",gap:6}}>
-              <span style={{fontSize:11,color:MT,fontWeight:400}}>{formatDate(m.date)}</span>
-              {isIncomplete&&<span style={{fontSize:9,fontWeight:700,letterSpacing:0.8,padding:"2px 6px",borderRadius:4,textTransform:"uppercase",background:`${MT}25`,color:MT,border:`1px solid ${MT}40`}}>Incomplete</span>}
-            </div>
-            <div style={{display:"flex",gap:4,alignItems:"center"}}>
-              {m.motm&&!isIncomplete&&<span style={{fontSize:10,background:`${GD}20`,color:GD,padding:"2px 6px",borderRadius:6,fontWeight:600}}>⭐{getName(m.motm)}</span>}
-              <button onClick={()=>shareMatch(m)} style={{background:"none",border:"none",fontSize:13,cursor:"pointer",padding:"2px 4px"}}>📤</button>
-              <button onClick={()=>onEdit(m)} style={{background:"none",border:"none",color:BL,fontSize:13,cursor:"pointer",padding:"2px 4px"}}>✏️</button>
-              {isAdmin&&(cd===m.id?<div style={{display:"flex",gap:3}}><button onClick={()=>{deleteMatch(m.id);}} disabled={deleting} style={{background:DG,border:"none",color:"#fff",fontSize:9,fontWeight:700,padding:"3px 6px",borderRadius:6,cursor:"pointer",opacity:deleting?0.6:1}}>{deleting?"..":"Yes"}</button><button onClick={()=>setCd(null)} style={{background:BD,border:"none",color:TX,fontSize:9,fontWeight:700,padding:"3px 6px",borderRadius:6,cursor:"pointer"}}>No</button></div>:<button onClick={()=>setCd(m.id)} style={{background:"none",border:"none",color:DG,fontSize:13,cursor:"pointer",padding:"2px 4px"}}>🗑️</button>)}
-            </div>
-          </div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",gap:8,alignItems:"center"}}>
-            <div style={{textAlign:"center"}}>
-              <div style={{fontSize:13,fontWeight:700,color:isIncomplete?TX:(w==="A"?A:DG)}}>{getName(m.team_a[0])}</div>
-              <div style={{fontSize:13,fontWeight:700,color:isIncomplete?TX:(w==="A"?A:DG)}}>{getName(m.team_a[1])}</div>
-              {!isIncomplete&&(w==="A"?<div style={{fontSize:10,color:A,fontWeight:700,marginTop:3}}>WIN</div>:<div style={{fontSize:10,color:DG,fontWeight:700,marginTop:3}}>LOSS</div>)}
-            </div>
-            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-              <div style={{display:"flex",gap:6,fontFamily:"'JetBrains Mono'",fontWeight:700,fontSize:16}}>
-                {m.sets.map((s,i)=><span key={i} style={{color:isIncomplete?MT:(s[0]>s[1]?A:DG)}}>{s[0]}-{s[1]}</span>)}
+                )}
               </div>
-              <span style={{fontSize:10,color:MT,fontFamily:"'JetBrains Mono'"}}>{tA}-{tB}</span>
-              {isIncomplete&&<span style={{fontSize:9,color:MT,fontStyle:"italic",marginTop:2}}>not counted in rankings</span>}
-            </div>
-            <div style={{textAlign:"center"}}>
-              <div style={{fontSize:13,fontWeight:700,color:isIncomplete?TX:(w==="B"?A:DG)}}>{getName(m.team_b[0])}</div>
-              <div style={{fontSize:13,fontWeight:700,color:isIncomplete?TX:(w==="B"?A:DG)}}>{getName(m.team_b[1])}</div>
-              {!isIncomplete&&(w==="B"?<div style={{fontSize:10,color:A,fontWeight:700,marginTop:3}}>WIN</div>:<div style={{fontSize:10,color:DG,fontWeight:700,marginTop:3}}>LOSS</div>)}
-            </div>
-          </div>
-          {/* Reaction bar */}
-          <div style={{display:"flex",gap:2,marginTop:8,paddingTop:8,borderTop:`1px solid ${BD}30`,justifyContent:"center"}}>
-            {REACTIONS.map(r=>{const count=(reactions[m.id]||[]).filter(x=>x.reaction===r.key).length;const mine=myReactions[m.id]===r.key;return(
-              <button key={r.key} onClick={()=>toggleReaction(m.id,r.key)} style={{display:"flex",alignItems:"center",gap:2,padding:"3px 8px",borderRadius:20,border:`1px solid ${mine?A+"60":"transparent"}`,background:mine?`${A}15`:"transparent",cursor:"pointer",fontSize:14,transition:"all 0.15s"}}>
-                <span>{r.emoji}</span>
-                {count>0&&<span style={{fontSize:10,fontWeight:700,color:mine?A:MT,fontFamily:"'JetBrains Mono'"}}>{count}</span>}
-              </button>
-            );})}
-          </div>
-        </div>);
-      })}
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
