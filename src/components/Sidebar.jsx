@@ -1,6 +1,18 @@
 import React from "react";
 import { supabase } from '../supabase';
 import { A, CD, CD2, BD, TX, MT, DG, BL } from '../theme';
+import Icon from './Icon';
+
+// Phase 6c: shared inline-flex pattern for sidebar nav buttons.
+// Adds a 9px gap between the leading <Icon> and the button label, while
+// preserving every prior padding/typography token used by the emoji-prefixed
+// buttons.
+const navBtnStyle = {
+  width:"100%",padding:"12px 16px",background:"transparent",border:"none",
+  color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",
+  fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s",
+  display:"flex",alignItems:"center",gap:9,
+};
 
 export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, user, avatarUrl, league, isAdmin, onSwitchLeague, showToast, installPrompt, handleInstall }) {
   return (
@@ -30,7 +42,7 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, user, ava
         {/* Header with user info — Issue #21: clickable to open My Profile */}
         <div style={{padding:"20px 16px",paddingTop:"calc(env(safe-area-inset-top, 0px) + 20px)",borderBottom:`1px solid ${BD}`}}>
           <div style={{display:"flex",justifyContent:"flex-end",marginBottom:8}}>
-            <button onClick={()=>setSidebarOpen(false)} style={{background:"none",border:"none",color:MT,fontSize:20,cursor:"pointer",padding:"4px 8px",lineHeight:1}} aria-label="Close sidebar">✕</button>
+            <button onClick={()=>setSidebarOpen(false)} style={{background:"none",border:"none",color:MT,cursor:"pointer",padding:"4px 8px",lineHeight:1,display:"flex",alignItems:"center"}} aria-label="Close sidebar"><Icon name="close" size={18}/></button>
           </div>
           <button onClick={()=>{setSidebarView("profile");setSidebarOpen(false);}} style={{display:"flex",alignItems:"center",gap:12,marginBottom:12,width:"100%",background:"transparent",border:"none",padding:0,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif"}} aria-label="Open my profile">
             <div style={{width:56,height:56,borderRadius:"50%",background:`${A}20`,border:`2px solid ${A}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,fontWeight:800,color:A,overflow:"hidden",flexShrink:0}}>
@@ -40,7 +52,7 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, user, ava
               <div style={{fontSize:14,fontWeight:700,color:TX}}>{user.user_metadata?.display_name||user.email?.split("@")[0]||"User"}</div>
               <div style={{fontSize:10,color:MT,marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{user.email}</div>
             </div>
-            <span style={{fontSize:14,color:MT,fontWeight:400,paddingRight:4}} aria-hidden="true">›</span>
+            <span style={{color:MT,paddingRight:4,display:"flex",alignItems:"center"}} aria-hidden="true"><Icon name="chevron" size={14}/></span>
           </button>
         </div>
 
@@ -59,9 +71,9 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, user, ava
               </div>
             </div>
             {/* S063: full league management — switch / create / join */}
-            <button onClick={()=>{setSidebarView("leagues");setSidebarOpen(false);}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>🏟️ Leagues</button>
+            <button onClick={()=>{setSidebarView("leagues");setSidebarOpen(false);}} style={navBtnStyle}><Icon name="league" size={15}/>Leagues</button>
             {league && isAdmin && (
-              <button onClick={()=>{const code=league?.invite_code;if(code){const url=`${window.location.origin}${window.location.pathname}?invite=${code}`;if(navigator.share)navigator.share({title:"Join my PadelHub league",text:`Join "${league?.name}" on PadelHub!`,url});else{navigator.clipboard.writeText(url);showToast("Invite link copied!");}}}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>📩 Invite Players</button>
+              <button onClick={()=>{const code=league?.invite_code;if(code){const url=`${window.location.origin}${window.location.pathname}?invite=${code}`;if(navigator.share)navigator.share({title:"Join my PadelHub league",text:`Join "${league?.name}" on PadelHub!`,url});else{navigator.clipboard.writeText(url);showToast("Invite link copied!");}}}} style={navBtnStyle}><Icon name="user-plus" size={15}/>Invite Players</button>
             )}
           </div>
 
@@ -69,19 +81,14 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, user, ava
 
           <div>
             <div style={{fontSize:10,color:MT,fontWeight:600,letterSpacing:1,textTransform:"uppercase",paddingLeft:16,marginBottom:8}}>App</div>
-            <button onClick={()=>{setSidebarView("rules");setSidebarOpen(false);}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>
-              📖 Official Rules
-            </button>
-            <button onClick={()=>{setSidebarView("settings");setSidebarOpen(false);}} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",color:TX,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",borderRadius:8,transition:"all 0.2s"}}>
-              ⚙️ Settings
-            </button>
+            <button onClick={()=>{setSidebarView("rules");setSidebarOpen(false);}} style={navBtnStyle}><Icon name="book" size={15}/>Official Rules</button>
+            <button onClick={()=>{setSidebarView("settings");setSidebarOpen(false);}} style={navBtnStyle}><Icon name="settings" size={15}/>Settings</button>
             {installPrompt ? (
-              <button onClick={handleInstall} style={{width:"100%",padding:"12px 16px",background:`${A}15`,border:`1px solid ${A}40`,borderRadius:8,color:A,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",transition:"all 0.2s"}}>
-                📲 Install App
-              </button>
+              <button onClick={handleInstall} style={{width:"100%",padding:"12px 16px",background:`${A}15`,border:`1px solid ${A}40`,borderRadius:8,color:A,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'Outfit',sans-serif",transition:"all 0.2s",display:"flex",alignItems:"center",gap:9}}><Icon name="share" size={15}/>Install App</button>
             ) : !window.matchMedia("(display-mode: standalone)").matches && /iPhone|iPad/i.test(navigator.userAgent) ? (
-              <div style={{padding:"12px 16px",background:`${BL}10`,border:`1px solid ${BL}30`,borderRadius:8,fontSize:11,color:MT,lineHeight:1.4}}>
-                📲 To install: tap <span style={{color:BL}}>Share</span> → <span style={{color:BL}}>Add to Home Screen</span>
+              <div style={{padding:"12px 16px",background:`${BL}10`,border:`1px solid ${BL}30`,borderRadius:8,fontSize:11,color:MT,lineHeight:1.4,display:"flex",alignItems:"flex-start",gap:9}}>
+                <Icon name="share" size={14}/>
+                <span>To install: tap <span style={{color:BL}}>Share</span> → <span style={{color:BL}}>Add to Home Screen</span></span>
               </div>
             ) : null}
           </div>
