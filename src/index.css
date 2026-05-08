@@ -1360,10 +1360,15 @@ body {
 
 .sbsec{padding:14px 18px 6px;}
 .sbsl{font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:#9090a4;margin-bottom:6px;}
-.sbitem{display:flex;align-items:center;gap:12px;padding:11px;border-radius:var(--r-md);cursor:pointer;transition:background 150ms;margin-bottom:1px;color:var(--text);}
+.sbitem{display:flex;align-items:center;gap:12px;padding:11px;border-radius:var(--r-md);cursor:pointer;transition:background 150ms,color 150ms;margin-bottom:1px;color:var(--text);}
 .sbitem:hover{background:var(--surface-2);}
-.sbico{width:34px;height:34px;border-radius:var(--r-sm);background:var(--surface-2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#9090a4;}
+.sbitem:active{background:var(--accent-dim);}
+.sbico{width:34px;height:34px;border-radius:var(--r-sm);background:var(--surface-2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#9090a4;transition:all 150ms;}
 .sbitem:hover .sbico{border-color:var(--accent-glow);color:var(--text);}
+.sbitem:active .sbico{border-color:var(--accent);color:var(--accent);background:var(--accent-dim);}
+/* Chevron icon — gray by default, turns accent green on press */
+.sb-chev{display:flex;color:#5a5a6a;transition:color 150ms;flex-shrink:0;}
+.sbitem:active .sb-chev{color:var(--accent);}
 .sbibd{flex:1;min-width:0;}
 .sbit{font-size:14px;font-weight:600;color:var(--text);}
 .sbis{font-family:var(--mono);font-size:10px;color:#9090a4;margin-top:1px;}

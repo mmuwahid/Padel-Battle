@@ -5,7 +5,7 @@ import Icon from './Icon';
 // S066 Phase 12: spec-faithful restyle. Slide-in right drawer (.ssheet) with
 // .sbprof header (clickable to open My Profile), .sbsec sections containing
 // .sbitem rows, .sbdiv divider, .sbfoot with .signout. Spec lines 2174-2196.
-export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, user, avatarUrl, league, isAdmin, onSwitchLeague, showToast, installPrompt, handleInstall }) {
+export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, user, avatarUrl, league, isAdmin, onSwitchLeague, showToast, installPrompt, handleInstall, playerCount, activeSeasonName }) {
   if (!sidebarOpen) return null;
 
   const userInitial = (user.user_metadata?.display_name || user.email || "U")[0].toUpperCase();
@@ -58,10 +58,16 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, user, ava
               <div className="sbico"><Icon name="league" size={16}/></div>
               <div className="sbibd">
                 <div className="sbit">{league.name}</div>
-                <div className="sbis">Tap to switch</div>
+                {(playerCount != null || activeSeasonName) && (
+                  <div className="sbis">
+                    {playerCount != null && `${playerCount} player${playerCount===1?"":"s"}`}
+                    {playerCount != null && activeSeasonName && " · "}
+                    {activeSeasonName}
+                  </div>
+                )}
               </div>
               {isAdmin && <div className="sbbadge">Admin</div>}
-              <Icon name="chevron" size={16} color="#5a5a6a"/>
+              <span className="sb-chev"><Icon name="chevron" size={16} color="currentColor"/></span>
             </div>
           ) : (
             <div className="sbitem" onClick={()=>{setSidebarView("leagues"); setSidebarOpen(false);}}>
@@ -70,7 +76,7 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, user, ava
                 <div className="sbit">Join or create</div>
                 <div className="sbis">No league selected</div>
               </div>
-              <Icon name="chevron" size={16} color="#5a5a6a"/>
+              <span className="sb-chev"><Icon name="chevron" size={16} color="currentColor"/></span>
             </div>
           )}
           {league && isAdmin && (
@@ -79,7 +85,7 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, user, ava
               <div className="sbibd">
                 <div className="sbit">Invite Players</div>
               </div>
-              <Icon name="chevron" size={16} color="#5a5a6a"/>
+              <span className="sb-chev"><Icon name="chevron" size={16} color="currentColor"/></span>
             </div>
           )}
         </div>
@@ -94,14 +100,14 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, user, ava
             <div className="sbibd">
               <div className="sbit">Official Rules</div>
             </div>
-            <Icon name="chevron" size={16} color="#5a5a6a"/>
+            <span className="sb-chev"><Icon name="chevron" size={16} color="currentColor"/></span>
           </div>
           <div className="sbitem" onClick={()=>{setSidebarView("settings"); setSidebarOpen(false);}}>
             <div className="sbico"><Icon name="settings" size={16}/></div>
             <div className="sbibd">
               <div className="sbit">Settings</div>
             </div>
-            <Icon name="chevron" size={16} color="#5a5a6a"/>
+            <span className="sb-chev"><Icon name="chevron" size={16} color="currentColor"/></span>
           </div>
           {installPrompt ? (
             <div className="sbitem" onClick={handleInstall}>
@@ -109,7 +115,7 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, user, ava
               <div className="sbibd">
                 <div className="sbit" style={{color:"var(--accent)"}}>Install App</div>
               </div>
-              <Icon name="chevron" size={16} color="#5a5a6a"/>
+              <span className="sb-chev"><Icon name="chevron" size={16} color="currentColor"/></span>
             </div>
           ) : (isIos && !isStandalone) ? (
             <div className="sbitem" style={{cursor:"default"}}>
