@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from '../supabase';
 import { PadelLogoSmall } from './icons';
+import { OnboardingScreen } from './OnboardingScreen';
 
 /**
  * S063 redesign: LeagueGate is now a slim state shell, NOT a full-screen
@@ -220,6 +221,23 @@ export function LeagueGate({ user, children }) {
     renameLeague,
     deleteLeague,
   };
+
+  // S066 Phase 11: brand-new user with 0 leagues → run the 3-step onboarding
+  // wizard. Once they create or join a league, leagues.length > 0 and we fall
+  // through to render the children (AppContent).
+  if (leagues.length === 0) {
+    const showToast = (msg, kind) => {
+      // Light toast for onboarding flow only — AppContent's useToast isn't
+      // mounted yet. Falls back to console + alert for errors.
+      if (kind === "error") {
+        console.error(msg);
+        try { window.alert(msg); } catch { /* noop */ }
+      } else {
+        console.log("[onboarding]", msg);
+      }
+    };
+    return <OnboardingScreen user={user} handlers={handlers} showToast={showToast} onComplete={refreshLeagues}/>;
+  }
 
   return children({ leagueId: selectedLeagueId, leagues, handlers });
 }
