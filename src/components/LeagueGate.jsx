@@ -84,6 +84,34 @@ export function LeagueGate({ user, children }) {
     }
   }, []);
 
+  // S068 Issue #46: load this user's most-recent join_request that has not yet
+  // been superseded. Used by the 0-leagues branch to route to Pending/Rejected.
+  // Declared BEFORE the useEffects that depend on it — moving it after caused
+  // a TDZ ReferenceError ("Cannot access before initialization") that broke
+  // <LeagueGate> render entirely (S068 hotfix #2).
+  const loadJoinRequest = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from("join_requests")
+        .select("id, league_id, type, player_id, display_name, country, gender, playing_position, status, reject_reason, created_at, leagues(id, name)")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      if (error) { setJoinRequest(null); return null; }
+      const top = (data || [])[0];
+      if (!top) { setJoinRequest(null); return null; }
+      const shaped = { ...top, league: top.leagues || null };
+      delete shaped.leagues;
+      setJoinRequest(shaped);
+      return shaped;
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.warn("[LeagueGate] loadJoinRequest failed (non-fatal):", err);
+      setJoinRequest(null);
+      return null;
+    }
+  }, [user.id]);
+
   // Initial load + ?invite=... auto-join handling
   // S068 hardening: wrapped in try/finally so setLoading(false) ALWAYS runs.
   // Previously a thrown promise inside the IIFE could leave the app stuck on
@@ -155,34 +183,6 @@ export function LeagueGate({ user, children }) {
       return found.id;
     } catch { return null; }
   };
-
-  // S068 Issue #46: load this user's most-recent join_request that has not yet
-  // been superseded. Used by the 0-leagues branch to route to Pending/Rejected.
-  // Wrapped in try/catch — if the table is missing (rollback) or RLS denies
-  // anything, we silently treat it as "no request" so the app never gets stuck
-  // in the loading state on this branch.
-  const loadJoinRequest = useCallback(async () => {
-    try {
-      const { data, error } = await supabase
-        .from("join_requests")
-        .select("id, league_id, type, player_id, display_name, country, gender, playing_position, status, reject_reason, created_at, leagues(id, name)")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(1);
-      if (error) { setJoinRequest(null); return null; }
-      const top = (data || [])[0];
-      if (!top) { setJoinRequest(null); return null; }
-      const shaped = { ...top, league: top.leagues || null };
-      delete shaped.leagues;
-      setJoinRequest(shaped);
-      return shaped;
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.warn("[LeagueGate] loadJoinRequest failed (non-fatal):", err);
-      setJoinRequest(null);
-      return null;
-    }
-  }, [user.id]);
 
   const refreshLeagues = useCallback(async () => {
     const userLeagues = await loadUserLeagues();
