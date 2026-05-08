@@ -285,8 +285,10 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
         <div className="an-body">
           {/* 4-section sub-tab bar (Q6=B Phase 5 .seg/.sb 4-col variant) */}
           <div className="seg-4">
-            {[["league","📈 League"],["partnership","🤝 Partners"],["opponent","⚔️ H2H"],["insights","💡 Insights"]].map(([k,l])=>(
-              <button key={k} className={`sb-4${analyticsSection===k?" on":""}`} onClick={()=>setAnalyticsSection(k)}>{l}</button>
+            {[["league","trending-up","League"],["partnership","users","Partners"],["opponent","swords","H2H"],["insights","bulb","Insights"]].map(([k,ic,l])=>(
+              <button key={k} className={`sb-4${analyticsSection===k?" on":""}`} onClick={()=>setAnalyticsSection(k)}>
+                <Icon name={ic} size={13}/>{l}
+              </button>
             ))}
           </div>
 
@@ -597,7 +599,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
         return (<>
           {/* Phase 5: roster header bar with edit/add controls (admin only) */}
           <div className="rbar">
-            <div className="rbar-t">Roster<span className="rbar-count">({filtered.length})</span></div>
+            <div className="rbar-t">Players<span className="rbar-count">({filtered.length})</span></div>
             {isAdmin && <div style={{display:"flex",gap:6,alignItems:"center"}}>
               <button className={`gbtn${editMode?" on":""}`} onClick={()=>{setEditMode(!editMode);setEditPid(null);setConfirmDel(null);setShowAddPlayer(false);}}>
                 <Icon name="edit" size={12}/>{editMode?"Done":"Edit"}
@@ -667,14 +669,14 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                   {isMe && !editMode && <span className="pbadge">YOU</span>}
                   {editMode ? (
                     <div className="padmin" onClick={e=>e.stopPropagation()}>
-                      <button title="Edit" onClick={()=>startEdit(p)}>✏️</button>
+                      <button title="Edit" onClick={()=>startEdit(p)}><Icon name="edit" size={14}/></button>
                       {isAdmin && (confirmDel===p.id ? (
                         <div className="yn">
                           <button className="y" onClick={()=>{deletePlayer(p.id);setConfirmDel(null);}}>Yes</button>
                           <button className="n" onClick={()=>setConfirmDel(null)}>No</button>
                         </div>
                       ) : (
-                        <button title="Delete" onClick={()=>setConfirmDel(p.id)}>🗑️</button>
+                        <button title="Delete" onClick={()=>setConfirmDel(p.id)}><Icon name="trash" size={14} color="var(--danger)"/></button>
                       ))}
                     </div>
                   ) : (
