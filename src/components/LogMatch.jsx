@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { A, BG, CD2, BD, TX, MT, DG, GD, PU, BL } from '../theme';
 import { TeamShuffler } from './TeamShuffler';
 import { createInitialLiveState, scorePoint, undoPoint, getLiveDisplay, liveToSets, validateMatch } from '../utils/scoringEngine';
 import { formatTeam } from '../utils/helpers';
-import { ScoreStepper } from './ScoreStepper';
+import Icon from './Icon';
 
+// S066 Phase 9: spec-faithful restyle of LogMatch.
+// Uses Phase 7's .tcard/.tcardh/.shufbtn/.tinner/.tcolh/.tcoldot/.tcollbl/.tcolvs/.pslot/.psel
+// + Phase 9's new .modebar/.modebtn/.sccard/.cstep/.csbtn/.csval/.livebi/.acbtn/.mvpcard/.savebtn etc.
+// Behavior preserved: 2/3 set toggle, Manual entry, LIVE scoring engine, FT-09 approval flow,
+// FT-09b FIP validation, dead-rubber auto-truncate, post-save broadcast push.
 export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goBack,sel,lbl,getName,seasonId,seasons,setCurSeason,onSave,showToast,sendPushNotification}){
   const isE=!!em;
   const [tA,setTA]=useState(["",""]);
@@ -15,14 +19,11 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
   const [date,setDate]=useState(new Date().toISOString().split("T")[0]);
   const [saving,setSaving]=useState(false);
   const [saved,setSaved]=useState(false);
-  // FT-08 RNG state
   const [showShuffler,setShowShuffler]=useState(false);
   const [queue,setQueue]=useState([]);
-  // LIVE scoring mode
   const [mode,setMode]=useState('manual');
   const [liveState,setLiveState]=useState(createInitialLiveState);
   const [liveNs,setLiveNs]=useState(3);
-  // FT-09b / S045: FIP validation state
   const [invalidIdx,setInvalidIdx]=useState([]);
   const [validationError,setValidationError]=useState("");
 
@@ -39,11 +40,9 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
     }
   },[em]);
 
-  // Derived live display values
   const {ptA,ptB,gA,gB,isDeuce,inTiebreak}=getLiveDisplay(liveState);
   const {sA,sB,completedSets,matchOver,history:liveHistory}=liveState;
 
-  // Team name helpers — use formatTeam for canonical " x " separator
   const teamName=(ids)=>{
     const names=ids.filter(Boolean).map(id=>getName?getName(id):id);
     if(names.length===0)return 'Team';
@@ -54,7 +53,6 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
   function handleModeChange(m){
     if(m===mode)return;
     if(m==='manual'){
-      // Sync completed live sets into the manual form
       const ls=liveToSets(liveState);
       if(ls.length>0){
         const padded=[...ls];
@@ -63,7 +61,6 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
         setNs(ls.length);
       }
     } else {
-      // Reset live state on entry to LIVE mode
       setLiveState(createInitialLiveState());
     }
     setMode(m);
@@ -71,13 +68,12 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
 
   const all=[...tA,...tB].filter(Boolean);
   const avail=c=>players.filter(p=>!all.includes(p.id)||p.id===c);
+  const playerName=(pid)=>pm[pid]?.nickname||pm[pid]?.name||"";
 
   async function submit(){
     if(tA.some(x=>!x)||tB.some(x=>!x))return;
     if(date>new Date().toISOString().split("T")[0]){if(showToast)showToast("Cannot log a match for a future date","error");return;}
 
-    // FT-09b / S045: FIP validation — single source of truth for both modes.
-    // Auto-truncates dead-rubber sets (post-2-0); rejects invalid shapes (5-3, 6-5, etc.).
     const rawSets = mode==='live' ? liveToSets(liveState) : sets.slice(0,ns);
     const result = validateMatch(rawSets);
 
@@ -87,7 +83,6 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
       if(showToast)showToast(result.error,"error");
       return;
     }
-    // Clear any prior validation error state
     setInvalidIdx([]);
     setValidationError("");
 
@@ -96,7 +91,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
     const isIncomplete = result.status === 'incomplete';
 
     setSaving(true);
-    let insertedStatus = "approved"; // FT-09: tracks status of new INSERT (set by trigger)
+    let insertedStatus = "approved";
     try{
       if(isE){
         const {error}=await supabase
@@ -105,7 +100,6 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
           .eq("id",em.id);
         if(error)throw error;
       }else{
-        // FT-09 / S044: trigger sets status server-side. Read it back to drive the toast + push gating.
         const {data:inserted,error}=await supabase
           .from("matches")
           .insert({league_id:leagueId,season_id:seasonId,date,team_a:[...tA],team_b:[...tB],sets:as,motm:motm||null,logged_by:user.id})
@@ -130,8 +124,6 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
       setSaved(true);
       setTimeout(()=>setSaved(false),2000);
       if(onSave)onSave();
-      // FT-09: pending submissions get a different toast and skip the broadcast push (server handles admin notification).
-      // FT-09b / S045: incomplete matches save but are excluded from rankings.
       const isPending = !isE && insertedStatus === "pending";
       const isIncompleteSaved = !isE && insertedStatus === "incomplete";
       if(showToast){
@@ -141,7 +133,6 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
         else if(result.droppedSets>0) showToast(hasNext?`Match saved (dead-rubber set dropped). Next up — ${queue.length} remaining`:"Match saved (dead-rubber set dropped)");
         else showToast(hasNext?`Match saved! Next up — ${queue.length} remaining`:"Match saved!");
       }
-      // Don't show the won/lost UX state for incomplete or pending saves.
       if(!isE && !isPending && !isIncompleteSaved && !isIncomplete && sendPushNotification){
         const tANames=formatTeam(getName?getName(tA[0]):tA[0],getName?getName(tA[1]):tA[1]);
         const tBNames=formatTeam(getName?getName(tB[0]):tB[0],getName?getName(tB[1]):tB[1]);
@@ -177,48 +168,80 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
     goBack();
   }
 
-  const canSave=mode==='live'?liveToSets(liveState).some(([a,b])=>a>0||b>0):true;
+  function shuffleNow(){
+    setShowShuffler(true);
+  }
+
+  // Manual mode results
+  const manualSets = sets.slice(0,ns);
+  const aWins = manualSets.filter(s=>s[0]>s[1]).length;
+  const bWins = manualSets.filter(s=>s[1]>s[0]).length;
+  const hasResult = manualSets.some(s=>s[0]>0||s[1]>0);
+
+  const allFilled = tA[0]&&tA[1]&&tB[0]&&tB[1];
+  const scoresEntered = mode==='manual' ? hasResult : (liveState.history.length>0);
+  const canSave = allFilled && scoresEntered;
+  const saveHint = !allFilled ? "Select all 4 players to continue" : !scoresEntered ? "Enter at least one set score" : "";
+
+  const teamAlbl = teamName(tA);
+  const teamBlbl = teamName(tB);
+  const tbA = liveState.tbA || 0;
+  const tbB = liveState.tbB || 0;
 
   return (
-    <div style={{padding:"20px 16px",maxWidth:"600px",margin:"0 auto"}}>
-      {isE&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}><div style={{display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:14,fontWeight:700,color:GD}}>✏️ Editing</span></div><button onClick={cancel} style={{background:"none",border:`1px solid ${DG}40`,color:DG,padding:"4px 12px",borderRadius:8,fontSize:11,fontWeight:600,cursor:"pointer"}}>Cancel</button></div>}
-      {saved&&<div style={{background:`${A}20`,border:`1px solid ${A}40`,borderRadius:12,padding:"12px 16px",marginBottom:12,display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:18}}>✅</span><span style={{color:A,fontWeight:600,fontSize:14}}>{isE?"Updated!":"Saved!"}</span></div>}
-
-      {/* Mode toggle — hidden in edit mode */}
-      {!isE&&(
-        <div style={{display:"flex",gap:4,background:CD2,borderRadius:12,padding:4,marginBottom:16,border:`1px solid ${BD}`}}>
-          {[{id:'manual',label:'✏️ Manual'},{id:'live',label:'⚡ LIVE'}].map(({id,label})=>(
-            <button key={id} onClick={()=>handleModeChange(id)} style={{flex:1,padding:"9px 0",border:"none",borderRadius:9,background:mode===id?`${id==='live'?A:A}20`:"transparent",color:mode===id?A:MT,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"'Outfit',sans-serif",transition:"all 0.15s"}}>
-              {label}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Season tag */}
-      {!isE&&<div style={{marginBottom:12}}>
-        <div style={lbl}>Season</div>
-        <div style={{position:"relative"}}>
-          <div style={{display:"flex",gap:4,overflowX:"auto",scrollbarWidth:"none",WebkitOverflowScrolling:"touch"}}>
-            {seasons.filter(s=>s.active||s.id===seasonId).map(s=>(
-              <button key={s.id} onClick={()=>setCurSeason(s.id)} style={{padding:"6px 12px",borderRadius:8,border:`1px solid ${seasonId===s.id?PU:BD}`,background:seasonId===s.id?`${PU}15`:"transparent",color:seasonId===s.id?PU:MT,fontSize:12,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:4,whiteSpace:"nowrap",flexShrink:0}}>
-                {s.active&&<span style={{width:5,height:5,borderRadius:"50%",background:A}}/>}{s.name}
-              </button>
-            ))}
+    <div className="logbody">
+      {isE && (
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div style={{display:"flex",alignItems:"center",gap:8,fontSize:12,fontWeight:700,color:"var(--gold)",fontFamily:"var(--mono)",letterSpacing:".08em",textTransform:"uppercase"}}>
+            <Icon name="edit" size={14}/> Editing
           </div>
-          {seasons.filter(s=>s.active||s.id===seasonId).length>3&&<div style={{position:"absolute",right:0,top:0,bottom:0,width:24,background:`linear-gradient(to right,transparent,#0a0a0f)`,pointerEvents:"none"}}/>}
+          <button onClick={cancel} className="shcancel" style={{width:"auto",padding:"6px 14px"}}>Cancel</button>
         </div>
-      </div>}
-
-      {/* FT-08: Shuffle Teams */}
-      {!isE&&!showShuffler&&(
-        <div style={{marginBottom:12}}>
-          <button onClick={()=>setShowShuffler(true)} style={{width:"100%",padding:"10px",borderRadius:10,border:`1px dashed ${A}`,background:`${A}10`,color:A,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>🎲 Shuffle Teams</button>
-          {queue.length>0&&<div style={{marginTop:6,fontSize:11,color:MT,textAlign:"center"}}>{queue.length} queued match{queue.length===1?"":"es"} waiting — save this one to continue.</div>}
+      )}
+      {saved && (
+        <div style={{background:"var(--accent-dim)",border:"1px solid var(--accent-glow)",borderRadius:"var(--r-md)",padding:"10px 14px",display:"flex",alignItems:"center",gap:8}}>
+          <Icon name="check" size={14} color="var(--accent)" strokeWidth={2.5}/>
+          <span style={{color:"var(--accent)",fontWeight:700,fontSize:13}}>{isE?"Updated!":"Saved!"}</span>
         </div>
       )}
 
-      {!isE&&showShuffler&&(
+      {/* Manual / LIVE mode bar (hidden in edit mode) */}
+      {!isE && (
+        <div className="modebar" style={{margin:0}}>
+          <button className={`modebtn ${mode==='manual'?'man':''}`} onClick={()=>handleModeChange('manual')}>
+            <Icon name="edit" size={15} color={mode==='manual'?"var(--text)":"#9090a4"}/>Manual
+          </button>
+          <button className={`modebtn ${mode==='live'?'live':''}`} onClick={()=>handleModeChange('live')}>
+            {mode==='live'?<div className="livedot"/>:<Icon name="zap" size={15} color="#9090a4"/>}Live
+          </button>
+        </div>
+      )}
+
+      {/* Date + Season context bar */}
+      <div className="ctxbar" style={{padding:"8px 0",borderBottom:"none"}}>
+        {!isE && seasons && seasons.length > 0 && (
+          <select
+            value={seasonId||""}
+            onChange={e=>setCurSeason(e.target.value)}
+            className="ctxchip"
+            style={{appearance:"none",WebkitAppearance:"none",cursor:"pointer",paddingRight:24,backgroundImage:"none"}}
+          >
+            {seasons.filter(s=>s.active||s.id===seasonId).map(s=>(
+              <option key={s.id} value={s.id}>{s.name}{s.active?" • active":""}</option>
+            ))}
+          </select>
+        )}
+        <input
+          type="date"
+          value={date}
+          max={new Date().toISOString().split("T")[0]}
+          onChange={e=>setDate(e.target.value)}
+          className="ctxchip"
+          style={{colorScheme:"dark",cursor:"pointer"}}
+        />
+      </div>
+
+      {!isE && showShuffler && (
         <TeamShuffler
           players={players}
           getName={getName}
@@ -239,196 +262,219 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
         />
       )}
 
-      <div style={{marginBottom:16}}>
-        <div style={lbl}>Date</div>
-        <input type="date" value={date} max={new Date().toISOString().split("T")[0]} onChange={e=>setDate(e.target.value)} style={{...sel,colorScheme:"dark"}}/>
-      </div>
-
-      <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",gap:8,marginBottom:16}}>
-        <div>
-          <div style={{...lbl,color:BL}}>Team A</div>
-          {tA.map((pid,i)=>(
-            <select key={i} value={pid} onChange={e=>{const t=[...tA];t[i]=e.target.value;setTA(t);}} style={{...sel,marginBottom:6,borderColor:`${BL}40`}}>
-              <option value="">Player {i+1}</option>
-              {avail(pid).map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}
-            </select>
-          ))}
-        </div>
-        <div style={{display:"flex",alignItems:"center",fontWeight:900,fontSize:18,color:MT,paddingTop:20}}>VS</div>
-        <div>
-          <div style={{...lbl,color:GD}}>Team B</div>
-          {tB.map((pid,i)=>(
-            <select key={i} value={pid} onChange={e=>{const t=[...tB];t[i]=e.target.value;setTB(t);}} style={{...sel,marginBottom:6,borderColor:`${GD}40`}}>
-              <option value="">Player {i+1}</option>
-              {avail(pid).map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}
-            </select>
-          ))}
-        </div>
-      </div>
-
-      {/* ── LIVE scoring panel ── */}
-      {mode==='live'&&!showShuffler&&(
-        <div style={{marginBottom:16}}>
-
-          {/* Sets count toggle */}
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-            <div style={{fontSize:11,color:MT,fontWeight:600,textTransform:"uppercase",letterSpacing:1}}>Sets</div>
-            <div style={{display:"flex",gap:4}}>
-              {[2,3].map(n=>(
-                <button key={n} onClick={()=>setLiveNs(n)} style={{padding:"4px 10px",borderRadius:6,border:`1px solid ${liveNs===n?A:BD}`,background:liveNs===n?`${A}15`:"transparent",color:liveNs===n?A:MT,fontSize:11,fontWeight:600,cursor:"pointer"}}>{n}</button>
-              ))}
-            </div>
-          </div>
-
-          {/* Scoreboard */}
-          <div style={{background:CD2,borderRadius:14,padding:"16px 20px",marginBottom:12,border:`1px solid ${BD}`}}>
-            {/* Team label row */}
-            <div style={{display:"grid",gridTemplateColumns:"1fr 60px 1fr",gap:8,marginBottom:10}}>
-              <div style={{color:A,fontWeight:700,fontSize:11,textTransform:"uppercase",letterSpacing:1,textAlign:"center",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{teamName(tA)}</div>
-              <div/>
-              <div style={{color:DG,fontWeight:700,fontSize:11,textTransform:"uppercase",letterSpacing:1,textAlign:"center",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{teamName(tB)}</div>
-            </div>
-
-            {/* Sets row */}
-            <div style={{display:"grid",gridTemplateColumns:"1fr 60px 1fr",gap:8,marginBottom:8,alignItems:"center"}}>
-              <div style={{fontSize:42,fontWeight:900,fontFamily:"'JetBrains Mono',monospace",color:TX,textAlign:"center",lineHeight:1}}>{sA}</div>
-              <div style={{fontSize:10,color:MT,textAlign:"center",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>SETS</div>
-              <div style={{fontSize:42,fontWeight:900,fontFamily:"'JetBrains Mono',monospace",color:TX,textAlign:"center",lineHeight:1}}>{sB}</div>
-            </div>
-
-            {/* Games row */}
-            <div style={{display:"grid",gridTemplateColumns:"1fr 60px 1fr",gap:8,marginBottom:8,alignItems:"center"}}>
-              <div style={{fontSize:22,fontWeight:700,fontFamily:"'JetBrains Mono',monospace",color:MT,textAlign:"center"}}>{inTiebreak?tbA:gA}</div>
-              <div style={{fontSize:10,color:MT,textAlign:"center",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{inTiebreak?"TB":"GAMES"}</div>
-              <div style={{fontSize:22,fontWeight:700,fontFamily:"'JetBrains Mono',monospace",color:MT,textAlign:"center"}}>{inTiebreak?liveState.tbB:gB}</div>
-            </div>
-
-            {/* Points row */}
-            {!matchOver&&(
-              <div style={{display:"grid",gridTemplateColumns:"1fr 60px 1fr",gap:8,alignItems:"center"}}>
-                <div style={{fontSize:28,fontWeight:800,fontFamily:"'JetBrains Mono',monospace",textAlign:"center",color:isDeuce?GD:ptA==='Ad'?A:TX}}>{isDeuce?'—':ptA}</div>
-                <div style={{fontSize:10,color:isDeuce?GD:MT,textAlign:"center",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{isDeuce?'DEUCE':'PTS'}</div>
-                <div style={{fontSize:28,fontWeight:800,fontFamily:"'JetBrains Mono',monospace",textAlign:"center",color:isDeuce?GD:ptB==='Ad'?DG:TX}}>{isDeuce?'—':ptB}</div>
-              </div>
-            )}
-
-            {/* Completed sets chips */}
-            {completedSets.length>0&&(
-              <div style={{marginTop:12,display:"flex",gap:6,justifyContent:"center",flexWrap:"wrap"}}>
-                {completedSets.map(({a,b},i)=>(
-                  <span key={i} style={{fontSize:12,color:MT,background:`${BD}60`,padding:"3px 10px",borderRadius:8,fontFamily:"'JetBrains Mono',monospace",fontWeight:700}}>{a}–{b}</span>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Match-over banner */}
-          {matchOver&&(()=>{
-            const tied=sA===sB;
-            const winnerIsA=sA>sB;
-            const winSets=tied?sA:(winnerIsA?sA:sB);
-            const loseSets=tied?sB:(winnerIsA?sB:sA);
-            const winnerLabel=tied?`${teamName(tA)} vs ${teamName(tB)}`:`${winnerIsA?teamName(tA):teamName(tB)} — Winners`;
-            return (
-              <div style={{background:`${A}18`,border:`1px solid ${A}50`,borderRadius:12,padding:"14px 16px",marginBottom:12,textAlign:"center"}}>
-                <div style={{fontSize:24,marginBottom:6}}>{tied?'🤝':'🎉'}</div>
-                <div style={{color:A,fontWeight:800,fontSize:15,marginBottom:8,lineHeight:1.3}}>{winnerLabel}</div>
-                <div style={{fontFamily:"'JetBrains Mono',monospace",fontWeight:800,fontSize:20,color:TX,marginBottom:8}}>
-                  {tied?`${sA} – ${sB}`:`${winSets} – ${loseSets}`}
-                </div>
-                <div style={{display:"flex",flexDirection:"column",gap:3,alignItems:"center"}}>
-                  {completedSets.map(({a,b},i)=>{
-                    const winnerScore=tied?a:(winnerIsA?a:b);
-                    const loserScore=tied?b:(winnerIsA?b:a);
-                    return (
-                      <div key={i} style={{fontSize:12,color:MT,fontFamily:"'JetBrains Mono',monospace",fontWeight:700}}>
-                        Set {i+1}: <span style={{color:TX}}>{winnerScore} – {loserScore}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })()}
-
-          {/* Scoring tap buttons */}
-          {!matchOver&&(
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
-              <button
-                onClick={()=>setLiveState(s=>scorePoint(s,'A',liveNs))}
-                style={{padding:"28px 12px",borderRadius:14,border:`2px solid ${A}50`,background:`${A}18`,color:A,fontSize:16,fontWeight:900,cursor:"pointer",fontFamily:"'Outfit',sans-serif",lineHeight:1.4,touchAction:"manipulation"}}
-              >
-                +1<br/>
-                <span style={{fontSize:11,fontWeight:500,color:`${A}99`,display:"block",marginTop:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{teamName(tA)}</span>
-              </button>
-              <button
-                onClick={()=>setLiveState(s=>scorePoint(s,'B',liveNs))}
-                style={{padding:"28px 12px",borderRadius:14,border:`2px solid ${DG}50`,background:`${DG}18`,color:DG,fontSize:16,fontWeight:900,cursor:"pointer",fontFamily:"'Outfit',sans-serif",lineHeight:1.4,touchAction:"manipulation"}}
-              >
-                +1<br/>
-                <span style={{fontSize:11,fontWeight:500,color:`${DG}99`,display:"block",marginTop:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{teamName(tB)}</span>
-              </button>
-            </div>
+      {/* Players card (.tcard with .tinner — same as Schedule form) */}
+      <div className="tcard">
+        <div className="tcardh">
+          <div className="tcardtit">Players</div>
+          {!isE && !showShuffler && (
+            <button className="shufbtn" onClick={shuffleNow}>
+              <Icon name="shuffle" size={13}/>Shuffle{queue.length>0?` · ${queue.length}`:''}
+            </button>
           )}
-
-          {/* Undo + Reset row */}
-          <div style={{display:"flex",gap:8}}>
-            {liveHistory.length>0&&(
-              <button
-                onClick={()=>setLiveState(undoPoint)}
-                style={{flex:1,padding:"10px",borderRadius:10,border:`1px solid ${BD}`,background:"transparent",color:MT,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}
-              >↩ Undo</button>
-            )}
-            {(liveHistory.length>0||matchOver)&&(
-              <button
-                onClick={()=>setLiveState(createInitialLiveState())}
-                style={{padding:"10px 14px",borderRadius:10,border:`1px solid ${BD}`,background:"transparent",color:MT,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}
-              >↺ Reset</button>
-            )}
+        </div>
+        <div className="tinner">
+          <div>
+            <div className="tcolh">
+              <div className="tcoldot tcolha"/>
+              <div className="tcollbl tcollbla">Team A</div>
+            </div>
+            {tA.map((pid,i)=>(
+              <div key={i} className="pslot">
+                <select
+                  className={`psel af${pid?' fi':''}`}
+                  value={pid}
+                  onChange={e=>{const t=[...tA];t[i]=e.target.value;setTA(t);}}
+                >
+                  <option value="">Player {i+1}</option>
+                  {avail(pid).map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}
+                </select>
+                <div className="pselch"><Icon name="chevron" size={13} color="rgba(74,222,128,.45)"/></div>
+              </div>
+            ))}
+          </div>
+          <div className="tcolvs">VS</div>
+          <div>
+            <div className="tcolh" style={{justifyContent:"flex-end"}}>
+              <div className="tcollbl tcollblb">Team B</div>
+              <div className="tcoldot tcolhb"/>
+            </div>
+            {tB.map((pid,i)=>(
+              <div key={i} className="pslot">
+                <select
+                  className={`psel bf${pid?' fi':''}`}
+                  value={pid}
+                  onChange={e=>{const t=[...tB];t[i]=e.target.value;setTB(t);}}
+                >
+                  <option value="">Player {i+1}</option>
+                  {avail(pid).map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}
+                </select>
+                <div className="pselch"><Icon name="chevron" size={13} color="rgba(245,158,11,.45)"/></div>
+              </div>
+            ))}
           </div>
         </div>
-      )}
+      </div>
 
-      {/* ── Manual sets entry (hidden in LIVE mode) ── */}
-      {mode==='manual'&&(
-        <div style={{marginBottom:16}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-            <div style={lbl}>Sets</div>
-            <div style={{display:"flex",gap:4}}>
+      {/* Score card — Manual mode */}
+      {mode==='manual' && (
+        <div className="sccard">
+          <div className="sccardh">
+            <div className="sccardhT">Score</div>
+            <div className="stog">
               {[2,3].map(n=>(
-                <button key={n} onClick={()=>setNs(n)} style={{padding:"4px 10px",borderRadius:6,border:`1px solid ${ns===n?A:BD}`,background:ns===n?`${A}15`:"transparent",color:ns===n?A:MT,fontSize:11,fontWeight:600,cursor:"pointer"}}>{n}</button>
+                <button key={n} className={`stogbtn${ns===n?' on':''}`} onClick={()=>setNs(n)}>{n} sets</button>
               ))}
             </div>
           </div>
-          {sets.slice(0,ns).map((s,i)=>(
-            <div key={i} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
-              <span style={{fontSize:11,color:MT,width:36,fontWeight:600}}>Set {i+1}</span>
-              <ScoreStepper value={s[0]} max={7} aColor={BL} ariaLabel={`Set ${i+1} Team A`} invalid={invalidIdx.includes(i)} onChange={(n)=>{const x=sets.map(y=>[...y]);x[i]=[n,x[i][1]];setSets(x);if(invalidIdx.length)setInvalidIdx([]);if(validationError)setValidationError("");}}/>
-              <span style={{color:MT,fontWeight:700}}>-</span>
-              <ScoreStepper value={s[1]} max={7} aColor={GD} ariaLabel={`Set ${i+1} Team B`} invalid={invalidIdx.includes(i)} onChange={(n)=>{const x=sets.map(y=>[...y]);x[i]=[x[i][0],n];setSets(x);if(invalidIdx.length)setInvalidIdx([]);if(validationError)setValidationError("");}}/>
-            </div>
-          ))}
-          {validationError && (
-            <div style={{marginTop:8,padding:"8px 12px",background:`${DG}15`,border:`1px solid ${DG}40`,borderRadius:8,fontSize:12,color:DG,fontWeight:600}}>
-              ⚠️ {validationError}
+          <div className="sctbody">
+            {Array.from({length:ns}).map((_,i)=>{
+              const s=sets[i]||[0,0];
+              const inv=invalidIdx.includes(i);
+              const setVal=(idx,val)=>{
+                const x=sets.map(y=>[...y]);
+                x[i]=idx===0?[val,x[i][1]]:[x[i][0],val];
+                setSets(x);
+                if(invalidIdx.length)setInvalidIdx([]);
+                if(validationError)setValidationError("");
+              };
+              return (
+                <div key={i} className="scrow">
+                  <div className="scrowl">S{i+1}</div>
+                  <div className={`cstep a${inv?' invalid':''}`}>
+                    <button className="csbtn" onClick={()=>setVal(0,Math.max(0,s[0]-1))}><Icon name="minus" size={14} strokeWidth={2.5} color="var(--accent)"/></button>
+                    <div className="csval">{s[0]}</div>
+                    <button className="csbtn" onClick={()=>setVal(0,Math.min(9,s[0]+1))}><Icon name="plus" size={14} strokeWidth={2.5} color="var(--accent)"/></button>
+                  </div>
+                  <div className="scrows">—</div>
+                  <div className={`cstep b${inv?' invalid':''}`}>
+                    <button className="csbtn" onClick={()=>setVal(1,Math.max(0,s[1]-1))}><Icon name="minus" size={14} strokeWidth={2.5} color="var(--gold)"/></button>
+                    <div className="csval">{s[1]}</div>
+                    <button className="csbtn" onClick={()=>setVal(1,Math.min(9,s[1]+1))}><Icon name="plus" size={14} strokeWidth={2.5} color="var(--gold)"/></button>
+                  </div>
+                </div>
+              );
+            })}
+            {validationError && (
+              <div className="lmerr"><Icon name="alert" size={12}/> {validationError}</div>
+            )}
+          </div>
+          {hasResult && (
+            <div className="scrrow">
+              <div className="scrteam a">{playerName(tA[0])||"Team A"}</div>
+              <div className="scrscore a">{aWins}</div>
+              <div className="scrdash">—</div>
+              <div className="scrscore b">{bWins}</div>
+              <div className="scrteam b">{playerName(tB[0])||"Team B"}</div>
             </div>
           )}
         </div>
       )}
 
-      <div style={{marginBottom:20}}>
-        <div style={lbl}>⭐ Man of the Match</div>
-        <select value={motm} onChange={e=>setMotm(e.target.value)} style={sel}>
-          <option value="">Select MVP</option>
-          {[...tA,...tB].filter(Boolean).map(pid=>(
-            <option key={pid} value={pid}>{pm[pid]?.nickname||pm[pid]?.name}</option>
-          ))}
-        </select>
+      {/* Score card — LIVE mode */}
+      {mode==='live' && !showShuffler && (
+        <div className="sccard">
+          <div className="sccardh">
+            <div className="sccardhT" style={{display:"flex",alignItems:"center",gap:6}}>
+              <div className="livedot"/> LIVE Score
+            </div>
+            <div className="stog">
+              {[2,3].map(n=>(
+                <button key={n} className={`stogbtn${liveNs===n?' on':''}`} onClick={()=>setLiveNs(n)}>{n} sets</button>
+              ))}
+            </div>
+          </div>
+          <div className="livebi">
+            <div className="liveh">
+              <div className="livetn a">{teamAlbl}</div>
+              <div className="livevsp">VS</div>
+              <div className="livetn b">{teamBlbl}</div>
+            </div>
+            <div className="liverws">
+              <div className="liverow">
+                <div className="livenum a">{sA}</div>
+                <div className="liverl">SETS</div>
+                <div className="livenum b">{sB}</div>
+              </div>
+              <div className="liverow">
+                <div className="livenum a" style={{fontSize:22,color:"#9090a4"}}>{inTiebreak?tbA:gA}</div>
+                <div className="liverl">{inTiebreak?"TB":"GAMES"}</div>
+                <div className="livenum b" style={{fontSize:22,color:"#9090a4"}}>{inTiebreak?tbB:gB}</div>
+              </div>
+              {!matchOver && (
+                <div className="liverow">
+                  <div className="livenum a" style={{fontSize:22,color:isDeuce?"var(--gold)":(ptA==='Ad'?"var(--accent)":"var(--text)")}}>{isDeuce?'—':ptA}</div>
+                  <div className="liverl" style={{color:isDeuce?"var(--gold)":undefined}}>{isDeuce?'DEUCE':'PTS'}</div>
+                  <div className="livenum b" style={{fontSize:22,color:isDeuce?"var(--gold)":(ptB==='Ad'?"var(--gold)":"var(--text)")}}>{isDeuce?'—':ptB}</div>
+                </div>
+              )}
+            </div>
+            {!matchOver && (
+              <div className="liveacs">
+                <button className="acbtn a" onClick={()=>setLiveState(s=>scorePoint(s,'A',liveNs))}>
+                  <div className="acval">+1</div>
+                  <div className="aclbl">{teamAlbl}</div>
+                </button>
+                <button className="acbtn b" onClick={()=>setLiveState(s=>scorePoint(s,'B',liveNs))}>
+                  <div className="acval">+1</div>
+                  <div className="aclbl">{teamBlbl}</div>
+                </button>
+              </div>
+            )}
+            {liveHistory.length>0 && (
+              <div className="undorow">
+                <button className="undobtn" onClick={()=>setLiveState(undoPoint)}>
+                  <Icon name="back" size={11}/>Undo last point
+                </button>
+              </div>
+            )}
+            {matchOver && (() => {
+              const tied = sA===sB;
+              const winnerIsA = sA>sB;
+              const winSets = tied?sA:(winnerIsA?sA:sB);
+              const loseSets = tied?sB:(winnerIsA?sB:sA);
+              return (
+                <div style={{background:"var(--accent-dim)",border:"1px solid var(--accent-glow)",borderRadius:"var(--r-md)",padding:"12px 14px",textAlign:"center",marginBottom:10}}>
+                  <div style={{fontSize:13,fontWeight:800,color:"var(--accent)",marginBottom:6,fontFamily:"var(--font)"}}>
+                    {tied?`${teamAlbl} vs ${teamBlbl}`:`${winnerIsA?teamAlbl:teamBlbl} — Winners`}
+                  </div>
+                  <div style={{fontFamily:"var(--mono)",fontWeight:800,fontSize:18,color:"var(--text)"}}>{tied?`${sA} – ${sB}`:`${winSets} – ${loseSets}`}</div>
+                </div>
+              );
+            })()}
+            {(liveHistory.length>0||matchOver) && (
+              <div style={{display:"flex",justifyContent:"center",marginBottom:10}}>
+                <button className="undobtn" onClick={()=>setLiveState(createInitialLiveState())}>
+                  <Icon name="back" size={11}/>Reset
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* MOTM card */}
+      <div className="mvpcard">
+        <div className="mvpiw"><Icon name="star" size={18} color="var(--gold)"/></div>
+        <div className="mvpsw">
+          <div className="mvplbl">Man of the Match</div>
+          <select className="mvpsel" value={motm} onChange={e=>setMotm(e.target.value)}>
+            <option value="">— Select MOTM</option>
+            {[...tA,...tB].filter(Boolean).map(pid=>(
+              <option key={pid} value={pid}>{playerName(pid)}</option>
+            ))}
+          </select>
+          <div className="mvpch"><Icon name="chevron" size={14}/></div>
+        </div>
       </div>
 
-      <button onClick={submit} disabled={saving||!canSave} style={{width:"100%",padding:"14px",borderRadius:12,border:"none",background:saving||!canSave?BD:isE?`linear-gradient(135deg,${GD},${GD}cc)`:`linear-gradient(135deg,${A},${A}cc)`,color:saving||!canSave?MT:BG,fontSize:15,fontWeight:800,cursor:saving||!canSave?"not-allowed":"pointer",textTransform:"uppercase",opacity:saving?0.6:1}}>
-        {saving?"Saving...":isE?"Update Match":"Save Match"}
-      </button>
+      {/* Save */}
+      <div>
+        <button onClick={submit} disabled={saving||!canSave} className={`savebtn${canSave&&!saving?' on':' off'}`}>
+          {canSave && !saving && <Icon name="check" size={18} color="#000" strokeWidth={2.5}/>}
+          {saving?"Saving…":isE?"Update Match":"Save Match"}
+        </button>
+        {!canSave && saveHint && <div className="savehint">{saveHint}</div>}
+      </div>
     </div>
   );
 }
