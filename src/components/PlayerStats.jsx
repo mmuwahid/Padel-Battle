@@ -11,6 +11,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
   const [subTab,setSubTab]=useState("roster"); // roster | analytics
   const [q,setQ]=useState(""); // Phase 5 search
   const [genderFilter,setGenderFilter]=useState("all"); // S066 Phase 8: "all" | "male" | "female"
+  const [filterOpen,setFilterOpen]=useState(false); // S066 Phase 8: sliders-icon toggles bar
   const [editMode,setEditMode]=useState(false);
   const [editPid,setEditPid]=useState(null);
   const [editName,setEditName]=useState("");
@@ -613,14 +614,20 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
           {/* Phase 5: roster header bar with edit/add controls (admin only) */}
           <div className="rbar">
             <div className="rbar-t">Players<span className="rbar-count">({filtered.length})</span></div>
-            {isAdmin && <div style={{display:"flex",gap:6,alignItems:"center"}}>
-              <button className={`gbtn${editMode?" on":""}`} onClick={()=>{setEditMode(!editMode);setEditPid(null);setConfirmDel(null);setShowAddPlayer(false);}}>
-                <Icon name="edit" size={12}/>{editMode?"Done":"Edit"}
+            <div style={{display:"flex",gap:6,alignItems:"center"}}>
+              {/* S066 Phase 8: sliders icon — toggles gender filter bar (visible to everyone) */}
+              <button className={`fbtn${filterOpen?" on":""}`} onClick={()=>setFilterOpen(v=>!v)} aria-label="Filter by gender" title="Filter by gender">
+                <Icon name="sliders" size={14} color={filterOpen?"var(--accent)":"var(--muted)"}/>
               </button>
-              {!editMode && <button className="pbtn" onClick={()=>setShowAddPlayer(!showAddPlayer)}>
-                <Icon name="plus" size={12} color="#000" strokeWidth={2.5}/>{showAddPlayer?"Cancel":"Add"}
-              </button>}
-            </div>}
+              {isAdmin && <>
+                <button className={`gbtn${editMode?" on":""}`} onClick={()=>{setEditMode(!editMode);setEditPid(null);setConfirmDel(null);setShowAddPlayer(false);}}>
+                  <Icon name="edit" size={12}/>{editMode?"Done":"Edit"}
+                </button>
+                {!editMode && <button className="pbtn" onClick={()=>setShowAddPlayer(!showAddPlayer)}>
+                  <Icon name="plus" size={12} color="#000" strokeWidth={2.5}/>{showAddPlayer?"Cancel":"Add"}
+                </button>}
+              </>}
+            </div>
           </div>
 
           {/* Phase 5: search input */}
@@ -629,17 +636,29 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
             <input className="srch" placeholder="Search players…" value={q} onChange={e=>setQ(e.target.value)}/>
           </div>
 
-          {/* S066 Phase 8: gender filter pills (All / Men / Women) */}
-          <div className="gfilter">
-            {[["all","All"],["male","Men"],["female","Women"]].map(([key,label])=>(
-              <button key={key}
-                className={`gfilter-pill${genderFilter===key?" on":""}`}
-                onClick={()=>setGenderFilter(key)}>
-                <span className="gfilter-lbl">{label}</span>
-                <span className="gfilter-cnt">{counts[key]}</span>
-              </button>
-            ))}
-          </div>
+          {/* S066 Phase 8: gender filter bar — small/subtle pills below search.
+              Spec: only visible when sliders icon is toggled on. Auto-width pills
+              with gender symbols. Active state colors: All/Men = accent green,
+              Women = pink (#f472b6). NO count badges. Inline "{N} results" when
+              filter is not "all". Fade-in animation on reveal. */}
+          {filterOpen && (
+            <div className="gfilter-bar">
+              {[
+                {id:"all",    label:"All",      activeCls:"fa"},
+                {id:"male",   label:"Men ♂",    activeCls:"fm"},
+                {id:"female", label:"Women ♀",  activeCls:"ff"},
+              ].map(f=>(
+                <button key={f.id}
+                  className={`gfpill${genderFilter===f.id?" "+f.activeCls:""}`}
+                  onClick={()=>setGenderFilter(f.id)}>
+                  {f.label}
+                </button>
+              ))}
+              {genderFilter!=="all" && (
+                <span className="gfilter-count">{filtered.length} result{filtered.length!==1?"s":""}</span>
+              )}
+            </div>
+          )}
 
           {/* Add Player form preserved verbatim (S046 admin path) */}
           {showAddPlayer&&!editMode&&<div style={{margin:"0 18px 12px",background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14}}>
