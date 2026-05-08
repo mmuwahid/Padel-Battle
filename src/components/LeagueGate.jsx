@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from '../supabase';
-import { PadelLogoSmall } from './icons';
+import { PadelLogoSmall, PadelHubMark } from './icons';
 import { OnboardingScreen } from './OnboardingScreen';
 import { PendingApprovalScreen } from './PendingApprovalScreen';
 import { RejectedScreen } from './RejectedScreen';
@@ -275,7 +275,7 @@ export function LeagueGate({ user, children }) {
       <div className="lscreen">
         <div className="lbg" />
         <div className="lhero">
-          <div className="llogobox"><PadelLogoSmall size={84} /></div>
+          <div className="llogobox"><PadelHubMark size={140} /></div>
           <div className="ltag">Loading…</div>
         </div>
       </div>

@@ -17,6 +17,30 @@ export const PadelLogo = () => (<svg width="48" height="48" viewBox="0 0 80 80" 
   <line x1="38" y1="52" x2="42" y2="52" stroke="#888" strokeWidth="1"/><line x1="38" y1="55" x2="42" y2="55" stroke="#888" strokeWidth="1"/><line x1="38" y1="58" x2="42" y2="58" stroke="#888" strokeWidth="1"/>
 </svg>);
 
+// S068 Issue #54: brand mark — same hub-pattern SVG as the static index.html
+// splash (6-dot network around a center node + connecting lines). Used on all
+// loading screens so the user sees ONE consistent logo from cold-start through
+// auth → leagues → match data, without the static-splash → React-splash
+// "different logo flash" the user reported.
+export const PadelHubMark = ({ size = 96 }) => (
+  <svg width={size} height={size} viewBox="0 0 100 100" fill="none">
+    <circle cx="50" cy="50" r="45" stroke="#4ADE80" strokeWidth="3" fill="none" opacity="0.3"/>
+    <circle cx="50" cy="50" r="6" fill="#4ADE80"/>
+    <circle cx="50" cy="22" r="4" fill="#4ADE80" opacity="0.7"/>
+    <circle cx="74" cy="38" r="4" fill="#4ADE80" opacity="0.7"/>
+    <circle cx="74" cy="62" r="4" fill="#4ADE80" opacity="0.7"/>
+    <circle cx="50" cy="78" r="4" fill="#4ADE80" opacity="0.7"/>
+    <circle cx="26" cy="62" r="4" fill="#4ADE80" opacity="0.7"/>
+    <circle cx="26" cy="38" r="4" fill="#4ADE80" opacity="0.7"/>
+    <line x1="50" y1="50" x2="50" y2="22" stroke="#4ADE80" strokeWidth="1.5" opacity="0.4"/>
+    <line x1="50" y1="50" x2="74" y2="38" stroke="#4ADE80" strokeWidth="1.5" opacity="0.4"/>
+    <line x1="50" y1="50" x2="74" y2="62" stroke="#4ADE80" strokeWidth="1.5" opacity="0.4"/>
+    <line x1="50" y1="50" x2="50" y2="78" stroke="#4ADE80" strokeWidth="1.5" opacity="0.4"/>
+    <line x1="50" y1="50" x2="26" y2="62" stroke="#4ADE80" strokeWidth="1.5" opacity="0.4"/>
+    <line x1="50" y1="50" x2="26" y2="38" stroke="#4ADE80" strokeWidth="1.5" opacity="0.4"/>
+  </svg>
+);
+
 export const PadelLogoSmall = ({size=26}) => (<svg width={size} height={size} viewBox="0 0 80 80" fill="none">
   <ellipse cx="40" cy="28" rx="16" ry="20" stroke="#666" strokeWidth="4" fill="none"/>
   <circle cx="40" cy="28" r="5" fill={A}/>

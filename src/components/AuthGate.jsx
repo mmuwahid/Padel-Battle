@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { supabase } from '../supabase';
-import { PadelLogoSmall } from './icons';
+import { PadelLogoSmall, PadelHubMark } from './icons';
 import Icon from './Icon';
 
 // Map raw Supabase error messages to user-friendly ones
@@ -216,7 +216,7 @@ export function AuthGate({children}){
       <div className="lscreen">
         <div className="lbg"/>
         <div className="lhero">
-          <div className="llogobox"><PadelLogoSmall size={84}/></div>
+          <div className="llogobox"><PadelHubMark size={140}/></div>
           <div className="lbrand">Padel<span className="accent">Hub</span></div>
           <div className="ltag">Set a new password</div>
         </div>
@@ -249,7 +249,7 @@ export function AuthGate({children}){
       <div className="lscreen">
         <div className="lbg"/>
         <div className="lhero">
-          <div className="llogobox"><PadelLogoSmall size={84}/></div>
+          <div className="llogobox"><PadelHubMark size={140}/></div>
           <div className="lbrand">Padel<span className="accent">Hub</span></div>
           <div className="ltag">Your league. Your rankings.</div>
         </div>

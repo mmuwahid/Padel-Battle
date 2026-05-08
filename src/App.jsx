@@ -4,7 +4,7 @@ import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, BL, PU, TL, TR } from './th
 import { formatTeam, win, formatDate, setTotals, flagEmoji, decodeImageFile } from './utils/helpers';
 import { calcElo } from './utils/elo';
 import { RULES, ARGUED } from './data/rules';
-import { CourtIcon, PadelLogo, PadelLogoSmall } from './components/icons';
+import { CourtIcon, PadelLogo, PadelLogoSmall, PadelHubMark } from './components/icons';
 import { NavIcon } from './components/NavIcons';
 import Icon from './components/Icon';
 import { FD } from './components/FormDots';
@@ -823,7 +823,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
     <div className="lscreen">
       <div className="lbg"/>
       <div className="lhero">
-        <div className="llogobox"><PadelLogoSmall size={84}/></div>
+        <div className="llogobox"><PadelHubMark size={140}/></div>
         <div className="ltag">Loading…</div>
       </div>
     </div>
