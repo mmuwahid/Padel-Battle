@@ -84,10 +84,12 @@ export default function Icon({ name, size = 20, color = "currentColor", strokeWi
     case "users":       return <svg style={s} viewBox="0 0 24 24" {...p}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
     case "swords":      return <svg style={s} viewBox="0 0 24 24" {...p}><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" y1="19" x2="19" y2="13"/><line x1="16" y1="16" x2="20" y2="20"/><line x1="19" y1="21" x2="21" y2="19"/><polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5"/><line x1="5" y1="14" x2="9" y2="18"/><line x1="7" y1="17" x2="4" y2="20"/><line x1="3" y1="19" x2="5" y2="21"/></svg>;
     case "bulb":        return <svg style={s} viewBox="0 0 24 24" {...p}><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.2 1 2V17h6v-.3c0-.8.4-1.5 1-2A7 7 0 0 0 12 2z"/></svg>;
-    /* S068: clearer flexed-arm silhouette (vertical fist+forearm at top-right,
-       horizontal upper-arm at bottom, rounded bicep bulge connecting them).
-       Reads as "💪" at icon sizes — the Lucide path was too anatomical. */
-    case "muscle":      return <svg style={s} viewBox="0 0 24 24" {...p}><path d="M14 2.5h5.5v9.5H14z"/><path d="M3 17.5h13.5V12H14"/><path d="M3 17.5C3 8.5 8.5 5 14 8.5"/><line x1="15.5" y1="5.5" x2="18" y2="5.5"/><line x1="15.5" y1="9" x2="18" y2="9"/></svg>;
+    /* S068: emoji-style filled 💪 silhouette. Single closed path traces the
+       outline of a flexed arm — horizontal upper-arm at the bottom, vertical
+       forearm + fist on the right, pronounced bicep bulge curving up between
+       shoulder and elbow. fill={color} overrides the SVG-level fill:none
+       so the shape renders solid like the emoji, not stroke-only. */
+    case "muscle":      return <svg style={s} viewBox="0 0 24 24" {...p}><path fill={color} stroke="none" d="M2 20h16V4h-4v8c0-8-10-6-12 3z"/><line x1="14" y1="7" x2="18" y2="7" strokeWidth={strokeWidth*0.5} stroke={color === 'currentColor' ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.4)'}/><line x1="14" y1="10" x2="18" y2="10" strokeWidth={strokeWidth*0.5} stroke={color === 'currentColor' ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.4)'}/></svg>;
     default:            return null;
   }
 }
