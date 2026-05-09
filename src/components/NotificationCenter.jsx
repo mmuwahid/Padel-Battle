@@ -36,7 +36,34 @@ const TONE_COLOR = {
   muted: "var(--muted)",
 };
 
-export function NotificationCenter({ onClose }) {
+// S070 Issue #79: route a notification to its destination based on type + data.kind.
+// Returns null when the notification has no actionable target (e.g. role_change,
+// rejected match, generic members announcement). Caller should ignore null returns
+// and just mark-read without navigating.
+export function notificationTarget(n) {
+  if (!n) return null;
+  const d = n.data || {};
+  const kind = d.kind;
+  switch (n.type) {
+    case "match": {
+      if (kind === "rejected") return null;
+      if (d.match_id) return { tab: "history", matchId: d.match_id };
+      return { tab: "history" };
+    }
+    case "members": {
+      if (kind === "join_pending") return { sidebarView: "approvalQueue" };
+      if (kind === "join_approved" && d.player_id) return { tab: "stats", playerId: d.player_id };
+      if (kind === "role_change") return null;
+      return null;
+    }
+    case "ranking":    return { tab: "board" };
+    case "tournament": return { tab: "gamemode" };
+    case "challenge":  return { tab: "gamemode" };
+    default:           return null;
+  }
+}
+
+export function NotificationCenter({ onClose, onNavigate }) {
   const { supabase, user, leagueId, showToast } = useLeague();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -140,8 +167,13 @@ export function NotificationCenter({ onClose }) {
           return (
             <div
               key={n.id}
-              className={`nc-item${n.read ? "" : " unread"}`}
-              onClick={() => !n.read && markRead(n.id)}
+              className={`nc-item${n.read ? "" : " unread"}${notificationTarget(n) ? " navigable" : ""}`}
+              onClick={() => {
+                if (!n.read) markRead(n.id);
+                // S070 Issue #79: route to the matching screen if this kind has a destination.
+                const target = notificationTarget(n);
+                if (target && onNavigate) onNavigate(target);
+              }}
             >
               <div className="nc-item-row">
                 <div className={`nc-ico ${meta.tone}`}>

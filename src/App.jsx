@@ -66,6 +66,9 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
   // (e.g. Ranking podium → drill-in). On back chevron, restore origin tab so
   // user lands where they came from instead of always landing on Players grid.
   const [drillInOrigin,setDrillInOrigin]=useState(null);
+  // S070 Issue #79: notification click-through. When set, MatchHistory scrolls
+  // to the matching .mcard, flashes a highlight, then calls onScrolled() to clear.
+  const [scrollToMatchId,setScrollToMatchId]=useState(null);
   const [selectedSeason,setSelectedSeason]=useState(null);
   const [tournament,setTournament]=useState(null);
   // FT-05: Challenges/Scheduling
@@ -108,6 +111,37 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
   // sub-view in the sidebar instead of nulling out the leagueId. Replaces
   // the old LeagueGate full-screen picker.
   const onSwitchLeague = () => navigateSidebar("leagues");
+
+  // S070 Issue #79: route a NotificationCenter click to its destination tab/screen.
+  // Declared after sidebarHistory state so the setter is in TDZ-safe scope.
+  const handleNotifNavigate = useCallback((target) => {
+    if (!target) return;
+    // Always close the notif drawer + sidebar overlay before routing.
+    setSidebarView(null);
+    setSidebarHistory([]);
+    setSidebarOpen(false);
+    if (target.sidebarView) {
+      // Re-open sidebar overlay with the requested view (e.g. approvalQueue).
+      setSidebarOpen(true);
+      setSidebarView(target.sidebarView);
+      return;
+    }
+    if (target.tab === "stats" && target.playerId) {
+      setDrillInOrigin("history");
+      setSelectedPlayer(target.playerId);
+      setTab("stats");
+      return;
+    }
+    if (target.tab) {
+      setSelectedPlayer(null);
+      setTab(target.tab);
+      if (target.matchId) {
+        // Defer scroll-target set until after the tab switch + first paint.
+        setTimeout(() => setScrollToMatchId(target.matchId), 0);
+      }
+    }
+  }, []);
+
   const [avatarUrl,setAvatarUrl]=useState(null);
   const [avatarUploading,setAvatarUploading]=useState(false);
 
@@ -982,7 +1016,10 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
             <PlatformAdmin onClose={goBackSidebar} showToast={showToast}/>
           )}
           {sidebarView==="notifications" && (
-            <NotificationCenter onClose={()=>{goBackSidebar();loadLeagueData();}}/>
+            <NotificationCenter
+              onClose={()=>{goBackSidebar();loadLeagueData();}}
+              onNavigate={handleNotifNavigate}
+            />
           )}
           {sidebarView==="leagues" && (
             <LeaguesView
@@ -1278,6 +1315,8 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
               shareMatch={shareMatch}
               sel={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:13,fontFamily: "var(--font)"}}
               onMatchDeleted={loadLeagueData}
+              scrollToMatchId={scrollToMatchId}
+              onScrolled={()=>setScrollToMatchId(null)}
             />
           </div>
           <div style={{display:matchSubTab==="schedule"?"block":"none"}}>

@@ -2178,6 +2178,18 @@ input.linput[type="date"]::-webkit-calendar-picker-indicator {
 @keyframes albFade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes albZoom { from { transform: scale(.86); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
+/* S070 Issue #79: notification-driven scroll-to-match highlight + click cue. */
+.nc-item.navigable { cursor: pointer; }
+.nc-item.navigable:active { transform: scale(.99); transition: transform 120ms; }
+.mcard.nc-flash {
+  animation: ncFlashPulse 1.6s ease-out;
+}
+@keyframes ncFlashPulse {
+  0%   { box-shadow: 0 0 0 0 var(--accent-glow); border-color: var(--accent); }
+  40%  { box-shadow: 0 0 0 6px rgba(74, 222, 128, 0.18); border-color: var(--accent); }
+  100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+}
+
 /* Tappable avatars — visual cue that the photo expands on click. */
 .propic.tappable,
 .dpro-pic.tappable {
