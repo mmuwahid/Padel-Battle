@@ -207,9 +207,11 @@ export function OnboardingScreen({ user, handlers, onComplete, showToast }) {
               {attempted && !gender && <div className="ferr">Please select your gender</div>}
             </div>
 
-            {/* Playing Side */}
+            {/* S070 Issue #83: renamed "Playing Side" → "Court Position".
+                Handedness is captured later in EditMyProfile (kept off the
+                onboarding wizard to keep step 2 short). */}
             <div className="fgrp">
-              <div className="fl2"><Icon name="court-l" size={12}/>Playing Side<span className="req">*</span></div>
+              <div className="fl2"><Icon name="court-l" size={12}/>Court Position<span className="req">*</span></div>
               <div className="stog2">
                 {[
                   {v:"left",  l:"Left Side",  i:"court-l"},
@@ -222,7 +224,7 @@ export function OnboardingScreen({ user, handlers, onComplete, showToast }) {
                   </button>
                 ))}
               </div>
-              {attempted && !side && <div className="ferr">Playing side is required</div>}
+              {attempted && !side && <div className="ferr">Court position is required</div>}
             </div>
 
             <button className={`octa${canStep2?'':' off'}`} onClick={()=>{setAttempt(true); if(canStep2) setStep(3);}}>

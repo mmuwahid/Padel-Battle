@@ -79,6 +79,14 @@ export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, re
                 <Icon name="calendar" size={12} color="#9090a4"/>{getAge(claimedPlayer.date_of_birth)} yrs
               </div>
             )}
+            {/* S070 Issue #83: handedness tag — rendered before court position
+                per spec ("Handedness should be read before the player position"). */}
+            {claimedPlayer.handedness && (
+              <div className="protag">
+                <Icon name="user" size={13} color="#9090a4"/>
+                {claimedPlayer.handedness==="left"?"Left Hand":"Right Hand"}
+              </div>
+            )}
             {claimedPlayer.playing_position && (
               <div className="protag">
                 <Icon name={claimedPlayer.playing_position==="left"?"court-l":claimedPlayer.playing_position==="right"?"court-r":"court-any"} size={13} color="#9090a4"/>

@@ -19,6 +19,7 @@ export function EditPlayerModal({ player, onClose, onSaved }) {
   const [country, setCountry] = useState(player.country || "");
   const [position, setPosition] = useState(player.playing_position || "");
   const [gender, setGender] = useState(player.gender || ""); // S066 Phase 8
+  const [handedness, setHandedness] = useState(player.handedness || ""); // S070 Issue #83
   const [avatarUrl, setAvatarUrl] = useState(player.avatar_url || null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -88,6 +89,7 @@ export function EditPlayerModal({ player, onClose, onSaved }) {
           country: country || null,
           playing_position: position || null,
           gender: gender || null,
+          handedness: handedness || null,
           avatar_url: avatarUrl || null,
         })
         .eq("id", player.id);
@@ -155,9 +157,22 @@ export function EditPlayerModal({ player, onClose, onSaved }) {
           </div>
         </div>
 
-        {/* Playing Side */}
+        {/* S070 Issue #83: Handedness (left/right hand) — separate from court position. */}
+        <div className="fgrp">
+          <div className="fl2"><Icon name="user" size={12} />Handedness</div>
+          <div className="gtog">
+            <button className={`gbtn2${handedness === "left" ? " on" : ""}`} onClick={() => setHandedness(handedness === "left" ? "" : "left")}>
+              <Icon name="user" size={16} color={handedness === "left" ? "var(--accent)" : "#9090a4"} />Left Hand
+            </button>
+            <button className={`gbtn2${handedness === "right" ? " on" : ""}`} onClick={() => setHandedness(handedness === "right" ? "" : "right")}>
+              <Icon name="user" size={16} color={handedness === "right" ? "var(--accent)" : "#9090a4"} />Right Hand
+            </button>
+          </div>
+        </div>
+
+        {/* S070 Issue #83: renamed "Playing Side" → "Court Position". */}
         <div className="fgrp" style={{ marginBottom: 18 }}>
-          <div className="fl2"><Icon name="court-l" size={12} />Playing Side</div>
+          <div className="fl2"><Icon name="court-l" size={12} />Court Position</div>
           <div className="stog2">
             {[
               { v: "left",  l: "Left Side",  i: "court-l" },
