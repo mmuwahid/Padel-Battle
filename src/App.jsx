@@ -35,6 +35,7 @@ function urlBase64ToUint8Array(base64String) {
 import { AuthGate } from './components/AuthGate';
 import { LeagueGate } from './components/LeagueGate';
 import { LeaguesView } from './components/LeaguesView';
+import { AvatarCropModal } from './components/AvatarCropModal';
 import { LogMatch } from './components/LogMatch';
 const PlayerStats = lazy(() => import('./components/PlayerStats').then(m => ({default: m.PlayerStats})));
 import { ScheduleView } from './components/ScheduleView';
@@ -118,26 +119,23 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
     })();
   },[user.id]);
 
-  // FT-03 / Issue #20: Upload avatar (resize to 200x200, upload to storage, save URL).
-  // S051: switched from FileReader->dataURL->Image to decodeImageFile() helper —
-  // fixes iOS Safari PWA "Failed to load on first attempt" by using createImageBitmap
-  // (native HEIC decode + reliable async). Also write-through to claimedPlayer.avatar_url
-  // so the user's photo propagates to every player-avatar slot in the app (ranking,
-  // partners, H2H, etc.) which read from players.avatar_url.
-  const uploadAvatar=async(file)=>{
-    if(!file)return;
+  // S069: avatar pick now opens AvatarCropModal first; the modal returns a
+  // pre-cropped 200x200 JPEG blob to uploadCroppedAvatar(). The legacy
+  // auto-center-crop path is retained as fallback if the cropper fails.
+  const [avatarFile, setAvatarFile] = useState(null);
+  const uploadAvatar = (file) => {
+    if (!file) return;
+    setAvatarFile(file);
+  };
+
+  // FT-03 / Issue #20: Upload avatar (200x200 already, upload to storage, save URL).
+  // S069: input is now a pre-cropped blob from AvatarCropModal. Path/storage logic
+  // unchanged; we just skip the canvas resize step.
+  const uploadCroppedAvatar = async (blob) => {
+    if (!blob) return;
+    setAvatarFile(null);
     setAvatarUploading(true);
     try{
-      const img=await decodeImageFile(file);
-      if(!img.width||!img.height)throw new Error("Invalid image dimensions");
-      const canvas=document.createElement("canvas");
-      canvas.width=200;canvas.height=200;
-      const ctx=canvas.getContext("2d");
-      const s=Math.min(img.width,img.height);
-      const sx=(img.width-s)/2,sy=(img.height-s)/2;
-      ctx.drawImage(img,sx,sy,s,s,0,0,200,200);
-      if(img.close)img.close();
-      const blob=await new Promise(r=>canvas.toBlob(r,"image/jpeg",0.85));
       const path=`${user.id}/avatar.jpg`;
       // S067: 1-retry upload pattern (iOS PWA storage cold-start race)
       let upErr=null;
@@ -1406,6 +1404,17 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
           </div>
         ))}
       </div>}
+
+      {/* S069: Avatar crop/zoom modal — opens after the user picks a file via
+          ProfileView (or any future caller of uploadAvatar). Returns a 200x200
+          JPEG blob to uploadCroppedAvatar(). */}
+      {avatarFile && (
+        <AvatarCropModal
+          file={avatarFile}
+          onCancel={()=>setAvatarFile(null)}
+          onCropped={uploadCroppedAvatar}
+        />
+      )}
 
       {/* TOAST NOTIFICATION */}
       {toast && (
