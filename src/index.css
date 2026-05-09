@@ -372,7 +372,10 @@ body {
 .llogobox {
   width: auto; height: auto;
   display: flex; align-items: center; justify-content: center;
-  filter: drop-shadow(0 0 36px rgba(74, 222, 128, 0.35));
+  /* S070 follow-up: lighter drop-shadow (was 36px / 0.35 alpha) — the heavier
+     halo paired with the radial-gradient bg circle was reading as a "container
+     box" against the dark app bg. Logo now floats transparent on var(--bg). */
+  filter: drop-shadow(0 0 24px rgba(74, 222, 128, 0.30));
   animation: pg 3s ease-in-out infinite;
   margin-bottom: 22px;
   overflow: visible;
@@ -381,14 +384,11 @@ body {
   box-shadow: none;
 }
 
-/* S070 Issue #80: brand-mark internal animations — dot fade + center pulse +
-   slow orbit on the outer dashed ring. The ring rotates around its viewBox
-   center via transform-origin: 50% 50%. */
+/* S070 Issue #80: brand-mark internal animations — dot fade + center pulse.
+   S070 follow-up: removed .lhmark-orbit (outer dashed ring + its rotation
+   keyframe) along with the radial-gradient halo circle — both contributed
+   to the "boxed" look the user flagged. */
 .lhmark { display: block; }
-.lhmark-orbit {
-  transform-origin: 50% 50%;
-  animation: hubOrbit 18s linear infinite;
-}
 .lhmark-pulse {
   transform-origin: 50% 50%;
   transform-box: fill-box;
@@ -403,9 +403,6 @@ body {
   transform-origin: 50% 50%;
   transform-box: fill-box;
   animation: hubDot 2.4s ease-in-out infinite;
-}
-@keyframes hubOrbit {
-  to { transform: rotate(360deg); }
 }
 @keyframes hubPulse {
   0%, 100% { transform: scale(1);   opacity: 1; }
