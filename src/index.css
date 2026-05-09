@@ -5,6 +5,7 @@ body {
      color as the floating header / nav / login backdrop — no visible seam.
      Lessons #18 / #40 / #44 all preserved. */
   background: #080808;
+  font-family: 'Syne', sans-serif;
   padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
   padding-left: env(safe-area-inset-left, 0px);
