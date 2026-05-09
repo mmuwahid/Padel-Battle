@@ -356,25 +356,68 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* S068 Issue #54: was flex-end (logo at bottom of screen), now center —
-     logo lives in the middle of the splash like the static index.html loader. */
-  justify-content: center;
-  padding: 32px 32px 28px;
+  /* S070 Issue #80: position the logo ~20% above true center per user direction.
+     Was justify-content:center (S068). Now flex-start with padding-top set so
+     the logo sits at ~30vh from top (which is ~20% above the visual middle on
+     a typical phone viewport). */
+  justify-content: flex-start;
+  padding: 30vh 32px 28px;
   position: relative;
   z-index: 1;
 }
-/* S068 Issue #54: opening-screen logo — border/container removed,
-   doubled in display size. Glow + pulse retained as a soft halo. */
+/* S070 Issue #80: re-designed splash logo container — bigger drop-shadow halo,
+   sophisticated multi-layer pulse animation. Coordinates with the new
+   <PadelHubMark> SVG component (with .lhmark / .lhmark-orbit / .lhmark-pulse
+   / .lhmark-pulse-aura / .lhmark-dot inner classes). */
 .llogobox {
   width: auto; height: auto;
   display: flex; align-items: center; justify-content: center;
-  filter: drop-shadow(0 0 28px rgba(74, 222, 128, 0.30));
+  filter: drop-shadow(0 0 36px rgba(74, 222, 128, 0.35));
   animation: pg 3s ease-in-out infinite;
-  margin-bottom: 18px;
+  margin-bottom: 22px;
   overflow: visible;
   background: none;
   border: none;
   box-shadow: none;
+}
+
+/* S070 Issue #80: brand-mark internal animations — dot fade + center pulse +
+   slow orbit on the outer dashed ring. The ring rotates around its viewBox
+   center via transform-origin: 50% 50%. */
+.lhmark { display: block; }
+.lhmark-orbit {
+  transform-origin: 50% 50%;
+  animation: hubOrbit 18s linear infinite;
+}
+.lhmark-pulse {
+  transform-origin: 50% 50%;
+  transform-box: fill-box;
+  animation: hubPulse 1.6s ease-in-out infinite;
+}
+.lhmark-pulse-aura {
+  transform-origin: 50% 50%;
+  transform-box: fill-box;
+  animation: hubAura 1.6s ease-in-out infinite;
+}
+.lhmark-dot {
+  transform-origin: 50% 50%;
+  transform-box: fill-box;
+  animation: hubDot 2.4s ease-in-out infinite;
+}
+@keyframes hubOrbit {
+  to { transform: rotate(360deg); }
+}
+@keyframes hubPulse {
+  0%, 100% { transform: scale(1);   opacity: 1; }
+  50%      { transform: scale(1.18); opacity: 0.95; }
+}
+@keyframes hubAura {
+  0%, 100% { transform: scale(0.85); opacity: 0.18; }
+  50%      { transform: scale(1.45); opacity: 0.05; }
+}
+@keyframes hubDot {
+  0%, 100% { transform: scale(1);    opacity: 0.85; }
+  50%      { transform: scale(1.25); opacity: 1; }
 }
 .lbrand {
   font-size: 32px;
@@ -2042,6 +2085,10 @@ input.linput[type="date"]::-webkit-calendar-picker-indicator {
 /* Pull-to-refresh — overlay shown during reload */
 .ptr-overlay{position:fixed;top:env(safe-area-inset-top,0);left:0;right:0;height:42px;display:flex;align-items:center;justify-content:center;z-index:50;background:linear-gradient(180deg,rgba(13,13,20,.95),rgba(13,13,20,0));pointer-events:none;}
 .ptr-spinner{width:22px;height:22px;border-radius:50%;border:2px solid rgba(74,222,128,.25);border-top-color:var(--accent);animation:ptrSpin 700ms linear infinite;}
+/* S070 Issue #80: full-screen PTR splash — same design as .lscreen + .lhero
+   but rendered as a fixed overlay so it sits on top of whatever was visible. */
+.ptr-splash{position:fixed;inset:0;z-index:300;background:var(--bg);display:flex;flex-direction:column;overflow:hidden;animation:fadeIn 180ms ease-out;}
+.ptr-splash > .lhero{flex:1;}
 .ptr-pull{position:fixed;top:env(safe-area-inset-top,0);left:50%;transform:translateX(-50%);z-index:49;color:var(--accent);opacity:0;transition:opacity 150ms;pointer-events:none;display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding-top:8px;}
 .ptr-pull.visible{opacity:1;}
 @keyframes ptrSpin{to{transform:rotate(360deg);}}
