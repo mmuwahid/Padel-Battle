@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, PU } from '../theme';
 import { generateAmericanoSchedule, generateMexicanoRound } from '../utils/tournaments';
 import { ScoreStepper } from './ScoreStepper';
+import Icon from './Icon';
 
 export function AmericanoMode({ players, getName, supabase, leagueId, tournament, setTournament, sel, endTournament, resetTournament, deleteTournament, showToast }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -185,45 +186,84 @@ export function AmericanoMode({ players, getName, supabase, leagueId, tournament
   // ════════════════════════════════════
   // RENDER: Casual Selector UI (default — no active tournament)
   // ════════════════════════════════════
+  const enough = selPlayers.length >= 4;
   return (
-    <div>
-      {/* Americano Card */}
-      <div onClick={() => { setCasualMode("americano"); }} style={{ background: CD, border: `1px solid ${casualMode === "americano" ? A : BD}`, borderRadius: 14, padding: 16, marginBottom: 12, cursor: "pointer", transition: "border-color 0.15s" }}>
-        <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>{"\uD83C\uDFAF"} Americano</h3>
-        <p style={{ fontSize: 12, color: MT, lineHeight: 1.5 }}>Rotating partners — play with everyone. Points accumulate individually across rounds.</p>
-        <span style={{ display: "inline-block", fontSize: 10, fontWeight: 600, padding: "3px 10px", borderRadius: 20, marginTop: 8, background: `${A}1e`, color: A }}>Quick Session</span>
-      </div>
-
-      {/* Mexicano Card */}
-      <div onClick={() => { setCasualMode("mexicano"); }} style={{ background: CD, border: `1px solid ${casualMode === "mexicano" ? PU : BD}`, borderRadius: 14, padding: 16, marginBottom: 16, cursor: "pointer", transition: "border-color 0.15s" }}>
-        <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>{"\uD83C\uDF2E"} Mexicano</h3>
-        <p style={{ fontSize: 12, color: MT, lineHeight: 1.5 }}>Dynamic matchmaking based on standings. Balanced matches every round.</p>
-        <span style={{ display: "inline-block", fontSize: 10, fontWeight: 600, padding: "3px 10px", borderRadius: 20, marginTop: 8, background: `${PU}1e`, color: PU }}>Adaptive</span>
-      </div>
-
-      {/* Player Selection */}
-      <div style={{ marginBottom: 12 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-          <div style={{ fontSize: 11, color: MT, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase" }}>Players ({selPlayers.length} selected)</div>
-          <button onClick={() => setSelP(selPlayers.length === players.length ? [] : players.map(p => p.id))} style={{ background: "none", border: "none", color: A, fontSize: 11, fontWeight: 600, cursor: "pointer" }}>{selPlayers.length === players.length ? "Deselect All" : "Select All"}</button>
+    <div className="gm-body">
+      {/* Mode picker — Americano */}
+      <div className={`gm-card ${casualMode === "americano" ? "on" : ""}`} onClick={() => setCasualMode("americano")} role="button" tabIndex={0}>
+        <div className="gm-card-hd">
+          <div className="gm-card-ico"><Icon name="target" size={20} /></div>
+          <div className="gm-card-tw">
+            <div className="gm-card-title">Americano</div>
+            <span className="gm-card-tag">Quick session</span>
+          </div>
         </div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-          {players.map(p => { const on = selPlayers.includes(p.id); return (
-            <button key={p.id} onClick={() => setSelP(on ? selPlayers.filter(x => x !== p.id) : [...selPlayers, p.id])} style={{ padding: "8px 14px", borderRadius: 10, border: `1px solid ${on ? A : BD}`, background: on ? `${A}15` : "transparent", color: on ? A : MT, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>{p.nickname || p.name}</button>
-          ); })}
+        <p className="gm-card-sub">Rotating partners — play with everyone. Points accumulate individually across rounds.</p>
+      </div>
+
+      {/* Mode picker — Mexicano */}
+      <div className={`gm-card ${casualMode === "mexicano" ? "on gold" : ""}`} onClick={() => setCasualMode("mexicano")} role="button" tabIndex={0}>
+        <div className="gm-card-hd">
+          <div className="gm-card-ico"><Icon name="trending-up" size={20} /></div>
+          <div className="gm-card-tw">
+            <div className="gm-card-title">Mexicano</div>
+            <span className="gm-card-tag">Adaptive</span>
+          </div>
+        </div>
+        <p className="gm-card-sub">Dynamic matchmaking based on standings. Balanced matches every round.</p>
+      </div>
+
+      {/* Player selection */}
+      <div className="gm-pblk">
+        <div className="gm-plbl-row">
+          <span className="gm-plbl">Players ({selPlayers.length} selected)</span>
+          <button className="gm-plink" onClick={() => setSelP(selPlayers.length === players.length ? [] : players.map(p => p.id))}>
+            {selPlayers.length === players.length ? "Deselect all" : "Select all"}
+          </button>
+        </div>
+        <div className="gm-pwrap">
+          {players.map(p => {
+            const on = selPlayers.includes(p.id);
+            return (
+              <button
+                key={p.id}
+                className={`gm-pchip ${on ? "on" : ""}`}
+                onClick={() => setSelP(on ? selPlayers.filter(x => x !== p.id) : [...selPlayers, p.id])}
+              >
+                {p.nickname || p.name}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* Courts & Points */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
-        <div><div style={{ fontSize: 11, color: MT, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>Courts</div><select value={courts} onChange={e => setCourts(+e.target.value)} style={sel}>{[1, 2, 3].map(n => <option key={n} value={n}>{n}</option>)}</select></div>
-        <div><div style={{ fontSize: 11, color: MT, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>Points / Round</div><select value={ptsPerRound} onChange={e => setPPR(+e.target.value)} style={sel}>{[16, 20, 24, 32].map(n => <option key={n} value={n}>{n}</option>)}</select></div>
+      <div className="gm-grid2">
+        <div className="gm-fld">
+          <span className="gm-fld-lbl">Courts</span>
+          <select className="gm-fld-sel" value={courts} onChange={e => setCourts(+e.target.value)}>
+            {[1, 2, 3].map(n => <option key={n} value={n}>{n}</option>)}
+          </select>
+        </div>
+        <div className="gm-fld">
+          <span className="gm-fld-lbl">Points / Round</span>
+          <select className="gm-fld-sel" value={ptsPerRound} onChange={e => setPPR(+e.target.value)}>
+            {[16, 20, 24, 32].map(n => <option key={n} value={n}>{n}</option>)}
+          </select>
+        </div>
       </div>
 
-      {/* Start Button */}
-      <button onClick={startCasualTournament} disabled={selPlayers.length < 4} style={{ width: "100%", padding: "14px", borderRadius: 12, border: "none", background: selPlayers.length >= 4 ? `linear-gradient(135deg,${PU},${PU}cc)` : BD, color: selPlayers.length >= 4 ? TX : MT, fontSize: 15, fontWeight: 800, cursor: selPlayers.length >= 4 ? "pointer" : "not-allowed", textTransform: "uppercase" }}>
+      {/* Start button */}
+      <button
+        className={`gm-startbtn ${enough ? "" : "off"}`}
+        onClick={startCasualTournament}
+        disabled={!enough}
+      >
+        <Icon name="zap" size={14} />
         Start {casualMode === "americano" ? "Americano" : "Mexicano"} ({selPlayers.length} players)
       </button>
+      {!enough && <div className="gm-hint">Select at least 4 players to start</div>}
     </div>
   );
 }
+
