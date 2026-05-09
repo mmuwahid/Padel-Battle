@@ -30,7 +30,7 @@ function pointsCount(sets){
   return sets.reduce((acc,s)=>{ acc[0]+=(s[0]||0); acc[1]+=(s[1]||0); return acc; },[0,0]);
 }
 
-export function MatchHistory({onEdit,shareMatch,sel,onMatchDeleted}){
+export function MatchHistory({onEdit,shareMatch,sel,onMatchDeleted,scrollToMatchId,onScrolled}){
   const { supabase, user, players, approvedMatches, pendingMatches, incompleteMatches, isAdmin, getName, showToast, seasons, selectedSeason, setSelectedSeason } = useLeague();
   const seasonFilter = (m) => !selectedSeason || m.season_id === selectedSeason;
   const matches = approvedMatches.filter(seasonFilter);
@@ -47,6 +47,25 @@ export function MatchHistory({onEdit,shareMatch,sel,onMatchDeleted}){
 
   const getAvatar = (pid) => players.find(pp=>pp.id===pid)?.avatar_url;
   const getCountry = (pid) => players.find(pp=>pp.id===pid)?.country;
+
+  // S070 Issue #79: scroll-to-match support for notification click-through.
+  // When parent passes scrollToMatchId, find the .mcard with that data-match-id,
+  // smooth-scroll it into view, briefly flash the .nc-flash highlight class,
+  // then call onScrolled() so the parent can clear the prop. Runs after a short
+  // delay to let MatchHistory finish its initial render + Pending section expand.
+  useEffect(() => {
+    if (!scrollToMatchId) return;
+    const t = setTimeout(() => {
+      const el = document.querySelector(`[data-match-id="${scrollToMatchId}"]`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.classList.add("nc-flash");
+        setTimeout(() => el.classList.remove("nc-flash"), 1800);
+      }
+      if (onScrolled) onScrolled();
+    }, 120);
+    return () => clearTimeout(t);
+  }, [scrollToMatchId, onScrolled]);
 
   // Stable key so the SELECT only refires when the SET of match IDs actually changes
   // (not on every render due to .filter() returning new array refs). Without this,
@@ -238,7 +257,7 @@ export function MatchHistory({onEdit,shareMatch,sel,onMatchDeleted}){
             {pendingExpanded && (
               <div className="mp-body">
                 {myPendingMatches.map(m=>(
-                  <div key={m.id} className="mcard pending">
+                  <div key={m.id} className="mcard pending" data-match-id={m.id}>
                     <div className="mhd2">
                       <div className="mdate2">{formatDate(m.date)}</div>
                       <span className="pending-tag">{"\u23F3"} Awaiting approval</span>
@@ -275,7 +294,7 @@ export function MatchHistory({onEdit,shareMatch,sel,onMatchDeleted}){
             })).filter(c => c.count > 0);
             const isPickerOpen = pickerOpen === m.id;
             return (
-              <div key={m.id} className={`mcard${isIncomplete?' inc':''}`}>
+              <div key={m.id} className={`mcard${isIncomplete?' inc':''}`} data-match-id={m.id}>
                 <div className="mhd2">
                   <div className="mdate2">{formatDate(m.date)}</div>
                   {isIncomplete
