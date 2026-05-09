@@ -933,9 +933,17 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
   return (
     <LeagueContext.Provider value={leagueCtx}>
     <div style={{background:BG,minHeight:"100vh",paddingBottom:"calc(82px + env(safe-area-inset-bottom, 0px))",fontFamily: "var(--font)",color:TX}}>
+      {/* S070 Issue #80: pull-to-refresh now uses the full-screen brand splash
+          (same .lscreen design as cold-start) instead of a small top spinner.
+          User flagged that PTR should "see the same screen" as cold-start. */}
       {ptrRefreshing && (
-        <div className="ptr-overlay">
-          <div className="ptr-spinner" />
+        <div className="ptr-splash">
+          <div className="lbg"/>
+          <div className="lhero">
+            <div className="llogobox"><PadelHubMark size={160}/></div>
+            <h1 className="lbrand"><span>Padel</span><span className="accent">Hub</span></h1>
+            <div className="ltag">Refreshing…</div>
+          </div>
         </div>
       )}
       {ptrPull > 20 && !ptrRefreshing && (
