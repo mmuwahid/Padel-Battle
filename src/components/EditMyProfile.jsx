@@ -16,6 +16,8 @@ export function EditMyProfile({ player, onClose }) {
   const [position, setPosition] = useState(player.playing_position || "");
   const [gender, setGender] = useState(player.gender || "");
   const [dob, setDob] = useState(player.date_of_birth || "");
+  // S070 Issue #83: handedness (left/right hand) — separate from court position.
+  const [handedness, setHandedness] = useState(player.handedness || "");
   const [saving, setSaving] = useState(false);
   const [attempted, setAttempt] = useState(false);
 
@@ -25,8 +27,9 @@ export function EditMyProfile({ player, onClose }) {
   const dobOk = !!dob;
   const countryOk = !!country;
   const genderOk = gender === "male" || gender === "female";
+  const handednessOk = handedness === "left" || handedness === "right";
   const sideOk = position === "left" || position === "right" || position === "any";
-  const canSave = nameOk && dobOk && countryOk && genderOk && sideOk;
+  const canSave = nameOk && dobOk && countryOk && genderOk && handednessOk && sideOk;
 
   const save = async () => {
     setAttempt(true);
@@ -43,6 +46,7 @@ export function EditMyProfile({ player, onClose }) {
           playing_position: position,
           gender,
           date_of_birth: dob,
+          handedness,
         })
         .eq("id", player.id);
       if (error) {
@@ -111,9 +115,26 @@ export function EditMyProfile({ player, onClose }) {
           {attempted && !genderOk && <div className="ferr">Please select your gender</div>}
         </div>
 
-        {/* Playing Side */}
+        {/* S070 Issue #83: Handedness — left/right hand of the player.
+            Rendered ABOVE Court Position per spec; distinct concept (the hand
+            you hold the racket with vs. which side of the court you play). */}
+        <div className="fgrp">
+          <div className="fl2"><Icon name="user" size={12}/>Handedness<span className="req">*</span></div>
+          <div className="gtog">
+            <button className={`gbtn2${handedness==="left"?" on":""}`} onClick={()=>setHandedness("left")}>
+              <Icon name="user" size={16} color={handedness==="left"?"var(--accent)":"#9090a4"}/>Left Hand
+            </button>
+            <button className={`gbtn2${handedness==="right"?" on":""}`} onClick={()=>setHandedness("right")}>
+              <Icon name="user" size={16} color={handedness==="right"?"var(--accent)":"#9090a4"}/>Right Hand
+            </button>
+          </div>
+          {attempted && !handednessOk && <div className="ferr">Handedness is required</div>}
+        </div>
+
+        {/* S070 Issue #83: renamed "Playing Side" → "Court Position" — clearer label
+            for which side of the court the player covers. */}
         <div className="fgrp" style={{marginBottom:18}}>
-          <div className="fl2"><Icon name="court-l" size={12}/>Playing Side<span className="req">*</span></div>
+          <div className="fl2"><Icon name="court-l" size={12}/>Court Position<span className="req">*</span></div>
           <div className="stog2">
             {[
               { v: "left",  l: "Left Side",  i: "court-l" },
@@ -126,7 +147,7 @@ export function EditMyProfile({ player, onClose }) {
               </button>
             ))}
           </div>
-          {attempted && !sideOk && <div className="ferr">Playing side is required</div>}
+          {attempted && !sideOk && <div className="ferr">Court position is required</div>}
         </div>
 
         {/* Actions */}

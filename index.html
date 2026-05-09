@@ -9,25 +9,38 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="theme-color" content="#0d0d14" />
     <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192.png" />
     <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon-precomposed" href="/icons/icon-192.png" />
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Outfit:wght@700&display=swap" as="style" />
     <link rel="preconnect" href="https://fonts.googleapis.com"/>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600;700;800;900&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
     <title>PadelHub</title>
     <meta name="description" content="Track padel matches, ELO rankings, partnerships and tournaments with your friends" />
-    <!-- OG tags for link previews (GN-18) -->
+    <!-- OG tags for link previews (GN-18 + S070 Issue #69 hygiene pass).
+         Cache-buster on og:image forces WhatsApp/iMessage/Slack to re-fetch
+         the preview after S070 ship; bump the ?v= each time the icon asset
+         changes. og:site_name + og:locale + og:image:alt help link-preview
+         scrapers fall back gracefully when image fetch is slow. -->
+    <meta property="og:site_name" content="PadelHub" />
+    <meta property="og:locale" content="en_US" />
     <meta property="og:title" content="PadelHub — Track Your Padel Game" />
     <meta property="og:description" content="Log matches, track ELO rankings, and discover your best partnerships." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://padel-battle.vercel.app" />
-    <meta property="og:image" content="https://padel-battle.vercel.app/icons/icon-512.png" />
+    <meta property="og:image" content="https://padel-battle.vercel.app/icons/icon-512.png?v=126" />
+    <meta property="og:image:secure_url" content="https://padel-battle.vercel.app/icons/icon-512.png?v=126" />
+    <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="512" />
     <meta property="og:image:height" content="512" />
+    <meta property="og:image:alt" content="PadelHub logo — green padel racket on dark background" />
     <meta name="twitter:card" content="summary" />
+    <meta name="twitter:site" content="@padelhub" />
     <meta name="twitter:title" content="PadelHub — Track Your Padel Game" />
     <meta name="twitter:description" content="Log matches, track ELO rankings, and discover your best partnerships." />
-    <meta name="twitter:image" content="https://padel-battle.vercel.app/icons/icon-512.png" />
+    <meta name="twitter:image" content="https://padel-battle.vercel.app/icons/icon-512.png?v=126" />
+    <meta name="twitter:image:alt" content="PadelHub logo — green padel racket on dark background" />
   </head>
   <body>
     <!-- Splash screen: visible instantly before React loads. Hidden by main.jsx after mount. -->

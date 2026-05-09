@@ -1957,6 +1957,48 @@ body {
 /* DOB / native date input overflow fix — iOS expands beyond container without box-sizing. */
 .fi2,.shi,.shsel{box-sizing:border-box;min-width:0;max-width:100%;}
 
+/* S070 Issue #84: durable iOS date-input fix — recurring regression.
+   Native input[type=date] on iOS has an intrinsic min-width that ignores
+   width:100% / max-width when the parent (.fgrp) is missing min-width:0,
+   AND it renders ~5px taller than text inputs because of internal padding
+   on ::-webkit-date-and-time-value. This block strips iOS chrome to make
+   the date input look identical to text inputs. */
+.fgrp { min-width: 0; }
+input.fi2[type="date"],
+input.fi[type="date"],
+input.linput[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  font-family: var(--font);
+  font-size: 13px;
+  line-height: 1.2;
+  color: var(--text);
+  -webkit-text-fill-color: var(--text);
+}
+input.fi2[type="date"]::-webkit-date-and-time-value,
+input.fi[type="date"]::-webkit-date-and-time-value,
+input.linput[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+  padding: 0;
+  margin: 0;
+  line-height: 1.4;
+  min-height: 16px;
+}
+input.fi2[type="date"]::-webkit-calendar-picker-indicator,
+input.fi[type="date"]::-webkit-calendar-picker-indicator,
+input.linput[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.7) brightness(1.2);
+  opacity: 0.6;
+  cursor: pointer;
+  margin-left: auto;
+}
+
 /* Save / Cancel buttons — active press state was missing in EditMyProfile. */
 .savebtn:active{transform:scale(.97);}
 .savebtn.on:active{box-shadow:0 4px 12px rgba(74,222,128,.45);}

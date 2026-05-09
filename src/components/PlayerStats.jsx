@@ -215,7 +215,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
               {roleLabel}
             </div>
           )}
-          {(player.country || positionLabel || getAge(player.date_of_birth) != null) && (
+          {(player.country || positionLabel || player.handedness || getAge(player.date_of_birth) != null) && (
             <div className="dpro-tags">
               {player.country && flagEmoji(player.country) && (
                 <div className="dpro-tag"><span className="flag">{flagEmoji(player.country)}</span>{player.country.toUpperCase()}</div>
@@ -224,6 +224,13 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
               {getAge(player.date_of_birth) != null && (
                 <div className="dpro-tag">
                   <Icon name="calendar" size={12} color="#9090a4"/>{getAge(player.date_of_birth)} yrs
+                </div>
+              )}
+              {/* S070 Issue #83: handedness tag — rendered before court position. */}
+              {player.handedness && (
+                <div className="dpro-tag">
+                  <Icon name="user" size={12} color="#9090a4"/>
+                  {player.handedness === 'left' ? 'Left Hand' : 'Right Hand'}
                 </div>
               )}
               {positionLabel && (
