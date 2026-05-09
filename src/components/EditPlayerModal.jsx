@@ -1,9 +1,10 @@
 import React, { useState, useRef } from "react";
 import Icon from "./Icon";
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, BL } from "../theme";
-import { flagEmoji, decodeImageFile } from "../utils/helpers";
+import { flagEmoji } from "../utils/helpers";
 import { useLeague } from "../LeagueContext";
 import { CountrySelect } from "./CountrySelect";
+import { AvatarCropModal } from "./AvatarCropModal";
 
 // S050: COUNTRIES moved to ./CountrySelect (full UN list, sorted by name,
 // Israel excluded). EditPlayerModal renders <CountrySelect/> instead of a
@@ -22,25 +23,23 @@ export function EditPlayerModal({ player, onClose, onSaved }) {
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const fileRef = useRef(null);
+  // S069: pending file → AvatarCropModal → cropped blob → uploadCroppedPhoto
+  const [pendingFile, setPendingFile] = useState(null);
 
   const inp = { background: CD2, color: TX, border: `1px solid ${BD}`, borderRadius: 10, padding: "10px 12px", fontSize: 14, width: "100%", outline: "none", fontWeight: 400, fontFamily: "var(--font)" };
 
-  // Resize + upload (mirrors App.jsx uploadAvatar pattern; player path: players/{playerId}.jpg).
-  // S051 Issue #20: switched to decodeImageFile() — fixes iOS first-attempt failure.
-  const uploadPhoto = async (file) => {
+  // S069: file pick now defers to AvatarCropModal — see pickPhoto. Once the
+  // user crops, uploadCroppedPhoto receives a 200x200 JPEG blob and uploads.
+  const pickPhoto = (file) => {
     if (!file) return;
+    setPendingFile(file);
+  };
+
+  const uploadCroppedPhoto = async (blob) => {
+    if (!blob) { setPendingFile(null); return; }
+    setPendingFile(null);
     setUploading(true);
     try {
-      const img = await decodeImageFile(file);
-      if (!img.width || !img.height) throw new Error("Invalid image dimensions");
-      const canvas = document.createElement("canvas");
-      canvas.width = 200; canvas.height = 200;
-      const ctx = canvas.getContext("2d");
-      const s = Math.min(img.width, img.height);
-      const sx = (img.width - s) / 2, sy = (img.height - s) / 2;
-      ctx.drawImage(img, sx, sy, s, s, 0, 0, 200, 200);
-      if (img.close) img.close();
-      const blob = await new Promise(r => canvas.toBlob(r, "image/jpeg", 0.85));
       const path = `players/${player.id}.jpg`;
       // S067 fix: iOS PWA storage upload intermittently fails on first try
       // (likely SW cold-start latency vs upload race). Single auto-retry after
@@ -119,7 +118,7 @@ export function EditPlayerModal({ player, onClose, onSaved }) {
             {uploading && <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: TX }}>...</div>}
           </div>
           {/* S067: dropped capture="environment" — that attr forced iOS to open the rear camera and skip the gallery. Without it, iOS shows the standard sheet (Photo Library / Take Photo / Choose File). */}
-          <input ref={fileRef} type="file" accept="image/*" onChange={e => uploadPhoto(e.target.files?.[0])} style={{ display: "none" }} />
+          <input ref={fileRef} type="file" accept="image/*" onChange={e => { pickPhoto(e.target.files?.[0]); e.target.value = ""; }} style={{ display: "none" }} />
           <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
             <button onClick={() => fileRef.current?.click()} disabled={uploading} style={{ padding: "8px 14px", background: `${A}15`, border: `1px solid ${A}`, borderRadius: 8, color: A, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font)", opacity: uploading ? 0.5 : 1 }}>📷 {avatarUrl ? "Change Photo" : "Upload Photo"}</button>
             {avatarUrl && <button onClick={removePhoto} disabled={uploading} style={{ padding: "8px 14px", background: "transparent", border: `1px solid ${BD}`, borderRadius: 8, color: MT, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font)", opacity: uploading ? 0.5 : 1 }}>Remove</button>}
@@ -172,6 +171,15 @@ export function EditPlayerModal({ player, onClose, onSaved }) {
             ))}
           </div>
         </div>
+
+        {/* S069: crop/zoom modal — opens when user picks a file. */}
+        {pendingFile && (
+          <AvatarCropModal
+            file={pendingFile}
+            onCancel={() => setPendingFile(null)}
+            onCropped={uploadCroppedPhoto}
+          />
+        )}
 
         {/* Actions — :active press-state added via .savebtn / .shcancel CSS in S067-r1 */}
         <div style={{ display: "flex", gap: 8 }}>

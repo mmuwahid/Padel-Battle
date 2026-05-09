@@ -3,6 +3,7 @@ import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, BL, PU } from '../theme';
 import { ACHS } from '../data/achievements';
 import { FD } from './FormDots';
 import Icon from './Icon';
+import { AvatarLightbox } from './AvatarLightbox';
 import { formatTeam, win, formatDate, setTotals, flagEmoji, getAge } from '../utils/helpers';
 
 export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matches,supabase,leagueId,isAdmin,getName,sel,onPlayersChange,showToast,claimedPlayer,leagueMembers,league}){
@@ -23,6 +24,8 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
   const [analyticsSection,setAnalyticsSection]=useState("league");
   const [h2hP1,setH2hP1]=useState(null);
   const [h2hP2,setH2hP2]=useState(null);
+  // S069: tap drill-in avatar to expand WhatsApp/Instagram-style.
+  const [showLightbox,setShowLightbox]=useState(false);
 
   const h2h=useMemo(()=>{
     if(!sp)return[];
@@ -198,7 +201,12 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
         </div>
         {/* Phase 6a hero block */}
         <section className="dpro">
-          <div className="dpro-pic">{player.avatar_url ? <img src={player.avatar_url} alt=""/> : player.name[0]}</div>
+          <div
+            className={`dpro-pic${player.avatar_url ? " tappable" : ""}`}
+            onClick={player.avatar_url ? () => setShowLightbox(true) : undefined}
+            role={player.avatar_url ? "button" : undefined}
+            aria-label={player.avatar_url ? "View photo" : undefined}
+          >{player.avatar_url ? <img src={player.avatar_url} alt=""/> : player.name[0]}</div>
           <h2 className="dpro-name">{player.name}</h2>
           {player.nickname && <p className="dpro-nick">"{player.nickname}"</p>}
           {roleLabel && (
@@ -307,6 +315,9 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
             );})}
           </div>
         </section>
+        {showLightbox && player.avatar_url && (
+          <AvatarLightbox src={player.avatar_url} alt={player.name} onClose={()=>setShowLightbox(false)}/>
+        )}
       </div>
     );
   }

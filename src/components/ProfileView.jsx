@@ -3,6 +3,7 @@ import { formatTeam, win, formatDate, flagEmoji, getAge } from '../utils/helpers
 import { calcElo } from '../utils/elo';
 import { ACHS } from '../data/achievements';
 import { EditMyProfile } from './EditMyProfile';
+import { AvatarLightbox } from './AvatarLightbox';
 import Icon from './Icon';
 
 // S066 Phase 12: spec-faithful header restyle.
@@ -14,6 +15,7 @@ import Icon from './Icon';
 // minor token cleanup but still render below the spec header.
 export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, removeAvatar, claimedPlayer, ps, elo, matches, players, isAdmin, getName, getStreak, setSidebarView, navigateSidebar, goBack, setTab, setSidebarOpen }) {
   const [editingMyProfile, setEditingMyProfile] = useState(false);
+  const [showLightbox, setShowLightbox] = useState(false);
   const fileInputRef = React.useRef(null);
 
   const userName = claimedPlayer?.name || user.user_metadata?.display_name || user.email?.split("@")[0] || "User";
@@ -40,7 +42,12 @@ export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, re
       {/* Spec header — .prohero */}
       <div className="prohero">
         <div className="prowrap">
-          <div className="propic">
+          <div
+            className={`propic${avatarUrl ? " tappable" : ""}`}
+            onClick={avatarUrl ? () => setShowLightbox(true) : undefined}
+            role={avatarUrl ? "button" : undefined}
+            aria-label={avatarUrl ? "View photo" : undefined}
+          >
             {avatarUrl ? <img src={avatarUrl} alt=""/> : userInitial}
           </div>
           <button className="procb" aria-label="Change photo" onClick={()=>fileInputRef.current?.click()}>
@@ -92,6 +99,10 @@ export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, re
 
       {editingMyProfile && claimedPlayer && (
         <EditMyProfile player={claimedPlayer} onClose={()=>setEditingMyProfile(false)}/>
+      )}
+
+      {showLightbox && avatarUrl && (
+        <AvatarLightbox src={avatarUrl} alt={userName} onClose={()=>setShowLightbox(false)}/>
       )}
 
       {/* Spec stats strip */}
