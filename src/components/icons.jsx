@@ -29,41 +29,33 @@ export const PadelLogo = () => (<svg width="48" height="48" viewBox="0 0 80 80" 
 export const PadelHubMark = ({ size = 96 }) => (
   <svg width={size} height={size} viewBox="0 0 100 100" fill="none" className="lhmark">
     <defs>
-      <radialGradient id="hub-glow" cx="50%" cy="50%" r="50%">
-        <stop offset="0%" stopColor="#4ADE80" stopOpacity="0.55"/>
-        <stop offset="50%" stopColor="#4ADE80" stopOpacity="0.18"/>
-        <stop offset="100%" stopColor="#4ADE80" stopOpacity="0"/>
-      </radialGradient>
       <linearGradient id="hub-ring" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%"   stopColor="#4ADE80" stopOpacity="0.95"/>
         <stop offset="50%"  stopColor="#4ADE80" stopOpacity="0.35"/>
         <stop offset="100%" stopColor="#4ADE80" stopOpacity="0.95"/>
       </linearGradient>
     </defs>
-    {/* Soft halo — sits behind everything */}
-    <circle cx="50" cy="50" r="48" fill="url(#hub-glow)"/>
-    {/* Outer dashed orbit — rotates */}
-    <circle className="lhmark-orbit" cx="50" cy="50" r="45" stroke="url(#hub-ring)" strokeWidth="1.5" fill="none" strokeDasharray="3 5" opacity="0.85"/>
-    {/* Inner solid ring */}
-    <circle cx="50" cy="50" r="36" stroke="#4ADE80" strokeWidth="1.5" fill="none" opacity="0.35"/>
+    {/* S070 follow-up: removed the radial-gradient halo + outer dashed ring +
+        inner solid ring — they were rendering as a visible "container" box
+        against the dark app bg. Logo now sits transparent on the page bg
+        with only the dot-network + connecting lines + pulsing center. */}
     {/* Connecting lines — center → 6 satellites */}
-    <line x1="50" y1="50" x2="50" y2="22" stroke="#4ADE80" strokeWidth="1.4" opacity="0.45"/>
-    <line x1="50" y1="50" x2="74" y2="38" stroke="#4ADE80" strokeWidth="1.4" opacity="0.45"/>
-    <line x1="50" y1="50" x2="74" y2="62" stroke="#4ADE80" strokeWidth="1.4" opacity="0.45"/>
-    <line x1="50" y1="50" x2="50" y2="78" stroke="#4ADE80" strokeWidth="1.4" opacity="0.45"/>
-    <line x1="50" y1="50" x2="26" y2="62" stroke="#4ADE80" strokeWidth="1.4" opacity="0.45"/>
-    <line x1="50" y1="50" x2="26" y2="38" stroke="#4ADE80" strokeWidth="1.4" opacity="0.45"/>
+    <line x1="50" y1="50" x2="50" y2="22" stroke="#4ADE80" strokeWidth="1.4" opacity="0.55"/>
+    <line x1="50" y1="50" x2="74" y2="38" stroke="#4ADE80" strokeWidth="1.4" opacity="0.55"/>
+    <line x1="50" y1="50" x2="74" y2="62" stroke="#4ADE80" strokeWidth="1.4" opacity="0.55"/>
+    <line x1="50" y1="50" x2="50" y2="78" stroke="#4ADE80" strokeWidth="1.4" opacity="0.55"/>
+    <line x1="50" y1="50" x2="26" y2="62" stroke="#4ADE80" strokeWidth="1.4" opacity="0.55"/>
+    <line x1="50" y1="50" x2="26" y2="38" stroke="#4ADE80" strokeWidth="1.4" opacity="0.55"/>
     {/* Satellite nodes — staggered fade */}
-    <circle className="lhmark-dot" style={{animationDelay:"0ms"}}    cx="50" cy="22" r="4.5" fill="#4ADE80"/>
-    <circle className="lhmark-dot" style={{animationDelay:"160ms"}}  cx="74" cy="38" r="4.5" fill="#4ADE80"/>
-    <circle className="lhmark-dot" style={{animationDelay:"320ms"}}  cx="74" cy="62" r="4.5" fill="#4ADE80"/>
-    <circle className="lhmark-dot" style={{animationDelay:"480ms"}}  cx="50" cy="78" r="4.5" fill="#4ADE80"/>
-    <circle className="lhmark-dot" style={{animationDelay:"640ms"}}  cx="26" cy="62" r="4.5" fill="#4ADE80"/>
-    <circle className="lhmark-dot" style={{animationDelay:"800ms"}}  cx="26" cy="38" r="4.5" fill="#4ADE80"/>
+    <circle className="lhmark-dot" style={{animationDelay:"0ms"}}    cx="50" cy="22" r="4.8" fill="#4ADE80"/>
+    <circle className="lhmark-dot" style={{animationDelay:"160ms"}}  cx="74" cy="38" r="4.8" fill="#4ADE80"/>
+    <circle className="lhmark-dot" style={{animationDelay:"320ms"}}  cx="74" cy="62" r="4.8" fill="#4ADE80"/>
+    <circle className="lhmark-dot" style={{animationDelay:"480ms"}}  cx="50" cy="78" r="4.8" fill="#4ADE80"/>
+    <circle className="lhmark-dot" style={{animationDelay:"640ms"}}  cx="26" cy="62" r="4.8" fill="#4ADE80"/>
+    <circle className="lhmark-dot" style={{animationDelay:"800ms"}}  cx="26" cy="38" r="4.8" fill="#4ADE80"/>
     {/* Central pulsing orb */}
     <circle className="lhmark-pulse-aura" cx="50" cy="50" r="14" fill="#4ADE80" opacity="0.18"/>
-    <circle className="lhmark-pulse" cx="50" cy="50" r="7" fill="#4ADE80"/>
-    <circle cx="50" cy="50" r="3" fill="#0d0d14" opacity="0.5"/>
+    <circle className="lhmark-pulse" cx="50" cy="50" r="7.5" fill="#4ADE80"/>
   </svg>
 );
 
