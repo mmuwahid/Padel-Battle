@@ -2288,3 +2288,26 @@ input.linput[type="date"]::-webkit-calendar-picker-indicator {
 .gm-startbtn.off{background:transparent;color:var(--muted);border-color:var(--border);cursor:not-allowed;}
 .gm-startbtn.off:active{transform:none;}
 .gm-hint{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.04em;text-align:center;}
+
+/* --- Phase 10 PR-B --- Tournament setup (SE/DE/RR) --- */
+.gm-setup{padding:14px 18px 24px;display:flex;flex-direction:column;gap:14px;}
+.gm-setup-blk{display:flex;flex-direction:column;gap:8px;}
+.gm-setup-lbl{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:700;}
+.gm-fmt-pill{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:var(--r-md);background:var(--gold-dim);border:1px solid var(--gold-glow);color:var(--gold);font-family:var(--mono);font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;align-self:flex-start;}
+.gm-tinput{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:11px 14px;color:var(--text);font-family:var(--font);font-size:14px;font-weight:600;outline:none;transition:border-color 150ms;}
+.gm-tinput:focus{border-color:var(--accent-glow);}
+.gm-tinput::placeholder{color:var(--muted);font-weight:500;}
+.gm-tlist{display:flex;flex-direction:column;gap:8px;}
+.gm-tcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;display:flex;flex-direction:column;gap:8px;}
+.gm-tcard-h{display:flex;align-items:center;gap:8px;}
+.gm-tname{flex:1;background:transparent;border:none;color:var(--text);font-family:var(--font);font-size:13px;font-weight:700;letter-spacing:-.01em;outline:none;padding:2px 0;}
+.gm-tname:focus{color:var(--accent);}
+.gm-trm{width:28px;height:28px;border-radius:var(--r-sm);background:transparent;border:1px solid rgba(248,113,113,.25);color:var(--danger);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 150ms;}
+.gm-trm:active{transform:scale(.93);background:rgba(248,113,113,.08);}
+.gm-trm:disabled{opacity:.3;cursor:not-allowed;}
+.gm-tsels{display:flex;gap:6px;}
+.gm-tsel{flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);padding:8px 10px;color:var(--text);font-family:var(--font);font-size:12px;font-weight:600;outline:none;cursor:pointer;min-width:0;}
+.gm-tsel:focus{border-color:var(--accent-glow);}
+.gm-addteam{width:100%;padding:11px;border-radius:var(--r-md);border:1px dashed var(--border);background:transparent;color:var(--muted);font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 150ms;}
+.gm-addteam:active{transform:scale(.99);background:rgba(74,222,128,.04);border-color:var(--accent-glow);color:var(--accent);}
+.gm-addteam:hover{border-color:var(--accent-glow);color:var(--accent);}

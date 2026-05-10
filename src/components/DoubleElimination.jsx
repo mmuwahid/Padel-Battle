@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, PU } from '../theme';
 import { BracketSVG } from './BracketSVG';
+import Icon from './Icon';
 
 const TEAM_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const getTeamLabel = (idx) => TEAM_LETTERS[idx] ? `Team ${TEAM_LETTERS[idx]}` : `Team ${idx + 1}`;
@@ -159,46 +160,71 @@ export function DoubleElimination({ players, getName, supabase, leagueId, tourna
   // ════════════════════════════════════
   // RENDER: DE Setup Screen
   // ════════════════════════════════════
-  if (!tournament || tournament.mode !== "double_elimination") {
+    if (!tournament || tournament.mode !== "double_elimination") {
     const validTeams = deTeams.filter(t => t.p1 && t.p2);
     return (
-      <div style={{ padding: "20px 16px", maxWidth: "600px", margin: "0 auto" }}>
-        <button onClick={() => setScreen("selector")} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: MT, fontSize: 12, fontWeight: 600, cursor: "pointer", marginBottom: 12, padding: 0 }}>{"\u2190"} Back to formats</button>
-        <div style={{ marginBottom: 18 }}>
-          <label style={{ fontSize: 11, fontWeight: 600, color: MT, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8, display: "block" }}>Tournament Name</label>
-          <input type="text" value={deTournamentName} onChange={e => setDeTournamentName(e.target.value)} placeholder="Double Elimination Classic" style={{ width: "100%", padding: "12px 16px", background: CD, border: "1px solid " + BD, borderRadius: 12, color: TX, fontFamily: "var(--font)", fontSize: 14, outline: "none" }} />
+      <div>
+        <div className="back-btn-row">
+          <button className="back-btn" onClick={() => setScreen("selector")} aria-label="Back to formats">
+            <Icon name="back" size={18} />
+          </button>
         </div>
-        <div style={{ marginBottom: 18 }}>
-          <label style={{ fontSize: 11, fontWeight: 600, color: MT, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8, display: "block" }}>Format</label>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 14px", background: PU + "1a", border: "1px solid " + PU + "40", borderRadius: 20, fontSize: 12, fontWeight: 600, color: PU }}>{"\uD83D\uDD04"} Double Elimination</span>
+        <div className="gm-h">
+          <span className="gm-h-eyebrow">Tournament Setup</span>
+          <h1 className="gm-h-title">Double Elimination</h1>
+          <p className="gm-h-sub">Two chances &mdash; winners + losers brackets</p>
         </div>
-        <div style={{ marginBottom: 18 }}>
-          <label style={{ fontSize: 11, fontWeight: 600, color: MT, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8, display: "block" }}>Teams ({deTeams.length} registered)</label>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
-            {deTeams.map((team, idx) => { const deAllSel = deTeams.flatMap(t => [t.p1, t.p2]).filter(Boolean); const p1O = deAllSel.filter(v => v !== team.p1); const p2O = deAllSel.filter(v => v !== team.p2); return (
-              <div key={idx} style={{ background: CD, border: "1px solid " + BD, borderRadius: 12, padding: "12px 14px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                  <input type="text" value={team.name} onChange={e => updateDeTeam(idx, "name", e.target.value)} style={{ background: "transparent", border: "none", color: TX, fontSize: 13, fontWeight: 600, outline: "none", width: "60%" }} />
-                  <button onClick={() => removeDeTeam(idx)} style={{ width: 28, height: 28, borderRadius: 8, background: DG + "1a", border: "1px solid " + DG + "33", color: DG, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>{"\u2715"}</button>
-                </div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <select value={team.p1} onChange={e => updateDeTeam(idx, "p1", e.target.value)} style={{ ...sel, flex: 1, fontSize: 12 }}>
-                    <option value="">Player 1</option>
-                    {players.filter(p => !p1O.includes(p.id)).map(p => <option key={p.id} value={p.id}>{p.nickname || p.name}</option>)}
-                  </select>
-                  <select value={team.p2} onChange={e => updateDeTeam(idx, "p2", e.target.value)} style={{ ...sel, flex: 1, fontSize: 12 }}>
-                    <option value="">Player 2</option>
-                    {players.filter(p => !p2O.includes(p.id)).map(p => <option key={p.id} value={p.id}>{p.nickname || p.name}</option>)}
-                  </select>
-                </div>
-              </div>
-            ); })}
+        <div className="gm-setup">
+          <div className="gm-setup-blk">
+            <span className="gm-setup-lbl">Tournament Name</span>
+            <input type="text" className="gm-tinput" value={deTournamentName} onChange={e => setDeTournamentName(e.target.value)} placeholder="Double Elimination Classic" />
           </div>
-          <button onClick={addDeTeam} style={{ width: "100%", padding: 12, background: CD2, border: "1px dashed " + BD, borderRadius: 12, color: MT, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>+ Add Team</button>
+          <div className="gm-setup-blk">
+            <span className="gm-setup-lbl">Format</span>
+            <span className="gm-fmt-pill"><Icon name="refresh" size={12} /> Double Elimination</span>
+          </div>
+          <div className="gm-setup-blk">
+            <span className="gm-setup-lbl">Teams ({deTeams.length} registered)</span>
+            <div className="gm-tlist">
+              {deTeams.map((team, idx) => {
+                const allSel = deTeams.flatMap(t => [t.p1, t.p2]).filter(Boolean);
+                const p1O = allSel.filter(v => v !== team.p1);
+                const p2O = allSel.filter(v => v !== team.p2);
+                return (
+                  <div key={idx} className="gm-tcard">
+                    <div className="gm-tcard-h">
+                      <input type="text" className="gm-tname" value={team.name} onChange={e => updateDeTeam(idx, "name", e.target.value)} />
+                      <button className="gm-trm" disabled={deTeams.length <= 2} onClick={() => removeDeTeam(idx)} aria-label="Remove team">
+                        <Icon name="close" size={14} />
+                      </button>
+                    </div>
+                    <div className="gm-tsels">
+                      <select className="gm-tsel" value={team.p1} onChange={e => updateDeTeam(idx, "p1", e.target.value)}>
+                        <option value="">Player 1</option>
+                        {players.filter(p => !p1O.includes(p.id)).map(p => <option key={p.id} value={p.id}>{p.nickname || p.name}</option>)}
+                      </select>
+                      <select className="gm-tsel" value={team.p2} onChange={e => updateDeTeam(idx, "p2", e.target.value)}>
+                        <option value="">Player 2</option>
+                        {players.filter(p => !p2O.includes(p.id)).map(p => <option key={p.id} value={p.id}>{p.nickname || p.name}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <button className="gm-addteam" onClick={addDeTeam}>
+              <Icon name="plus" size={12} /> Add Team
+            </button>
+          </div>
+          <button
+            className={`gm-startbtn ${validTeams.length >= 4 ? "" : "off"}`}
+            onClick={createDETournament}
+            disabled={validTeams.length < 4}
+          >
+            <Icon name="zap" size={14} />
+            Create Tournament {validTeams.length >= 4 ? "(" + validTeams.length + " teams)" : "(min 4 teams)"}
+          </button>
         </div>
-        <button onClick={createDETournament} disabled={validTeams.length < 4} style={{ width: "100%", padding: 14, background: validTeams.length >= 4 ? A : BD, border: "none", borderRadius: 14, color: validTeams.length >= 4 ? BG : MT, fontSize: 15, fontWeight: 700, cursor: validTeams.length >= 4 ? "pointer" : "not-allowed", marginBottom: 20 }}>
-          Create Tournament {validTeams.length >= 4 ? "(" + validTeams.length + " teams)" : "(min 4 teams)"}
-        </button>
       </div>
     );
   }
