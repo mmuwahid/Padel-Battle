@@ -160,7 +160,7 @@ export function DoubleElimination({ players, getName, supabase, leagueId, tourna
   // ════════════════════════════════════
   // RENDER: DE Setup Screen
   // ════════════════════════════════════
-    if (!tournament || tournament.mode !== "double_elimination") {
+  if (!tournament || tournament.mode !== "double_elimination") {
     const validTeams = deTeams.filter(t => t.p1 && t.p2);
     return (
       <div>
@@ -179,17 +179,19 @@ export function DoubleElimination({ players, getName, supabase, leagueId, tourna
             <span className="gm-setup-lbl">Tournament Name</span>
             <input type="text" className="gm-tinput" value={deTournamentName} onChange={e => setDeTournamentName(e.target.value)} placeholder="Double Elimination Classic" />
           </div>
+
           <div className="gm-setup-blk">
             <span className="gm-setup-lbl">Format</span>
             <span className="gm-fmt-pill"><Icon name="refresh" size={12} /> Double Elimination</span>
           </div>
+
           <div className="gm-setup-blk">
             <span className="gm-setup-lbl">Teams ({deTeams.length} registered)</span>
             <div className="gm-tlist">
               {deTeams.map((team, idx) => {
-                const allSel = deTeams.flatMap(t => [t.p1, t.p2]).filter(Boolean);
-                const p1O = allSel.filter(v => v !== team.p1);
-                const p2O = allSel.filter(v => v !== team.p2);
+                const deAllSel = deTeams.flatMap(t => [t.p1, t.p2]).filter(Boolean);
+                const p1O = deAllSel.filter(v => v !== team.p1);
+                const p2O = deAllSel.filter(v => v !== team.p2);
                 return (
                   <div key={idx} className="gm-tcard">
                     <div className="gm-tcard-h">
@@ -216,6 +218,7 @@ export function DoubleElimination({ players, getName, supabase, leagueId, tourna
               <Icon name="plus" size={12} /> Add Team
             </button>
           </div>
+
           <button
             className={`gm-startbtn ${validTeams.length >= 4 ? "" : "off"}`}
             onClick={createDETournament}
@@ -311,12 +314,20 @@ export function DoubleElimination({ players, getName, supabase, leagueId, tourna
               const key = "l-" + ri + "-" + mi;
               const sc = tournament.scores?.[key];
               const tAN = m.team_a_name || "TBD"; const tBN = m.team_b_name || "TBD";
+              const tAP = m.team_a?.filter(Boolean).map(pid => getName(pid)).join(" / ") || "";
+              const tBP = m.team_b?.filter(Boolean).map(pid => getName(pid)).join(" / ") || "";
               return (
-                <div key={mi} style={{ marginBottom: 8 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                    <span style={{ flex:1, fontSize:13, fontWeight:600, textAlign:"right", color: sc?(sc.a>sc.b?A:TX):TX }}>{tAN}</span>
+                <div key={mi} style={{ marginBottom: 10, paddingBottom: 8, borderBottom: `1px solid ${BD}30` }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                    <div style={{ flex:1, textAlign:"right" }}>
+                      <div style={{ fontSize:13, fontWeight:700, color: sc?(sc.a>sc.b?A:TX):TX }}>{tAN}</div>
+                      {tAP && <div style={{ fontSize:11, color:MT, fontFamily:"var(--mono)", marginTop:1 }}>{tAP}</div>}
+                    </div>
                     <span style={{ color:MT, fontSize:11, fontWeight:700 }}>vs</span>
-                    <span style={{ flex:1, fontSize:13, fontWeight:600, color: sc?(sc.b>sc.a?A:TX):TX }}>{tBN}</span>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontSize:13, fontWeight:700, color: sc?(sc.b>sc.a?A:TX):TX }}>{tBN}</div>
+                      {tBP && <div style={{ fontSize:11, color:MT, fontFamily:"var(--mono)", marginTop:1 }}>{tBP}</div>}
+                    </div>
                   </div>
                   {!sc && m.team_a && m.team_b && (
                     <div style={{ display:"flex", alignItems:"center", gap:6, justifyContent:"center" }}>
@@ -336,10 +347,16 @@ export function DoubleElimination({ players, getName, supabase, leagueId, tourna
       {gf && (gf.team_a || gf.team_b) && (
         <div style={{ margin: "16px 0", padding: 16, background: "linear-gradient(135deg, " + GD + "14, " + GD + "05)", border: "2px solid " + GD + "60", borderRadius: 14 }}>
           <h3 style={{ fontSize: 14, fontWeight: 800, color: GD, marginBottom: 10, textAlign: "center" }}>{"\uD83C\uDFC6"} Grand Final</h3>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: "center", marginBottom: 8 }}>
-            <span style={{ fontSize: 15, fontWeight: 700, color: gfScore?(gfScore.a>gfScore.b?A:TX):TX }}>{gf.team_a_name || "TBD"}</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, justifyContent: "center", marginBottom: 10 }}>
+            <div style={{ textAlign: "right", flex: 1 }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: gfScore?(gfScore.a>gfScore.b?A:TX):TX }}>{gf.team_a_name || "TBD"}</div>
+              {gf.team_a && <div style={{ fontSize: 11, color: MT, fontFamily: "var(--mono)", marginTop: 2 }}>{gf.team_a.filter(Boolean).map(pid=>getName(pid)).join(" / ")}</div>}
+            </div>
             <span style={{ color: MT, fontSize: 12, fontWeight: 700 }}>vs</span>
-            <span style={{ fontSize: 15, fontWeight: 700, color: gfScore?(gfScore.b>gfScore.a?A:TX):TX }}>{gf.team_b_name || "TBD"}</span>
+            <div style={{ textAlign: "left", flex: 1 }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: gfScore?(gfScore.b>gfScore.a?A:TX):TX }}>{gf.team_b_name || "TBD"}</div>
+              {gf.team_b && <div style={{ fontSize: 11, color: MT, fontFamily: "var(--mono)", marginTop: 2 }}>{gf.team_b.filter(Boolean).map(pid=>getName(pid)).join(" / ")}</div>}
+            </div>
           </div>
           {!gfScore && gf.team_a && gf.team_b && (
             <div style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>

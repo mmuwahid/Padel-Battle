@@ -6,6 +6,82 @@ import { DoubleElimination } from './DoubleElimination';
 import { RoundRobin } from './RoundRobin';
 import Icon from './Icon';
 
+// Format rules — surfaced inside Game Mode as collapsible reference cards.
+const FORMAT_RULES = [
+  {
+    id: "fmt-americano",
+    title: "Americano",
+    icon: "target",
+    preview: "Rotating partners — everyone plays everyone",
+    content: "Casual round-robin format. Partners rotate each round so you play with every other player at least once. Points accumulate INDIVIDUALLY across all rounds — partner doesn't matter for ranking. Best for groups of 4–8 looking for a relaxed session. Player with most total points wins.",
+    tags: [{ l: "Quick session", c: "g" }, { l: "Individual scoring", c: "g" }, { l: "Partner rotates", c: "go" }],
+  },
+  {
+    id: "fmt-mexicano",
+    title: "Mexicano",
+    icon: "trending-up",
+    preview: "Adaptive matchmaking by current standings",
+    content: "Like Americano but pairings are recomputed each round based on the live leaderboard — top players face top players, mid faces mid. Keeps every match competitive instead of letting strong players steamroll. Each round starts when the previous is fully scored. Same individual point scoring as Americano.",
+    tags: [{ l: "Adaptive pairings", c: "g" }, { l: "Balanced matches", c: "g" }, { l: "Re-seeded each round", c: "go" }],
+  },
+  {
+    id: "fmt-round-robin",
+    title: "Round Robin",
+    icon: "award",
+    preview: "Every team plays every other team",
+    content: "Fixed teams (you pick partners up front). Every team plays every other team exactly once. Final standings ranked by wins, then by point differential as tiebreaker. Most matches of any format, fairest for ranking purposes.",
+    tags: [{ l: "Fixed teams", c: "g" }, { l: "Wins → diff tiebreak", c: "g" }, { l: "Most matches", c: "go" }],
+  },
+  {
+    id: "fmt-single-elim",
+    title: "Single Elimination",
+    icon: "trophy",
+    preview: "Lose once, you're out",
+    content: "Classic knockout bracket. Lose a match and you're done — winners advance until one team is left. Fast, high-stakes resolution. Best for 4, 8, or 16 teams (powers of 2). Bye rounds applied to top seeds when team count isn't a power of 2.",
+    tags: [{ l: "Fastest format", c: "g" }, { l: "Single loss = out", c: "r" }, { l: "Best 4–16 teams", c: "go" }],
+  },
+  {
+    id: "fmt-double-elim",
+    title: "Double Elimination",
+    icon: "refresh",
+    preview: "Two chances — winners + losers brackets",
+    content: "Lose once → drop to the losers bracket but stay alive. Lose twice → eliminated. Final = winners-bracket champion vs losers-bracket champion. If the losers-bracket team wins the final, a 'true final' rematch may be required (winners-bracket team has only lost once). Roughly 2× the matches of single elimination.",
+    tags: [{ l: "Second chance", c: "g" }, { l: "Two losses = out", c: "r" }, { l: "More matches", c: "go" }],
+  },
+];
+
+function FormatRuleCard({ rule }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className={`rcard${open ? " open" : ""}`} onClick={() => setOpen(v => !v)}>
+      <div className="rchd">
+        <div className="rcico">
+          <Icon name={rule.icon} size={16} color="var(--accent)" />
+        </div>
+        <div className="rctw">
+          <div className="rct">{rule.title}</div>
+          {!open && rule.preview && <div className="rcprev">{rule.preview}</div>}
+        </div>
+        <div className="rcchev">
+          <Icon name="chevron" size={14} color="currentColor" />
+        </div>
+      </div>
+      <div className={`rcbody ${open ? "op" : "cl"}`}>
+        <div className="rccont">
+          <div className="rcontent">{rule.content}</div>
+          {rule.tags && rule.tags.length > 0 && (
+            <div className="rtags">
+              {rule.tags.map((t, i) => (
+                <span key={i} className={`rtag ${t.c || "g"}`}>{t.l}</span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function GameMode({ tournament, setTournament, sel }) {
   const { supabase, players, getName, leagueId, showToast } = useLeague();
   const [topTab, setTopTab] = useState("casual");
@@ -103,6 +179,16 @@ export function GameMode({ tournament, setTournament, sel }) {
           </div>
         </div>
       )}
+
+      <div className="gm-rules-sec">
+        <div className="gm-rules-sec-h">
+          <Icon name="book" size={14} />
+          <span>Format Rules</span>
+        </div>
+        <div className="gm-rules-list">
+          {FORMAT_RULES.map(rule => <FormatRuleCard key={rule.id} rule={rule} />)}
+        </div>
+      </div>
     </div>
   );
 }

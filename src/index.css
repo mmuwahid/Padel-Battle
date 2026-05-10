@@ -2246,14 +2246,15 @@ input.linput[type="date"]::-webkit-calendar-picker-indicator {
   transform: scale(.96);
 }
 
-
-/* --- Phase 10 --- Game Mode (selector + tournament setup shell) --- */
+/* ─── Phase 10 — Game Mode (selector + tournament setup shell) ─── */
 .gm-h{padding:8px 18px 0;display:flex;flex-direction:column;gap:2px;}
 .gm-h-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:2px;}
 .gm-h-title{font-size:26px;font-weight:800;letter-spacing:-.02em;color:var(--text);}
 .gm-h-sub{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.04em;margin-top:2px;}
 .gm-seg{margin:14px 18px 0;}
 .gm-body{padding:14px 18px;display:flex;flex-direction:column;gap:12px;}
+
+/* Mode picker cards (used for SE/DE/RR + Americano/Mexicano) */
 .gm-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px;cursor:pointer;transition:transform 150ms,border-color 150ms,background 150ms;display:flex;flex-direction:column;gap:8px;}
 .gm-card:active{transform:scale(.99);}
 .gm-card.on{border-color:var(--accent);background:linear-gradient(180deg,var(--surface),rgba(74,222,128,.05));}
@@ -2269,6 +2270,8 @@ input.linput[type="date"]::-webkit-calendar-picker-indicator {
 .gm-card-chev{color:var(--muted);transition:color 150ms,transform 150ms;flex-shrink:0;}
 .gm-card:active .gm-card-chev,.gm-card.on .gm-card-chev{color:var(--accent);}
 .gm-card-sub{font-family:var(--mono);font-size:11px;color:var(--muted);line-height:1.55;margin:0;}
+
+/* Player chips */
 .gm-pblk{display:flex;flex-direction:column;gap:9px;padding-top:4px;}
 .gm-plbl-row{display:flex;align-items:center;justify-content:space-between;}
 .gm-plbl{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:700;}
@@ -2278,18 +2281,62 @@ input.linput[type="date"]::-webkit-calendar-picker-indicator {
 .gm-pchip{padding:8px 13px;border-radius:var(--r-md);border:1px solid var(--border);background:transparent;color:var(--muted);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;transition:all 150ms;}
 .gm-pchip:active{transform:scale(.97);}
 .gm-pchip.on{border-color:var(--accent);background:var(--accent-dim);color:var(--accent);}
+
+/* Two-up grid for Courts / Points */
 .gm-grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding-top:2px;}
 .gm-fld{display:flex;flex-direction:column;gap:6px;}
 .gm-fld-lbl{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:700;}
 .gm-fld-sel{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px;color:var(--text);font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;outline:none;}
 .gm-fld-sel:focus{border-color:var(--accent-glow);}
+
+/* Start tournament button */
 .gm-startbtn{width:100%;padding:14px;border-radius:var(--r-md);border:1px solid var(--accent);background:var(--accent);color:#000;font-family:var(--font);font-size:14px;font-weight:800;cursor:pointer;letter-spacing:.02em;transition:all 150ms;display:flex;align-items:center;justify-content:center;gap:7px;margin-top:4px;}
 .gm-startbtn:active{transform:scale(.99);}
 .gm-startbtn.off{background:transparent;color:var(--muted);border-color:var(--border);cursor:not-allowed;}
 .gm-startbtn.off:active{transform:none;}
 .gm-hint{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.04em;text-align:center;}
 
-/* --- Phase 10 PR-B --- Tournament setup (SE/DE/RR) --- */
+/* Active tournament header */
+.gm-actbar{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:8px 18px 0;}
+.gm-actl{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0;}
+.gm-acttitle{font-size:22px;font-weight:800;letter-spacing:-.02em;color:var(--text);}
+.gm-actsub{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.04em;}
+.gm-actr{display:flex;gap:6px;flex-shrink:0;}
+.gm-actbtn{padding:7px 12px;border-radius:var(--r-sm);border:1px solid var(--border);background:transparent;color:var(--muted);font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all 150ms;}
+.gm-actbtn:active{transform:scale(.97);}
+.gm-actbtn.dng{border-color:rgba(248,113,113,.3);color:var(--danger);}
+.gm-actbtn.dng.solid{background:var(--danger);border-color:var(--danger);color:#fff;}
+
+/* Standings card */
+.gm-stand{background:var(--surface);border:1px solid var(--gold-glow);border-radius:var(--r-lg);padding:14px;}
+.gm-stand-h{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;}
+.gm-stand-row{display:flex;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+.gm-stand-row:last-child{border-bottom:none;}
+.gm-stand-rank{width:26px;font-family:var(--mono);font-size:13px;font-weight:800;color:var(--text);}
+.gm-stand-rank.g{color:var(--gold);}
+.gm-stand-rank.s{color:#94a3b8;}
+.gm-stand-rank.b{color:#c97b2e;}
+.gm-stand-name{flex:1;font-size:14px;font-weight:600;color:var(--text);}
+.gm-stand-pts{font-family:var(--mono);font-size:16px;font-weight:800;color:var(--accent);}
+.gm-stand-pts.g{color:var(--gold);}
+
+/* Round cards */
+.gm-rndcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;display:flex;flex-direction:column;gap:10px;}
+.gm-rnd-h{display:flex;align-items:center;justify-content:space-between;}
+.gm-rnd-h-t{font-size:14px;font-weight:800;color:var(--text);letter-spacing:-.01em;}
+.gm-sit{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);background:var(--surface-2);padding:3px 8px;border-radius:var(--r-sm);border:1px solid var(--border);}
+.gm-mtch{display:flex;flex-direction:column;gap:4px;padding-top:6px;border-top:1px solid rgba(255,255,255,.04);}
+.gm-mtch:first-of-type{border-top:none;padding-top:0;}
+.gm-mtch-row{display:flex;align-items:center;gap:8px;}
+.gm-mtch-team{flex:1;font-size:13px;font-weight:600;color:var(--text);}
+.gm-mtch-team.win{color:var(--accent);}
+.gm-mtch-team.l{text-align:right;}
+.gm-mtch-team.r{text-align:left;}
+.gm-mtch-vs{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--muted);}
+.gm-mtch-sc{display:flex;align-items:center;gap:6px;justify-content:center;padding-top:4px;}
+.gm-mtch-court{font-family:var(--mono);font-size:9px;color:var(--muted);margin-left:4px;letter-spacing:.06em;text-transform:uppercase;}
+
+/* ─── Phase 10 PR-B — Tournament setup (SE/DE/RR) ─── */
 .gm-setup{padding:14px 18px 24px;display:flex;flex-direction:column;gap:14px;}
 .gm-setup-blk{display:flex;flex-direction:column;gap:8px;}
 .gm-setup-lbl{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:700;}
@@ -2311,3 +2358,9 @@ input.linput[type="date"]::-webkit-calendar-picker-indicator {
 .gm-addteam{width:100%;padding:11px;border-radius:var(--r-md);border:1px dashed var(--border);background:transparent;color:var(--muted);font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 150ms;}
 .gm-addteam:active{transform:scale(.99);background:rgba(74,222,128,.04);border-color:var(--accent-glow);color:var(--accent);}
 .gm-addteam:hover{border-color:var(--accent-glow);color:var(--accent);}
+
+/* Format Rules section embedded in Game Mode (uses .rcard pattern from RulesView) */
+.gm-rules-sec{padding:8px 18px 24px;display:flex;flex-direction:column;gap:10px;margin-top:14px;border-top:1px solid var(--border);padding-top:18px;}
+.gm-rules-sec-h{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);}
+.gm-rules-list{display:flex;flex-direction:column;gap:0;}
+

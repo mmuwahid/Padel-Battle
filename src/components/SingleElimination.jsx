@@ -153,7 +153,7 @@ export function SingleElimination({ players, getName, supabase, leagueId, tourna
   // ════════════════════════════════════
   // RENDER: SE Setup Screen
   // ════════════════════════════════════
-    if (!tournament || tournament.mode !== "single_elimination") {
+  if (!tournament || tournament.mode !== "single_elimination") {
     const validTeams = seTeams.filter(t => t.p1 && t.p2);
     return (
       <div>
@@ -172,17 +172,19 @@ export function SingleElimination({ players, getName, supabase, leagueId, tourna
             <span className="gm-setup-lbl">Tournament Name</span>
             <input type="text" className="gm-tinput" value={tournamentName} onChange={e => setTournamentName(e.target.value)} placeholder="Friday Night Showdown" />
           </div>
+
           <div className="gm-setup-blk">
             <span className="gm-setup-lbl">Format</span>
             <span className="gm-fmt-pill"><Icon name="trophy" size={12} /> Single Elimination</span>
           </div>
+
           <div className="gm-setup-blk">
             <span className="gm-setup-lbl">Teams ({seTeams.length} registered)</span>
             <div className="gm-tlist">
               {seTeams.map((team, idx) => {
-                const allSel = seTeams.flatMap(t => [t.p1, t.p2]).filter(Boolean);
-                const p1O = allSel.filter(v => v !== team.p1);
-                const p2O = allSel.filter(v => v !== team.p2);
+                const seAllSel = seTeams.flatMap(t => [t.p1, t.p2]).filter(Boolean);
+                const p1O = seAllSel.filter(v => v !== team.p1);
+                const p2O = seAllSel.filter(v => v !== team.p2);
                 return (
                   <div key={idx} className="gm-tcard">
                     <div className="gm-tcard-h">
@@ -209,13 +211,14 @@ export function SingleElimination({ players, getName, supabase, leagueId, tourna
               <Icon name="plus" size={12} /> Add Team
             </button>
           </div>
+
           <button
             className={`gm-startbtn ${validTeams.length >= 4 ? "" : "off"}`}
             onClick={createSETournament}
             disabled={validTeams.length < 4}
           >
             <Icon name="zap" size={14} />
-            Create Tournament {validTeams.length >= 4 ? "(" + validTeams.length + " teams)" : "(min 4 teams)"}
+            Create Tournament {validTeams.length >= 4 ? `(${validTeams.length} teams)` : "(min 4 teams)"}
           </button>
         </div>
       </div>
@@ -309,10 +312,16 @@ export function SingleElimination({ players, getName, supabase, leagueId, tourna
             <h3 style={{ fontSize: 12, fontWeight: 700, color: PU, marginBottom: 8, paddingBottom: 6, borderBottom: `1px solid ${BD}` }}>Enter Scores — {roundLabel}</h3>
             {unscored.map(({ m, mi }) => (
               <div key={mi} style={{ background: CD, border: `1px solid ${PU}40`, borderRadius: 12, padding: 12, marginBottom: 6 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600 }}>{m.team_a_name || m.team_a?.filter(Boolean).map(pid => getName(pid)).join(" x ") || "TBD"}</div>
-                    <div style={{ fontSize: 13, fontWeight: 600, marginTop: 4 }}>{m.team_b_name || m.team_b?.filter(Boolean).map(pid => getName(pid)).join(" x ") || "TBD"}</div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ marginBottom: 6 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: TX }}>{m.team_a_name || "Team A"}</div>
+                      <div style={{ fontSize: 11, color: MT, fontFamily: "var(--mono)", marginTop: 1 }}>{m.team_a?.filter(Boolean).map(pid => getName(pid)).join(" / ") || "TBD"}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: TX }}>{m.team_b_name || "Team B"}</div>
+                      <div style={{ fontSize: 11, color: MT, fontFamily: "var(--mono)", marginTop: 1 }}>{m.team_b?.filter(Boolean).map(pid => getName(pid)).join(" / ") || "TBD"}</div>
+                    </div>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 2, alignItems: "center" }}>
                     <input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="0" id={`se-a-${ri}-${mi}`} style={{ width: 44, padding: "4px", borderRadius: 6, border: `1px solid ${BD}`, background: CD2, color: TX, textAlign: "center", fontSize: 13, fontFamily: "'JetBrains Mono'" }} />

@@ -106,7 +106,7 @@ export function RoundRobin({ players, getName, supabase, leagueId, tournament, s
   // ════════════════════════════════════
   // RENDER: RR Setup Screen
   // ════════════════════════════════════
-    if (!tournament || tournament.mode !== "round_robin") {
+  if (!tournament || tournament.mode !== "round_robin") {
     const validTeams = rrTeams.filter(t => t.p1 && t.p2);
     return (
       <div>
@@ -125,17 +125,19 @@ export function RoundRobin({ players, getName, supabase, leagueId, tournament, s
             <span className="gm-setup-lbl">Tournament Name</span>
             <input type="text" className="gm-tinput" value={rrTournamentName} onChange={e => setRrTournamentName(e.target.value)} placeholder="Round Robin League" />
           </div>
+
           <div className="gm-setup-blk">
             <span className="gm-setup-lbl">Format</span>
             <span className="gm-fmt-pill"><Icon name="award" size={12} /> Round Robin</span>
           </div>
+
           <div className="gm-setup-blk">
             <span className="gm-setup-lbl">Teams ({rrTeams.length} registered)</span>
             <div className="gm-tlist">
               {rrTeams.map((team, idx) => {
-                const allSel = rrTeams.flatMap(t => [t.p1, t.p2]).filter(Boolean);
-                const p1O = allSel.filter(v => v !== team.p1);
-                const p2O = allSel.filter(v => v !== team.p2);
+                const rrAllSel = rrTeams.flatMap(t => [t.p1, t.p2]).filter(Boolean);
+                const p1O = rrAllSel.filter(v => v !== team.p1);
+                const p2O = rrAllSel.filter(v => v !== team.p2);
                 return (
                   <div key={idx} className="gm-tcard">
                     <div className="gm-tcard-h">
@@ -162,6 +164,7 @@ export function RoundRobin({ players, getName, supabase, leagueId, tournament, s
               <Icon name="plus" size={12} /> Add Team
             </button>
           </div>
+
           <button
             className={`gm-startbtn ${validTeams.length >= 3 ? "" : "off"}`}
             onClick={createRRTournament}
@@ -271,12 +274,20 @@ export function RoundRobin({ players, getName, supabase, leagueId, tournament, s
             {matches.map((m, mi) => {
               const key = "rr-" + ri + "-" + mi;
               const sc = tournament.scores?.[key];
+              const tAP = m.team_a?.filter(Boolean).map(pid => getName(pid)).join(" / ") || "";
+              const tBP = m.team_b?.filter(Boolean).map(pid => getName(pid)).join(" / ") || "";
               return (
                 <div key={mi} style={{ marginBottom: mi < matches.length - 1 ? 10 : 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                    <span style={{ flex:1, fontSize:13, fontWeight:600, textAlign:"right", color: sc?(sc.a>sc.b?A:TX):TX }}>{m.team_a_name}</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                    <div style={{ flex:1, textAlign:"right" }}>
+                      <div style={{ fontSize:13, fontWeight:700, color: sc?(sc.a>sc.b?A:TX):TX }}>{m.team_a_name}</div>
+                      {tAP && <div style={{ fontSize:11, color:MT, fontFamily:"var(--mono)", marginTop:1 }}>{tAP}</div>}
+                    </div>
                     <span style={{ color:MT, fontSize:11, fontWeight:700 }}>vs</span>
-                    <span style={{ flex:1, fontSize:13, fontWeight:600, color: sc?(sc.b>sc.a?A:TX):TX }}>{m.team_b_name}</span>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontSize:13, fontWeight:700, color: sc?(sc.b>sc.a?A:TX):TX }}>{m.team_b_name}</div>
+                      {tBP && <div style={{ fontSize:11, color:MT, fontFamily:"var(--mono)", marginTop:1 }}>{tBP}</div>}
+                    </div>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
                     <ScoreStepper value={sc?.a||0} aColor={A} ariaLabel={`${m.team_a_name} score`} onChange={(n)=>recordRRScore(ri,mi,n,sc?.b||0)}/>
