@@ -373,10 +373,9 @@ body {
 .llogobox {
   width: auto; height: auto;
   display: flex; align-items: center; justify-content: center;
-  /* S070 follow-up: lighter drop-shadow (was 36px / 0.35 alpha) — the heavier
-     halo paired with the radial-gradient bg circle was reading as a "container
-     box" against the dark app bg. Logo now floats transparent on var(--bg). */
-  filter: drop-shadow(0 0 24px rgba(74, 222, 128, 0.30));
+  /* S072 redesign: gold drop-shadow halo replacing prior green tint, matching
+     the new 3D gold-orb + satellite mark. */
+  filter: drop-shadow(0 0 28px rgba(245, 158, 11, 0.40));
   animation: pg 3s ease-in-out infinite;
   margin-bottom: 22px;
   overflow: visible;
@@ -385,37 +384,48 @@ body {
   box-shadow: none;
 }
 
-/* S070 Issue #80: brand-mark internal animations — dot fade + center pulse.
-   S070 follow-up: removed .lhmark-orbit (outer dashed ring + its rotation
-   keyframe) along with the radial-gradient halo circle — both contributed
-   to the "boxed" look the user flagged. */
+/* S072 brand-mark internal animations — center pulse + outer aura breathing
+   + slow satellite-group orbit rotation + per-satellite scale staggers. */
 .lhmark { display: block; }
 .lhmark-pulse {
   transform-origin: 50% 50%;
   transform-box: fill-box;
-  animation: hubPulse 1.6s ease-in-out infinite;
+  animation: hubPulse 1.8s ease-in-out infinite;
 }
-.lhmark-pulse-aura {
+.lhmark-aura {
   transform-origin: 50% 50%;
   transform-box: fill-box;
-  animation: hubAura 1.6s ease-in-out infinite;
+  animation: hubAura 2.4s ease-in-out infinite;
 }
-.lhmark-dot {
-  transform-origin: 50% 50%;
+.lhmark-orbit {
+  /* transform-origin set inline on element (50px 50px) — keeps the satellite
+     ring spinning around the SVG center even when CSS box origins don't apply
+     cleanly to grouped <g> elements with mixed children. */
+  animation: hubOrbit 22s linear infinite;
+}
+.lhmark-sat {
   transform-box: fill-box;
-  animation: hubDot 2.4s ease-in-out infinite;
+  animation: hubSat 2s ease-in-out infinite;
 }
+/* Header variant — smaller, no aura, faster orbit feel. */
+.lhmark.lhmark-sm .lhmark-orbit { animation-duration: 18s; }
+.lhmark.lhmark-sm .lhmark-pulse { animation-duration: 1.6s; }
+
 @keyframes hubPulse {
-  0%, 100% { transform: scale(1);   opacity: 1; }
-  50%      { transform: scale(1.18); opacity: 0.95; }
+  0%, 100% { transform: scale(1);    opacity: 1; }
+  50%      { transform: scale(1.10); opacity: 0.95; }
 }
 @keyframes hubAura {
-  0%, 100% { transform: scale(0.85); opacity: 0.18; }
-  50%      { transform: scale(1.45); opacity: 0.05; }
+  0%, 100% { transform: scale(0.92); opacity: 0.55; }
+  50%      { transform: scale(1.18); opacity: 0.85; }
 }
-@keyframes hubDot {
-  0%, 100% { transform: scale(1);    opacity: 0.85; }
-  50%      { transform: scale(1.25); opacity: 1; }
+@keyframes hubOrbit {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes hubSat {
+  0%, 100% { transform: scale(1);    opacity: 0.92; }
+  50%      { transform: scale(1.15); opacity: 1; }
 }
 .lbrand {
   font-size: 32px;

@@ -4,7 +4,7 @@ import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, BL, PU, TL, TR } from './th
 import { formatTeam, win, formatDate, setTotals, flagEmoji, decodeImageFile } from './utils/helpers';
 import { calcElo } from './utils/elo';
 import { RULES, ARGUED } from './data/rules';
-import { CourtIcon, PadelLogo, PadelLogoSmall, PadelHubMark } from './components/icons';
+import { CourtIcon, PadelLogo, PadelLogoSmall, PadelHubMark, PadelHubMarkHeader } from './components/icons';
 import { NavIcon } from './components/NavIcons';
 import Icon from './components/Icon';
 import { FD } from './components/FormDots';
@@ -971,7 +971,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
             setSidebarHistory([]);
             setTab("board");
           }} aria-label="Go to Ranking">
-            <PadelLogoSmall size={36}/>
+            <PadelHubMarkHeader size={32}/>
             <h1 className="lt"><span>Padel</span><span className="accent">Hub</span></h1>
           </button>
         </div>
