@@ -102,60 +102,81 @@ export function AmericanoMode({ players, getName, supabase, leagueId, tournament
     const lastRoundDone = (() => { const ri = allRounds.length - 1; if (ri < 0) return false; const ms = allRounds[ri]?.matches || []; return ms.length > 0 && ms.every((_, mi) => tournament.scores[`${ri}-${mi}`]); })();
 
     return (
-      <div style={{ padding: "20px 16px", maxWidth: "600px", margin: "0 auto" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-          <div><h2 style={{ fontSize: 18, fontWeight: 800 }}>{isMex ? "\uD83C\uDF2E Mexicano" : "\uD83C\uDFAF Americano"}</h2><p style={{ fontSize: 11, color: MT }}>{scored}/{totalMatches} scored · Round {allRounds.length} · {tournament.players.length} players</p></div>
-          <div style={{ display: "flex", gap: 4 }}>
-            <button onClick={() => { if (confirm("End tournament?")) endTournament(); }} style={{ padding: "6px 14px", borderRadius: 8, border: `1px solid ${DG}40`, color: DG, background: "transparent", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>End</button>
-            {confirmDelete ? <><button onClick={() => { deleteTournament(); setConfirmDelete(false); }} style={{ padding: "6px 10px", borderRadius: 8, background: DG, border: "none", color: "#fff", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>Confirm</button><button onClick={() => setConfirmDelete(false)} style={{ padding: "6px 10px", borderRadius: 8, border: `1px solid ${BD}`, background: "transparent", color: MT, fontSize: 11, cursor: "pointer" }}>No</button></> : <button onClick={() => setConfirmDelete(true)} style={{ padding: "6px 14px", borderRadius: 8, border: `1px solid ${DG}20`, color: MT, background: "transparent", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>Delete</button>}
+      <div>
+        <div className="gm-actbar">
+          <div className="gm-actl">
+            <span className="gm-h-eyebrow">{isMex ? "Mexicano" : "Americano"}</span>
+            <h1 className="gm-acttitle">{tournament.players.length} Players</h1>
+            <p className="gm-actsub">{scored}/{totalMatches} scored &middot; Round {allRounds.length}</p>
+          </div>
+          <div className="gm-actr">
+            <button className="gm-actbtn dng" onClick={() => { if (confirm("End tournament?")) endTournament(); }}>End</button>
+            {confirmDelete ? (
+              <>
+                <button className="gm-actbtn dng solid" onClick={() => { deleteTournament(); setConfirmDelete(false); }}>Confirm</button>
+                <button className="gm-actbtn" onClick={() => setConfirmDelete(false)}>No</button>
+              </>
+            ) : (
+              <button className="gm-actbtn" onClick={() => setConfirmDelete(true)}>Delete</button>
+            )}
           </div>
         </div>
 
-        <div style={{ background: CD, borderRadius: 14, border: `1px solid ${PU}30`, padding: 14, marginBottom: 12 }}>
-          <h3 style={{ fontSize: 13, fontWeight: 700, color: PU, letterSpacing: 1, textTransform: "uppercase", marginBottom: 10 }}>Live Standings</h3>
-          {leaderboard.map((p, i) => (
-            <div key={p.pid} style={{ display: "flex", alignItems: "center", padding: "6px 0", borderBottom: i < leaderboard.length - 1 ? `1px solid ${BD}20` : "none" }}>
-              <span style={{ width: 24, fontSize: 14, fontWeight: 800, color: i < 3 ? [GD, SV, BZ][i] : TX, fontFamily: "'JetBrains Mono'" }}>{i + 1}</span>
-              <span style={{ flex: 1, fontSize: 14, fontWeight: 600 }}>{getName(p.pid)}</span>
-              <span style={{ fontSize: 18, fontWeight: 800, color: i === 0 ? GD : A, fontFamily: "'JetBrains Mono'" }}>{p.points}</span>
-            </div>
-          ))}
-        </div>
+        <div className="gm-body">
+          <div className="gm-stand">
+            <div className="gm-stand-h"><Icon name="trophy" size={12} /> Live Standings</div>
+            {leaderboard.map((p, i) => {
+              const rankCls = i === 0 ? "g" : i === 1 ? "s" : i === 2 ? "b" : "";
+              return (
+                <div key={p.pid} className="gm-stand-row">
+                  <span className={`gm-stand-rank ${rankCls}`}>{i + 1}</span>
+                  <span className="gm-stand-name">{getName(p.pid)}</span>
+                  <span className={`gm-stand-pts ${i === 0 ? "g" : ""}`}>{p.points}</span>
+                </div>
+              );
+            })}
+          </div>
 
-        {isMex && lastRoundDone && <button onClick={nextMexicanoRound} style={{ width: "100%", padding: "12px", borderRadius: 12, border: "none", background: `linear-gradient(135deg,${PU},${PU}cc)`, color: TX, fontSize: 14, fontWeight: 800, cursor: "pointer", marginBottom: 12, textTransform: "uppercase" }}>Generate Next Round</button>}
+          {isMex && lastRoundDone && (
+            <button className="gm-startbtn" onClick={nextMexicanoRound}>
+              <Icon name="refresh" size={14} />
+              Generate Next Round
+            </button>
+          )}
 
-        {allRounds.map((round, ri) => {
-          const matches = round.matches || [];
-          return (
-            <div key={ri} style={{ background: CD, borderRadius: 12, border: `1px solid ${BD}`, padding: 14, marginBottom: 8 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-                <h3 style={{ fontSize: 14, fontWeight: 700 }}>Round {ri + 1}</h3>
-                {round.sitting && <span style={{ fontSize: 11, color: MT, background: BD, padding: "2px 8px", borderRadius: 6 }}>Sitting: {getName(round.sitting)}</span>}
+          {allRounds.map((round, ri) => {
+            const matches = round.matches || [];
+            return (
+              <div key={ri} className="gm-rndcard">
+                <div className="gm-rnd-h">
+                  <span className="gm-rnd-h-t">Round {ri + 1}</span>
+                  {round.sitting && <span className="gm-sit">Sitting: {getName(round.sitting)}</span>}
+                </div>
+                {matches.map((match, mi) => {
+                  const key = `${ri}-${mi}`;
+                  const sc = tournament.scores[key];
+                  const tA = match.teamA || [];
+                  const tB = match.teamB || [];
+                  return (
+                    <div key={mi} className="gm-mtch">
+                      <div className="gm-mtch-row">
+                        <span className={`gm-mtch-team l ${sc && sc.a > sc.b ? "win" : ""}`}>{tA.map(p => getName(p)).join(" / ")}</span>
+                        <span className="gm-mtch-vs">vs</span>
+                        <span className={`gm-mtch-team r ${sc && sc.b > sc.a ? "win" : ""}`}>{tB.map(p => getName(p)).join(" / ")}</span>
+                      </div>
+                      <div className="gm-mtch-sc">
+                        <ScoreStepper value={sc?.a || 0} max={ptsPerRound} aColor={A} ariaLabel="Team A points" onChange={(n) => recordScore(ri, mi, n, ptsPerRound - n)} />
+                        <span className="gm-mtch-vs">-</span>
+                        <ScoreStepper value={sc?.b || 0} max={ptsPerRound} aColor={DG} ariaLabel="Team B points" onChange={(n) => recordScore(ri, mi, ptsPerRound - n, n)} />
+                        {match.court && <span className="gm-mtch-court">Court {match.court}</span>}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-              {matches.map((match, mi) => {
-                const key = `${ri}-${mi}`;
-                const sc = tournament.scores[key];
-                const tA = match.teamA || [];
-                const tB = match.teamB || [];
-                return (
-                  <div key={mi} style={{ marginBottom: mi < matches.length - 1 ? 10 : 0 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                      <span style={{ flex: 1, fontSize: 13, fontWeight: 600, textAlign: "right", color: sc ? (sc.a > sc.b ? A : TX) : TX }}>{tA.map(p => getName(p)).join(" x ")}</span>
-                      <span style={{ color: MT, fontSize: 11, fontWeight: 700 }}>vs</span>
-                      <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: sc ? (sc.b > sc.a ? A : TX) : TX }}>{tB.map(p => getName(p)).join(" x ")}</span>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
-                      <ScoreStepper value={sc?.a||0} max={ptsPerRound} aColor={A} ariaLabel="Team A points" onChange={(n)=>recordScore(ri,mi,n,ptsPerRound-n)}/>
-                      <span style={{ color: MT, fontWeight: 700, fontSize: 12 }}>-</span>
-                      <ScoreStepper value={sc?.b||0} max={ptsPerRound} aColor={DG} ariaLabel="Team B points" onChange={(n)=>recordScore(ri,mi,ptsPerRound-n,n)}/>
-                      {match.court && <span style={{ fontSize: 9, color: MT, marginLeft: 4 }}>Court {match.court}</span>}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     );
   }
@@ -167,17 +188,27 @@ export function AmericanoMode({ players, getName, supabase, leagueId, tournament
     const prevLb = getLeaderboard();
     const prevMode = tournament.mode;
     return (
-      <div style={{ padding: "20px 16px", maxWidth: "600px", margin: "0 auto" }}>
-        <div style={{ marginBottom: 20 }}>
-          <h3 style={{ fontSize: 14, fontWeight: 700, color: GD, marginBottom: 10 }}>{"\uD83C\uDFC6"} Last Tournament — {prevMode === "americano" ? "Americano" : "Mexicano"}</h3>
-          {prevLb.map((p, i) => (
-            <div key={p.pid} style={{ display: "flex", alignItems: "center", padding: "10px 12px", marginBottom: 4, background: CD, borderRadius: 10, border: `1px solid ${i === 0 ? `${GD}40` : BD}` }}>
-              <span style={{ fontSize: 16, fontWeight: 800, color: i < 3 ? [GD, SV, BZ][i] : TX, width: 28, fontFamily: "'JetBrains Mono'" }}>{i + 1}</span>
-              <span style={{ flex: 1, fontSize: 14, fontWeight: 600 }}>{getName(p.pid)}</span>
-              <span style={{ fontSize: 18, fontWeight: 800, color: i === 0 ? GD : A, fontFamily: "'JetBrains Mono'" }}>{p.points}pts</span>
-            </div>
-          ))}
-          <button onClick={resetTournament} style={{ marginTop: 8, padding: "8px 16px", borderRadius: 10, border: `1px solid ${BD}`, background: "transparent", color: MT, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>Clear Results</button>
+      <div>
+        <div className="gm-h">
+          <span className="gm-h-eyebrow">Final Results</span>
+          <h1 className="gm-h-title">{prevMode === "americano" ? "Americano" : "Mexicano"}</h1>
+          <p className="gm-h-sub">Last tournament &middot; {prevLb.length} players</p>
+        </div>
+        <div className="gm-body">
+          <div className="gm-stand">
+            <div className="gm-stand-h"><Icon name="trophy" size={12} /> Final Standings</div>
+            {prevLb.map((p, i) => {
+              const rankCls = i === 0 ? "g" : i === 1 ? "s" : i === 2 ? "b" : "";
+              return (
+                <div key={p.pid} className="gm-stand-row">
+                  <span className={`gm-stand-rank ${rankCls}`}>{i + 1}</span>
+                  <span className="gm-stand-name">{getName(p.pid)}</span>
+                  <span className={`gm-stand-pts ${i === 0 ? "g" : ""}`}>{p.points} pts</span>
+                </div>
+              );
+            })}
+          </div>
+          <button className="gm-actbtn" style={{ alignSelf: "center" }} onClick={resetTournament}>Clear Results</button>
         </div>
       </div>
     );
