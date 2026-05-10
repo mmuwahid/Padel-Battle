@@ -2484,3 +2484,11 @@ input.linput[type="date"]::-webkit-calendar-picker-indicator {
   color: var(--text); margin-top: 2px; }
 .sform-youinfo-sub { font-family: var(--mono); font-size: 10px; color: var(--muted);
   margin-top: 3px; }
+
+/* S074 FT-16: notification deep-link flash highlight on .omcard */
+@keyframes om-flash-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(74,222,128,0); }
+  20%      { box-shadow: 0 0 0 4px rgba(74,222,128,.55); }
+  60%      { box-shadow: 0 0 0 8px rgba(74,222,128,.18); }
+}
+.omcard.om-flash { animation: om-flash-pulse 1.6s ease-out 1; }

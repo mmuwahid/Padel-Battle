@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, BL, PU } from '../theme';
 import { formatDate, win, setTotals, formatTeam } from '../utils/helpers';
 import { TeamShuffler } from './TeamShuffler';
@@ -6,7 +6,7 @@ import { ScoreStepper } from './ScoreStepper';
 import { validateMatch } from '../utils/scoringEngine';
 import Icon from './Icon';
 
-export function ScheduleView({challenges,players,matches,supabase,leagueId,user,getName,isAdmin,onUpdate,showToast,sendPushNotification,sel,elo,seasonId,openMatches,openMatchPlayers,claimedPlayer}){
+export function ScheduleView({challenges,players,matches,supabase,leagueId,user,getName,isAdmin,onUpdate,showToast,sendPushNotification,sel,elo,seasonId,openMatches,openMatchPlayers,claimedPlayer,scrollToOpenMatchId,onOpenMatchScrolled}){
   const [showForm,setShowForm]=useState(false);
   const [step,setStep]=useState(1); // 1=teams, 2=date/venue
   const [showShuffler,setShowShuffler]=useState(false); // FT-08
@@ -21,6 +21,21 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
   // S073 FT-16: match type toggle in Step 1 + open-match action busy flag
   const [matchType,setMatchType]=useState("private"); // "private" | "open"
   const [omBusy,setOmBusy]=useState(false);
+
+  // S074 FT-16: scroll-to + flash an .omcard when a notification deep-links here.
+  useEffect(() => {
+    if (!scrollToOpenMatchId) return;
+    const t = setTimeout(() => {
+      const el = document.querySelector(`.omcard[data-open-match-id="${scrollToOpenMatchId}"]`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.classList.add("om-flash");
+        setTimeout(() => el.classList.remove("om-flash"), 1800);
+      }
+      if (onOpenMatchScrolled) onOpenMatchScrolled();
+    }, 120);
+    return () => clearTimeout(t);
+  }, [scrollToOpenMatchId, onOpenMatchScrolled]);
   const [loggingMatch,setLoggingMatch]=useState(null);
   const [cancelConfirmId,setCancelConfirmId]=useState(null);
   const [logSets,setLogSets]=useState([[0,0],[0,0],[0,0]]);
@@ -82,14 +97,10 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
       });
       if(error)throw error;
       showToast("Match opened to league — waiting for 3 more players");
-      // Notification: notify all league members. Targets gathered from `matches`
-      // accumulated team rosters (pragmatic — full member list not in scope here).
-      if(sendPushNotification){
-        sendPushNotification("open_match","New Open Match",
-          `${getName(claimedPlayer.id)} opened a match on ${formatDate(date)} — claim a spot to join.`,
-          [] // server-side broadcast: empty target list = league-wide via RLS
-        );
-      }
+      // S074 FT-16: in-app notification rows for all league members are inserted by
+      // create_open_match RPC server-side (Lesson #54 — single source of truth to
+      // avoid duplicates with push-notify Edge Function). Web push delivery is a
+      // S074+ follow-up via pg_net / trigger pattern.
       setShowForm(false);setStep(1);setMatchType("private");
       setNotes("");setLocation("");
       if(onUpdate)onUpdate();
@@ -105,13 +116,8 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
       if(error)throw error;
       if(data?.status==="locked"){
         showToast("Match locked in — teams shuffled!");
-        if(sendPushNotification){
-          const allIds=[...(data.team_a_player_ids||[]),...(data.team_b_player_ids||[])];
-          const targets=getPlayerUserIds(allIds);
-          sendPushNotification("open_match","Match Locked In",
-            `Teams: ${data.team_a_player_ids.map(getName).join(" / ")} vs ${data.team_b_player_ids.map(getName).join(" / ")}`,
-            targets);
-        }
+        // S074 FT-16: 'locked' notification rows for all 4 participants are
+        // inserted by join_open_match RPC server-side (single source of truth).
       } else {
         showToast(`Spot claimed (${data?.count||"?"}/4)`);
       }
@@ -132,16 +138,11 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
   async function cancelOpenMatch(omId){
     setOmBusy(true);
     try{
-      const om=(openMatches||[]).find(o=>o.id===omId);
-      const signedUp=(openMatchPlayers||[]).filter(p=>p.open_match_id===omId).map(p=>p.player_id);
       const {error}=await supabase.rpc("cancel_open_match",{p_open_match_id:omId});
       if(error)throw error;
       showToast("Match cancelled");
-      if(om&&sendPushNotification){
-        const targets=getPlayerUserIds(signedUp);
-        sendPushNotification("open_match","Open Match Cancelled",
-          `The open match on ${formatDate(om.scheduled_at.split("T")[0])} was cancelled.`,targets);
-      }
+      // S074 FT-16: 'cancelled' notification rows for all signed-up players are
+      // inserted by cancel_open_match RPC server-side.
       if(onUpdate)onUpdate();
     }catch(err){showToast(err.message||"Failed to cancel","error");}
     finally{setOmBusy(false);}
@@ -302,7 +303,7 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
             const dateStr=dt.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short"}).toUpperCase();
             const timeStr=dt.toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"});
             return (
-              <div key={om.id} className={`omcard${isLocked?" locked":""}`}>
+              <div key={om.id} className={`omcard${isLocked?" locked":""}`} data-open-match-id={om.id}>
                 <div className="omcard-hd">
                   <div className="omcard-when">
                     <div className="omcard-date">{dateStr} {"·"} {timeStr}</div>

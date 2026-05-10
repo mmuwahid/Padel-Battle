@@ -11,6 +11,7 @@ const TYPE_META = {
   members:    { icon: "users",       tone: "blue" },
   challenge:  { icon: "swords",      tone: "gold" },
   tournament: { icon: "trophy",      tone: "gold" },
+  open_match: { icon: "users",       tone: "green" },  // S074 FT-16
   system:     { icon: "bell",        tone: "muted" },
 };
 
@@ -18,7 +19,17 @@ const TYPE_META = {
 // or null if not a kind we want to override.
 function ft09Variant(n) {
   const kind = n?.data?.kind;
+  const type = n?.type;
   if (!kind) return null;
+  // S074 FT-16: open_match variants — new (green users) / locked (gold lock) / cancelled (danger close)
+  if (type === "open_match") {
+    switch (kind) {
+      case "new":       return { icon: "users", tone: "green",  strokeWidth: 2 };
+      case "locked":    return { icon: "check", tone: "gold",   strokeWidth: 3 };
+      case "cancelled": return { icon: "close", tone: "danger", strokeWidth: 3 };
+      default: return null;
+    }
+  }
   switch (kind) {
     case "approved":    return { icon: "check",   tone: "green",  strokeWidth: 3 };
     case "edited":      return { icon: "edit",    tone: "blue",   strokeWidth: 2 };
@@ -59,6 +70,14 @@ export function notificationTarget(n) {
     case "ranking":    return { tab: "board" };
     case "tournament": return { tab: "gamemode" };
     case "challenge":  return { tab: "gamemode" };
+    // S074 FT-16: open_match notifications all route to ScheduleView (history tab),
+    // schedule sub-tab. Cancelled has no openMatchId since the row is gone — caller
+    // just navigates to the section with no flash highlight.
+    case "open_match": {
+      if (kind === "cancelled") return { tab: "history", subTab: "schedule" };
+      if (d.open_match_id) return { tab: "history", subTab: "schedule", openMatchId: d.open_match_id };
+      return { tab: "history", subTab: "schedule" };
+    }
     default:           return null;
   }
 }

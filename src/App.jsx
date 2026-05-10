@@ -69,6 +69,8 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
   // S070 Issue #79: notification click-through. When set, MatchHistory scrolls
   // to the matching .mcard, flashes a highlight, then calls onScrolled() to clear.
   const [scrollToMatchId,setScrollToMatchId]=useState(null);
+  // S074 FT-16: deep-link target for an open-match card (notification click-through).
+  const [scrollToOpenMatchId,setScrollToOpenMatchId]=useState(null);
   const [selectedSeason,setSelectedSeason]=useState(null);
   const [tournament,setTournament]=useState(null);
   // FT-05: Challenges/Scheduling
@@ -138,9 +140,15 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
     if (target.tab) {
       setSelectedPlayer(null);
       setTab(target.tab);
+      // S074 FT-16: schedule sub-tab for open-match deep-links
+      if (target.subTab === "schedule") setMatchSubTab("schedule");
+      else if (target.tab === "history") setMatchSubTab("history");
       if (target.matchId) {
         // Defer scroll-target set until after the tab switch + first paint.
         setTimeout(() => setScrollToMatchId(target.matchId), 0);
+      }
+      if (target.openMatchId) {
+        setTimeout(() => setScrollToOpenMatchId(target.openMatchId), 0);
       }
     }
   }, []);
@@ -1360,6 +1368,8 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
               openMatches={openMatches}
               openMatchPlayers={openMatchPlayers}
               claimedPlayer={claimedPlayer}
+              scrollToOpenMatchId={scrollToOpenMatchId}
+              onOpenMatchScrolled={()=>setScrollToOpenMatchId(null)}
               sel={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:13,fontFamily: "var(--font)"}}
             />
           </div>
