@@ -180,7 +180,7 @@ export function MatchHistory({onEdit,shareMatch,sel,onMatchDeleted,scrollToMatch
           {/* Header row */}
           {sets.map((_,i)=>(
             <div key={`h${i}`} className="mghd" style={{gridRow:1, gridColumn:3+i}}>
-              {i===2 ? 'S/TB' : `S${i+1}`}
+              {`S${i+1}`}
             </div>
           ))}
           <div className="mghd mghd-final" style={{gridRow:1, gridColumn:finalCol}}>FINAL</div>

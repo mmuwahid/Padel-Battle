@@ -25,6 +25,7 @@ export function SeasonManagement({ setSidebarView, goBack }) {
   const [newStart, setNewStart] = useState(new Date().toISOString().slice(0, 10));
   const [newLocation, setNewLocation] = useState("");
   const [cloneFrom, setCloneFrom] = useState("");
+  const [newFormat, setNewFormat] = useState("individual"); // S073 FT-15
   const [creating, setCreating] = useState(false);
 
   // Edit form
@@ -83,6 +84,7 @@ export function SeasonManagement({ setSidebarView, goBack }) {
         p_start_date: newStart,
         p_clone_from: cloneFrom || null,
         p_location: newLocation.trim() || null,
+        p_format: newFormat,
       });
       if (error) throw error;
       showToast("Season created");
@@ -396,6 +398,20 @@ export function SeasonManagement({ setSidebarView, goBack }) {
                     <option key={s.id} value={s.id}>{s.name} ({rosters[s.id]?.size || 0} players)</option>
                   ))}
                 </select>
+              </div>
+              {/* S073 FT-15: format toggle — defaults to individual; pairs unlocks Pair Roster admin (deferred to S074). */}
+              <div className="shf">
+                <div className="shlbl"><Icon name="trophy" size={12} color="var(--muted)" />Format</div>
+                <div className="sform-typetoggle">
+                  <button type="button" className={`sform-typebtn${newFormat==="individual"?" on":""}`} onClick={()=>setNewFormat("individual")}>
+                    Individual
+                    <span className="sform-typebtn-sub">Random partners</span>
+                  </button>
+                  <button type="button" className={`sform-typebtn${newFormat==="pairs"?" on":""}`} onClick={()=>setNewFormat("pairs")}>
+                    Pairs
+                    <span className="sform-typebtn-sub">Fixed teams</span>
+                  </button>
+                </div>
               </div>
               <div className="inote">
                 <Icon name="info" size={14} color="rgba(245,158,11,.85)" />

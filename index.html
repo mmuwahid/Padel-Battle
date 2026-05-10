@@ -9,6 +9,11 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="theme-color" content="#0d0d14" />
     <link rel="manifest" href="/manifest.json" />
+    <!-- S073: SVG icon prioritized so home-screen + apple-touch + tab favicon
+         all render the new green orb design without needing PNG regen. PNG
+         fallbacks kept for older clients. -->
+    <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
+    <link rel="apple-touch-icon" href="/icons/icon.svg" />
     <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192.png" />
     <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png" />
     <link rel="apple-touch-icon-precomposed" href="/icons/icon-192.png" />
@@ -43,48 +48,49 @@
     <meta name="twitter:image:alt" content="PadelHub logo — green padel racket on dark background" />
   </head>
   <body>
-    <!-- S072: redesigned splash — gold 3D orb hub + 6 satellite orbs orbiting
-         around it. Mirrors <PadelHubMark> in src/components/icons.jsx so the
-         static splash and the React splash render identical artwork (#98). -->
+    <!-- S073: green 3D orb hub + 6 satellite orbs orbiting around it (Issue
+         #90 — brand color is green, not gold). Mirrors <PadelHubMark> in
+         src/components/icons.jsx so static + React splashes render identical
+         artwork (Lesson #98). -->
     <div id="splash" style="position:fixed;inset:0;z-index:9999;background:#080808;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:30vh 32px 0;font-family:'Syne',system-ui,sans-serif">
-      <svg width="160" height="160" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter:drop-shadow(0 0 28px rgba(245,158,11,0.40))">
+      <svg width="160" height="160" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter:drop-shadow(0 0 28px rgba(74,222,128,0.40))">
         <defs>
           <radialGradient id="s-orb" cx="35%" cy="28%" r="70%">
-            <stop offset="0%" stop-color="#fde68a"/>
-            <stop offset="40%" stop-color="#f59e0b"/>
-            <stop offset="100%" stop-color="#78350f"/>
+            <stop offset="0%" stop-color="#d1fae5"/>
+            <stop offset="40%" stop-color="#4ade80"/>
+            <stop offset="100%" stop-color="#14532d"/>
           </radialGradient>
           <radialGradient id="s-sat" cx="32%" cy="28%" r="72%">
-            <stop offset="0%" stop-color="#fef3c7"/>
-            <stop offset="45%" stop-color="#f59e0b"/>
-            <stop offset="100%" stop-color="#92400e"/>
+            <stop offset="0%" stop-color="#ecfdf5"/>
+            <stop offset="45%" stop-color="#4ade80"/>
+            <stop offset="100%" stop-color="#166534"/>
           </radialGradient>
           <radialGradient id="s-aura" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.55"/>
-            <stop offset="55%" stop-color="#f59e0b" stop-opacity="0.18"/>
-            <stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/>
+            <stop offset="0%" stop-color="#4ade80" stop-opacity="0.55"/>
+            <stop offset="55%" stop-color="#4ade80" stop-opacity="0.18"/>
+            <stop offset="100%" stop-color="#4ade80" stop-opacity="0"/>
           </radialGradient>
         </defs>
         <circle class="splash-aura" cx="50" cy="50" r="48" fill="url(#s-aura)"/>
         <g class="splash-orbit" style="transform-origin:50px 50px">
-          <line x1="50" y1="50" x2="50" y2="20" stroke="#f59e0b" stroke-width="0.7" opacity="0.32"/>
-          <circle cx="50" cy="20" r="6.2" fill="url(#s-sat)"/><ellipse cx="48.5" cy="18.5" rx="1.8" ry="1.3" fill="#fef9c3" opacity="0.75"/>
-          <line x1="50" y1="50" x2="76" y2="35" stroke="#f59e0b" stroke-width="0.7" opacity="0.32"/>
-          <circle cx="76" cy="35" r="6.2" fill="url(#s-sat)"/><ellipse cx="74.5" cy="33.5" rx="1.8" ry="1.3" fill="#fef9c3" opacity="0.75"/>
-          <line x1="50" y1="50" x2="76" y2="65" stroke="#f59e0b" stroke-width="0.7" opacity="0.32"/>
-          <circle cx="76" cy="65" r="6.2" fill="url(#s-sat)"/><ellipse cx="74.5" cy="63.5" rx="1.8" ry="1.3" fill="#fef9c3" opacity="0.75"/>
-          <line x1="50" y1="50" x2="50" y2="80" stroke="#f59e0b" stroke-width="0.7" opacity="0.32"/>
-          <circle cx="50" cy="80" r="6.2" fill="url(#s-sat)"/><ellipse cx="48.5" cy="78.5" rx="1.8" ry="1.3" fill="#fef9c3" opacity="0.75"/>
-          <line x1="50" y1="50" x2="24" y2="65" stroke="#f59e0b" stroke-width="0.7" opacity="0.32"/>
-          <circle cx="24" cy="65" r="6.2" fill="url(#s-sat)"/><ellipse cx="22.5" cy="63.5" rx="1.8" ry="1.3" fill="#fef9c3" opacity="0.75"/>
-          <line x1="50" y1="50" x2="24" y2="35" stroke="#f59e0b" stroke-width="0.7" opacity="0.32"/>
-          <circle cx="24" cy="35" r="6.2" fill="url(#s-sat)"/><ellipse cx="22.5" cy="33.5" rx="1.8" ry="1.3" fill="#fef9c3" opacity="0.75"/>
+          <line x1="50" y1="50" x2="50" y2="20" stroke="#4ade80" stroke-width="0.7" opacity="0.32"/>
+          <circle cx="50" cy="20" r="6.2" fill="url(#s-sat)"/><ellipse cx="48.5" cy="18.5" rx="1.8" ry="1.3" fill="#ecfdf5" opacity="0.75"/>
+          <line x1="50" y1="50" x2="76" y2="35" stroke="#4ade80" stroke-width="0.7" opacity="0.32"/>
+          <circle cx="76" cy="35" r="6.2" fill="url(#s-sat)"/><ellipse cx="74.5" cy="33.5" rx="1.8" ry="1.3" fill="#ecfdf5" opacity="0.75"/>
+          <line x1="50" y1="50" x2="76" y2="65" stroke="#4ade80" stroke-width="0.7" opacity="0.32"/>
+          <circle cx="76" cy="65" r="6.2" fill="url(#s-sat)"/><ellipse cx="74.5" cy="63.5" rx="1.8" ry="1.3" fill="#ecfdf5" opacity="0.75"/>
+          <line x1="50" y1="50" x2="50" y2="80" stroke="#4ade80" stroke-width="0.7" opacity="0.32"/>
+          <circle cx="50" cy="80" r="6.2" fill="url(#s-sat)"/><ellipse cx="48.5" cy="78.5" rx="1.8" ry="1.3" fill="#ecfdf5" opacity="0.75"/>
+          <line x1="50" y1="50" x2="24" y2="65" stroke="#4ade80" stroke-width="0.7" opacity="0.32"/>
+          <circle cx="24" cy="65" r="6.2" fill="url(#s-sat)"/><ellipse cx="22.5" cy="63.5" rx="1.8" ry="1.3" fill="#ecfdf5" opacity="0.75"/>
+          <line x1="50" y1="50" x2="24" y2="35" stroke="#4ade80" stroke-width="0.7" opacity="0.32"/>
+          <circle cx="24" cy="35" r="6.2" fill="url(#s-sat)"/><ellipse cx="22.5" cy="33.5" rx="1.8" ry="1.3" fill="#ecfdf5" opacity="0.75"/>
         </g>
         <circle class="splash-orb" cx="50" cy="50" r="13" fill="url(#s-orb)"/>
-        <ellipse cx="46" cy="45.5" rx="4.2" ry="3" fill="#fef9c3" opacity="0.55"/>
+        <ellipse cx="46" cy="45.5" rx="4.2" ry="3" fill="#ecfdf5" opacity="0.55"/>
       </svg>
       <div style="display:flex;align-items:center;gap:6px;margin-top:24px">
-        <span style="font-size:26px;font-weight:800;letter-spacing:1.5px;color:#f0f0f0;font-family:'Syne',system-ui,sans-serif">Padel</span><span style="font-size:26px;font-weight:800;letter-spacing:1.5px;color:#f59e0b;font-family:'Syne',system-ui,sans-serif">Hub</span>
+        <span style="font-size:26px;font-weight:800;letter-spacing:1.5px;color:#f0f0f0;font-family:'Syne',system-ui,sans-serif">Padel</span><span style="font-size:26px;font-weight:800;letter-spacing:1.5px;color:#4ade80;font-family:'Syne',system-ui,sans-serif">Hub</span>
       </div>
       <div id="splash-status" style="margin-top:22px;color:#9090a4;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;font-family:'DM Mono',monospace">Loading…</div>
       <style>

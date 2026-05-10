@@ -272,7 +272,7 @@ export function LeagueGate({ user, children }) {
   // briefly during cold launch — usually <500ms).
   if (loading) {
     return (
-      <div className="lscreen">
+      <div className="lscreen splash">
         <div className="lbg" />
         <div className="lhero">
           <div className="llogobox"><PadelHubMark size={140} /></div>

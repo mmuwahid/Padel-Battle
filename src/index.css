@@ -357,15 +357,24 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* S070 Issue #80: position the logo ~20% above true center per user direction.
-     Was justify-content:center (S068). Now flex-start with padding-top set so
-     the logo sits at ~30vh from top (which is ~20% above the visual middle on
-     a typical phone viewport). */
+  /* S073 Issue #90 #1: forms shouldn't push Google sign-in below the fold.
+     Default to compact top padding so login + signup + recovery fit on one
+     viewport. Splash screens (App.jsx loading + LeagueGate picker) opt into
+     the wider 30vh hero space via .lscreen.splash modifier below. */
   justify-content: flex-start;
-  padding: 30vh 32px 28px;
+  padding: clamp(28px, 6vh, 56px) 32px 18px;
   position: relative;
   z-index: 1;
 }
+.lscreen.splash .lhero {
+  /* S073: splash variant — logo positioned ~20% above true center for the
+     opening loading screen (App.jsx splash). Form-bearing screens use the
+     compact default above. */
+  padding-top: 30vh;
+}
+.lscreen.splash .llogobox { margin-bottom: 22px; }
+/* S073 #90 #1: tighten spacing between logo, wordmark, tag on form screens. */
+.lscreen:not(.splash) .llogobox { margin-bottom: 12px; }
 /* S070 Issue #80: re-designed splash logo container — bigger drop-shadow halo,
    sophisticated multi-layer pulse animation. Coordinates with the new
    <PadelHubMark> SVG component (with .lhmark / .lhmark-orbit / .lhmark-pulse
@@ -373,9 +382,9 @@ body {
 .llogobox {
   width: auto; height: auto;
   display: flex; align-items: center; justify-content: center;
-  /* S072 redesign: gold drop-shadow halo replacing prior green tint, matching
-     the new 3D gold-orb + satellite mark. */
-  filter: drop-shadow(0 0 28px rgba(245, 158, 11, 0.40));
+  /* S073: green drop-shadow halo (Issue #90 — brand color is green not gold).
+     Same 3D orb + satellite design as S072 but with the app accent color. */
+  filter: drop-shadow(0 0 28px rgba(74, 222, 128, 0.40));
   animation: pg 3s ease-in-out infinite;
   margin-bottom: 22px;
   overflow: visible;
@@ -2372,3 +2381,106 @@ input.linput[type="date"]::-webkit-calendar-picker-indicator {
 .gm-rules-sec-h{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);}
 .gm-rules-list{display:flex;flex-direction:column;gap:0;}
 
+
+/* ─── S073 FT-16: Open-match voting CSS ─────────────────────────────── */
+.om-section { padding: 0 0 8px; }
+.om-secheader { padding: 6px 16px 10px; display: flex; align-items: center; gap: 8px; }
+.om-secheader-eb { font-family: var(--mono); font-size: 10px; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+.om-secheader-ct { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+
+.omcard { background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-lg); margin: 0 16px 12px; overflow: hidden; }
+.omcard.locked { border-color: var(--gold-glow, rgba(245,158,11,.25)); }
+.omcard-hd { display: flex; align-items: center; padding: 12px 14px;
+  background: var(--surface-2); border-bottom: 1px solid var(--border);
+  gap: 12px; min-height: 52px; }
+.omcard-when { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.omcard-date { font-family: var(--mono); font-size: 11px; font-weight: 700;
+  letter-spacing: .06em; color: var(--text); text-transform: uppercase; }
+.omcard-meta { font-family: var(--mono); font-size: 9.5px; color: var(--muted);
+  letter-spacing: .04em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.omcard-status { display: flex; align-items: center; gap: 6px; padding: 5px 11px;
+  border-radius: var(--r-full); font-family: var(--mono); font-size: 10px;
+  font-weight: 800; letter-spacing: .08em; flex-shrink: 0; }
+.omcard-status.open { background: var(--accent-dim); color: var(--accent);
+  border: 1px solid var(--accent-glow); }
+.omcard-status.locked { background: var(--gold-dim, rgba(245,158,11,.1)); color: var(--gold, #f59e0b);
+  border: 1px solid var(--gold-glow, rgba(245,158,11,.3)); }
+.omcard-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+.omcard-slots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+  padding: 14px 14px 6px; }
+.omslot { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.omslot-avi { width: 44px; height: 44px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font); font-weight: 800; font-size: 16px;
+  background: linear-gradient(135deg, rgba(74,222,128,.16), rgba(74,222,128,.04));
+  border: 2px solid rgba(74,222,128,.32); color: var(--accent); }
+.omslot-avi.org { border-color: var(--gold, #f59e0b); color: var(--gold, #f59e0b);
+  background: linear-gradient(135deg, rgba(245,158,11,.16), rgba(245,158,11,.04)); }
+.omslot-avi.empty { background: transparent; border: 2px dashed rgba(255,255,255,.18);
+  color: var(--muted); font-size: 22px; font-weight: 300; }
+.omslot-avi.team-a { border-color: var(--accent); color: var(--accent); }
+.omslot-avi.team-b { border-color: var(--gold, #f59e0b); color: var(--gold, #f59e0b);
+  background: linear-gradient(135deg, rgba(245,158,11,.16), rgba(245,158,11,.04)); }
+.omslot-name { font-family: var(--mono); font-size: 9.5px; font-weight: 700;
+  color: var(--text); max-width: 72px; overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap; text-align: center; }
+.omslot-name.empty { color: var(--muted); font-weight: 500; }
+.omslot-role { font-family: var(--mono); font-size: 8px; font-weight: 800;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--gold, #f59e0b);
+  margin-top: -3px; }
+.omslot-team { font-family: var(--mono); font-size: 8px; font-weight: 800;
+  letter-spacing: .1em; text-transform: uppercase; margin-top: -3px; }
+.omslot-team.a { color: var(--accent); }
+.omslot-team.b { color: var(--gold, #f59e0b); }
+
+.omcard-notes { padding: 8px 14px; font-family: var(--mono); font-size: 10px;
+  color: var(--muted); border-top: 1px solid var(--border); font-style: normal; }
+.omcard-actions { display: flex; gap: 8px; padding: 10px 14px 14px; }
+.omcard-btn { flex: 1; padding: 11px 14px; border-radius: var(--r-md); border: none;
+  font-family: var(--font); font-size: 13px; font-weight: 800; letter-spacing: .02em;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.omcard-btn:disabled { opacity: .5; cursor: not-allowed; }
+.omcard-btn.primary { background: var(--accent); color: #000; }
+.omcard-btn.gold { background: var(--gold, #f59e0b); color: #000; }
+.omcard-btn.muted { background: var(--surface-2); color: var(--muted);
+  border: 1px solid var(--border); }
+.omcard-btn.danger { background: rgba(248,113,113,.08); color: var(--danger);
+  border: 1px solid rgba(248,113,113,.22); }
+.omcard-btn.ghost { background: transparent; color: var(--text);
+  border: 1px solid rgba(255,255,255,.18); }
+
+/* Schedule form match-type toggle */
+.sform-tcard { background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-lg); margin: 0 0 14px; padding: 14px; }
+.sform-tcardh { display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px; }
+.sform-tcardh-lbl { font-family: var(--mono); font-size: 10px; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.sform-typetoggle { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.sform-typebtn { padding: 14px 12px; border-radius: var(--r-md); background: var(--surface-2);
+  border: 1px solid var(--border); font-family: var(--font); font-size: 13px;
+  font-weight: 700; color: var(--muted); display: flex; flex-direction: column;
+  align-items: center; gap: 4px; cursor: pointer; }
+.sform-typebtn.on { background: var(--accent-dim); border-color: var(--accent-glow);
+  color: var(--accent); }
+.sform-typebtn-sub { font-family: var(--mono); font-size: 9px; font-weight: 500;
+  letter-spacing: .04em; opacity: .85; }
+
+.sform-youonly { background: var(--surface); border: 1px solid var(--accent-glow);
+  border-radius: var(--r-lg); margin: 0 0 14px; padding: 18px 14px;
+  display: flex; align-items: center; gap: 14px; }
+.sform-youavi { width: 54px; height: 54px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font); font-weight: 800; font-size: 20px;
+  background: linear-gradient(135deg, rgba(245,158,11,.20), rgba(245,158,11,.04));
+  border: 2px solid var(--gold, #f59e0b); color: var(--gold, #f59e0b); }
+.sform-youinfo { flex: 1; }
+.sform-youinfo-eb { font-family: var(--mono); font-size: 9px; font-weight: 800;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--gold, #f59e0b); }
+.sform-youinfo-name { font-family: var(--font); font-size: 18px; font-weight: 800;
+  color: var(--text); margin-top: 2px; }
+.sform-youinfo-sub { font-family: var(--mono); font-size: 10px; color: var(--muted);
+  margin-top: 3px; }

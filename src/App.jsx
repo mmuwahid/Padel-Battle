@@ -73,6 +73,9 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
   const [tournament,setTournament]=useState(null);
   // FT-05: Challenges/Scheduling
   const [challenges,setChallenges]=useState([]);
+  // S073 FT-16: open-match voting (open/locked/completed/cancelled lifecycle).
+  const [openMatches,setOpenMatches]=useState([]);
+  const [openMatchPlayers,setOpenMatchPlayers]=useState([]);
   const [matchSubTab,setMatchSubTab]=useState(()=>{const h=window.location.hash.replace("#","");return h==="schedule"?"schedule":"history";}); // history | schedule
   const [claimedPlayer,setClaimedPlayer]=useState(undefined); // undefined=loading, null=unclaimed, object=claimed
   // Sidebar and view management
@@ -346,15 +349,19 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
         {data:playersData,error:playersErr},
         {data:matchesData,error:matchesErr},
         {data:seasonsData,error:seasonsErr},
-        {data:challengesData}
+        {data:challengesData},
+        {data:openMatchesData},
+        {data:openMatchPlayersData}
       ] = await Promise.all([
         supabase.from("leagues").select("id,name,invite_code,created_by").eq("id",leagueId).single(),
         supabase.from("league_members").select("id,role").eq("league_id",leagueId).eq("user_id",user.id).single(),
         supabase.from("league_members").select("id,user_id,role,profiles(id,email,display_name,avatar_url)").eq("league_id",leagueId),
         supabase.from("players").select("id,name,nickname,user_id,created_by,created_at,avatar_url,country,playing_position,gender,date_of_birth,handedness").eq("league_id",leagueId).order("name"),
-        supabase.from("matches").select("id,team_a,team_b,sets,motm,date,season_id,league_id,status,logged_by,created_at").eq("league_id",leagueId).order("date",{ascending:false}).limit(500),
-        supabase.from("seasons").select("id,name,active,start_date,end_date,location").eq("league_id",leagueId).order("start_date"),
-        supabase.from("challenges").select("id,team_a,team_b,status,date,time,location,notes,created_by,match_id,responses,duration,league_id").eq("league_id",leagueId).in("status",["open","pending","confirmed","played"]).order("date",{ascending:true})
+        supabase.from("matches").select("id,team_a,team_b,sets,motm,date,season_id,league_id,status,logged_by,created_at,open_match_id").eq("league_id",leagueId).order("date",{ascending:false}).limit(500),
+        supabase.from("seasons").select("id,name,active,start_date,end_date,location,format").eq("league_id",leagueId).order("start_date"),
+        supabase.from("challenges").select("id,team_a,team_b,status,date,time,location,notes,created_by,match_id,responses,duration,league_id").eq("league_id",leagueId).in("status",["open","pending","confirmed","played"]).order("date",{ascending:true}),
+        supabase.from("open_matches").select("id,league_id,season_id,organizer_id,scheduled_at,duration_minutes,court,notes,status,team_a_player_ids,team_b_player_ids,locked_at,created_at").eq("league_id",leagueId).in("status",["open","locked"]).order("scheduled_at",{ascending:true}),
+        supabase.from("open_match_players").select("id,open_match_id,player_id,joined_at")
       ]);
 
       if (leagueErr) throw leagueErr;
@@ -385,6 +392,13 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
       setSeasons(seasonsData || []);
 
       setChallenges(challengesData||[]);
+      // S073 FT-16: open-match state — filter join-table rows to only those
+      // belonging to the loaded open matches (defensive against orphans).
+      const omIds = new Set((openMatchesData||[]).map(o=>o.id));
+      setOpenMatches(openMatchesData||[]);
+      setOpenMatchPlayers((openMatchPlayersData||[]).filter(p=>omIds.has(p.open_match_id)));
+      // Auto-cancel stale open matches whose scheduled time has passed
+      supabase.rpc("expire_stale_open_matches",{p_league_id:leagueId}).then(()=>{});
 
       // Fetch unread notification count
       supabase.from("notifications").select("id",{count:"exact",head:true}).eq("league_id",leagueId).eq("user_id",user.id).eq("read",false).then(({count})=>setUnreadNotifCount(count||0));
@@ -401,7 +415,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
       firstLoadRef.current = false;
     } catch (_err) {
       // S026: Clear state on error so user sees empty state, not stale data
-      setLeague(null); setPlayers([]); setMatches([]); setSeasons([]); setChallenges([]);
+      setLeague(null); setPlayers([]); setMatches([]); setSeasons([]); setChallenges([]); setOpenMatches([]); setOpenMatchPlayers([]);
       setLoading(false);
       showToast("Failed to load data — tap refresh to retry", "error");
     }
@@ -882,7 +896,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
   // through login → leagues fetch → match data fetch, instead of three flashes
   // (auth lscreen → leagues lscreen → full-screen shimmer skeleton).
   if (loading) return (
-    <div className="lscreen">
+    <div className="lscreen splash">
       <div className="lbg"/>
       <div className="lhero">
         <div className="llogobox"><PadelHubMark size={140}/></div>
@@ -928,6 +942,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
     supabase, user, leagueId, league, players, matches, approvedMatches, pendingMatches, incompleteMatches,
     elo, seasons, selectedSeason, setSelectedSeason, isAdmin, isOwner, myMemberId, leagueMembers, memberProfiles,
     getName, showToast, sendPushNotification, loadLeagueData,
+    openMatches, openMatchPlayers, claimedPlayer,
   };
 
   return (
@@ -1342,6 +1357,9 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
               sendPushNotification={sendPushNotification}
               elo={elo}
               seasonId={selectedSeason}
+              openMatches={openMatches}
+              openMatchPlayers={openMatchPlayers}
+              claimedPlayer={claimedPlayer}
               sel={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:13,fontFamily: "var(--font)"}}
             />
           </div>

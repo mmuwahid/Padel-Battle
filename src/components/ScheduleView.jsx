@@ -6,7 +6,7 @@ import { ScoreStepper } from './ScoreStepper';
 import { validateMatch } from '../utils/scoringEngine';
 import Icon from './Icon';
 
-export function ScheduleView({challenges,players,matches,supabase,leagueId,user,getName,isAdmin,onUpdate,showToast,sendPushNotification,sel,elo,seasonId}){
+export function ScheduleView({challenges,players,matches,supabase,leagueId,user,getName,isAdmin,onUpdate,showToast,sendPushNotification,sel,elo,seasonId,openMatches,openMatchPlayers,claimedPlayer}){
   const [showForm,setShowForm]=useState(false);
   const [step,setStep]=useState(1); // 1=teams, 2=date/venue
   const [showShuffler,setShowShuffler]=useState(false); // FT-08
@@ -18,6 +18,9 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
   const [tB,setTB]=useState(["",""]);
   const [notes,setNotes]=useState("");
   const [saving,setSaving]=useState(false);
+  // S073 FT-16: match type toggle in Step 1 + open-match action busy flag
+  const [matchType,setMatchType]=useState("private"); // "private" | "open"
+  const [omBusy,setOmBusy]=useState(false);
   const [loggingMatch,setLoggingMatch]=useState(null);
   const [cancelConfirmId,setCancelConfirmId]=useState(null);
   const [logSets,setLogSets]=useState([[0,0],[0,0],[0,0]]);
@@ -60,6 +63,90 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
     }catch(err){showToast(err.message||"Failed to schedule","error");}
     setSaving(false);
   }
+
+  // S073 FT-16: open-match RPC actions ----------------------------------
+  async function createOpenMatch(){
+    const today=new Date().toISOString().split("T")[0];
+    if(!date||date<today){showToast("Select a future date","error");return;}
+    if(!claimedPlayer){showToast("Claim a player first","error");return;}
+    const scheduledAt=new Date(`${date}T${time||"18:00"}:00`).toISOString();
+    setSaving(true);
+    try{
+      const {data,error}=await supabase.rpc("create_open_match",{
+        p_league_id:leagueId,
+        p_scheduled_at:scheduledAt,
+        p_duration:duration||90,
+        p_court:location.trim()||null,
+        p_notes:notes.trim()||null,
+        p_season_id:seasonId||null
+      });
+      if(error)throw error;
+      showToast("Match opened to league — waiting for 3 more players");
+      // Notification: notify all league members. Targets gathered from `matches`
+      // accumulated team rosters (pragmatic — full member list not in scope here).
+      if(sendPushNotification){
+        sendPushNotification("open_match","New Open Match",
+          `${getName(claimedPlayer.id)} opened a match on ${formatDate(date)} — claim a spot to join.`,
+          [] // server-side broadcast: empty target list = league-wide via RLS
+        );
+      }
+      setShowForm(false);setStep(1);setMatchType("private");
+      setNotes("");setLocation("");
+      if(onUpdate)onUpdate();
+      return data;
+    }catch(err){showToast(err.message||"Failed to open match","error");}
+    finally{setSaving(false);}
+  }
+  async function joinOpenMatch(omId){
+    if(!claimedPlayer){showToast("Claim a player first","error");return;}
+    setOmBusy(true);
+    try{
+      const {data,error}=await supabase.rpc("join_open_match",{p_open_match_id:omId});
+      if(error)throw error;
+      if(data?.status==="locked"){
+        showToast("Match locked in — teams shuffled!");
+        if(sendPushNotification){
+          const allIds=[...(data.team_a_player_ids||[]),...(data.team_b_player_ids||[])];
+          const targets=getPlayerUserIds(allIds);
+          sendPushNotification("open_match","Match Locked In",
+            `Teams: ${data.team_a_player_ids.map(getName).join(" / ")} vs ${data.team_b_player_ids.map(getName).join(" / ")}`,
+            targets);
+        }
+      } else {
+        showToast(`Spot claimed (${data?.count||"?"}/4)`);
+      }
+      if(onUpdate)onUpdate();
+    }catch(err){showToast(err.message||"Failed to claim spot","error");}
+    finally{setOmBusy(false);}
+  }
+  async function leaveOpenMatch(omId){
+    setOmBusy(true);
+    try{
+      const {error}=await supabase.rpc("leave_open_match",{p_open_match_id:omId});
+      if(error)throw error;
+      showToast("Left the match");
+      if(onUpdate)onUpdate();
+    }catch(err){showToast(err.message||"Failed to leave","error");}
+    finally{setOmBusy(false);}
+  }
+  async function cancelOpenMatch(omId){
+    setOmBusy(true);
+    try{
+      const om=(openMatches||[]).find(o=>o.id===omId);
+      const signedUp=(openMatchPlayers||[]).filter(p=>p.open_match_id===omId).map(p=>p.player_id);
+      const {error}=await supabase.rpc("cancel_open_match",{p_open_match_id:omId});
+      if(error)throw error;
+      showToast("Match cancelled");
+      if(om&&sendPushNotification){
+        const targets=getPlayerUserIds(signedUp);
+        sendPushNotification("open_match","Open Match Cancelled",
+          `The open match on ${formatDate(om.scheduled_at.split("T")[0])} was cancelled.`,targets);
+      }
+      if(onUpdate)onUpdate();
+    }catch(err){showToast(err.message||"Failed to cancel","error");}
+    finally{setOmBusy(false);}
+  }
+  // ---------------------------------------------------------------------
 
   // S026: Atomic challenge response via server-side RPC (prevents read-modify-write race)
   async function respondToChallenge(ch,response){
@@ -195,6 +282,86 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
         <button className="sched-add" onClick={()=>setShowForm(!showForm)}>{showForm?"Cancel":"+ Schedule"}</button>
       </div>
 
+      {/* S073 FT-16: Open Matches section — renders above the regular schedule
+          list. Each card shows date/time/court + 4 slot avatars + status pill +
+          contextual action (Claim / Leave / Cancel / Log Score). */}
+      {(openMatches||[]).length>0 && !showForm && (
+        <div className="om-section">
+          <div className="om-secheader">
+            <span className="om-secheader-eb">Open to League</span>
+            <span className="om-secheader-ct">{openMatches.length} active</span>
+          </div>
+          {openMatches.map(om=>{
+            const signedUpRows=(openMatchPlayers||[]).filter(p=>p.open_match_id===om.id);
+            const signedUpIds=signedUpRows.map(p=>p.player_id);
+            const filledCount=signedUpIds.length;
+            const isOrganizer=claimedPlayer?.id===om.organizer_id;
+            const youSignedUp=claimedPlayer?signedUpIds.includes(claimedPlayer.id):false;
+            const isLocked=om.status==="locked";
+            const dt=new Date(om.scheduled_at);
+            const dateStr=dt.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short"}).toUpperCase();
+            const timeStr=dt.toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"});
+            return (
+              <div key={om.id} className={`omcard${isLocked?" locked":""}`}>
+                <div className="omcard-hd">
+                  <div className="omcard-when">
+                    <div className="omcard-date">{dateStr} {"·"} {timeStr}</div>
+                    <div className="omcard-meta">{om.duration_minutes} min{om.court?` ${"·"} ${om.court}`:""} {"·"} {getName(om.organizer_id)} opened</div>
+                  </div>
+                  <span className={`omcard-status ${isLocked?"locked":"open"}`}>
+                    <span className="omcard-dot"/>{isLocked?"Locked":`${filledCount} / 4`}
+                  </span>
+                </div>
+                <div className="omcard-slots">
+                  {[0,1,2,3].map(idx=>{
+                    let pid=null, team=null;
+                    if(isLocked){
+                      const teamA=om.team_a_player_ids||[];
+                      const teamB=om.team_b_player_ids||[];
+                      if(idx<teamA.length){pid=teamA[idx];team="a";}
+                      else if(idx<teamA.length+teamB.length){pid=teamB[idx-teamA.length];team="b";}
+                    } else {
+                      pid=signedUpIds[idx]||null;
+                    }
+                    if(!pid) return (
+                      <div key={idx} className="omslot">
+                        <div className="omslot-avi empty">+</div>
+                        <div className="omslot-name empty">Open</div>
+                      </div>
+                    );
+                    const isOrg=pid===om.organizer_id;
+                    const initial=(getName(pid)||"?").charAt(0).toUpperCase();
+                    return (
+                      <div key={idx} className="omslot">
+                        <div className={`omslot-avi${isOrg?" org":""}${team?(team==="a"?" team-a":" team-b"):""}`}>{initial}</div>
+                        <div className="omslot-name">{getName(pid)}</div>
+                        {isOrg && !isLocked && <div className="omslot-role">Org</div>}
+                        {team && <div className={`omslot-team ${team}`}>Team {team.toUpperCase()}</div>}
+                      </div>
+                    );
+                  })}
+                </div>
+                {om.notes && <div className="omcard-notes">"{om.notes}"</div>}
+                <div className="omcard-actions">
+                  {!isLocked && !youSignedUp && filledCount<4 && (
+                    <button className="omcard-btn primary" disabled={omBusy} onClick={()=>joinOpenMatch(om.id)}>Claim a Spot</button>
+                  )}
+                  {!isLocked && youSignedUp && !isOrganizer && (
+                    <button className="omcard-btn muted" disabled={omBusy} onClick={()=>leaveOpenMatch(om.id)}>Leave</button>
+                  )}
+                  {!isLocked && (isOrganizer || isAdmin) && (
+                    <button className="omcard-btn danger" disabled={omBusy} onClick={()=>cancelOpenMatch(om.id)}>Cancel</button>
+                  )}
+                  {isLocked && (isOrganizer || isAdmin) && (
+                    <button className="omcard-btn ghost" disabled={omBusy} onClick={()=>cancelOpenMatch(om.id)}>Cancel</button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {/* Phase 7 (S065 spec port): Multi-step schedule form. Markup ported verbatim
           from PadelHub_Complete_v2.jsx ScheduleScreen lines 1490-1622, with LONG
           token names. Step 1: Players card with Team A (green) / VS / Team B (gold).
@@ -208,11 +375,38 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
             <div className="sch-step-circle active">1</div>
             <div className="sch-connector"><div className="sch-connector-fill" style={{width:"0%"}}/></div>
             <div className="sch-step-circle idle">2</div>
-            <div className="sch-step-label">Players {"\u2192"} Details</div>
+            <div className="sch-step-label">{matchType==="open"?"Open":"Players"} {"\u2192"} Details</div>
           </div>
 
+          {/* S073 FT-16: Match type toggle \u2014 Private vs Open to League */}
+          <div className="sform-tcard">
+            <div className="sform-tcardh"><span className="sform-tcardh-lbl">Match Type</span></div>
+            <div className="sform-typetoggle">
+              <button className={`sform-typebtn${matchType==="private"?" on":""}`} onClick={()=>setMatchType("private")}>
+                Private Match
+                <span className="sform-typebtn-sub">Pick all 4 players</span>
+              </button>
+              <button className={`sform-typebtn${matchType==="open"?" on":""}`} onClick={()=>setMatchType("open")}>
+                Open to League
+                <span className="sform-typebtn-sub">Anyone can claim</span>
+              </button>
+            </div>
+          </div>
+
+          {/* S073 FT-16 Open mode: show "you're in" card instead of team picker */}
+          {matchType==="open" && claimedPlayer && (
+            <div className="sform-youonly">
+              <div className="sform-youavi">{(getName(claimedPlayer.id)||"?").charAt(0).toUpperCase()}</div>
+              <div className="sform-youinfo">
+                <div className="sform-youinfo-eb">Organizer {"\u00b7"} Spot 1 of 4</div>
+                <div className="sform-youinfo-name">{getName(claimedPlayer.id)} (you)</div>
+                <div className="sform-youinfo-sub">Other 3 spots open to all league members</div>
+              </div>
+            </div>
+          )}
+
           {/* FT-08 Shuffler renders inline above the players card when active */}
-          {showShuffler && (
+          {matchType==="private" && showShuffler && (
             <div style={{marginTop:10}}>
               <TeamShuffler
                 players={players}
@@ -232,8 +426,8 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
             </div>
           )}
 
-          {/* Teams card */}
-          {!showShuffler && (
+          {/* Teams card — only visible in Private match type */}
+          {matchType==="private" && !showShuffler && (
             <div className="tcard" style={{marginTop:10}}>
               <div className="tcardh">
                 <div className="tcardtit">Players</div>
@@ -283,15 +477,17 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
 
           {/* Actions: 3fr / 2fr (Continue / Cancel) */}
           {(() => {
-            const canContinue = tA[0] && tA[1] && tB[0] && tB[1];
+            // S073 FT-16: Open mode requires only the organizer (you), not a full 4-player team.
+            const canContinue = matchType==="open" ? !!claimedPlayer : (tA[0] && tA[1] && tB[0] && tB[1]);
             return (<>
               <div style={{display:"grid",gridTemplateColumns:"3fr 2fr",gap:8,marginTop:10}}>
                 <button className={`savebtn ${canContinue?"on":"off"}`} disabled={!canContinue} onClick={()=>canContinue && setStep(2)}>
                   {canContinue && <Icon name="arrow-right" size={16} color="#000" strokeWidth={2}/>}Continue
                 </button>
-                <button className="shcancel" onClick={()=>{setShowForm(false);setStep(1);setTA(["",""]);setTB(["",""]);}}>Cancel</button>
+                <button className="shcancel" onClick={()=>{setShowForm(false);setStep(1);setTA(["",""]);setTB(["",""]);setMatchType("private");}}>Cancel</button>
               </div>
-              {!canContinue && <div className="savehint">Select all 4 players to continue</div>}
+              {!canContinue && matchType==="private" && <div className="savehint">Select all 4 players to continue</div>}
+              {!canContinue && matchType==="open" && <div className="savehint">Claim a player profile to open a match</div>}
             </>);
           })()}
         </div>
@@ -357,8 +553,8 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
 
           {/* Actions: 3fr / 2fr (Schedule Match / Back) */}
           <div style={{display:"grid",gridTemplateColumns:"3fr 2fr",gap:8,marginTop:10}}>
-            <button className={`savebtn ${saving?"off":"on"}`} disabled={saving} onClick={createChallenge}>
-              {!saving && <Icon name="check" size={16} color="#000" strokeWidth={2.5}/>}{saving?"Scheduling...":"Schedule Match"}
+            <button className={`savebtn ${saving?"off":"on"}`} disabled={saving} onClick={matchType==="open"?createOpenMatch:createChallenge}>
+              {!saving && <Icon name="check" size={16} color="#000" strokeWidth={2.5}/>}{saving?(matchType==="open"?"Opening...":"Scheduling..."):(matchType==="open"?"Open to League":"Schedule Match")}
             </button>
             <button className="shcancel" onClick={()=>setStep(1)}>Back</button>
           </div>

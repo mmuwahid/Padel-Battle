@@ -17,38 +17,41 @@ export const PadelLogo = () => (<svg width="48" height="48" viewBox="0 0 80 80" 
   <line x1="38" y1="52" x2="42" y2="52" stroke="#888" strokeWidth="1"/><line x1="38" y1="55" x2="42" y2="55" stroke="#888" strokeWidth="1"/><line x1="38" y1="58" x2="42" y2="58" stroke="#888" strokeWidth="1"/>
 </svg>);
 
-// S072 redesign — 3D gold-orb hub with 6 orbiting satellite orbs.
-// Design intent: a central pulsing gold orb (3D gradient — light highlight top,
-// dark amber bottom) with 6 smaller satellite orbs orbiting around it. Subtle
-// connecting lines + outer aura halo. Animations: center pulse, outer aura
-// breathing, slow rotation on the satellite group, individual scale pulse on
-// each satellite (staggered).
+// S073 — 3D green-orb hub with 6 orbiting satellite orbs.
+// Per Issue #90: brand color is GREEN (#4ade80, the app accent), not gold.
+// S072 shipped this in gold — incorrect call against brand. Reverted to green
+// while preserving the same 3D orb + 6 satellite + pulsating + orbit animation
+// design that was approved.
 //
-// Color palette: pure gold/bronze gradient using hub-orb-grad (mid #f59e0b,
-// highlight #fde68a, shadow #92400e) for both the center hub and satellites,
-// with a transparent aura via hub-aura-grad.
+// Design: central pulsing green orb (3D gradient — light highlight top,
+// dark green bottom) with 6 smaller satellite orbs orbiting around it via
+// hubOrbit group rotation. Subtle connecting lines. Outer aura halo.
+//
+// Color palette: pure green using hub-orb-grad (mid #4ade80, highlight #d1fae5,
+// shadow #14532d) for both the center hub and satellites; transparent aura.
+// Logo sits transparent on var(--bg) — no container box (S070 lesson).
 //
 // Used at three sizes:
 //   - 140px+ on AuthGate / LeagueGate / App.jsx loading splash (full effect)
-//   - 26px in app header `.lm` slot via PadelHubMarkHeader (no aura)
-//   - 32px static fallback in index.html splash (mirror this artwork there)
+//   - 32px in app header `.lm` slot via PadelHubMarkHeader (no aura)
+//   - 160px static fallback in index.html splash (mirror this artwork there)
 export const PadelHubMark = ({ size = 96 }) => (
   <svg width={size} height={size} viewBox="0 0 100 100" fill="none" className="lhmark">
     <defs>
       <radialGradient id="hub-orb-grad" cx="35%" cy="28%" r="70%">
-        <stop offset="0%"   stopColor="#fde68a"/>
-        <stop offset="40%"  stopColor="#f59e0b"/>
-        <stop offset="100%" stopColor="#78350f"/>
+        <stop offset="0%"   stopColor="#d1fae5"/>
+        <stop offset="40%"  stopColor="#4ade80"/>
+        <stop offset="100%" stopColor="#14532d"/>
       </radialGradient>
       <radialGradient id="hub-sat-grad" cx="32%" cy="28%" r="72%">
-        <stop offset="0%"   stopColor="#fef3c7"/>
-        <stop offset="45%"  stopColor="#f59e0b"/>
-        <stop offset="100%" stopColor="#92400e"/>
+        <stop offset="0%"   stopColor="#ecfdf5"/>
+        <stop offset="45%"  stopColor="#4ade80"/>
+        <stop offset="100%" stopColor="#166534"/>
       </radialGradient>
       <radialGradient id="hub-aura-grad" cx="50%" cy="50%" r="50%">
-        <stop offset="0%"   stopColor="#f59e0b" stopOpacity="0.55"/>
-        <stop offset="55%"  stopColor="#f59e0b" stopOpacity="0.18"/>
-        <stop offset="100%" stopColor="#f59e0b" stopOpacity="0"/>
+        <stop offset="0%"   stopColor="#4ade80" stopOpacity="0.55"/>
+        <stop offset="55%"  stopColor="#4ade80" stopOpacity="0.18"/>
+        <stop offset="100%" stopColor="#4ade80" stopOpacity="0"/>
       </radialGradient>
     </defs>
 
@@ -57,59 +60,51 @@ export const PadelHubMark = ({ size = 96 }) => (
 
     {/* Satellite group — slow orbit rotation around center */}
     <g className="lhmark-orbit" style={{transformOrigin:"50px 50px"}}>
-      {/* 6 satellites at hexagonal positions, r=30 from center */}
-      {/* Each: connector line + 3D orb + highlight reflection */}
-      {/* Top */}
-      <line x1="50" y1="50" x2="50" y2="20" stroke="#f59e0b" strokeWidth="0.7" opacity="0.32"/>
+      <line x1="50" y1="50" x2="50" y2="20" stroke="#4ade80" strokeWidth="0.7" opacity="0.32"/>
       <circle className="lhmark-sat" style={{animationDelay:"0ms",   transformOrigin:"50px 20px"}} cx="50" cy="20" r="6.2" fill="url(#hub-sat-grad)"/>
-      <ellipse cx="48.5" cy="18.5" rx="1.8" ry="1.3" fill="#fef9c3" opacity="0.75"/>
+      <ellipse cx="48.5" cy="18.5" rx="1.8" ry="1.3" fill="#ecfdf5" opacity="0.75"/>
 
-      {/* Top-right */}
-      <line x1="50" y1="50" x2="76" y2="35" stroke="#f59e0b" strokeWidth="0.7" opacity="0.32"/>
+      <line x1="50" y1="50" x2="76" y2="35" stroke="#4ade80" strokeWidth="0.7" opacity="0.32"/>
       <circle className="lhmark-sat" style={{animationDelay:"180ms", transformOrigin:"76px 35px"}} cx="76" cy="35" r="6.2" fill="url(#hub-sat-grad)"/>
-      <ellipse cx="74.5" cy="33.5" rx="1.8" ry="1.3" fill="#fef9c3" opacity="0.75"/>
+      <ellipse cx="74.5" cy="33.5" rx="1.8" ry="1.3" fill="#ecfdf5" opacity="0.75"/>
 
-      {/* Bottom-right */}
-      <line x1="50" y1="50" x2="76" y2="65" stroke="#f59e0b" strokeWidth="0.7" opacity="0.32"/>
+      <line x1="50" y1="50" x2="76" y2="65" stroke="#4ade80" strokeWidth="0.7" opacity="0.32"/>
       <circle className="lhmark-sat" style={{animationDelay:"360ms", transformOrigin:"76px 65px"}} cx="76" cy="65" r="6.2" fill="url(#hub-sat-grad)"/>
-      <ellipse cx="74.5" cy="63.5" rx="1.8" ry="1.3" fill="#fef9c3" opacity="0.75"/>
+      <ellipse cx="74.5" cy="63.5" rx="1.8" ry="1.3" fill="#ecfdf5" opacity="0.75"/>
 
-      {/* Bottom */}
-      <line x1="50" y1="50" x2="50" y2="80" stroke="#f59e0b" strokeWidth="0.7" opacity="0.32"/>
+      <line x1="50" y1="50" x2="50" y2="80" stroke="#4ade80" strokeWidth="0.7" opacity="0.32"/>
       <circle className="lhmark-sat" style={{animationDelay:"540ms", transformOrigin:"50px 80px"}} cx="50" cy="80" r="6.2" fill="url(#hub-sat-grad)"/>
-      <ellipse cx="48.5" cy="78.5" rx="1.8" ry="1.3" fill="#fef9c3" opacity="0.75"/>
+      <ellipse cx="48.5" cy="78.5" rx="1.8" ry="1.3" fill="#ecfdf5" opacity="0.75"/>
 
-      {/* Bottom-left */}
-      <line x1="50" y1="50" x2="24" y2="65" stroke="#f59e0b" strokeWidth="0.7" opacity="0.32"/>
+      <line x1="50" y1="50" x2="24" y2="65" stroke="#4ade80" strokeWidth="0.7" opacity="0.32"/>
       <circle className="lhmark-sat" style={{animationDelay:"720ms", transformOrigin:"24px 65px"}} cx="24" cy="65" r="6.2" fill="url(#hub-sat-grad)"/>
-      <ellipse cx="22.5" cy="63.5" rx="1.8" ry="1.3" fill="#fef9c3" opacity="0.75"/>
+      <ellipse cx="22.5" cy="63.5" rx="1.8" ry="1.3" fill="#ecfdf5" opacity="0.75"/>
 
-      {/* Top-left */}
-      <line x1="50" y1="50" x2="24" y2="35" stroke="#f59e0b" strokeWidth="0.7" opacity="0.32"/>
+      <line x1="50" y1="50" x2="24" y2="35" stroke="#4ade80" strokeWidth="0.7" opacity="0.32"/>
       <circle className="lhmark-sat" style={{animationDelay:"900ms", transformOrigin:"24px 35px"}} cx="24" cy="35" r="6.2" fill="url(#hub-sat-grad)"/>
-      <ellipse cx="22.5" cy="33.5" rx="1.8" ry="1.3" fill="#fef9c3" opacity="0.75"/>
+      <ellipse cx="22.5" cy="33.5" rx="1.8" ry="1.3" fill="#ecfdf5" opacity="0.75"/>
     </g>
 
-    {/* Central 3D pulsing orb — top-left highlight ellipse for depth */}
+    {/* Central 3D pulsing orb */}
     <circle className="lhmark-pulse" cx="50" cy="50" r="13" fill="url(#hub-orb-grad)"/>
-    <ellipse cx="46" cy="45.5" rx="4.2" ry="3" fill="#fef9c3" opacity="0.55"/>
+    <ellipse cx="46" cy="45.5" rx="4.2" ry="3" fill="#ecfdf5" opacity="0.55"/>
   </svg>
 );
 
-// S072 small variant — for app header .lm slot. No aura layer to avoid the
-// "container box" effect on a 26px target. Only the central orb + satellites.
+// Header variant — for app header .lm slot. No aura layer to avoid the
+// "container box" effect at small size on the dark app bg.
 export const PadelHubMarkHeader = ({ size = 26 }) => (
   <svg width={size} height={size} viewBox="0 0 100 100" fill="none" className="lhmark lhmark-sm">
     <defs>
       <radialGradient id="hub-orb-grad-sm" cx="35%" cy="28%" r="70%">
-        <stop offset="0%"   stopColor="#fde68a"/>
-        <stop offset="40%"  stopColor="#f59e0b"/>
-        <stop offset="100%" stopColor="#78350f"/>
+        <stop offset="0%"   stopColor="#d1fae5"/>
+        <stop offset="40%"  stopColor="#4ade80"/>
+        <stop offset="100%" stopColor="#14532d"/>
       </radialGradient>
       <radialGradient id="hub-sat-grad-sm" cx="32%" cy="28%" r="72%">
-        <stop offset="0%"   stopColor="#fef3c7"/>
-        <stop offset="50%"  stopColor="#f59e0b"/>
-        <stop offset="100%" stopColor="#92400e"/>
+        <stop offset="0%"   stopColor="#ecfdf5"/>
+        <stop offset="50%"  stopColor="#4ade80"/>
+        <stop offset="100%" stopColor="#166534"/>
       </radialGradient>
     </defs>
     <g className="lhmark-orbit" style={{transformOrigin:"50px 50px"}}>
@@ -121,7 +116,7 @@ export const PadelHubMarkHeader = ({ size = 26 }) => (
       <circle cx="24" cy="35" r="7" fill="url(#hub-sat-grad-sm)"/>
     </g>
     <circle className="lhmark-pulse" cx="50" cy="50" r="14" fill="url(#hub-orb-grad-sm)"/>
-    <ellipse cx="46" cy="45.5" rx="4.5" ry="3.2" fill="#fef9c3" opacity="0.55"/>
+    <ellipse cx="46" cy="45.5" rx="4.5" ry="3.2" fill="#ecfdf5" opacity="0.55"/>
   </svg>
 );
 

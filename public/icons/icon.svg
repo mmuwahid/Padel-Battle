@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- S073: PadelHub brand mark — green 3D orb hub with 6 orbiting satellite orbs.
+     Single source of truth for SVG rendering across PWA manifest icons,
+     apple-touch-icon, and any social card preview that supports SVG.
+     Mirrors <PadelHubMark> in src/components/icons.jsx. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="orb" cx="35%" cy="28%" r="70%">
+      <stop offset="0%"   stop-color="#d1fae5"/>
+      <stop offset="40%"  stop-color="#4ade80"/>
+      <stop offset="100%" stop-color="#14532d"/>
+    </radialGradient>
+    <radialGradient id="sat" cx="32%" cy="28%" r="72%">
+      <stop offset="0%"   stop-color="#ecfdf5"/>
+      <stop offset="45%"  stop-color="#4ade80"/>
+      <stop offset="100%" stop-color="#166534"/>
+    </radialGradient>
+    <radialGradient id="aura" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#4ade80" stop-opacity="0.40"/>
+      <stop offset="55%"  stop-color="#4ade80" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#4ade80" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- Solid dark background to match PWA bg + give the logo contrast on
+       app-launcher tiles that don't honor transparency (Android maskable). -->
+  <rect width="512" height="512" fill="#080808"/>
+  <!-- Aura halo -->
+  <circle cx="256" cy="256" r="246" fill="url(#aura)"/>
+  <!-- Connector lines + 6 satellites at hexagonal positions, scaled from the
+       100x100 internal coords used in PadelHubMark by 5.12. -->
+  <g>
+    <line x1="256" y1="256" x2="256" y2="102" stroke="#4ade80" stroke-width="3.6" opacity="0.32"/>
+    <circle cx="256" cy="102" r="32" fill="url(#sat)"/>
+    <ellipse cx="248" cy="94" rx="9" ry="6.7" fill="#ecfdf5" opacity="0.75"/>
+
+    <line x1="256" y1="256" x2="389" y2="179" stroke="#4ade80" stroke-width="3.6" opacity="0.32"/>
+    <circle cx="389" cy="179" r="32" fill="url(#sat)"/>
+    <ellipse cx="381" cy="171" rx="9" ry="6.7" fill="#ecfdf5" opacity="0.75"/>
+
+    <line x1="256" y1="256" x2="389" y2="333" stroke="#4ade80" stroke-width="3.6" opacity="0.32"/>
+    <circle cx="389" cy="333" r="32" fill="url(#sat)"/>
+    <ellipse cx="381" cy="325" rx="9" ry="6.7" fill="#ecfdf5" opacity="0.75"/>
+
+    <line x1="256" y1="256" x2="256" y2="410" stroke="#4ade80" stroke-width="3.6" opacity="0.32"/>
+    <circle cx="256" cy="410" r="32" fill="url(#sat)"/>
+    <ellipse cx="248" cy="402" rx="9" ry="6.7" fill="#ecfdf5" opacity="0.75"/>
+
+    <line x1="256" y1="256" x2="123" y2="333" stroke="#4ade80" stroke-width="3.6" opacity="0.32"/>
+    <circle cx="123" cy="333" r="32" fill="url(#sat)"/>
+    <ellipse cx="115" cy="325" rx="9" ry="6.7" fill="#ecfdf5" opacity="0.75"/>
+
+    <line x1="256" y1="256" x2="123" y2="179" stroke="#4ade80" stroke-width="3.6" opacity="0.32"/>
+    <circle cx="123" cy="179" r="32" fill="url(#sat)"/>
+    <ellipse cx="115" cy="171" rx="9" ry="6.7" fill="#ecfdf5" opacity="0.75"/>
+  </g>
+  <!-- Central 3D orb -->
+  <circle cx="256" cy="256" r="67" fill="url(#orb)"/>
+  <ellipse cx="236" cy="233" rx="22" ry="15" fill="#ecfdf5" opacity="0.55"/>
+</svg>
