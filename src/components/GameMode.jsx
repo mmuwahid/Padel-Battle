@@ -46,7 +46,7 @@ const COMPETITIVE_FORMAT_RULES = [
   {
     id: "fmt-round-robin",
     title: "Round Robin",
-    icon: "award",
+    icon: "grid",
     preview: "Every team plays every other team",
     content: "Fixed teams (you pick partners up front). Every team plays every other team exactly once. Final standings ranked by wins, then by point differential as tiebreaker. Most matches of any format, fairest for ranking purposes.",
     tags: [{ l: "Fixed teams", c: "g" }, { l: "Wins → diff tiebreak", c: "g" }, { l: "Most matches", c: "go" }],
@@ -185,7 +185,7 @@ export function GameMode({ tournament, setTournament, sel }) {
 
             <div className="gm-card" onClick={() => setScreen("rr-setup")} role="button" tabIndex={0}>
               <div className="gm-card-hd">
-                <div className="gm-card-ico"><Icon name="award" size={20} /></div>
+                <div className="gm-card-ico"><Icon name="grid" size={20} /></div>
                 <div className="gm-card-tw">
                   <div className="gm-card-title">Round Robin</div>
                   <span className="gm-card-tag">Everyone plays</span>
