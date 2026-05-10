@@ -6,8 +6,8 @@ import { DoubleElimination } from './DoubleElimination';
 import { RoundRobin } from './RoundRobin';
 import Icon from './Icon';
 
-// Format rules — surfaced inside Game Mode as collapsible reference cards.
-const FORMAT_RULES = [
+// Format rules — split per tab (Casual = Americano/Mexicano, Competitive = RR/SE/DE).
+const CASUAL_FORMAT_RULES = [
   {
     id: "fmt-americano",
     title: "Americano",
@@ -24,14 +24,9 @@ const FORMAT_RULES = [
     content: "Like Americano but pairings are recomputed each round based on the live leaderboard — top players face top players, mid faces mid. Keeps every match competitive instead of letting strong players steamroll. Each round starts when the previous is fully scored. Same individual point scoring as Americano.",
     tags: [{ l: "Adaptive pairings", c: "g" }, { l: "Balanced matches", c: "g" }, { l: "Re-seeded each round", c: "go" }],
   },
-  {
-    id: "fmt-round-robin",
-    title: "Round Robin",
-    icon: "award",
-    preview: "Every team plays every other team",
-    content: "Fixed teams (you pick partners up front). Every team plays every other team exactly once. Final standings ranked by wins, then by point differential as tiebreaker. Most matches of any format, fairest for ranking purposes.",
-    tags: [{ l: "Fixed teams", c: "g" }, { l: "Wins → diff tiebreak", c: "g" }, { l: "Most matches", c: "go" }],
-  },
+];
+
+const COMPETITIVE_FORMAT_RULES = [
   {
     id: "fmt-single-elim",
     title: "Single Elimination",
@@ -47,6 +42,14 @@ const FORMAT_RULES = [
     preview: "Two chances — winners + losers brackets",
     content: "Lose once → drop to the losers bracket but stay alive. Lose twice → eliminated. Final = winners-bracket champion vs losers-bracket champion. If the losers-bracket team wins the final, a 'true final' rematch may be required (winners-bracket team has only lost once). Roughly 2× the matches of single elimination.",
     tags: [{ l: "Second chance", c: "g" }, { l: "Two losses = out", c: "r" }, { l: "More matches", c: "go" }],
+  },
+  {
+    id: "fmt-round-robin",
+    title: "Round Robin",
+    icon: "award",
+    preview: "Every team plays every other team",
+    content: "Fixed teams (you pick partners up front). Every team plays every other team exactly once. Final standings ranked by wins, then by point differential as tiebreaker. Most matches of any format, fairest for ranking purposes.",
+    tags: [{ l: "Fixed teams", c: "g" }, { l: "Wins → diff tiebreak", c: "g" }, { l: "Most matches", c: "go" }],
   },
 ];
 
@@ -138,57 +141,71 @@ export function GameMode({ tournament, setTournament, sel }) {
         <button className={`sb ${topTab === "competitive" ? "on" : ""}`} onClick={() => setTopTab("competitive")}>Competitive</button>
       </div>
 
-      {topTab === "casual" && <AmericanoMode {...sharedProps} />}
-
-      {topTab === "competitive" && (
-        <div className="gm-body">
-          <div className="gm-card" onClick={() => setScreen("se-setup")} role="button" tabIndex={0}>
-            <div className="gm-card-hd">
-              <div className="gm-card-ico"><Icon name="trophy" size={20} /></div>
-              <div className="gm-card-tw">
-                <div className="gm-card-title">Single Elimination</div>
-                <span className="gm-card-tag">Knockout</span>
-              </div>
-              <span className="gm-card-chev"><Icon name="chevron" size={16} /></span>
+      {topTab === "casual" && (
+        <>
+          <AmericanoMode {...sharedProps} />
+          <div className="gm-rules-sec">
+            <div className="gm-rules-sec-h">
+              <Icon name="book" size={14} />
+              <span>Format Rules</span>
             </div>
-            <p className="gm-card-sub">Lose once, you're out. Classic knockout bracket — high stakes, fast resolution. Best for 4–16 teams.</p>
-          </div>
-
-          <div className="gm-card" onClick={() => setScreen("de-setup")} role="button" tabIndex={0}>
-            <div className="gm-card-hd">
-              <div className="gm-card-ico"><Icon name="refresh" size={20} /></div>
-              <div className="gm-card-tw">
-                <div className="gm-card-title">Double Elimination</div>
-                <span className="gm-card-tag">Two chances</span>
-              </div>
-              <span className="gm-card-chev"><Icon name="chevron" size={16} /></span>
+            <div className="gm-rules-list">
+              {CASUAL_FORMAT_RULES.map(rule => <FormatRuleCard key={rule.id} rule={rule} />)}
             </div>
-            <p className="gm-card-sub">Winners and losers brackets. One loss sends you to the losers bracket. Two losses and you're out.</p>
           </div>
-
-          <div className="gm-card" onClick={() => setScreen("rr-setup")} role="button" tabIndex={0}>
-            <div className="gm-card-hd">
-              <div className="gm-card-ico"><Icon name="award" size={20} /></div>
-              <div className="gm-card-tw">
-                <div className="gm-card-title">Round Robin</div>
-                <span className="gm-card-tag">Everyone plays</span>
-              </div>
-              <span className="gm-card-chev"><Icon name="chevron" size={16} /></span>
-            </div>
-            <p className="gm-card-sub">All teams play each other. Final standings by wins, then point differential. Fairest format.</p>
-          </div>
-        </div>
+        </>
       )}
 
-      <div className="gm-rules-sec">
-        <div className="gm-rules-sec-h">
-          <Icon name="book" size={14} />
-          <span>Format Rules</span>
-        </div>
-        <div className="gm-rules-list">
-          {FORMAT_RULES.map(rule => <FormatRuleCard key={rule.id} rule={rule} />)}
-        </div>
-      </div>
+      {topTab === "competitive" && (
+        <>
+          <div className="gm-body">
+            <div className="gm-card" onClick={() => setScreen("se-setup")} role="button" tabIndex={0}>
+              <div className="gm-card-hd">
+                <div className="gm-card-ico"><Icon name="trophy" size={20} /></div>
+                <div className="gm-card-tw">
+                  <div className="gm-card-title">Single Elimination</div>
+                  <span className="gm-card-tag">Knockout</span>
+                </div>
+                <span className="gm-card-chev"><Icon name="chevron" size={16} /></span>
+              </div>
+              <p className="gm-card-sub">Lose once, you're out. Classic knockout bracket — high stakes, fast resolution. Best for 4–16 teams.</p>
+            </div>
+
+            <div className="gm-card" onClick={() => setScreen("de-setup")} role="button" tabIndex={0}>
+              <div className="gm-card-hd">
+                <div className="gm-card-ico"><Icon name="refresh" size={20} /></div>
+                <div className="gm-card-tw">
+                  <div className="gm-card-title">Double Elimination</div>
+                  <span className="gm-card-tag">Two chances</span>
+                </div>
+                <span className="gm-card-chev"><Icon name="chevron" size={16} /></span>
+              </div>
+              <p className="gm-card-sub">Winners and losers brackets. One loss sends you to the losers bracket. Two losses and you're out.</p>
+            </div>
+
+            <div className="gm-card" onClick={() => setScreen("rr-setup")} role="button" tabIndex={0}>
+              <div className="gm-card-hd">
+                <div className="gm-card-ico"><Icon name="award" size={20} /></div>
+                <div className="gm-card-tw">
+                  <div className="gm-card-title">Round Robin</div>
+                  <span className="gm-card-tag">Everyone plays</span>
+                </div>
+                <span className="gm-card-chev"><Icon name="chevron" size={16} /></span>
+              </div>
+              <p className="gm-card-sub">All teams play each other. Final standings by wins, then point differential. Fairest format.</p>
+            </div>
+          </div>
+          <div className="gm-rules-sec">
+            <div className="gm-rules-sec-h">
+              <Icon name="book" size={14} />
+              <span>Format Rules</span>
+            </div>
+            <div className="gm-rules-list">
+              {COMPETITIVE_FORMAT_RULES.map(rule => <FormatRuleCard key={rule.id} rule={rule} />)}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
