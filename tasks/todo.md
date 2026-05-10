@@ -1,6 +1,56 @@
 # Active Work
 
-## NEXT SESSION (S073) — START HERE
+## NEXT SESSION (S074) — START HERE
+**Last session:** S073 (2026-05-10) — **1 push-direct commit `0be427e`, SW v138 → v139, 1 DB migration, 2 GitHub issues closed (#90 logo+login, #91 S/TB→S3), Vercel READY.** Logo color reverted gold→green per brand (Issue #90 part 2) — same 3D orb + 6-satellite + pulsating + orbit design preserved, gradients `#d1fae5 → #4ade80 → #14532d`. Login page fits one viewport (Issue #90 part 1) — `.lhero` 30vh→`clamp(28px,6vh,56px)` with `.lscreen.splash` opt-in for splash usages, AuthGate logo 140→96. PWA icon consistency (Issue #90 part 3) — new `/public/icons/icon.svg` single-source-of-truth wired into manifest + apple-touch-icon. **FT-16 frontend MVP** — open_matches loaded into App.jsx context, ScheduleView Open Matches section + claim/leave/cancel actions + Schedule form Private/Open toggle wired to `create_open_match`/`join_open_match`/`leave_open_match`/`cancel_open_match` RPCs. **FT-15 frontend MVP** — `create_season` RPC extended with `p_format` param, SeasonManagement create form has Individual/Pairs toggle. **Issue #91 fix** — MatchHistory.jsx:183 column header S/TB → S3.
+
+### 🎯 S074 PRIORITY — finish FT-16 + FT-15 + smoke test
+1. **iPhone smoke test of S073 ship** — verify SW v139 cold-load green logo (AuthGate + LeagueGate + App.jsx splash + in-app header `.lm` + index.html static splash); login form fits without scroll; S3 column reads correctly in MatchHistory; open-match flow end-to-end (create open match → second account claims spot → 4th claim auto-shuffles teams → notification fires → log score from locked card).
+2. **FT-16 polish (S073 deferred)** — per `padelhub/planning/FT-16-open-match-voting.md` C4-C5:
+   - NotificationCenter `open_match` renderer with 3 kinds (new = green users icon / locked = gold lock icon / cancelled = red x-circle), CTA deep-links into ScheduleView Open section
+   - Push-notify Edge Function branch for `type='open_match'` (kind-aware title/body composition, reuses fan-out + rate-limit pattern)
+   - LogMatch pre-fill from locked open match — read `?openMatchId=...` query param OR state hand-off, fetch open_match row, pre-fill team_a/team_b selectors with locked players, disable team picker, on insert set `matches.open_match_id` FK (trigger flips status='completed' DB-side, already wired in S072)
+   - Deep-link routing matrix extension in NotificationCenter — `open_match.new` / `.locked` / `.cancelled` route to ScheduleView Open with flash highlight on relevant card
+3. **FT-15 main features (S073 deferred)** — per `padelhub/planning/FT-15-pairs-leaderboard.md` v2 commit sequencing C2-C4:
+   - Pairs Roster admin UI in SeasonManagement (when `selectedSeason.format === 'pairs'`) — list pairs with avatar+name pattern from match-history cards, Add Pair modal with two-player dropdown filtered to season roster, edit/delete actions (delete refused if pair has matches — DB enforces)
+   - LogMatch pair-aware picker (when format='pairs') — replaces 4-player picker with 2-pair picker; resolve pair → underlying team_a/team_b uuid[] before insert
+   - New `PairsRanking.jsx` component (~250 lines, 7-col Premier-Padel broadcast spec) — # / Pair / MP / MW / ML / CW / EFF%, no ELO column, country flags below player names within pair cell, podium mirrors normal league podium with 2 small avatars side-by-side per slot, "Player A / Player B" name format
+   - Branch routing in App.jsx Ranking — when `selectedSeason.format === 'pairs'` render `<PairsRanking>` instead of individual leaderboard
+4. **PNG icon regen (#90 follow-up)** — export `/public/icons/icon.svg` → 192×192 + 512×512 PNGs + new `/og-image.png` so older browsers + WhatsApp share preview match new green orb design. Requires image-export tool not available in S073.
+5. **Color sweep Note A from S069** — still awaiting user A1/A2/A3 decision.
+6. **Game Mode Phase 10 PR-D / PR-E** — SE/DE/RR active tournament views (needs state-based score input refactor first); BracketSVG color tokens.
+
+### S073 outcomes (this session — archived)
+- [x] Logo color reverted gold → green across icons.jsx + index.css + index.html static splash
+- [x] Highlight ellipses cream `#fef9c3` → mint `#ecfdf5` for green tonal harmony
+- [x] Wordmark "Hub" in static splash gold → green
+- [x] Drop-shadow filter green `rgba(74,222,128,0.40)`
+- [x] `.lhero` compact default + `.lscreen.splash` modifier for splash uses
+- [x] `.lscreen.splash` applied in App.jsx loading splash + LeagueGate picker
+- [x] AuthGate `<PadelHubMark size>` 140 → 96 for form breathing room
+- [x] `/public/icons/icon.svg` new 512×512 single-source-of-truth SVG
+- [x] manifest.json SVG-first icon list + PNG fallbacks
+- [x] index.html `rel=icon` SVG + `apple-touch-icon` SVG + 180×180 PNG fallback
+- [x] MatchHistory.jsx S/TB → S3 column header
+- [x] App.jsx open_matches + open_match_players loaded; matches+seasons SELECT extended; context exposure
+- [x] expire_stale_open_matches RPC sweep on each load
+- [x] ScheduleView Open Matches section render + claim/leave/cancel actions wired to RPCs
+- [x] ScheduleView Step-1 Private/Open match-type toggle
+- [x] ScheduleView Step-2 submit routes by matchType (createOpenMatch vs createChallenge)
+- [x] ~110 lines new CSS for .om* + .sform-*
+- [x] DB migration s073_create_season_format applied (Lesson #101 — DROP both overloads, recreate 6-arg with p_format)
+- [x] SeasonManagement Format toggle (Individual/Pairs) in Create bottom-sheet
+- [x] SW v138 → v139
+- [x] Issue #90 closed via gh issue close + detailed comment
+- [x] Issue #91 closed via gh issue close + detailed comment
+- [x] Pushed to origin/main as commit 0be427e + Vercel deploy dpl_AK1mm8zXESE7NVw4WvZuE2KVdWuV READY
+- [ ] FT-16 NotificationCenter renderer + push-notify Edge Function + LogMatch pre-fill (deferred to S074)
+- [ ] FT-15 Pairs Roster admin UI + LogMatch pair picker + PairsRanking component (deferred to S074)
+- [ ] iPhone smoke test pending (deferred to user)
+
+---
+
+## ARCHIVED — earlier session pointer (S072)
+**Earlier session:** S072 (2026-05-10) — START HERE
 **Last session:** S072 (2026-05-10) — **1 push-direct commit `ece8faf`, SW v137 → v138, 9 DB migrations applied via Supabase MCP, 2 plan-as-deliverable files written, 2 mockups reviewed and revised by user, ~5h day, 0 GitHub issues closed.** Gold-orb logo redesign: new `PadelHubMark` SVG (3D gold central orb + 6 satellite orbs orbiting via `hubOrbit` 22s + `hubAura` 2.4s breathing + per-satellite scale stagger via `hubSat` 2s at 0/180/360/540/720/900ms). New `PadelHubMarkHeader` no-aura variant for in-app header `.logo .lm` (replaces PadelLogoSmall at 32px). `index.html` static splash mirrored. Wordmark "Hub" tinted gold. SW bumped v137→v138. **DB foundation FT-16 (5 migrations):** open_matches table + open_match_players join + matches.open_match_id FK + RLS + 6 SECURITY DEFINER RPCs (create / join with auto-shuffle on lock / leave / cancel / set_teams override / expire_stale sweep). **DB foundation FT-15 (4 migrations):** seasons.format column (defaults 'individual', existing 2 seasons untouched) + pairs table with elo seeded at 1500 (Premier-Padel-style) + 3 admin RPCs + pair-ELO trigger fires on approved matches in pairs-format seasons. **2 lessons (#101, #102):** CREATE OR REPLACE FUNCTION can't rename input parameters at the same ordinal position; multi-statement Supabase MCP migrations are all-or-nothing transactions.
 
 ### 🎯 S073 PRIORITY — frontend wiring
