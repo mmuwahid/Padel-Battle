@@ -236,7 +236,11 @@ export function PlatformAdmin({ onClose, showToast }) {
               {filter === "users" && fUsers.map(u => (
                 <div key={u.id} className="paitem-wrap">
                   <div className="paitem">
-                    <div className="paavi">{(u.display_name || u.email || "?")[0].toUpperCase()}</div>
+                    {u.avatar_url ? (
+                      <img className="paavi paavi-img" src={u.avatar_url} alt="" />
+                    ) : (
+                      <div className="paavi">{(u.display_name || u.email || "?")[0].toUpperCase()}</div>
+                    )}
                     <div className="paib">
                       <div className="pain">{u.display_name || u.email?.split("@")[0]}</div>
                       <div className="paim">{u.email} · {u.league_count} league{u.league_count === 1 ? "" : "s"}</div>

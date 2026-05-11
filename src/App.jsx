@@ -106,6 +106,13 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
     setSidebarView(next);
     setSidebarOpen(false);
   }, [sidebarView]);
+  // S077 r14: scroll to top whenever the sidebarView changes so submenu screens
+  // (League Management, Platform Admin, Season Management, etc.) always open at
+  // the top of the page instead of inheriting the previous screen's scroll.
+  useEffect(() => {
+    try { window.scrollTo({ top: 0, left: 0, behavior: "auto" }); } catch {}
+  }, [sidebarView]);
+
   const goBackSidebar = useCallback(() => {
     setSidebarHistory(prev => {
       if (prev.length === 0) {
