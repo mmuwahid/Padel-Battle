@@ -38,6 +38,7 @@ export function SeasonManagement({ setSidebarView, goBack }) {
   const [savingRoster, setSavingRoster] = useState(false);
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleteSeasonTyped, setDeleteSeasonTyped] = useState("");
   const [deleting, setDeleting] = useState(false);
 
   // S076 FT-15: pair management state
@@ -166,11 +167,24 @@ export function SeasonManagement({ setSidebarView, goBack }) {
   };
 
   const deleteSeason = async (seasonId) => {
+    if (deleteSeasonTyped.trim().toLowerCase() !== "delete") {
+      showToast('Type "delete" to confirm', "error");
+      return;
+    }
     setDeleting(true);
+    // S077 r15: one retry-with-backoff so a transient "Load failed" /
+    // network race on the first attempt doesn't surface to the user.
+    const attempt = async () => supabase.rpc("delete_season", { p_season_id: seasonId });
     try {
-      const { error } = await supabase.rpc("delete_season", { p_season_id: seasonId });
-      if (error) throw error;
+      let { error } = await attempt();
+      if (error) {
+        await new Promise(r => setTimeout(r, 350));
+        const r2 = await attempt();
+        if (r2.error) throw r2.error;
+      }
       showToast("Season deleted");
+      setConfirmDelete(false);
+      setDeleteSeasonTyped("");
       closeEdit();
       await loadLeagueData();
     } catch (err) {
@@ -395,10 +409,18 @@ export function SeasonManagement({ setSidebarView, goBack }) {
 
           {!openSeason.active && (
             confirmDelete ? (
-              <div className="sm-confirmrow danger">
-                <span>Delete permanently? (no matches allowed)</span>
-                <button className="dbtn" onClick={() => deleteSeason(openSeasonId)} disabled={deleting}>{deleting ? "..." : "Delete"}</button>
-                <button className="gbtn ghost" onClick={() => setConfirmDelete(false)}>No</button>
+              <div className="sm-confirmrow danger" style={{flexWrap:"wrap",gap:8}}>
+                <input
+                  className="shi"
+                  type="text"
+                  value={deleteSeasonTyped}
+                  onChange={(e) => setDeleteSeasonTyped(e.target.value)}
+                  placeholder='Type "delete" to confirm'
+                  autoFocus
+                  style={{flex:1,minWidth:160}}
+                />
+                <button className="dbtn" onClick={() => deleteSeason(openSeasonId)} disabled={deleting || deleteSeasonTyped.trim().toLowerCase() !== "delete"}>{deleting ? "..." : "Delete"}</button>
+                <button className="gbtn ghost" onClick={() => { setConfirmDelete(false); setDeleteSeasonTyped(""); }}>Cancel</button>
               </div>
             ) : (
               <button className="sm-bigaction danger ghost" onClick={() => setConfirmDelete(true)}>

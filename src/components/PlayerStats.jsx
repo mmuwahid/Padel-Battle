@@ -267,7 +267,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
         {/* Row 2 (Cons. Wins / MOTM / Match Diff) */}
         <div className="dpro-grid" style={{paddingBottom:6}}>
           <div className="dpro-cell"><div className="dpro-cell-v">{getStreak(sp)}</div><div className="dpro-cell-l">Cons. Wins</div></div>
-          <div className="dpro-cell"><div className="dpro-cell-v gold">{stats.motm}</div><div className="dpro-cell-l">⭐ MOTM</div></div>
+          <div className="dpro-cell"><div className="dpro-cell-v gold">{stats.motm}</div><div className="dpro-cell-l" style={{display:"inline-flex",alignItems:"center",gap:4,justifyContent:"center"}}><Icon name="star" size={11} color="var(--gold)"/>MOTM</div></div>
           <div className="dpro-cell">
             <div className={`dpro-cell-v ${gd>=0?'diff-pos':'diff-neg'}`}>{gd>0?"+":""}{gd}</div>
             <div className="dpro-cell-l">Match Diff</div>
@@ -588,7 +588,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
             </div>
 
             {analyticsData.topMotm.length>0&&<section className="dpro-sec" style={{padding:0}}>
-              <h3 className="dpro-sectitle gold">⭐ MOTM Ranking</h3>
+              <h3 className="dpro-sectitle gold" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="star" size={14} color="var(--gold)"/>MOTM Ranking</h3>
               <div className="dpro-sec-card">
                 {analyticsData.topMotm.map((x,i)=>(
                   <div key={x.pid} className="lrow">
@@ -597,7 +597,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                       <div className="lrow-avi gold">{getAvatar(x.pid)?<img src={getAvatar(x.pid)} alt=""/>:getName(x.pid)[0]}</div>
                       <span className="lrow-name">{getName(x.pid)}</span>
                     </div>
-                    <span className="lrow-gold">{x.count}× ⭐</span>
+                    <span className="lrow-gold" style={{display:"inline-flex",alignItems:"center",gap:3}}>{x.count}× <Icon name="star" size={11} color="var(--gold)"/></span>
                   </div>
                 ))}
               </div>

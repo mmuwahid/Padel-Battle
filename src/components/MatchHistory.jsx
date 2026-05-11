@@ -274,7 +274,9 @@ export function MatchHistory({onEdit,shareMatch,sel,onMatchDeleted,scrollToMatch
 
       {s.length===0 && (
         <div style={{textAlign:"center",padding:"40px 20px"}}>
-          <div style={{fontSize:40,marginBottom:12}}>{"\uD83C\uDFBE"}</div>
+          <div style={{marginBottom:12,display:"flex",justifyContent:"center"}}>
+            <Icon name="tennis-ball" size={56} color="var(--muted)" strokeWidth={1.5}/>
+          </div>
           <div style={{fontSize:15,fontWeight:600,marginBottom:6}}>No matches yet</div>
           <div style={{fontSize:12,color:"#9090a4",lineHeight:1.5}}>Tap the + button to log your first match.</div>
         </div>

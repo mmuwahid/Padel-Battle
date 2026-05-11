@@ -441,7 +441,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
       supabase.rpc("get_league_stats").then(({data, error}) => {
         if (error || !data) return;
         const map={};
-        data.forEach(r => { map[r.league_id] = { players: r.player_count, matches: r.match_count, seasons: r.season_count }; });
+        data.forEach(r => { map[r.league_id] = { players: r.player_count, matches: r.match_count, seasons: r.season_count, is_playing: r.is_playing }; });
         setLeagueStats(map);
       });
       const rostersMap={};

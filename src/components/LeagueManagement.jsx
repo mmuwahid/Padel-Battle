@@ -223,8 +223,8 @@ export function LeagueManagement({
                 <>
                   <div className="lmnameval">{league?.name}</div>
                   {isOwner && (
-                    <button className="gbtn" onClick={() => { setDraftName(league?.name || ""); setEditingName(true); }}>
-                      <Icon name="edit" size={13} />Edit
+                    <button className="gbtn pair-iconbtn" aria-label="Rename league" title="Rename" onClick={() => { setDraftName(league?.name || ""); setEditingName(true); }}>
+                      <Icon name="edit" size={14} />
                     </button>
                   )}
                 </>
@@ -308,11 +308,15 @@ export function LeagueManagement({
       </div>
 
       <div className="lm-body">
-        {/* Dashboard */}
+        {/* Dashboard — S077 r15: "Joined" was confusing. Renamed to "Playing"
+            and based on whether the user has a claimed player row in the
+            league (not just membership). Owner-of-league always has a player
+            row post-r13 backfill, so for own leagues both Owned and Playing
+            count. */}
         <div className="lmstats">
           <div className="lmsc"><div className="lmscv">{leagues.length}</div><div className="lmscl">Leagues</div></div>
           <div className="lmsc"><div className="lmscv">{leagues.filter(l => l.created_by === user?.id).length}</div><div className="lmscl">Owned</div></div>
-          <div className="lmsc"><div className="lmscv">{leagues.length - leagues.filter(l => l.created_by === user?.id).length}</div><div className="lmscl">Joined</div></div>
+          <div className="lmsc"><div className="lmscv">{leagues.filter(l => leagueStats[l.id]?.is_playing).length}</div><div className="lmscl">Playing</div></div>
         </div>
 
         {/* All leagues list */}
@@ -374,12 +378,12 @@ export function LeagueManagement({
                     <button className="gbtn ghost" onClick={() => { setDeleteId(null); setDeleteConfirm(""); }}>Cancel</button>
                   </div>
                 ) : isLOwner ? (
-                  <div className="secft" onClick={(e) => e.stopPropagation()}>
-                    <button className="gbtn" onClick={() => { setRenameId(l.id); setRenameDraft(l.name); }}>
-                      <Icon name="edit" size={12} />Rename
-                    </button>
-                    <button className="dbtn" onClick={() => { setDeleteId(l.id); setDeleteConfirm(""); }}>
-                      <Icon name="trash" size={12} />Delete
+                  // S077 r15: dropped the Rename button — rename happens inside
+                  // the detail view. Only the icon-only Delete remains, aligned
+                  // to the right.
+                  <div className="secft secft-right" onClick={(e) => e.stopPropagation()}>
+                    <button className="dbtn pair-iconbtn" aria-label="Delete league" title="Delete" onClick={() => { setDeleteId(l.id); setDeleteConfirm(""); }}>
+                      <Icon name="trash" size={14} />
                     </button>
                   </div>
                 ) : null}

@@ -1871,6 +1871,7 @@ body {
 .secname-btn{flex:1;min-width:0;background:none;border:none;padding:0;cursor:pointer;text-align:left;color:inherit;font:inherit;}
 .lm-list-form{display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap;}
 .lm-list-form .shi{flex:1;min-width:140px;}
+.secft-right{display:flex;justify-content:flex-end;margin-top:6px;}
 /* S077 r5: avatar-as-image in pairs leaderboard + season admin cards. */
 .prk-avi-img{object-fit:cover;}
 .sm-pairavi-img{object-fit:cover;background:transparent;}

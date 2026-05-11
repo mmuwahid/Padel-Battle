@@ -1,3 +1,4 @@
+import Icon from "./Icon";
 import React, { useState, useMemo } from "react";
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, BL, PU } from '../theme';
 import { formatTeam, win } from '../utils/helpers';
@@ -44,7 +45,7 @@ export function CombosView({combos,players,matches,pm,getName}){
   if(activeCombos.length===0)return (
     <div style={{padding:"20px 16px",maxWidth:"600px",margin:"0 auto",textAlign:"center"}}>
       <div style={{padding:"40px 20px"}}>
-        <div style={{fontSize:40,marginBottom:12}}>🤝</div>
+        <div style={{marginBottom:12,display:"flex",justifyContent:"center"}}><Icon name="users" size={56} color="var(--muted)" strokeWidth={1.5}/></div>
         <div style={{fontSize:15,fontWeight:600,color:TX,marginBottom:6}}>No partnerships yet</div>
         <div style={{fontSize:12,color:MT,lineHeight:1.5}}>Play some doubles matches to see partnership stats here.</div>
       </div>
@@ -54,22 +55,22 @@ export function CombosView({combos,players,matches,pm,getName}){
   return (
     <div style={{padding:"20px 16px",maxWidth:"600px",margin:"0 auto"}}>
       <div style={{display:"flex",gap:6,marginBottom:16}}>
-        {[["duos","🔥 Best Pairs"],["player","👤 My Partners"],["matrix","🧪 Chemistry"]].map(([k,l])=>(
+        {[["duos","Best Pairs"],["player","My Partners"],["matrix","Chemistry"]].map(([k,l])=>(
           <button key={k} onClick={()=>setView(k)} style={{padding:"6px 12px",borderRadius:8,border:`1px solid ${view===k?A:BD}`,background:view===k?`${A}15`:"transparent",color:view===k?A:MT,fontSize:11,fontWeight:600,cursor:"pointer",flex:1,textAlign:"center"}}>{l}</button>
         ))}
       </div>
 
       {view==="duos"&&<div>
-        <h2 style={{fontSize:16,fontWeight:700,marginBottom:14}}>🔥 Top Pairs</h2>
+        <h2 style={{fontSize:16,fontWeight:700,marginBottom:14,display:"flex",alignItems:"center",gap:6}}><Icon name="flame" size={16} color="var(--accent)"/>Top Pairs</h2>
         {top3.length===0&&<p style={{fontSize:13,color:MT}}>No partnerships recorded yet</p>}
         {top3.map((c,i)=>{
           const pct=c.games>0?(c.wins/c.games*100):0;
-          const medals=["🥇","🥈","🥉"];
+          // S077 r15: emoji medals removed — just use rank numbers below.
           const colors=[GD,SV,BZ];
           return (<div key={"t"+i} style={{background:CD,borderRadius:16,border:`1px solid ${colors[i]}30`,padding:16,marginBottom:10,position:"relative",overflow:"hidden"}}>
             <div style={{position:"absolute",top:-20,right:-20,width:80,height:80,borderRadius:"50%",background:`${colors[i]}08`,filter:"blur(20px)"}}/>
             <div style={{display:"flex",alignItems:"center",gap:12}}>
-              <div style={{fontSize:32}}>{medals[i]}</div>
+              <div style={{fontSize:32}}>{(i+1)}</div>
               <div style={{flex:1}}>
                 <div style={{fontSize:16,fontWeight:800,color:TX}}>{getName(c.players[0])} <span style={{color:MT,fontWeight:400}}>x</span> {getName(c.players[1])}</div>
                 <div style={{display:"flex",gap:12,marginTop:6}}>
@@ -137,7 +138,7 @@ export function CombosView({combos,players,matches,pm,getName}){
                 <div style={{background:CD,borderRadius:12,border:`1px solid ${A}30`,padding:14,textAlign:"center"}}>
                   {partners.length>1&&best.pct>0&&<div style={{fontSize:10,color:A,fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>Best Partner</div>}
                   {(partners.length===1||best.pct===0)&&<div style={{fontSize:10,color:MT,fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>{partners.length===1?"Only Partner":"Partner"}</div>}
-                  <div style={{fontSize:20}}>🤝</div>
+                  <Icon name="users" size={20} color="var(--muted)"/>
                   <div style={{fontSize:15,fontWeight:700,marginTop:4}}>{getName(best.pid)}</div>
                   <div style={{fontSize:22,fontWeight:900,color:A,fontFamily:"'JetBrains Mono'",marginTop:4}}>{best.pct.toFixed(0)}%</div>
                   <div style={{fontSize:11,color:MT}}>{best.w}W {best.l}L · {best.games} MP</div>
