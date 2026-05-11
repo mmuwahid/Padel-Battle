@@ -82,6 +82,8 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
   const [openMatchPlayers,setOpenMatchPlayers]=useState([]);
   // S076 FT-15: pairs roster (registered pair entities for pairs-format seasons)
   const [pairs,setPairs]=useState([]);
+  // S077: per-season admin assignments (additive to league owner/admin).
+  const [seasonAdmins,setSeasonAdmins]=useState([]);
   const [matchSubTab,setMatchSubTab]=useState(()=>{const h=window.location.hash.replace("#","");return h==="schedule"?"schedule":"history";}); // history | schedule
   const [claimedPlayer,setClaimedPlayer]=useState(undefined); // undefined=loading, null=unclaimed, object=claimed
   // Sidebar and view management
@@ -370,7 +372,8 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
         {data:challengesData},
         {data:openMatchesData},
         {data:openMatchPlayersData},
-        {data:pairsData}
+        {data:pairsData},
+        {data:seasonAdminsData}
       ] = await Promise.all([
         supabase.from("leagues").select("id,name,invite_code,created_by").eq("id",leagueId).single(),
         supabase.from("league_members").select("id,role").eq("league_id",leagueId).eq("user_id",user.id).single(),
@@ -381,7 +384,8 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
         supabase.from("challenges").select("id,team_a,team_b,status,date,time,location,notes,created_by,match_id,responses,duration,league_id").eq("league_id",leagueId).in("status",["open","pending","confirmed","played"]).order("date",{ascending:true}),
         supabase.from("open_matches").select("id,league_id,season_id,organizer_id,scheduled_at,duration_minutes,court,notes,status,team_a_player_ids,team_b_player_ids,locked_at,created_at").eq("league_id",leagueId).in("status",["open","locked"]).order("scheduled_at",{ascending:true}),
         supabase.from("open_match_players").select("id,open_match_id,player_id,joined_at"),
-        supabase.from("pairs").select("id,season_id,league_id,player_a_id,player_b_id,name,color,elo,created_at").eq("league_id",leagueId)
+        supabase.from("pairs").select("id,season_id,league_id,player_a_id,player_b_id,name,color,elo,created_at").eq("league_id",leagueId),
+        supabase.from("season_admins").select("id,season_id,player_id,user_id,granted_at").in("season_id", (await supabase.from("seasons").select("id").eq("league_id",leagueId)).data?.map(r=>r.id)||[])
       ]);
 
       if (leagueErr) throw leagueErr;
@@ -418,6 +422,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
       setOpenMatches(openMatchesData||[]);
       setOpenMatchPlayers((openMatchPlayersData||[]).filter(p=>omIds.has(p.open_match_id)));
       setPairs(pairsData||[]);
+      setSeasonAdmins(seasonAdminsData||[]);
       // Auto-cancel stale open matches whose scheduled time has passed
       supabase.rpc("expire_stale_open_matches",{p_league_id:leagueId}).then(()=>{});
 
@@ -436,7 +441,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
       firstLoadRef.current = false;
     } catch (_err) {
       // S026: Clear state on error so user sees empty state, not stale data
-      setLeague(null); setPlayers([]); setMatches([]); setSeasons([]); setChallenges([]); setOpenMatches([]); setOpenMatchPlayers([]); setPairs([]);
+      setLeague(null); setPlayers([]); setMatches([]); setSeasons([]); setChallenges([]); setOpenMatches([]); setOpenMatchPlayers([]); setPairs([]); setSeasonAdmins([]);
       setLoading(false);
       showToast("Failed to load data — tap refresh to retry", "error");
     }
@@ -674,6 +679,11 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
       await supabase.from("push_subscriptions").update(prefs).eq("user_id", user.id);
     }
   };
+
+  // S077: per-season admin helpers — true if the current authed user is
+  // assigned as a season admin for the given season (or any season).
+  const isSeasonAdmin = (sid) => !!sid && (seasonAdmins||[]).some(sa => sa.season_id===sid && sa.user_id===user?.id);
+  const isSeasonAdminOfAny = (seasonAdmins||[]).some(sa => sa.user_id===user?.id);
 
   // Send push notification via Edge Function. target_user_ids = array of user IDs to notify (optional — defaults to all league members)
   const sendPushNotification = async (type, title, body, body_text, target_user_ids, opts) => {
@@ -966,7 +976,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
     supabase, user, leagueId, league, players, matches, approvedMatches, pendingMatches, incompleteMatches,
     elo, seasons, selectedSeason, setSelectedSeason, isAdmin, isOwner, myMemberId, leagueMembers, memberProfiles,
     getName, showToast, sendPushNotification, loadLeagueData,
-    openMatches, openMatchPlayers, pairs, claimedPlayer,
+    openMatches, openMatchPlayers, pairs, seasonAdmins, isSeasonAdmin, isSeasonAdminOfAny, claimedPlayer,
   };
 
   return (
