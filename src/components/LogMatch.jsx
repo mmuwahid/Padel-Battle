@@ -474,11 +474,11 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
           </div>
           {hasResult && (
             <div className="scrrow">
-              <div className="scrteam a">{playerName(tA[0])||"Team A"}</div>
+              <div className="scrteam a">{formatTeam(playerName(tA[0]),playerName(tA[1]))||"Team A"}</div>
               <div className="scrscore a">{aWins}</div>
               <div className="scrdash">—</div>
               <div className="scrscore b">{bWins}</div>
-              <div className="scrteam b">{playerName(tB[0])||"Team B"}</div>
+              <div className="scrteam b">{formatTeam(playerName(tB[0]),playerName(tB[1]))||"Team B"}</div>
             </div>
           )}
         </div>

@@ -342,34 +342,34 @@ body {
   overflow: hidden;
 }
 .lbg {
+  /* S077: dropped 28x28 grid lines that were creating a perceived "black
+     square" around the logo's drop-shadow halo. Kept the soft radial green
+     glow at top + flat brand bg — same atmosphere, no boxed-in look. */
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(74, 222, 128, 0.08), transparent 60%),
-    linear-gradient(rgba(74, 222, 128, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(74, 222, 128, 0.02) 1px, transparent 1px),
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(74, 222, 128, 0.10), transparent 60%),
     var(--bg);
-  background-size: auto, 28px 28px, 28px 28px, auto;
   pointer-events: none;
 }
 .lhero {
+  /* S077: balanced login layout per user feedback — logo centered vertically
+     in the available space (flex:1) so the form sibling sits at the bottom
+     of .lscreen naturally. No scroll. Splash variant overrides below. */
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* S073 Issue #90 #1: forms shouldn't push Google sign-in below the fold.
-     Default to compact top padding so login + signup + recovery fit on one
-     viewport. Splash screens (App.jsx loading + LeagueGate picker) opt into
-     the wider 30vh hero space via .lscreen.splash modifier below. */
-  justify-content: flex-start;
-  padding: clamp(28px, 6vh, 56px) 32px 18px;
+  justify-content: center;
+  padding: 24px 32px 18px;
   position: relative;
   z-index: 1;
 }
 .lscreen.splash .lhero {
-  flex: 1;
-  /* S073: splash variant — logo positioned ~20% above true center for the
-     opening loading screen (App.jsx splash). Form-bearing screens use the
-     compact default above. */
+  /* S073/S077: splash variant — logo positioned ~20% above true center for
+     the opening loading screen (App.jsx splash + LeagueGate picker). Form
+     screens use the centered default above. */
+  justify-content: flex-start;
   padding-top: 30vh;
 }
 .lscreen.splash .llogobox { margin-bottom: 22px; }
@@ -384,7 +384,7 @@ body {
   display: flex; align-items: center; justify-content: center;
   /* S073: green drop-shadow halo (Issue #90 — brand color is green not gold).
      Same 3D orb + satellite design as S072 but with the app accent color. */
-  filter: drop-shadow(0 0 28px rgba(74, 222, 128, 0.40));
+  filter: drop-shadow(0 0 18px rgba(74, 222, 128, 0.32));
   animation: pg 3s ease-in-out infinite;
   margin-bottom: 22px;
   overflow: visible;
@@ -455,7 +455,7 @@ body {
 }
 .lform {
   flex-shrink: 0;
-  padding: 0 20px 28px;
+  padding: 0 20px 36px;
   position: relative;
   z-index: 1;
   width: 100%;
@@ -1784,22 +1784,28 @@ body {
 .prk-empty{padding:36px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--muted);}
 .prk-empty-t{font-family:var(--font);font-weight:800;font-size:15px;color:var(--text);}
 .prk-empty-s{font-size:12px;line-height:1.5;max-width:280px;}
-.prk-podium{display:grid;grid-template-columns:1fr 1.1fr 1fr;align-items:end;gap:8px;padding:8px 0;}
-.prk-pod{padding:14px 10px;border-radius:14px;background:var(--surface-2);border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;transition:transform .12s;}
+.prk-podium{display:grid;align-items:end;gap:8px;padding:8px 0;}
+.prk-podium-1{grid-template-columns:1fr;max-width:280px;margin:0 auto;}
+.prk-podium-2{grid-template-columns:1fr 1.15fr;}
+.prk-podium-3{grid-template-columns:1fr 1.15fr 1fr;}
+.prk-pod{padding:14px 10px;border-radius:14px;background:var(--surface-2);border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;transition:transform .12s;}
 .prk-pod:active{transform:scale(.98);}
-.prk-pod.p1{padding-bottom:20px;background:linear-gradient(180deg,rgba(245,158,11,.15),var(--surface-2));border-color:rgba(245,158,11,.45);}
+.prk-pod.p1{padding-bottom:18px;background:linear-gradient(180deg,rgba(245,158,11,.15),var(--surface-2));border-color:rgba(245,158,11,.45);}
 .prk-pod.p2{background:linear-gradient(180deg,rgba(192,192,192,.08),var(--surface-2));}
 .prk-pod.p3{background:linear-gradient(180deg,rgba(205,127,50,.1),var(--surface-2));}
 .prk-podh{font-family:var(--mono);font-size:10px;font-weight:800;color:var(--muted);}
 .prk-pod.p1 .prk-podh{color:#f59e0b;font-size:13px;}
-.prk-podavi{display:flex;align-items:center;}
-.prk-podavi .prk-avi{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#22c55e);color:#000;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;font-family:var(--font);}
-.prk-podavi .prk-avi+.prk-avi{margin-left:-10px;border:2px solid var(--surface-2);}
-.prk-podname{font-family:var(--font);font-weight:700;font-size:11px;text-align:center;line-height:1.2;color:var(--text);}
-.prk-podwl{font-family:var(--mono);font-size:10px;display:flex;gap:6px;}
+/* S077: stacked podium player rows — avatar + name + flag, one per row. */
+.prk-podstack{display:flex;flex-direction:column;gap:6px;width:100%;align-items:flex-start;padding:0 6px;}
+.prk-podrow{display:flex;align-items:center;gap:8px;width:100%;min-width:0;}
+.prk-podrow .prk-avi{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#22c55e);color:#000;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;font-family:var(--font);flex-shrink:0;}
+.prk-podpname{display:flex;align-items:center;gap:5px;min-width:0;flex:1;}
+.prk-podpnamea{font-family:var(--font);font-weight:700;font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.prk-podflag{font-size:14px;line-height:1;}
+.prk-podwl{font-family:var(--mono);font-size:10px;display:flex;gap:6px;font-weight:700;}
 .prk-podpct{font-family:var(--mono);font-weight:800;font-size:13px;color:var(--text);}
 .prk-tbl{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
-.prk-trow{display:grid;grid-template-columns:24px minmax(110px,1.5fr) 38px 38px 38px 38px 52px;align-items:center;gap:6px;padding:10px 10px;border-bottom:1px solid rgba(74,222,128,.04);cursor:pointer;}
+.prk-trow{display:grid;grid-template-columns:32px minmax(130px,1.5fr) 32px 32px 32px 32px 48px;align-items:center;gap:6px;padding:10px 10px;border-bottom:1px solid rgba(74,222,128,.04);cursor:pointer;}
 .prk-trow:last-child{border-bottom:0;}
 .prk-trow.prk-thead{background:rgba(74,222,128,.05);border-bottom:1px solid var(--border);cursor:default;font-family:var(--mono);font-size:9px;font-weight:800;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;}
 .prk-trow.prk-r1{background:linear-gradient(90deg,rgba(245,158,11,.06),transparent);}
@@ -1808,12 +1814,13 @@ body {
 .prk-cell{font-family:var(--font);font-size:13px;color:var(--text);}
 .prk-c-num{font-family:var(--mono);font-weight:800;color:var(--muted);text-align:center;}
 .prk-c-pair{display:flex;align-items:center;gap:8px;min-width:0;}
-.prk-pairavis{display:flex;align-items:center;flex-shrink:0;}
-.prk-pairavis .prk-avi{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#22c55e);color:#000;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;font-family:var(--font);}
-.prk-pairavis .prk-avi+.prk-avi{margin-left:-9px;border:2px solid var(--surface);}
-.prk-pairmeta{min-width:0;flex:1;}
-.prk-pairtit{font-family:var(--font);font-weight:700;font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.prk-pairsub{font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* S077: stacked player rows in the Players column — avatar + name + flag. */
+.prk-pairstack{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1;width:100%;}
+.prk-pairname{font-family:var(--font);font-weight:800;font-size:11px;color:var(--accent);letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.prk-pairrow{display:flex;align-items:center;gap:6px;min-width:0;}
+.prk-pairrow .prk-avi{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#22c55e);color:#000;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;font-family:var(--font);flex-shrink:0;}
+.prk-pname{font-family:var(--font);font-weight:700;font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
+.prk-pflag{font-size:13px;line-height:1;flex-shrink:0;}
 .prk-c-stat{font-family:var(--mono);font-weight:700;text-align:center;font-size:12px;}
 .prk-c-eff{font-family:var(--mono);font-weight:800;text-align:right;font-size:13px;color:var(--accent);}
 .prk-note{display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:10px;font-size:11px;color:var(--muted);}
@@ -1828,6 +1835,28 @@ body {
 .sm-pairnames-line1{font-family:var(--font);font-weight:700;font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .sm-pairnames-line2{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .sm-paircard-acts{display:flex;gap:6px;flex-shrink:0;}
+.pair-iconbtn{padding:6px 8px;min-width:32px;justify-content:center;align-items:center;}
+/* S077 Season Awards — centered cards + SVG icons + Top Pair redesign. */
+.saw-title{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:800;color:var(--accent);margin:0 0 12px;text-transform:uppercase;letter-spacing:.05em;}
+.saw-card{padding:14px 12px;background:var(--surface-2);border-radius:10px;border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;}
+.saw-card-champ{background:linear-gradient(135deg,rgba(245,158,11,.15),var(--surface-2));border-color:rgba(245,158,11,.50);border-width:1.5px;}
+.saw-card-runner{background:linear-gradient(135deg,rgba(192,192,192,.12),var(--surface-2));border-color:rgba(192,192,192,.50);border-width:1.5px;}
+.saw-cardh{display:inline-flex;align-items:center;gap:5px;font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);justify-content:center;}
+.saw-card-champ .saw-cardh{color:#f59e0b;}
+.saw-card-runner .saw-cardh{color:#c0c0c0;}
+.saw-stack{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;}
+.saw-pname{font-size:13px;font-weight:900;color:var(--text);text-transform:uppercase;line-height:1.1;letter-spacing:.03em;}
+.saw-pmeta{font-size:11px;font-weight:700;line-height:1.1;}
+.saw-pname-sm{font-size:11px;font-weight:800;color:var(--text);text-transform:uppercase;line-height:1.15;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;}
+.saw-pmeta-sm{font-size:10px;font-weight:700;line-height:1.1;}
+.saw-mini{padding:10px 8px;gap:6px;}
+.saw-toppair{padding:16px 14px;gap:10px;border-color:rgba(245,158,11,.35);}
+.saw-tpstack{display:flex;align-items:center;justify-content:center;gap:14px;width:100%;flex-wrap:wrap;}
+.saw-tpplayer{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;}
+.saw-tpsep{font-family:var(--font);font-size:18px;font-weight:300;color:var(--muted);}
+.saw-tpwr{font-family:var(--mono);font-size:13px;font-weight:800;color:var(--accent);}
+.saw-tpwl{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;font-weight:700;}
+.saw-tpwldot{color:var(--muted);}
 .sm-bigaction{width:100%;padding:13px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family: var(--font);display:inline-flex;align-items:center;justify-content:center;gap:6px;}
 .sm-bigaction.danger{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.4);color:var(--loss);}
 .sm-bigaction.danger.ghost{background:transparent;}

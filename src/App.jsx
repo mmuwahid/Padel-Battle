@@ -1141,79 +1141,95 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
             };
             return hasAwards && (
               <div style={{marginBottom:20}}>
-                <h3 style={{fontSize:13,fontWeight:800,color:A,margin:"0 0 12px",textTransform:"uppercase",letterSpacing:0.5}}>🏆 Season Awards</h3>
+                {/* S077: dropped trophy emoji — use Icon SVG. */}
+                <h3 className="saw-title"><Icon name="trophy" size={14} color={A} strokeWidth={2}/>Season Awards</h3>
                 <div style={{display:"flex",flexDirection:"column",gap:10}}>
-                  {/* Champion + Runner-Up side by side */}
+                  {/* Champion + Runner-Up — S077: centered title + centered
+                      avatar+name+wins stack. SVG award icons replace emoji. */}
                   {(awards.champion || awards.runnerUp) && (
                     <div style={{display:"grid",gridTemplateColumns:awards.runnerUp?"1fr 1fr":"1fr",gap:10}}>
                       {awards.champion && (
-                        <div style={{padding:"14px 12px",background:`linear-gradient(135deg,${GD}15,${CD2})`,borderRadius:10,border:`1.5px solid ${GD}50`,display:"flex",flexDirection:"column",gap:8}}>
-                          <div style={{fontSize:9,fontWeight:800,color:GD,letterSpacing:0.8,textTransform:"uppercase"}}>🥇 Champion</div>
-                          <div style={{display:"flex",alignItems:"center",gap:8}}>
-                            <Avatar pid={awards.champion.playerId} size={34}/>
-                            <div>
-                              <div style={{fontSize:13,fontWeight:900,color:TX,textTransform:"uppercase"}}>{getName(awards.champion.playerId)}</div>
-                              <div style={{fontSize:11,color:GD,fontWeight:700}}>{awards.champion.wins} wins</div>
-                            </div>
+                        <div className="saw-card saw-card-champ">
+                          <div className="saw-cardh"><Icon name="award" size={11} color={GD} strokeWidth={2}/>Champion</div>
+                          <div className="saw-stack">
+                            <Avatar pid={awards.champion.playerId} size={36}/>
+                            <div className="saw-pname">{getName(awards.champion.playerId)}</div>
+                            <div className="saw-pmeta" style={{color:GD}}>{awards.champion.wins} wins</div>
                           </div>
                         </div>
                       )}
                       {awards.runnerUp && (
-                        <div style={{padding:"14px 12px",background:`linear-gradient(135deg,${SV}12,${CD2})`,borderRadius:10,border:`1.5px solid ${SV}50`,display:"flex",flexDirection:"column",gap:8}}>
-                          <div style={{fontSize:9,fontWeight:800,color:SV,letterSpacing:0.8,textTransform:"uppercase"}}>🥈 Runner-Up</div>
-                          <div style={{display:"flex",alignItems:"center",gap:8}}>
-                            <Avatar pid={awards.runnerUp.playerId} size={34}/>
-                            <div>
-                              <div style={{fontSize:13,fontWeight:900,color:TX,textTransform:"uppercase"}}>{getName(awards.runnerUp.playerId)}</div>
-                              <div style={{fontSize:11,color:SV,fontWeight:700}}>{awards.runnerUp.wins} wins</div>
-                            </div>
+                        <div className="saw-card saw-card-runner">
+                          <div className="saw-cardh"><Icon name="award" size={11} color={SV} strokeWidth={2}/>Runner-Up</div>
+                          <div className="saw-stack">
+                            <Avatar pid={awards.runnerUp.playerId} size={36}/>
+                            <div className="saw-pname">{getName(awards.runnerUp.playerId)}</div>
+                            <div className="saw-pmeta" style={{color:SV}}>{awards.runnerUp.wins} wins</div>
                           </div>
                         </div>
                       )}
                     </div>
                   )}
-                  {/* Top Pair — full-width, centered avatar+name per player */}
-                  {awards.topPair && (
-                    <div style={{padding:"14px 12px",background:CD2,borderRadius:10,border:`1px solid ${A}30`,textAlign:"center"}}>
-                      <div style={{fontSize:9,fontWeight:800,color:A,letterSpacing:0.8,textTransform:"uppercase",marginBottom:10}}>🤝 Top Pair</div>
-                      <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:20}}>
-                        <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,minWidth:0,flex:1}}>
-                          <Avatar pid={awards.topPair.playerIds[0]} size={32}/>
-                          <div style={{fontSize:11,fontWeight:800,color:TX,textTransform:"uppercase",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:"100%"}}>{getName(awards.topPair.playerIds[0])}</div>
+                  {/* Top Pair — S077 redesign: crown SVG header, no × separator,
+                      '/' between players, W/L on its own row with color coding
+                      (W green if >0 else muted; L red if >0 else muted). */}
+                  {awards.topPair && (() => {
+                    const tpW = awards.topPair.wins;
+                    const tpL = awards.topPair.total - awards.topPair.wins;
+                    return (
+                      <div className="saw-card saw-toppair">
+                        <div className="saw-cardh"><Icon name="crown" size={12} color="#f59e0b" strokeWidth={2}/>Top Pair</div>
+                        <div className="saw-tpstack">
+                          <div className="saw-tpplayer">
+                            <Avatar pid={awards.topPair.playerIds[0]} size={34}/>
+                            <div className="saw-pname">{getName(awards.topPair.playerIds[0])}</div>
+                          </div>
+                          <div className="saw-tpsep">/</div>
+                          <div className="saw-tpplayer">
+                            <Avatar pid={awards.topPair.playerIds[1]} size={34}/>
+                            <div className="saw-pname">{getName(awards.topPair.playerIds[1])}</div>
+                          </div>
                         </div>
-                        <div style={{fontSize:13,color:MT,fontWeight:700,flexShrink:0}}>×</div>
-                        <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,minWidth:0,flex:1}}>
-                          <Avatar pid={awards.topPair.playerIds[1]} size={32}/>
-                          <div style={{fontSize:11,fontWeight:800,color:TX,textTransform:"uppercase",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:"100%"}}>{getName(awards.topPair.playerIds[1])}</div>
+                        <div className="saw-tpwr">{awards.topPair.winRate}% WR</div>
+                        <div className="saw-tpwl">
+                          <span style={{color: tpW > 0 ? "var(--win)" : "var(--muted)"}}>{tpW}W</span>
+                          <span className="saw-tpwldot">·</span>
+                          <span style={{color: tpL > 0 ? "var(--loss)" : "var(--muted)"}}>{tpL}L</span>
                         </div>
                       </div>
-                      <div style={{fontSize:10,color:A,fontWeight:600,marginTop:8}}>{awards.topPair.winRate}% WR · {awards.topPair.wins}W/{awards.topPair.total-awards.topPair.wins}L</div>
-                    </div>
-                  )}
-                  {/* Bottom row: Most Active · Most MOTM · Longest Streak */}
+                    );
+                  })()}
+                  {/* Bottom row: Most Active · Most MOTM · Longest Streak.
+                      S077: titles + content centered, emoji → SVG icons. */}
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
                     {awards.mostActive && (
-                      <div style={{padding:"10px 8px",background:CD2,borderRadius:10,border:`1px solid ${BD}`}}>
-                        <div style={{fontSize:8,fontWeight:800,color:MT,letterSpacing:0.5,textTransform:"uppercase",marginBottom:6}}>⚡ Most Active</div>
-                        <Avatar pid={awards.mostActive.playerId} size={26}/>
-                        <div style={{fontSize:11,fontWeight:800,color:TX,marginTop:5,textTransform:"uppercase",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{getName(awards.mostActive.playerId)}</div>
-                        <div style={{fontSize:10,color:A,fontWeight:700,marginTop:2}}>{awards.mostActive.value} MP</div>
+                      <div className="saw-card saw-mini">
+                        <div className="saw-cardh"><Icon name="zap" size={11} color={MT} strokeWidth={2}/>Most Active</div>
+                        <div className="saw-stack">
+                          <Avatar pid={awards.mostActive.playerId} size={28}/>
+                          <div className="saw-pname-sm">{getName(awards.mostActive.playerId)}</div>
+                          <div className="saw-pmeta-sm" style={{color:A}}>{awards.mostActive.value} MP</div>
+                        </div>
                       </div>
                     )}
                     {awards.mostMotm && (
-                      <div style={{padding:"10px 8px",background:CD2,borderRadius:10,border:`1px solid ${BD}`}}>
-                        <div style={{fontSize:8,fontWeight:800,color:MT,letterSpacing:0.5,textTransform:"uppercase",marginBottom:6}}>⭐ Most MOTM</div>
-                        <Avatar pid={awards.mostMotm.playerId} size={26}/>
-                        <div style={{fontSize:11,fontWeight:800,color:TX,marginTop:5,textTransform:"uppercase",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{getName(awards.mostMotm.playerId)}</div>
-                        <div style={{fontSize:10,color:GD,fontWeight:700,marginTop:2}}>{awards.mostMotm.value}× MOTM</div>
+                      <div className="saw-card saw-mini">
+                        <div className="saw-cardh"><Icon name="star" size={11} color={MT} strokeWidth={2}/>Most MOTM</div>
+                        <div className="saw-stack">
+                          <Avatar pid={awards.mostMotm.playerId} size={28}/>
+                          <div className="saw-pname-sm">{getName(awards.mostMotm.playerId)}</div>
+                          <div className="saw-pmeta-sm" style={{color:GD}}>{awards.mostMotm.value}× MOTM</div>
+                        </div>
                       </div>
                     )}
                     {awards.longestStreak && (
-                      <div style={{padding:"10px 8px",background:CD2,borderRadius:10,border:`1px solid ${BD}`}}>
-                        <div style={{fontSize:8,fontWeight:800,color:MT,letterSpacing:0.5,textTransform:"uppercase",marginBottom:6}}>🔥 Cons. Wins</div>
-                        <Avatar pid={awards.longestStreak.playerId} size={26}/>
-                        <div style={{fontSize:11,fontWeight:800,color:TX,marginTop:5,textTransform:"uppercase",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{getName(awards.longestStreak.playerId)}</div>
-                        <div style={{fontSize:10,color:A,fontWeight:700,marginTop:2}}>{awards.longestStreak.value} in a row</div>
+                      <div className="saw-card saw-mini">
+                        <div className="saw-cardh"><Icon name="flame" size={11} color={MT} strokeWidth={2}/>Cons. Wins</div>
+                        <div className="saw-stack">
+                          <Avatar pid={awards.longestStreak.playerId} size={28}/>
+                          <div className="saw-pname-sm">{getName(awards.longestStreak.playerId)}</div>
+                          <div className="saw-pmeta-sm" style={{color:A}}>{awards.longestStreak.value} in a row</div>
+                        </div>
                       </div>
                     )}
                   </div>

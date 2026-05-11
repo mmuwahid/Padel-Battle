@@ -13,7 +13,7 @@ import { useLeague } from "../LeagueContext";
 // User decision S067 Q6=A: keep S055 full-screen Season Detail pattern for
 // edit (rich roster toggle UX doesn't fit a sheet). List + Create restyled.
 export function SeasonManagement({ setSidebarView, goBack }) {
-  const { supabase, leagueId, players, seasons, pairs, showToast, loadLeagueData, isOwner } = useLeague();
+  const { supabase, leagueId, players, seasons, pairs, showToast, loadLeagueData, isOwner, isAdmin } = useLeague();
 
   const [rosters, setRosters] = useState({});
   const [loading, setLoading] = useState(true);
@@ -370,8 +370,8 @@ export function SeasonManagement({ setSidebarView, goBack }) {
                     <div className="sm-paircard-acts">
                       {isEditing ? (
                         <>
-                          <button className="gbtn" onClick={handleSavePairName} disabled={pairBusy}><Icon name="check" size={12} />Save</button>
-                          <button className="gbtn ghost" onClick={() => setEditingPairId(null)}>Cancel</button>
+                          <button className="gbtn pair-iconbtn" aria-label="Save name" title="Save" onClick={handleSavePairName} disabled={pairBusy}><Icon name="check" size={14} /></button>
+                          <button className="gbtn ghost pair-iconbtn" aria-label="Cancel" title="Cancel" onClick={() => setEditingPairId(null)}><Icon name="close" size={14} /></button>
                         </>
                       ) : isConfirmDel ? (
                         <>
@@ -380,8 +380,8 @@ export function SeasonManagement({ setSidebarView, goBack }) {
                         </>
                       ) : (
                         <>
-                          <button className="gbtn" onClick={() => handleEditPair(pr)}><Icon name="edit" size={12} />Rename</button>
-                          <button className="dbtn" onClick={() => setConfirmDeletePair(pr.id)}><Icon name="trash" size={12} />Delete</button>
+                          <button className="gbtn pair-iconbtn" aria-label="Rename pair" title="Rename" onClick={() => handleEditPair(pr)}><Icon name="edit" size={14} /></button>
+                          <button className="dbtn pair-iconbtn" aria-label="Delete pair" title="Delete" onClick={() => setConfirmDeletePair(pr.id)}><Icon name="trash" size={14} /></button>
                         </>
                       )}
                     </div>
@@ -486,11 +486,11 @@ export function SeasonManagement({ setSidebarView, goBack }) {
       </div>
 
       <div className="sm-body">
-        {!isOwner && (
-          <div className="sm-note">Owner-only screen.</div>
+        {!isAdmin && (
+          <div className="sm-note">Admin or Owner only.</div>
         )}
 
-        {isOwner && (
+        {isAdmin && (
           <>
             <button className="pbtn pbtn-block" onClick={openCreate}>
               <Icon name="plus" size={16} strokeWidth={2.5} />New Season
