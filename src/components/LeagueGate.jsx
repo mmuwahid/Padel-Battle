@@ -211,6 +211,20 @@ export function LeagueGate({ user, children }) {
       .single();
     if (leagueErr) throw leagueErr;
     const leagueId = leagueData.id;
+    // S077 r6: wait for the handle_new_league trigger to commit our admin row.
+    // The trigger fires AFTER INSERT but PostgREST returns before commit on
+    // some pool configs — polling for our membership row keeps us out of the
+    // "0 leagues → PendingApprovalScreen" race.
+    for (let i = 0; i < 10; i++) {
+      const { data: mem } = await supabase
+        .from("league_members")
+        .select("id")
+        .eq("league_id", leagueId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (mem) break;
+      await new Promise(r => setTimeout(r, 150));
+    }
     if (autoSeason) {
       await supabase
         .from("seasons")

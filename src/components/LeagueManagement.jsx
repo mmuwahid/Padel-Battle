@@ -87,6 +87,15 @@ export function LeagueManagement({ setSidebarView, goBack }) {
       </div>
 
       <div className="lm-body">
+        <button className="crow" onClick={() => setSidebarView("leagues")}>
+          <div className="cricon"><Icon name="plus" size={16} color="var(--accent)" /></div>
+          <div className="crbody">
+            <div className="crtitle">Create new league</div>
+            <div className="crsub">Start a new league with your own players and seasons</div>
+          </div>
+          <div className="crchev"><Icon name="chevron" size={16} color="var(--muted-2)" /></div>
+        </button>
+
         <div className="lmstats">
           <div className="lmsc"><div className="lmscv">{(players || []).length}</div><div className="lmscl">Players</div></div>
           <div className="lmsc"><div className="lmscv">{(approvedMatches || []).length}</div><div className="lmscl">Matches</div></div>
