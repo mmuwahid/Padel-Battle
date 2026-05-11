@@ -1341,6 +1341,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
           sendPushNotification={sendPushNotification}
           prefilledOpenMatch={prefilledOpenMatch}
           onPrefilledHandled={()=>setPrefilledOpenMatch(null)}
+          pairs={pairs}
         />
       )}
 

@@ -9,7 +9,7 @@ import Icon from './Icon';
 // + Phase 9's new .modebar/.modebtn/.sccard/.cstep/.csbtn/.csval/.livebi/.acbtn/.mvpcard/.savebtn etc.
 // Behavior preserved: 2/3 set toggle, Manual entry, LIVE scoring engine, FT-09 approval flow,
 // FT-09b FIP validation, dead-rubber auto-truncate, post-save broadcast push.
-export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goBack,sel,lbl,getName,seasonId,seasons,setCurSeason,onSave,showToast,sendPushNotification,prefilledOpenMatch,onPrefilledHandled}){
+export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goBack,sel,lbl,getName,seasonId,seasons,setCurSeason,onSave,showToast,sendPushNotification,prefilledOpenMatch,onPrefilledHandled,pairs}){
   const isE=!!em;
   const [tA,setTA]=useState(["",""]);
   const [tB,setTB]=useState(["",""]);
@@ -26,6 +26,50 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
   const [liveNs,setLiveNs]=useState(3);
   const [invalidIdx,setInvalidIdx]=useState([]);
   const [validationError,setValidationError]=useState("");
+  // S076 FT-15: pair-aware picker state (pairs-format seasons only)
+  const currentSeason = (seasons || []).find(sea => sea.id === seasonId);
+  const isPairsFormat = currentSeason?.format === "pairs";
+  const seasonPairs = isPairsFormat ? (pairs || []).filter(pr => pr.season_id === seasonId) : [];
+  const [selectedPairA,setSelectedPairA]=useState("");
+  const [selectedPairB,setSelectedPairB]=useState("");
+  // Pair labels — "Custom Name · A / B" or "A / B"
+  const pairLabel = (pr) => {
+    const pA = (players || []).find(p => p.id === pr.player_a_id);
+    const pB = (players || []).find(p => p.id === pr.player_b_id);
+    const fallback = `${pA?.name || "?"} / ${pB?.name || "?"}`;
+    return pr.name ? `${pr.name} · ${fallback}` : fallback;
+  };
+  // When a pair is selected, push its player IDs into tA/tB
+  useEffect(() => {
+    if (!isPairsFormat) return;
+    if (selectedPairA) {
+      const pr = seasonPairs.find(p => p.id === selectedPairA);
+      if (pr) setTA([pr.player_a_id, pr.player_b_id]);
+    } else {
+      setTA(["",""]);
+    }
+  }, [selectedPairA, isPairsFormat]);
+  useEffect(() => {
+    if (!isPairsFormat) return;
+    if (selectedPairB) {
+      const pr = seasonPairs.find(p => p.id === selectedPairB);
+      if (pr) setTB([pr.player_a_id, pr.player_b_id]);
+    } else {
+      setTB(["",""]);
+    }
+  }, [selectedPairB, isPairsFormat]);
+  // When editing an existing match in a pairs season, pre-select the pairs
+  useEffect(() => {
+    if (!isPairsFormat || !em) return;
+    const findPair = (team) => seasonPairs.find(pr =>
+      (pr.player_a_id === team[0] && pr.player_b_id === team[1]) ||
+      (pr.player_a_id === team[1] && pr.player_b_id === team[0])
+    );
+    const pA = findPair(em.team_a || []);
+    const pB = findPair(em.team_b || []);
+    if (pA) setSelectedPairA(pA.id);
+    if (pB) setSelectedPairB(pB.id);
+  }, [em, isPairsFormat]);
   // S075 FT-16: hold the open_match id so we can attach it to the insert payload.
   const [openMatchId,setOpenMatchId]=useState(null);
 
@@ -283,57 +327,106 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
         />
       )}
 
-      {/* Players card (.tcard with .tinner — same as Schedule form) */}
+      {/* Players card (.tcard with .tinner — same as Schedule form). S076 FT-15: pair-aware in pairs seasons. */}
       <div className="tcard">
         <div className="tcardh">
-          <div className="tcardtit">Players</div>
-          {!isE && !showShuffler && (
+          <div className="tcardtit">{isPairsFormat ? "Pairs" : "Players"}</div>
+          {!isE && !showShuffler && !isPairsFormat && (
             <button className="shufbtn" onClick={shuffleNow}>
               <Icon name="shuffle" size={13}/>Shuffle{queue.length>0?` · ${queue.length}`:''}
             </button>
           )}
         </div>
-        <div className="tinner">
-          <div>
-            <div className="tcolh">
-              <div className="tcoldot tcolha"/>
-              <div className="tcollbl tcollbla">Team A</div>
-            </div>
-            {tA.map((pid,i)=>(
-              <div key={i} className="pslot">
+        {isPairsFormat ? (
+          <div className="tinner">
+            <div>
+              <div className="tcolh">
+                <div className="tcoldot tcolha"/>
+                <div className="tcollbl tcollbla">Pair A</div>
+              </div>
+              <div className="pslot">
                 <select
-                  className={`psel af${pid?' fi':''}`}
-                  value={pid}
-                  onChange={e=>{const t=[...tA];t[i]=e.target.value;setTA(t);}}
+                  className={`psel af${selectedPairA?' fi':''}`}
+                  value={selectedPairA}
+                  onChange={e=>setSelectedPairA(e.target.value)}
                 >
-                  <option value="">Player {i+1}</option>
-                  {avail(pid).map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}
+                  <option value="">— Pick a pair —</option>
+                  {seasonPairs.filter(pr => pr.id !== selectedPairB).map(pr => (
+                    <option key={pr.id} value={pr.id}>{pairLabel(pr)}</option>
+                  ))}
                 </select>
                 <div className="pselch"><Icon name="chevron" size={13} color="rgba(74,222,128,.45)"/></div>
               </div>
-            ))}
-          </div>
-          <div className="tcolvs">VS</div>
-          <div>
-            <div className="tcolh" style={{justifyContent:"flex-end"}}>
-              <div className="tcollbl tcollblb">Team B</div>
-              <div className="tcoldot tcolhb"/>
             </div>
-            {tB.map((pid,i)=>(
-              <div key={i} className="pslot">
+            <div className="tcolvs">VS</div>
+            <div>
+              <div className="tcolh" style={{justifyContent:"flex-end"}}>
+                <div className="tcollbl tcollblb">Pair B</div>
+                <div className="tcoldot tcolhb"/>
+              </div>
+              <div className="pslot">
                 <select
-                  className={`psel bf${pid?' fi':''}`}
-                  value={pid}
-                  onChange={e=>{const t=[...tB];t[i]=e.target.value;setTB(t);}}
+                  className={`psel bf${selectedPairB?' fi':''}`}
+                  value={selectedPairB}
+                  onChange={e=>setSelectedPairB(e.target.value)}
                 >
-                  <option value="">Player {i+1}</option>
-                  {avail(pid).map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}
+                  <option value="">— Pick a pair —</option>
+                  {seasonPairs.filter(pr => pr.id !== selectedPairA).map(pr => (
+                    <option key={pr.id} value={pr.id}>{pairLabel(pr)}</option>
+                  ))}
                 </select>
                 <div className="pselch"><Icon name="chevron" size={13} color="rgba(245,158,11,.45)"/></div>
               </div>
-            ))}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="tinner">
+            <div>
+              <div className="tcolh">
+                <div className="tcoldot tcolha"/>
+                <div className="tcollbl tcollbla">Team A</div>
+              </div>
+              {tA.map((pid,i)=>(
+                <div key={i} className="pslot">
+                  <select
+                    className={`psel af${pid?' fi':''}`}
+                    value={pid}
+                    onChange={e=>{const t=[...tA];t[i]=e.target.value;setTA(t);}}
+                  >
+                    <option value="">Player {i+1}</option>
+                    {avail(pid).map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}
+                  </select>
+                  <div className="pselch"><Icon name="chevron" size={13} color="rgba(74,222,128,.45)"/></div>
+                </div>
+              ))}
+            </div>
+            <div className="tcolvs">VS</div>
+            <div>
+              <div className="tcolh" style={{justifyContent:"flex-end"}}>
+                <div className="tcollbl tcollblb">Team B</div>
+                <div className="tcoldot tcolhb"/>
+              </div>
+              {tB.map((pid,i)=>(
+                <div key={i} className="pslot">
+                  <select
+                    className={`psel bf${pid?' fi':''}`}
+                    value={pid}
+                    onChange={e=>{const t=[...tB];t[i]=e.target.value;setTB(t);}}
+                  >
+                    <option value="">Player {i+1}</option>
+                    {avail(pid).map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}
+                  </select>
+                  <div className="pselch"><Icon name="chevron" size={13} color="rgba(245,158,11,.45)"/></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {isPairsFormat && seasonPairs.length < 2 && (
+          <div className="sm-empty" style={{marginTop:8,fontSize:12}}>
+            Register at least 2 pairs in Season Management before logging matches.
+          </div>
+        )}
       </div>
 
       {/* Score card — Manual mode */}
