@@ -336,6 +336,10 @@ body {
 
 .lscreen {
   min-height: 100vh;
+  /* S077: dvh is the iOS-aware viewport unit — 100dvh = visible area after
+     the URL bar is accounted for. Falls back to 100vh on browsers that
+     don't support dvh. */
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -353,17 +357,18 @@ body {
   pointer-events: none;
 }
 .lhero {
-  /* S077: balanced login layout per user feedback — logo centered vertically
-     in the available space (flex:1) so the form sibling sits at the bottom
-     of .lscreen naturally. No scroll. Splash variant overrides below. */
+  /* S077 r2: tighter padding so the logo cluster doesn't push the form below
+     the fold on smaller iPhones. flex:1 + justify-content:center keeps it
+     centered in whatever space is left after the form takes its natural height. */
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 24px 32px 18px;
+  padding: 12px 32px 8px;
   position: relative;
   z-index: 1;
+  min-height: 0;
 }
 .lscreen.splash .lhero {
   /* S073/S077: splash variant — logo positioned ~20% above true center for
@@ -374,7 +379,7 @@ body {
 }
 .lscreen.splash .llogobox { margin-bottom: 22px; }
 /* S073 #90 #1: tighten spacing between logo, wordmark, tag on form screens. */
-.lscreen:not(.splash) .llogobox { margin-bottom: 12px; }
+.lscreen:not(.splash) .llogobox { margin-bottom: 8px; }
 /* S070 Issue #80: re-designed splash logo container — bigger drop-shadow halo,
    sophisticated multi-layer pulse animation. Coordinates with the new
    <PadelHubMark> SVG component (with .lhmark / .lhmark-orbit / .lhmark-pulse
@@ -437,7 +442,8 @@ body {
   50%      { transform: scale(1.15); opacity: 1; }
 }
 .lbrand {
-  font-size: 32px;
+  /* S077 r2: tighter wordmark on form screens to claw back vertical space. */
+  font-size: 28px;
   font-weight: 800;
   font-family: var(--font);
   letter-spacing: 0.02em;
@@ -455,7 +461,9 @@ body {
 }
 .lform {
   flex-shrink: 0;
-  padding: 0 20px 36px;
+  /* S077 r2: tighter padding-bottom + gap so the whole form fits above the
+     fold on iPhone SE / iPhone 12 mini without a scroll. */
+  padding: 0 20px 24px;
   position: relative;
   z-index: 1;
   width: 100%;
@@ -463,7 +471,7 @@ body {
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
 }
 .flbl {
   font-family: var(--mono);
@@ -1805,9 +1813,20 @@ body {
 .prk-podwl{font-family:var(--mono);font-size:10px;display:flex;gap:6px;font-weight:700;}
 .prk-podpct{font-family:var(--mono);font-weight:800;font-size:13px;color:var(--text);}
 .prk-tbl{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
-.prk-trow{display:grid;grid-template-columns:32px minmax(130px,1.5fr) 32px 32px 32px 32px 48px;align-items:center;gap:6px;padding:10px 10px;border-bottom:1px solid rgba(74,222,128,.04);cursor:pointer;}
+.prk-trow{display:grid;grid-template-columns:34px 1fr 28px 28px 28px 28px 40px;align-items:center;gap:4px;padding:9px 10px;border-bottom:1px solid rgba(74,222,128,.04);cursor:pointer;}
 .prk-trow:last-child{border-bottom:0;}
-.prk-trow.prk-thead{background:rgba(74,222,128,.05);border-bottom:1px solid var(--border);cursor:default;font-family:var(--mono);font-size:9px;font-weight:800;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;}
+.prk-trow.prk-thead{background:rgba(74,222,128,.05);border-bottom:1px solid var(--border);cursor:default;font-family:var(--mono);font-size:9px;font-weight:800;color:#9090a4;letter-spacing:.1em;text-transform:uppercase;}
+/* S077 r2: header stat cells color-coded to match individual leaderboard
+   (.lbh.r color styles) — MP default, MW win green, ML loss red, CW gold,
+   EFF default. Right-aligned. */
+.prk-thead .prk-c-stat{justify-self:end;text-align:right;}
+.prk-thead .prk-c-stat:nth-of-type(2){color:#9090a4;}            /* MP */
+.prk-thead .prk-c-stat:nth-of-type(3){color:var(--win);}          /* MW */
+.prk-thead .prk-c-stat:nth-of-type(4){color:var(--loss);}         /* ML */
+.prk-thead .prk-c-stat:nth-of-type(5){color:var(--gold);}         /* CW */
+.prk-thead .prk-c-eff{justify-self:end;text-align:right;color:#9090a4;}
+.prk-c-stat{font-size:11px;}
+.prk-c-eff{font-size:12px;padding-right:2px;}
 .prk-trow.prk-r1{background:linear-gradient(90deg,rgba(245,158,11,.06),transparent);}
 .prk-trow.prk-r2{background:linear-gradient(90deg,rgba(192,192,192,.04),transparent);}
 .prk-trow.prk-r3{background:linear-gradient(90deg,rgba(205,127,50,.05),transparent);}
@@ -1841,7 +1860,10 @@ body {
 .saw-card{padding:14px 12px;background:var(--surface-2);border-radius:10px;border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;}
 .saw-card-champ{background:linear-gradient(135deg,rgba(245,158,11,.15),var(--surface-2));border-color:rgba(245,158,11,.50);border-width:1.5px;}
 .saw-card-runner{background:linear-gradient(135deg,rgba(192,192,192,.12),var(--surface-2));border-color:rgba(192,192,192,.50);border-width:1.5px;}
-.saw-cardh{display:inline-flex;align-items:center;gap:5px;font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);justify-content:center;}
+.saw-cardh{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);justify-content:center;}
+/* S077 r2: Most Active / Most MOTM / Cons. Wins use the .saw-mini card.
+   User wants those titles in white, not muted, for stronger contrast. */
+.saw-mini .saw-cardh{color:var(--text);font-size:9.5px;}
 .saw-card-champ .saw-cardh{color:#f59e0b;}
 .saw-card-runner .saw-cardh{color:#c0c0c0;}
 .saw-stack{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;}

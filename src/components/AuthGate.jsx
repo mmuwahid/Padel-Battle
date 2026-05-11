@@ -216,7 +216,7 @@ export function AuthGate({children}){
       <div className="lscreen">
         <div className="lbg"/>
         <div className="lhero">
-          <div className="llogobox"><PadelHubMark size={96}/></div>
+          <div className="llogobox"><PadelHubMark size={80}/></div>
           <div className="lbrand">Padel<span className="accent">Hub</span></div>
           <div className="ltag">Set a new password</div>
         </div>
@@ -249,7 +249,7 @@ export function AuthGate({children}){
       <div className="lscreen">
         <div className="lbg"/>
         <div className="lhero">
-          <div className="llogobox"><PadelHubMark size={96}/></div>
+          <div className="llogobox"><PadelHubMark size={80}/></div>
           <div className="lbrand">Padel<span className="accent">Hub</span></div>
           <div className="ltag">Your league. Your rankings.</div>
         </div>
