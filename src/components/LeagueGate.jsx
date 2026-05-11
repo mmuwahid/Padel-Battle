@@ -56,12 +56,21 @@ export function LeagueGate({ user, children }) {
       .eq("user_id", user.id);
     if (error) {
       setLoading(false);
+      // S077 r11: keep stale leagues on error — don't clobber to [] which
+      // would route the user to OnboardingScreen/PendingApproval.
       return [];
     }
     const userLeagues = (data || [])
       .map(m => ({ ...m.leagues, _userRole: m.role }))
       .filter(Boolean);
-    setLeagues(userLeagues);
+    // S077 r11: stale-while-revalidate. If this fetch returned empty BUT we
+    // previously had leagues for this user, keep the cached list. A transient
+    // read-replica lag or stale JWT shouldn't route the user away. Only set
+    // empty when we know for sure (initial cold-start where loading is true).
+    setLeagues(prev => {
+      if (userLeagues.length === 0 && prev.length > 0) return prev;
+      return userLeagues;
+    });
     return userLeagues;
   }, [user.id]);
 

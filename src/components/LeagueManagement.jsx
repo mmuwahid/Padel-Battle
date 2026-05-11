@@ -15,9 +15,12 @@ import { useLeague } from "../LeagueContext";
 // Props leagues + leagueHandlers come from <AppContent> which gets them
 // from <LeagueGate>.
 export function LeagueManagement({
-  setSidebarView, goBack,
+  setSidebarView, navigateSidebar, goBack,
   leagues = [], leagueHandlers = {},
 }) {
+  // S077 r11: nav helper — push current view onto sidebar history so the
+  // back button on Player/Season Management returns here, not the drawer.
+  const goTo = navigateSidebar || setSidebarView;
   const {
     supabase, league, leagueId,
     showToast, loadLeagueData,
@@ -248,7 +251,7 @@ export function LeagueManagement({
           {isAdmin && (
             <div>
               <div className="slbl">Players</div>
-              <button className="crow" onClick={() => setSidebarView("playerManagement")}>
+              <button className="crow" onClick={() => goTo("playerManagement")}>
                 <div className="cricon"><Icon name="players" size={16} color="var(--accent)" /></div>
                 <div className="crbody">
                   <div className="crtitle">Player Management</div>
@@ -262,7 +265,7 @@ export function LeagueManagement({
           {isAdmin && (
             <div>
               <div className="slbl">Seasons</div>
-              <button className="crow" onClick={() => setSidebarView("seasonManagement")}>
+              <button className="crow" onClick={() => goTo("seasonManagement")}>
                 <div className="cricon"><Icon name="calendar" size={16} color="var(--accent)" /></div>
                 <div className="crbody">
                   <div className="crtitle">Season Management</div>
@@ -314,16 +317,28 @@ export function LeagueManagement({
             const isActive = l.id === leagueId;
             const isRenaming = renameId === l.id;
             const isDeleting = deleteId === l.id;
+            // Whole card is the open trigger (per user direction: no separate
+            // "Open" button). Inline rename/delete forms stop propagation so
+            // they don't bubble up to the card click.
+            const cardOnClick = () => {
+              if (isRenaming || isDeleting) return;
+              openDetail(l.id);
+            };
             return (
-              <div key={l.id} className={`secard${isActive ? " on" : ""}`}>
+              <div
+                key={l.id}
+                className={`secard${isActive ? " on" : ""}`}
+                onClick={cardOnClick}
+                style={{ cursor: "pointer" }}
+              >
                 <div className="secdtop">
-                  <button className="secname-btn" onClick={() => openDetail(l.id)}>
-                    <span className="secname">{l.name}</span>
-                  </button>
-                  <div className={isLOwner ? "badgea" : "badgee"}>{isLOwner ? "OWNER" : (l._userRole === "admin" ? "ADMIN" : "MEMBER")}</div>
+                  <span className="secname">{l.name}</span>
+                  <div className={isLOwner ? "badgea" : "badgee"}>
+                    {isLOwner ? "OWNER" : (l._userRole === "admin" ? "ADMIN" : "MEMBER")}
+                  </div>
                 </div>
                 {isRenaming ? (
-                  <div className="lm-list-form">
+                  <div className="lm-list-form" onClick={(e) => e.stopPropagation()}>
                     <input className="shi" type="text" value={renameDraft} onChange={(e) => setRenameDraft(e.target.value)} placeholder="New name" autoFocus />
                     <button className="gbtn" disabled={renaming || !renameDraft.trim()} onClick={() => handleRename(l.id)}>
                       <Icon name="check" size={12} />{renaming ? "..." : "Save"}
@@ -331,30 +346,23 @@ export function LeagueManagement({
                     <button className="gbtn ghost" onClick={() => { setRenameId(null); setRenameDraft(""); }}>Cancel</button>
                   </div>
                 ) : isDeleting ? (
-                  <div className="lm-list-form">
+                  <div className="lm-list-form" onClick={(e) => e.stopPropagation()}>
                     <input className="shi" type="text" value={deleteConfirm} onChange={(e) => setDeleteConfirm(e.target.value)} placeholder='Type "delete" to confirm' autoFocus />
                     <button className="dbtn" disabled={deleting || deleteConfirm.trim().toLowerCase() !== "delete"} onClick={() => handleDelete(l.id)}>
                       {deleting ? "..." : "Delete"}
                     </button>
                     <button className="gbtn ghost" onClick={() => { setDeleteId(null); setDeleteConfirm(""); }}>Cancel</button>
                   </div>
-                ) : (
-                  <div className="secft">
-                    <button className="gbtn" onClick={() => openDetail(l.id)}>
-                      <Icon name="chevron" size={12} />Open
+                ) : isLOwner ? (
+                  <div className="secft" onClick={(e) => e.stopPropagation()}>
+                    <button className="gbtn" onClick={() => { setRenameId(l.id); setRenameDraft(l.name); }}>
+                      <Icon name="edit" size={12} />Rename
                     </button>
-                    {isLOwner && (
-                      <button className="gbtn" onClick={() => { setRenameId(l.id); setRenameDraft(l.name); }}>
-                        <Icon name="edit" size={12} />Rename
-                      </button>
-                    )}
-                    {isLOwner && (
-                      <button className="dbtn" onClick={() => { setDeleteId(l.id); setDeleteConfirm(""); }}>
-                        <Icon name="trash" size={12} />Delete
-                      </button>
-                    )}
+                    <button className="dbtn" onClick={() => { setDeleteId(l.id); setDeleteConfirm(""); }}>
+                      <Icon name="trash" size={12} />Delete
+                    </button>
                   </div>
-                )}
+                ) : null}
               </div>
             );
           })}

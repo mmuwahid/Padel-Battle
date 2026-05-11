@@ -57,7 +57,6 @@ export function AdminDashboard({ setSidebarView, navigateSidebar, goBack, setTab
   ];
 
   const cards = [
-    { t: "Player Management", d: `${(players || []).length} active`, i: "players", view: "playerManagement" },
     { t: "League Management", d: league?.name || "—", i: "settings", view: "leagueManagement" },
     {
       t: "Approval Queue",

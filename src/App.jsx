@@ -1065,7 +1065,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
             <SeasonManagement setSidebarView={setSidebarView} goBack={goBackSidebar}/>
           )}
           {sidebarView==="leagueManagement" && (
-            <LeagueManagement setSidebarView={setSidebarView} goBack={goBackSidebar} leagues={leagues||[]} leagueHandlers={leagueHandlers}/>
+            <LeagueManagement setSidebarView={setSidebarView} navigateSidebar={navigateSidebar} goBack={goBackSidebar} leagues={leagues||[]} leagueHandlers={leagueHandlers}/>
           )}
           {sidebarView==="settings" && (
             <SettingsView user={user} claimedPlayer={claimedPlayer} isAdmin={isAdmin} pushSubscribed={pushSubscribed} subscribeToPush={subscribeToPush} unsubscribeFromPush={unsubscribeFromPush} notifNewMatch={notifNewMatch} notifRankingChange={notifRankingChange} notifNewMembers={notifNewMembers} notifChallenges={notifChallenges} toggleNotification={toggleNotification} onSwitchLeague={onSwitchLeague} setSidebarView={setSidebarView} navigateSidebar={navigateSidebar} goBack={goBackSidebar} showToast={showToast} loadLeagueData={loadLeagueData} testPushNotification={testPushNotification}/>
