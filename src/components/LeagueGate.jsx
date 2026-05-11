@@ -228,45 +228,25 @@ export function LeagueGate({ user, children }) {
   // S063: createLeague accepts {name, format, autoSeason} — format defaults
   // to 'singles' for backward compat. autoSeason creates "Season 1" with the
   // same format so new leagues are immediately usable.
+  // S077 r9: atomic create_league RPC. The DB function inserts the league,
+  // the owner's admin membership (via handle_new_league trigger), and the
+  // optional Season 1 inside a single transaction. No more multi-step race.
   const createLeague = useCallback(async ({ name, format = "singles", autoSeason = true }) => {
     if (!name?.trim()) throw new Error("League name required");
     if (!["singles", "pairs"].includes(format)) throw new Error("Invalid format");
-    const { data: leagueData, error: leagueErr } = await supabase
-      .from("leagues")
-      .insert({ name: name.trim(), created_by: user.id, format })
-      .select()
-      .single();
-    if (leagueErr) throw leagueErr;
-    const leagueId = leagueData.id;
-    // S077 r6: wait for the handle_new_league trigger to commit our admin row.
-    // The trigger fires AFTER INSERT but PostgREST returns before commit on
-    // some pool configs — polling for our membership row keeps us out of the
-    // "0 leagues → PendingApprovalScreen" race.
-    for (let i = 0; i < 10; i++) {
-      const { data: mem } = await supabase
-        .from("league_members")
-        .select("id")
-        .eq("league_id", leagueId)
-        .eq("user_id", user.id)
-        .maybeSingle();
-      if (mem) break;
-      await new Promise(r => setTimeout(r, 150));
-    }
-    if (autoSeason) {
-      await supabase
-        .from("seasons")
-        .insert({
-          league_id: leagueId,
-          name: "Season 1",
-          start_date: new Date().toISOString().split("T")[0],
-          active: true,
-        });
-    }
+    const { data, error } = await supabase.rpc("create_league", {
+      p_name: name.trim(),
+      p_format: format,
+      p_auto_season: autoSeason,
+    });
+    if (error) throw error;
+    const leagueId = data?.id;
+    if (!leagueId) throw new Error("Create league returned no id");
     const updated = await loadUserLeagues();
     const newLeague = updated.find(l => l.id === leagueId);
     setSelectedLeagueId(leagueId);
-    return newLeague || leagueData;
-  }, [user.id, loadUserLeagues, setSelectedLeagueId]);
+    return newLeague || { id: leagueId, name: name.trim(), invite_code: data.invite_code };
+  }, [loadUserLeagues, setSelectedLeagueId]);
 
   const joinLeague = useCallback(async (code) => {
     if (!code?.trim()) throw new Error("Invite code required");

@@ -13,10 +13,11 @@ import { useLeague } from "../LeagueContext";
 // User decision S067 Q6=A: keep S055 full-screen Season Detail pattern for
 // edit (rich roster toggle UX doesn't fit a sheet). List + Create restyled.
 export function SeasonManagement({ setSidebarView, goBack }) {
-  const { supabase, leagueId, players, seasons, pairs, showToast, loadLeagueData, isOwner, isAdmin } = useLeague();
+  const { supabase, leagueId, players, seasons, pairs, seasonRosters, showToast, loadLeagueData, isOwner, isAdmin } = useLeague();
 
-  const [rosters, setRosters] = useState({});
-  const [loading, setLoading] = useState(true);
+  // S077 r9: read seasonRosters from context (no separate round-trip).
+  const rosters = seasonRosters || {};
+  const loading = false;
   const [openSeasonId, setOpenSeasonId] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
 
@@ -57,26 +58,7 @@ export function SeasonManagement({ setSidebarView, goBack }) {
     return (b.start_date || "").localeCompare(a.start_date || "");
   });
 
-  const loadRosters = useCallback(async () => {
-    setLoading(true);
-    try {
-      const seasonIds = (seasons || []).map(s => s.id);
-      if (seasonIds.length === 0) { setRosters({}); setLoading(false); return; }
-      const { data, error } = await supabase.from("season_players").select("season_id,player_id").in("season_id", seasonIds);
-      if (error) throw error;
-      const map = {};
-      (data || []).forEach(r => {
-        if (!map[r.season_id]) map[r.season_id] = new Set();
-        map[r.season_id].add(r.player_id);
-      });
-      setRosters(map);
-    } catch (err) {
-      showToast(err.message || "Failed to load rosters", "error");
-    }
-    setLoading(false);
-  }, [supabase, seasons, showToast]);
-
-  useEffect(() => { loadRosters(); }, [loadRosters]);
+  // S077 r9: loadRosters dropped — context already has seasonRosters.
 
   const openCreate = () => {
     setNewName("");
@@ -103,7 +85,6 @@ export function SeasonManagement({ setSidebarView, goBack }) {
       showToast("Season created");
       setShowCreate(false);
       await loadLeagueData();
-      await loadRosters();
     } catch (err) {
       showToast(err.message || "Failed to create season", "error");
     }
@@ -153,7 +134,8 @@ export function SeasonManagement({ setSidebarView, goBack }) {
         p_player_ids: Array.from(current),
       });
       if (error) throw error;
-      setRosters(prev => ({ ...prev, [seasonId]: current }));
+      // S077 r9: seasonRosters refreshes via loadLeagueData on next load.
+      await loadLeagueData();
     } catch (err) {
       showToast(err.message || "Failed to update roster", "error");
     }
@@ -191,7 +173,6 @@ export function SeasonManagement({ setSidebarView, goBack }) {
       showToast("Season deleted");
       closeEdit();
       await loadLeagueData();
-      await loadRosters();
     } catch (err) {
       showToast(err.message || "Failed to delete season", "error");
     }

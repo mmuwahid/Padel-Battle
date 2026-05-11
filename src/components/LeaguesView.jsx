@@ -170,7 +170,7 @@ export function LeaguesView({
                         className="lv-card-main"
                         onClick={() => { handlers.switchLeague(l.id); onClose?.(); }}
                       >
-                        <span className="lv-card-emoji">🏟️</span>
+
                         <div className="lv-card-body">
                           <div className="lv-card-row1">
                             <span className="lv-card-name">{l.name}</span>
@@ -228,11 +228,8 @@ export function LeaguesView({
       {/* Action toggles */}
       {section === null && (
         <div className="lv-section lv-actions">
-          <button className="pbtn" onClick={() => { setSection("create"); setCreateErr(""); }}>
-            <Icon name="plus" size={13} color="#000" strokeWidth={2.5} /> Create new league
-          </button>
-          <button className="gbtn" onClick={() => { setSection("join"); setJoinErr(""); }}>
-            Join with invite code
+          <button className="pbtn" onClick={() => { setSection("join"); setJoinErr(""); }}>
+            <Icon name="plus" size={13} color="#000" strokeWidth={2.5} /> Join with invite code
           </button>
         </div>
       )}
