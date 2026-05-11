@@ -1,25 +1,90 @@
 # Active Work
 
-## NEXT SESSION (S074) — START HERE
-**Last session:** S073 (2026-05-10) — **1 push-direct commit `0be427e`, SW v138 → v139, 1 DB migration, 2 GitHub issues closed (#90 logo+login, #91 S/TB→S3), Vercel READY.** Logo color reverted gold→green per brand (Issue #90 part 2) — same 3D orb + 6-satellite + pulsating + orbit design preserved, gradients `#d1fae5 → #4ade80 → #14532d`. Login page fits one viewport (Issue #90 part 1) — `.lhero` 30vh→`clamp(28px,6vh,56px)` with `.lscreen.splash` opt-in for splash usages, AuthGate logo 140→96. PWA icon consistency (Issue #90 part 3) — new `/public/icons/icon.svg` single-source-of-truth wired into manifest + apple-touch-icon. **FT-16 frontend MVP** — open_matches loaded into App.jsx context, ScheduleView Open Matches section + claim/leave/cancel actions + Schedule form Private/Open toggle wired to `create_open_match`/`join_open_match`/`leave_open_match`/`cancel_open_match` RPCs. **FT-15 frontend MVP** — `create_season` RPC extended with `p_format` param, SeasonManagement create form has Individual/Pairs toggle. **Issue #91 fix** — MatchHistory.jsx:183 column header S/TB → S3.
+## NEXT SESSION (S076) — START HERE
+**Last session:** S075 (2026-05-11) — **1 push-direct commit `9c72c17`, SW v141 → v142, Edge Function `push-notify` v18 ACTIVE, Vercel deploy `dpl_2MUTDLtTriuAVnfWNJEJ1weQjV14` READY.** **FT-16 push-notify Edge Function branch:** `open_match` → `notif_challenges` pref + `/#schedule` deep-link + new `skip_in_app` flag (bypasses bell-row insertion when RPC has already inserted). **FT-16 client-side web push:** `sendPushNotification` signature extended with `opts.skip_in_app`; ScheduleView re-adds 3 push calls (create/lock/cancel) all with `skip_in_app:true`. **FT-16 LogMatch pre-fill:** `prefilledOpenMatch` + `onPrefilledHandled` props, useEffect pre-fills teams + date, insert includes `open_match_id` FK. **"Log Score" button** on locked `.omcard` visible only to participants. **App.jsx:** `prefilledOpenMatch` state + `handleLogOpenMatch` callback. **Login gap regression fix** (user screenshot mid-session): `.lhero` `flex:1` was leftover from splash sizing pushing auth form to bottom of viewport — moved `flex:1` to `.lscreen.splash .lhero` only. **SW v141 → v142.** **2 new validated patterns** (additive `skip_in_app` flag for migrating to RPC-inserted bell rows; CRLF line endings in /tmp break naive multi-line `.replace()`). **0 GitHub issues closed** — #71 ready to close after iPhone smoke test confirms end-to-end.
 
-### 🎯 S074 PRIORITY — finish FT-16 + FT-15 + smoke test
-1. **iPhone smoke test of S073 ship** — verify SW v139 cold-load green logo (AuthGate + LeagueGate + App.jsx splash + in-app header `.lm` + index.html static splash); login form fits without scroll; S3 column reads correctly in MatchHistory; open-match flow end-to-end (create open match → second account claims spot → 4th claim auto-shuffles teams → notification fires → log score from locked card).
-2. **FT-16 polish (S073 deferred)** — per `padelhub/planning/FT-16-open-match-voting.md` C4-C5:
-   - NotificationCenter `open_match` renderer with 3 kinds (new = green users icon / locked = gold lock icon / cancelled = red x-circle), CTA deep-links into ScheduleView Open section
-   - Push-notify Edge Function branch for `type='open_match'` (kind-aware title/body composition, reuses fan-out + rate-limit pattern)
-   - LogMatch pre-fill from locked open match — read `?openMatchId=...` query param OR state hand-off, fetch open_match row, pre-fill team_a/team_b selectors with locked players, disable team picker, on insert set `matches.open_match_id` FK (trigger flips status='completed' DB-side, already wired in S072)
-   - Deep-link routing matrix extension in NotificationCenter — `open_match.new` / `.locked` / `.cancelled` route to ScheduleView Open with flash highlight on relevant card
-3. **FT-15 main features (S073 deferred)** — per `padelhub/planning/FT-15-pairs-leaderboard.md` v2 commit sequencing C2-C4:
+### 🎯 S076 PRIORITY — smoke test S075 then close Issue #71
+1. **iPhone smoke test of S075 ship (SW v142)** — verify (a) login form no longer has gap below logo (b) FT-16 end-to-end: create open match → second account claims → 4th claim auto-shuffles teams → green-users notification fires → tap → ScheduleView green-flash on locked `.omcard` → tap "Log Score" button → LogMatch pre-filled with locked players + date → save → match appears in history with `open_match_id` FK + `open_matches.status='completed'`.
+2. **Close GitHub Issue #71** after smoke test passes.
+3. **Polish: disable LogMatch team picker when `prefilledOpenMatch` is set** — show "From open match" read-only badge with undo button. ~30 lines, single commit.
+4. **FT-15 main features (closes Issue #25)** — per `padelhub/planning/FT-15-pairs-leaderboard.md` v2 commit sequencing C2-C4:
+   - Pairs Roster admin UI in SeasonManagement (when `selectedSeason.format === 'pairs'`)
+   - LogMatch pair-aware picker (when format='pairs') — replaces 4-player picker with 2-pair picker
+   - New `PairsRanking.jsx` component (~250 lines, 7-col Premier-Padel broadcast spec)
+   - Branch routing in App.jsx Ranking on `selectedSeason.format`
+5. **PNG icon regen (#90 follow-up)** — export `/public/icons/icon.svg` → 192×192 + 512×512 PNGs + new `/og-image.png`.
+6. **Color sweep Note A from S069** — still awaiting user A1/A2/A3 decision.
+7. **Game Mode Phase 10 PR-D / PR-E** — SE/DE/RR active tournament views (needs state-based score input refactor first); BracketSVG color tokens.
+
+### S075 outcomes (this session — archived)
+- [x] Cross-PC git sync — /tmp/Padel-Battle pulled from `dc24ccd` → `c22b70c` (33 commits)
+- [x] Retrospective S074 session log written from `git show` on `b688201` + `c22b70c`
+- [x] S074 entries added to sessions/INDEX.md + tasks/todo.md + tasks/lessons.md (Lesson #103)
+- [x] push-notify Edge Function: `open_match` cases in `typeFilter` + `pushUrl`
+- [x] push-notify Edge Function: `skip_in_app` payload param
+- [x] push-notify deployed via Supabase MCP — v18 ACTIVE
+- [x] App.jsx `sendPushNotification(opts)` signature extension with backward-compat body_text slot fallback
+- [x] ScheduleView createOpenMatch — `sendPushNotification("open_match", "New open match", ...)` with skip_in_app:true
+- [x] ScheduleView joinOpenMatch on lock — `sendPushNotification("open_match", "Match locked in!", ...)` to 4 participants with skip_in_app:true
+- [x] ScheduleView cancelOpenMatch — `sendPushNotification("open_match", "Open match cancelled", ...)` with skip_in_app:true
+- [x] LogMatch `prefilledOpenMatch` + `onPrefilledHandled` props
+- [x] LogMatch useEffect pre-fills tA/tB/date from `team_a_player_ids`/`team_b_player_ids`/`scheduled_at`
+- [x] LogMatch matches insert payload includes `open_match_id`
+- [x] LogMatch clears openMatchId + calls onPrefilledHandled after save
+- [x] App.jsx `prefilledOpenMatch` state + `handleLogOpenMatch` callback
+- [x] ScheduleView `isParticipant` derived + "Log Score" button on locked `.omcard`
+- [x] index.css `.lhero` `flex:1` regression fix — moved to `.lscreen.splash .lhero` only
+- [x] SW v141 → v142
+- [x] npm run build — clean, no syntax errors
+- [x] Commit `9c72c17` pushed to origin/main
+- [x] Vercel deploy `dpl_2MUTDLtTriuAVnfWNJEJ1weQjV14` — READY, production
+- [ ] iPhone smoke test of S075 ship (deferred to user)
+- [ ] Close GitHub Issue #71 after smoke test (deferred to S076)
+
+---
+
+## ARCHIVED — earlier session pointer (S074)
+**Earlier session:** S074 (2026-05-10) — **2 push-direct commits (`b688201`, `c22b70c`), SW v139 → v140 → v141, 1 DB migration (`s074_open_match_rpcs_with_notifications`), 0 GitHub issues closed, session NOT closed before originating PC shut down — log reconstructed retrospectively at S075 cold start.** **FT-16 NotificationCenter renderer (`b688201`):** `TYPE_META.open_match` (users/green) + `ft09Variant()` kind switch (new/locked/cancelled → users-green/check-gold/close-danger) + `notificationTarget()` routes `open_match` to `tab=history, subTab=schedule, openMatchId` for ScheduleView deep-link. **DB migration `s074_open_match_rpcs_with_notifications`:** `create_open_match` / `join_open_match` (on lock) / `cancel_open_match` now fan out in-app bell notifications with `data: {kind, open_match_id, ...}`; client-side `sendPushNotification` calls dropped from ScheduleView per Lesson #54 (RPC is single source of truth). **Deep-link flash (`b688201`):** App.jsx new `scrollToOpenMatchId` state + handleNotifNavigate writes AFTER setTab, ScheduleView `useEffect` queries `.omcard[data-open-match-id]` + scrollIntoView + 1.6s `.om-flash` pulse (identical pattern to S070 `.nc-flash`). **RR grid icon (`c22b70c`):** `Icon.jsx` new `grid` case (4 rounded rects 7×7 at corners), GameMode RR card + FORMAT_RULES RR icon swapped `award` → `grid`. **No GitHub issues closed** — #71 (FT-16) still needs push-notify Edge Function + LogMatch pre-fill; #25 (FT-15) still needs Pairs Roster + LogMatch picker + PairsRanking.
+
+### 🎯 S075 PRIORITY — close FT-16 + ship FT-15 main features
+1. **FT-16 closeout (recommended next — closes Issue #71)** — per `padelhub/planning/FT-16-open-match-voting.md` remaining:
+   - **(a) Push-notify Edge Function branch** for `type='open_match'` — kind-aware title/body composition (new: "New open match — claim a spot" / locked: "Match locked — 4 players in" / cancelled: "Open match cancelled"), reuses fan-out + rate-limit pattern from existing branches. Reads from `notifications` table where `type='open_match'` (RPCs already insert there).
+   - **(b) LogMatch pre-fill from locked open match** — read `?openMatchId=...` query param OR state hand-off (NotificationCenter deep-link can route to LogMatch instead of ScheduleView for locked variant; or "Log Score" button on locked `.omcard` navigates with the param); fetch open_match row + open_match_players; pre-fill team_a/team_b selectors with locked players (uuid[]); disable team picker (display read-only); on insert set `matches.open_match_id` FK (existing trigger flips `open_matches.status='completed'` DB-side per S072 wiring).
+2. **FT-15 main features (closes Issue #25)** — per `padelhub/planning/FT-15-pairs-leaderboard.md` v2 commit sequencing C2-C4:
    - Pairs Roster admin UI in SeasonManagement (when `selectedSeason.format === 'pairs'`) — list pairs with avatar+name pattern from match-history cards, Add Pair modal with two-player dropdown filtered to season roster, edit/delete actions (delete refused if pair has matches — DB enforces)
    - LogMatch pair-aware picker (when format='pairs') — replaces 4-player picker with 2-pair picker; resolve pair → underlying team_a/team_b uuid[] before insert
    - New `PairsRanking.jsx` component (~250 lines, 7-col Premier-Padel broadcast spec) — # / Pair / MP / MW / ML / CW / EFF%, no ELO column, country flags below player names within pair cell, podium mirrors normal league podium with 2 small avatars side-by-side per slot, "Player A / Player B" name format
    - Branch routing in App.jsx Ranking — when `selectedSeason.format === 'pairs'` render `<PairsRanking>` instead of individual leaderboard
-4. **PNG icon regen (#90 follow-up)** — export `/public/icons/icon.svg` → 192×192 + 512×512 PNGs + new `/og-image.png` so older browsers + WhatsApp share preview match new green orb design. Requires image-export tool not available in S073.
+3. **iPhone smoke test of S073 + S074 ship** — verify SW v141 cold-load green logo, open-match flow end-to-end (create → claim → 4th claim auto-shuffles → notification with green users icon → tap → deep-link to ScheduleView + green flash on locked card → log score), RR grid icon in Game Mode Casual tab + FORMAT_RULES.
+4. **PNG icon regen (#90 follow-up)** — export `/public/icons/icon.svg` → 192×192 + 512×512 PNGs + new `/og-image.png` so older browsers + WhatsApp share preview match new green orb design. Requires image-export tool not available in S073/S074.
 5. **Color sweep Note A from S069** — still awaiting user A1/A2/A3 decision.
 6. **Game Mode Phase 10 PR-D / PR-E** — SE/DE/RR active tournament views (needs state-based score input refactor first); BracketSVG color tokens.
 
-### S073 outcomes (this session — archived)
+### S074 outcomes (this session — archived)
+- [x] FT-16 NotificationCenter `TYPE_META.open_match` + `ft09Variant()` kind switch (new/locked/cancelled)
+- [x] FT-16 `notificationTarget()` routing matrix extended for `open_match` → tab=history, subTab=schedule, openMatchId
+- [x] DB migration `s074_open_match_rpcs_with_notifications` — RPCs now fan out in-app bell notifications
+- [x] Client-side `sendPushNotification` calls dropped from ScheduleView createOpenMatch/joinOpenMatch/cancelOpenMatch (Lesson #54)
+- [x] App.jsx `scrollToOpenMatchId` state + `handleNotifNavigate` extension
+- [x] ScheduleView `useEffect` scroll-flash on `.omcard[data-open-match-id]` + `onOpenMatchScrolled` callback
+- [x] `data-open-match-id` attr added to `.omcard` JSX
+- [x] `index.css` `@keyframes om-flash-pulse` + `.om-flash` class (3-stop accent-green box-shadow ring)
+- [x] SW v139 → v140
+- [x] RR icon swapped `award` → `grid` in GameMode card + FORMAT_RULES
+- [x] `Icon.jsx` new `grid` case (4 rounded rects)
+- [x] SW v140 → v141
+- [x] Pushed to origin/main as commits `b688201` + `c22b70c`
+- [ ] **Session was NOT closed before originating PC shut down** — log reconstructed at S075 cold start (Lesson #103)
+- [ ] FT-16 push-notify Edge Function branch (deferred to S075)
+- [ ] FT-16 LogMatch pre-fill from locked open match (deferred to S075)
+- [ ] iPhone smoke test pending (deferred to user)
+
+---
+
+## ARCHIVED — earlier session pointer (S073)
+**Earlier session:** S073 (2026-05-10) — **1 push-direct commit `0be427e`, SW v138 → v139, 1 DB migration, 2 GitHub issues closed (#90 logo+login, #91 S/TB→S3), Vercel READY.** Logo color reverted gold→green per brand (Issue #90 part 2) — same 3D orb + 6-satellite + pulsating + orbit design preserved, gradients `#d1fae5 → #4ade80 → #14532d`. Login page fits one viewport (Issue #90 part 1) — `.lhero` 30vh→`clamp(28px,6vh,56px)` with `.lscreen.splash` opt-in for splash usages, AuthGate logo 140→96. PWA icon consistency (Issue #90 part 3) — new `/public/icons/icon.svg` single-source-of-truth wired into manifest + apple-touch-icon. **FT-16 frontend MVP** — open_matches loaded into App.jsx context, ScheduleView Open Matches section + claim/leave/cancel actions + Schedule form Private/Open toggle wired to `create_open_match`/`join_open_match`/`leave_open_match`/`cancel_open_match` RPCs. **FT-15 frontend MVP** — `create_season` RPC extended with `p_format` param, SeasonManagement create form has Individual/Pairs toggle. **Issue #91 fix** — MatchHistory.jsx:183 column header S/TB → S3.
+
+### S073 outcomes (archived)
 - [x] Logo color reverted gold → green across icons.jsx + index.css + index.html static splash
 - [x] Highlight ellipses cream `#fef9c3` → mint `#ecfdf5` for green tonal harmony
 - [x] Wordmark "Hub" in static splash gold → green
