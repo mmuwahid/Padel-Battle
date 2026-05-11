@@ -150,18 +150,13 @@ export function LeagueGate({ user, children }) {
   }, [loadUserLeagues, loadJoinRequest, resolveSelectedLeague]);
 
   // S068: poll join_request every 8s while on the Pending screen so the user sees
-  // the approval transition without manually refreshing. Realtime channel would be
-  // ideal but RLS-filtered subscriptions are heavier; polling is cheap here.
+  // the approval transition without manually refreshing.
   useEffect(() => {
     if (leagues.length > 0) return;
     if (!joinRequest || joinRequest.status !== "pending") return;
     const t = setInterval(async () => {
       const j = await loadJoinRequest();
       if (j && j.status === "approved") {
-        // S068 fix: after approval, refresh leagues AND auto-select the
-        // newly-joined league. Without resolveSelectedLeague the user
-        // landed in AppContent's 0-leagueId empty-state ("You're not in a
-        // league yet") even though leagues.length had become 1.
         const updated = await loadUserLeagues();
         if (updated && updated.length > 0) {
           setSelectedLeagueId(updated[0].id);
@@ -170,6 +165,38 @@ export function LeagueGate({ user, children }) {
     }, 8000);
     return () => clearInterval(t);
   }, [leagues.length, joinRequest, loadJoinRequest, loadUserLeagues, setSelectedLeagueId]);
+
+  // S077 r8 safety net: when the user lands on the 0-leagues branch but has no
+  // pending join_request, auto-retry loadUserLeagues every 3s for up to 30s.
+  // Catches the createLeague trigger-commit race (and any stale-session race
+  // where the user actually does have memberships but the first fetch returned
+  // empty). Also retries on tab focus / visibilitychange so resuming from the
+  // home screen triggers a fresh check.
+  useEffect(() => {
+    if (loading) return;
+    if (leagues.length > 0) return;
+    if (joinRequest && joinRequest.status === "pending") return;
+    let tries = 0;
+    const tick = async () => {
+      tries++;
+      const updated = await loadUserLeagues();
+      if (updated && updated.length > 0) {
+        setSelectedLeagueId(updated[0].id);
+        return true;
+      }
+      return false;
+    };
+    const interval = setInterval(async () => {
+      const ok = await tick();
+      if (ok || tries >= 10) clearInterval(interval);
+    }, 3000);
+    const onVisible = () => { if (document.visibilityState === "visible") tick(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [loading, leagues.length, joinRequest, loadUserLeagues, setSelectedLeagueId]);
 
   // ── Handlers exposed to children ──
   const tryAutoJoin = async (code, currentLeagues) => {
