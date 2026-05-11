@@ -85,7 +85,6 @@ export function RulesView({ setSidebarView, goBack }) {
       )}
       <div className="rtbey">Reference</div>
       <div className="rtbh1">Rules</div>
-      <div className="rtbsub">Tap a card to expand details</div>
 
       <div className="rtsrchw">
         <div className="rtsrchi"><Icon name="search" size={16} color="var(--muted)" /></div>

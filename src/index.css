@@ -1615,10 +1615,10 @@ body {
 /* ─── S066 Phase 12 PR 3: Rules — spec class names + collapse + press state ─── */
 
 /* Header block (.rtb / .rtbey / .rtbh1 / .rtbsub) — replaces .rules-h family */
-.rtb{padding:18px 18px 4px;}
-.rtbey{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:6px;}
-.rtbh1{font-family:var(--font);font-size:24px;font-weight:800;letter-spacing:-.01em;color:var(--text);margin-bottom:4px;}
-.rtbsub{font-family:var(--mono);font-size:11px;color:#9090a4;line-height:1.5;}
+.rtb{padding:18px 0 4px;}
+.rtbey{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:6px;padding:0 18px;}
+.rtbh1{font-family:var(--font);font-size:24px;font-weight:800;letter-spacing:-.01em;color:var(--text);margin-bottom:4px;padding:0 18px;}
+.rtbsub{font-family:var(--mono);font-size:11px;color:#9090a4;line-height:1.5;padding:0 18px;}
 .rtbey.gold{color:var(--gold);}
 
 /* Search bar */
