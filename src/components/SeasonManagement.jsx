@@ -13,7 +13,7 @@ import { useLeague } from "../LeagueContext";
 // User decision S067 Q6=A: keep S055 full-screen Season Detail pattern for
 // edit (rich roster toggle UX doesn't fit a sheet). List + Create restyled.
 export function SeasonManagement({ setSidebarView, goBack }) {
-  const { supabase, leagueId, players, seasons, showToast, loadLeagueData, isOwner } = useLeague();
+  const { supabase, leagueId, players, seasons, pairs, showToast, loadLeagueData, isOwner } = useLeague();
 
   const [rosters, setRosters] = useState({});
   const [loading, setLoading] = useState(true);
@@ -38,6 +38,16 @@ export function SeasonManagement({ setSidebarView, goBack }) {
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  // S076 FT-15: pair management state
+  const [showCreatePair, setShowCreatePair] = useState(false);
+  const [newPairA, setNewPairA] = useState("");
+  const [newPairB, setNewPairB] = useState("");
+  const [newPairName, setNewPairName] = useState("");
+  const [pairBusy, setPairBusy] = useState(false);
+  const [editingPairId, setEditingPairId] = useState(null);
+  const [editPairName, setEditPairName] = useState("");
+  const [confirmDeletePair, setConfirmDeletePair] = useState(null);
 
   const sortedSeasons = [...(seasons || [])].sort((a, b) => {
     if (a.active !== b.active) return a.active ? -1 : 1;
@@ -185,6 +195,70 @@ export function SeasonManagement({ setSidebarView, goBack }) {
     setDeleting(false);
   };
 
+  // S076 FT-15: pair management handlers ------------------------------------
+  const seasonPairs = (pairs || []).filter(pr => pr.season_id === openSeasonId);
+  const openCreatePair = () => {
+    setNewPairA(""); setNewPairB(""); setNewPairName(""); setShowCreatePair(true);
+  };
+  const handleCreatePair = async () => {
+    if (!openSeasonId) return;
+    if (!newPairA || !newPairB || newPairA === newPairB) {
+      showToast("Pick two different players", "error"); return;
+    }
+    setPairBusy(true);
+    try {
+      const { error } = await supabase.rpc("create_pair", {
+        p_season_id: openSeasonId,
+        p_player_a: newPairA,
+        p_player_b: newPairB,
+        p_name: newPairName.trim() || null,
+        p_color: null,
+      });
+      if (error) throw error;
+      showToast("Pair created");
+      setShowCreatePair(false);
+      await loadLeagueData();
+    } catch (err) {
+      showToast(err.message || "Failed to create pair", "error");
+    }
+    setPairBusy(false);
+  };
+  const handleEditPair = (pr) => {
+    setEditingPairId(pr.id);
+    setEditPairName(pr.name || "");
+  };
+  const handleSavePairName = async () => {
+    if (!editingPairId) return;
+    setPairBusy(true);
+    try {
+      const { error } = await supabase.rpc("update_pair", {
+        p_pair_id: editingPairId,
+        p_name: editPairName.trim() || null,
+        p_color: null,
+      });
+      if (error) throw error;
+      showToast("Pair updated");
+      setEditingPairId(null);
+      await loadLeagueData();
+    } catch (err) {
+      showToast(err.message || "Failed to update pair", "error");
+    }
+    setPairBusy(false);
+  };
+  const handleDeletePair = async (pairId) => {
+    setPairBusy(true);
+    try {
+      const { error } = await supabase.rpc("delete_pair", { p_pair_id: pairId });
+      if (error) throw error;
+      showToast("Pair deleted");
+      setConfirmDeletePair(null);
+      await loadLeagueData();
+    } catch (err) {
+      showToast(err.message || "Failed to delete pair", "error");
+    }
+    setPairBusy(false);
+  };
+
   const fmtDate = (d) => {
     if (!d) return "—";
     const dt = new Date(d);
@@ -259,6 +333,64 @@ export function SeasonManagement({ setSidebarView, goBack }) {
             </div>
           </div>
 
+          {openSeason.format === "pairs" && (
+            <div className="sm-roster sm-pairs">
+              <div className="sm-roster-h">
+                <div className="slbl">Pairs Roster</div>
+                <span className="sm-roster-ct">{seasonPairs.length} pair{seasonPairs.length === 1 ? "" : "s"}</span>
+              </div>
+              <button className="pbtn pbtn-block" onClick={openCreatePair} disabled={openRoster.size < 2}>
+                <Icon name="plus" size={16} strokeWidth={2.5} />Add Pair
+              </button>
+              {seasonPairs.length === 0 && (
+                <div className="sm-empty">No pairs yet. Add pairs above before logging matches.</div>
+              )}
+              {seasonPairs.map(pr => {
+                const pA = (players || []).find(pl => pl.id === pr.player_a_id);
+                const pB = (players || []).find(pl => pl.id === pr.player_b_id);
+                const nameFallback = `${pA?.name || "?"} / ${pB?.name || "?"}`;
+                const isEditing = editingPairId === pr.id;
+                const isConfirmDel = confirmDeletePair === pr.id;
+                return (
+                  <div key={pr.id} className="sm-paircard">
+                    <div className="sm-paircard-main">
+                      <div className="sm-pairavi">{(pA?.name || "?").charAt(0).toUpperCase()}</div>
+                      <div className="sm-pairavi">{(pB?.name || "?").charAt(0).toUpperCase()}</div>
+                      <div className="sm-pairnames">
+                        {isEditing ? (
+                          <input className="shi" type="text" value={editPairName} onChange={(e) => setEditPairName(e.target.value)} placeholder={nameFallback} autoFocus />
+                        ) : (
+                          <>
+                            <div className="sm-pairnames-line1">{pr.name || nameFallback}</div>
+                            {pr.name && <div className="sm-pairnames-line2">{nameFallback}</div>}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <div className="sm-paircard-acts">
+                      {isEditing ? (
+                        <>
+                          <button className="gbtn" onClick={handleSavePairName} disabled={pairBusy}><Icon name="check" size={12} />Save</button>
+                          <button className="gbtn ghost" onClick={() => setEditingPairId(null)}>Cancel</button>
+                        </>
+                      ) : isConfirmDel ? (
+                        <>
+                          <button className="dbtn" onClick={() => handleDeletePair(pr.id)} disabled={pairBusy}>{pairBusy ? "..." : "Delete"}</button>
+                          <button className="gbtn ghost" onClick={() => setConfirmDeletePair(null)}>No</button>
+                        </>
+                      ) : (
+                        <>
+                          <button className="gbtn" onClick={() => handleEditPair(pr)}><Icon name="edit" size={12} />Rename</button>
+                          <button className="dbtn" onClick={() => setConfirmDeletePair(pr.id)}><Icon name="trash" size={12} />Delete</button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
           {openSeason.active ? (
             confirmEnd ? (
               <div className="sm-confirmrow danger">
@@ -291,6 +423,50 @@ export function SeasonManagement({ setSidebarView, goBack }) {
             )
           )}
         </div>
+
+        {showCreatePair && (
+          <div className="overlay" onClick={() => !pairBusy && setShowCreatePair(false)}>
+            <div className="bsheet" onClick={(e) => e.stopPropagation()}>
+              <div className="shdl" />
+              <div className="shhdr">
+                <div className="shtitle">Add Pair</div>
+                <button className="shclose" onClick={() => setShowCreatePair(false)}><Icon name="close" size={14} /></button>
+              </div>
+              <div className="shbody">
+                <div className="shf">
+                  <div className="shlbl"><Icon name="hash" size={12} color="var(--muted)" />Player A</div>
+                  <select className="shsel" value={newPairA} onChange={(e) => setNewPairA(e.target.value)}>
+                    <option value="">— Pick player —</option>
+                    {(players || []).filter(pl => openRoster.has(pl.id) && pl.id !== newPairB).map(pl => (
+                      <option key={pl.id} value={pl.id}>{pl.name}{pl.nickname ? ` (${pl.nickname})` : ""}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="shf">
+                  <div className="shlbl"><Icon name="hash" size={12} color="var(--muted)" />Player B</div>
+                  <select className="shsel" value={newPairB} onChange={(e) => setNewPairB(e.target.value)}>
+                    <option value="">— Pick player —</option>
+                    {(players || []).filter(pl => openRoster.has(pl.id) && pl.id !== newPairA).map(pl => (
+                      <option key={pl.id} value={pl.id}>{pl.name}{pl.nickname ? ` (${pl.nickname})` : ""}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="shf">
+                  <div className="shlbl"><Icon name="trophy" size={12} color="var(--muted)" />Pair Name (optional)</div>
+                  <input className="shi" type="text" value={newPairName} onChange={(e) => setNewPairName(e.target.value)} placeholder='e.g. "Thunder"' />
+                </div>
+                <div className="inote">
+                  <Icon name="info" size={14} color="rgba(74,222,128,.85)" />
+                  <div className="inotet">Both players must be in this season's roster. Pair ELO starts at 1500.</div>
+                </div>
+              </div>
+              <div className="shact">
+                <button className="shcancel" onClick={() => setShowCreatePair(false)} disabled={pairBusy}>Cancel</button>
+                <button className="shsubmit" onClick={handleCreatePair} disabled={pairBusy || !newPairA || !newPairB || newPairA === newPairB}>{pairBusy ? "..." : "Create Pair"}</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }

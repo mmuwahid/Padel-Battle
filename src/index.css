@@ -1775,6 +1775,16 @@ body {
 .sm-rost-n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .sm-rost-s{font-family:var(--mono);font-size:10px;color:var(--muted);font-weight:700;display:inline-flex;align-items:center;gap:4px;}
 .sm-rost.on .sm-rost-s{color:var(--accent);}
+/* S076 FT-15: Pairs Roster admin cards */
+.sm-pairs{margin-top:20px;}
+.sm-paircard{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;}
+.sm-paircard-main{display:flex;align-items:center;gap:8px;flex:1;min-width:0;}
+.sm-pairavi{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#22c55e);color:#000;display:inline-flex;align-items:center;justify-content:center;font-family:var(--font);font-weight:800;font-size:13px;flex-shrink:0;}
+.sm-pairavi+.sm-pairavi{margin-left:-12px;border:2px solid var(--surface-2);}
+.sm-pairnames{flex:1;min-width:0;margin-left:6px;}
+.sm-pairnames-line1{font-family:var(--font);font-weight:700;font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sm-pairnames-line2{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sm-paircard-acts{display:flex;gap:6px;flex-shrink:0;}
 .sm-bigaction{width:100%;padding:13px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family: var(--font);display:inline-flex;align-items:center;justify-content:center;gap:6px;}
 .sm-bigaction.danger{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.4);color:var(--loss);}
 .sm-bigaction.danger.ghost{background:transparent;}

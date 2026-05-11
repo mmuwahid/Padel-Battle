@@ -79,6 +79,8 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
   // S073 FT-16: open-match voting (open/locked/completed/cancelled lifecycle).
   const [openMatches,setOpenMatches]=useState([]);
   const [openMatchPlayers,setOpenMatchPlayers]=useState([]);
+  // S076 FT-15: pairs roster (registered pair entities for pairs-format seasons)
+  const [pairs,setPairs]=useState([]);
   const [matchSubTab,setMatchSubTab]=useState(()=>{const h=window.location.hash.replace("#","");return h==="schedule"?"schedule":"history";}); // history | schedule
   const [claimedPlayer,setClaimedPlayer]=useState(undefined); // undefined=loading, null=unclaimed, object=claimed
   // Sidebar and view management
@@ -366,7 +368,8 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
         {data:seasonsData,error:seasonsErr},
         {data:challengesData},
         {data:openMatchesData},
-        {data:openMatchPlayersData}
+        {data:openMatchPlayersData},
+        {data:pairsData}
       ] = await Promise.all([
         supabase.from("leagues").select("id,name,invite_code,created_by").eq("id",leagueId).single(),
         supabase.from("league_members").select("id,role").eq("league_id",leagueId).eq("user_id",user.id).single(),
@@ -376,7 +379,8 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
         supabase.from("seasons").select("id,name,active,start_date,end_date,location,format").eq("league_id",leagueId).order("start_date"),
         supabase.from("challenges").select("id,team_a,team_b,status,date,time,location,notes,created_by,match_id,responses,duration,league_id").eq("league_id",leagueId).in("status",["open","pending","confirmed","played"]).order("date",{ascending:true}),
         supabase.from("open_matches").select("id,league_id,season_id,organizer_id,scheduled_at,duration_minutes,court,notes,status,team_a_player_ids,team_b_player_ids,locked_at,created_at").eq("league_id",leagueId).in("status",["open","locked"]).order("scheduled_at",{ascending:true}),
-        supabase.from("open_match_players").select("id,open_match_id,player_id,joined_at")
+        supabase.from("open_match_players").select("id,open_match_id,player_id,joined_at"),
+        supabase.from("pairs").select("id,season_id,league_id,player_a_id,player_b_id,name,color,elo,created_at").eq("league_id",leagueId)
       ]);
 
       if (leagueErr) throw leagueErr;
@@ -412,6 +416,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
       const omIds = new Set((openMatchesData||[]).map(o=>o.id));
       setOpenMatches(openMatchesData||[]);
       setOpenMatchPlayers((openMatchPlayersData||[]).filter(p=>omIds.has(p.open_match_id)));
+      setPairs(pairsData||[]);
       // Auto-cancel stale open matches whose scheduled time has passed
       supabase.rpc("expire_stale_open_matches",{p_league_id:leagueId}).then(()=>{});
 
@@ -430,7 +435,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
       firstLoadRef.current = false;
     } catch (_err) {
       // S026: Clear state on error so user sees empty state, not stale data
-      setLeague(null); setPlayers([]); setMatches([]); setSeasons([]); setChallenges([]); setOpenMatches([]); setOpenMatchPlayers([]);
+      setLeague(null); setPlayers([]); setMatches([]); setSeasons([]); setChallenges([]); setOpenMatches([]); setOpenMatchPlayers([]); setPairs([]);
       setLoading(false);
       showToast("Failed to load data — tap refresh to retry", "error");
     }
@@ -960,7 +965,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
     supabase, user, leagueId, league, players, matches, approvedMatches, pendingMatches, incompleteMatches,
     elo, seasons, selectedSeason, setSelectedSeason, isAdmin, isOwner, myMemberId, leagueMembers, memberProfiles,
     getName, showToast, sendPushNotification, loadLeagueData,
-    openMatches, openMatchPlayers, claimedPlayer,
+    openMatches, openMatchPlayers, pairs, claimedPlayer,
   };
 
   return (
