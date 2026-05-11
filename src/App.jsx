@@ -1252,7 +1252,9 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
           {/* Empty state */}
           {seasonLb.length===0&&(
             <div style={{textAlign:"center",padding:"40px 20px",background:CD,borderRadius:12,border:`1px solid ${BD}`}}>
-              <div style={{fontSize:40,marginBottom:12}}>🎾</div>
+              <div style={{marginBottom:12,display:"flex",justifyContent:"center"}}>
+                <Icon name="trophy" size={56} color="var(--muted)" strokeWidth={1.5}/>
+              </div>
               <div style={{fontSize:15,fontWeight:600,color:TX,marginBottom:6}}>No rankings yet</div>
               <div style={{fontSize:12,color:MT,lineHeight:1.5}}>Play your first match to appear in the ranking.</div>
             </div>
