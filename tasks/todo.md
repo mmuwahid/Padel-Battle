@@ -1,21 +1,53 @@
 # Active Work
 
-## NEXT SESSION (S077) — START HERE
-**Last session:** S076 (2026-05-11) — **3 push-direct commits (`3dde01f` C2, `ecf33a9` C3, `fb21d37` C4), SW v142 → v143 → v144 → v145, ~585 net LOC across 11 file changes, 0 GitHub issues closed (#25 ready to close after iPhone smoke test).** Single-session ship of all 3 frontend commits from FT-15 v2 plan (plan estimated 2 sessions). **C2:** Pairs Roster admin UI in SeasonManagement + pairs state load in App.jsx + RPC wiring. **C3:** LogMatch pair-aware picker (2 dropdowns when format=pairs, shuffle hidden, edit-match reverse-resolves registered pair). **C4:** New `PairsRanking.jsx` (~200 LOC, 7-col Premier-Padel broadcast spec, podium with paired avatars, no ELO column visible) + App.jsx Ranking branch on format + PAIRS gold pill in `.lbbar`. **1 new mistake (#104) + 3 patterns** captured. FT-15 main features feature-complete. Both Issue #71 (FT-16) and Issue #25 (FT-15) ready to close after iPhone smoke test.
+## NEXT SESSION (S078) — START HERE
+**Last session:** S077 (2026-05-11) — **~22 push-direct commits, SW v145 → v162, 16 named DB migrations, 2 GitHub issues closed (#71 FT-16, #25 FT-15), 1 new issue opened (#92 pairs season stats isolation), ~8h mega-session across 16 ship rounds.** Permission audit + reconciliation locked the 3-role model (owner / league admin / member). League Management restructured into single home with parent/detail pattern. Atomic create_league + delete_league + delete_season RPCs eliminate multi-step write races. Pending Review unlock root-caused and fixed via auto-player creation + backfill. Visual sweeps: logo PadelLogoSmall→PadelHubMarkHeader across 4 auth screens, all emoji→SVG (trophy/tennis-ball/bar-chart/star/users/flame/crown), avatars use player.avatar_url across PairsRanking + PlatformAdmin. Login fits notched iPhones via 100dvh + safe-area subtraction. Scroll-to-top on submenu nav. Danger Zone delete pattern adopted for leagues + seasons (hard delete with matches allowed for owner/platform-admin). All r16 tests confirmed PASS by user. Final commit `95b39b7` live on SW v162.
 
-### 🎯 S077 PRIORITY — smoke test S075 + S076 then close #71 + #25
-1. **iPhone smoke test of S076 ship (SW v145)** — verify (a) Pairs Roster admin in SeasonManagement when format=pairs: add/rename/delete pair flow, Add Pair button gated on 2+ roster (b) LogMatch pair-aware picker renders when current season is pairs, shuffle button hidden, pair selection sets tA/tB correctly, edit-match pre-selects registered pair (c) PairsRanking podium + table render with correct pair-ELO sort, EFF% computed correctly (d) PAIRS gold pill visible in Leaderboard title bar (e) individual-format seasons still render normal leaderboard.
-2. **Close GitHub Issue #71 (FT-16) + Issue #25 (FT-15)** after smoke test passes — both have shipped DB + frontend end-to-end.
-3. **FT-15 polish:**
-   - form strip (last-5 W/L dots per pair) on each table row
-   - Awards section (Most Active by pair, MOTM by player — Q9 keeps MOTM per-player)
-   - per-pair drill-in screen via existing `onPairDrillIn` prop hook (mirror PlayerStats for pairs)
-4. **LogMatch: read-only picker when `prefilledOpenMatch` is set** — leftover polish from S075. Show "From open match" badge + undo button.
-5. **PNG icon regen (#90 follow-up)** — export `/public/icons/icon.svg` → 192×192 + 512×512 PNGs + new `/og-image.png`.
-6. **Color sweep Note A from S069** — still awaiting user A1/A2/A3 decision.
-7. **Game Mode Phase 10 PR-D / PR-E** — SE/DE/RR active tournament views + BracketSVG color tokens.
+### 🎯 S078 PRIORITY — pairs season stats isolation (Issue #92)
+1. **Issue #92 — pairs season stats should not feed individual leaderboard/analytics.** Right now pair-format season matches are recomputing per-player stats (winRate, MP, MW, ML, MOTM rankings) and feeding into the individual leaderboard. Needs:
+   - Filter PlayerStats analytics queries by `season.format` — exclude pairs seasons from individual stat aggregations
+   - Add a Pairs sub-tab to the Players screen that shows per-pair stats (mirror PlayerStats layout but with pair grouping)
+   - Verify pair-ELO trigger only fires for `format='pairs'` matches (was wired in S072 — re-verify after this session's RPC churn)
+   - Ensure ranking screen for an individual-format season doesn't include matches from pair-format seasons
+2. **PNG icon regen** (#90 follow-up) — already shipped in S077 r5 (icon.svg + scripts/generate-pwa-icons.js) — verify WhatsApp/iMessage preview shows new green orb (cache-buster `?v=146`).
+3. **Color sweep Note A from S069** — still awaiting user A1/A2/A3 decision (`#9090a4` vs spec `#555555` vs redefine `--muted`).
+4. **Game Mode Phase 10 PR-D / PR-E** — SE/DE/RR active tournament views (needs state-based score input refactor first) + BracketSVG color tokens.
+5. **FT-15 polish (deferred from S076):**
+   - form strip (last-5 W/L dots per pair) on each pairs leaderboard row
+   - Awards section in pairs ranking (Most Active by pair, MOTM by player — keeps MOTM per-player)
+   - per-pair drill-in screen via existing `onPairDrillIn` prop hook
+6. **LogMatch read-only picker when `prefilledOpenMatch` is set** — show "From open match" badge + undo button. ~30 lines.
 
-### S076 outcomes (this session — archived)
+### S077 outcomes (this session — archived)
+- [x] Cross-PC cold start + retrospective S074 session log (was missing)
+- [x] S075 closed (FT-16 push-notify Edge Function + LogMatch pre-fill + login gap fix)
+- [x] S076 closed (FT-15 main features — Pairs Roster, LogMatch pair picker, PairsRanking, 3 commits in 1 session)
+- [x] S077 r1: post-S076 smoke-test bundle — pairs leaderboard polish, header rename, color coding, podium threshold, Season Awards SVG sweep
+- [x] S077 r2: login layout no-scroll on notched iPhones (100dvh, safe-area-inset subtraction)
+- [x] S077 r3: admin Season Management visibility + login height calc fix
+- [x] S077 r4: per-season admin layer attempt (DB + UI)
+- [x] S077 r5: tightened to owner-only + season-admin model + new SeasonAdminsManagement screen + avatars use player.avatar_url
+- [x] S077 r6: permission audit lockdown — pair RPCs to season-admin gate, cancel_open_match too, createLeague timing race fix, Create League nav in LM
+- [x] S077 r7: COLLAPSED back to owner+admin only — dropped per-season role, simplified DB + frontend, dormant tables left
+- [x] S077 r8: closed remaining matrix gaps (players_insert RLS, matches_update_self_pending RLS)
+- [x] S077 r9: atomic create_league RPC + Season Management fast-load (season_players in Promise.all) + LeaguesView cleanup
+- [x] S077 r10: League Management as the single home — full parent/detail restructure
+- [x] S077 r11: card click + back-button history fix + stale-while-revalidate loadUserLeagues
+- [x] S077 r12: tennis ball emoji → trophy SVG in empty leaderboard state
+- [x] S077 r13: PENDING REVIEW UNLOCK (root cause + backfill) + LM card subtitles + back-button persistence via lifted detailLeagueId + logo sweep + emoji sweep
+- [x] S077 r14: Platform Admin user avatars + scroll-to-top on sidebarView change
+- [x] S077 r15: emoji sweep round 2 (MatchHistory tennis ball, PlayerStats stars, CombosView users/flame) + season delete typed-confirm + LM card cleanup (drop Rename, icon-only Delete) + dashboard Joined→Playing
+- [x] S077 r16: Delete League moved to Danger Zone in detail view + atomic delete_league RPC + hard-delete-with-matches + season delete simplified (non-blocking) + Platform Admin league rows cleanup
+- [x] GitHub issues #71 + #25 closed via gh CLI
+- [x] User confirmed PASS on all sections (D Pairs leaderboard + E Season Awards + G regression sweep + r16 fixes)
+- [ ] Issue #92 — pairs season stats isolation (NEW, opened S077 — defer to S078)
+
+---
+
+## ARCHIVED — earlier session pointer (S076)
+**Earlier session:** S076 (2026-05-11) — **3 push-direct commits (`3dde01f` C2, `ecf33a9` C3, `fb21d37` C4), SW v142 → v143 → v144 → v145, ~585 net LOC across 11 file changes, 0 GitHub issues closed (#25 ready to close after iPhone smoke test).** Single-session ship of all 3 frontend commits from FT-15 v2 plan (plan estimated 2 sessions). **C2:** Pairs Roster admin UI in SeasonManagement + pairs state load in App.jsx + RPC wiring. **C3:** LogMatch pair-aware picker (2 dropdowns when format=pairs, shuffle hidden, edit-match reverse-resolves registered pair). **C4:** New `PairsRanking.jsx` (~200 LOC, 7-col Premier-Padel broadcast spec, podium with paired avatars, no ELO column visible) + App.jsx Ranking branch on format + PAIRS gold pill in `.lbbar`. **1 new mistake (#104) + 3 patterns** captured. FT-15 main features feature-complete. Both Issue #71 (FT-16) and Issue #25 (FT-15) ready to close after iPhone smoke test.
+
+### S076 outcomes (archived)
 - [x] C2: App.jsx loads pairs in loadLeagueData Promise.all
 - [x] C2: pairs state + LeagueContext exposure + reset on league switch
 - [x] C2: SeasonManagement pulls pairs from useLeague() context
