@@ -1092,7 +1092,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
             <SettingsView user={user} claimedPlayer={claimedPlayer} isAdmin={isAdmin} pushSubscribed={pushSubscribed} subscribeToPush={subscribeToPush} unsubscribeFromPush={unsubscribeFromPush} notifNewMatch={notifNewMatch} notifRankingChange={notifRankingChange} notifNewMembers={notifNewMembers} notifChallenges={notifChallenges} toggleNotification={toggleNotification} onSwitchLeague={onSwitchLeague} setSidebarView={setSidebarView} navigateSidebar={navigateSidebar} goBack={goBackSidebar} showToast={showToast} loadLeagueData={loadLeagueData} testPushNotification={testPushNotification}/>
           )}
           {sidebarView==="platform" && (
-            <PlatformAdmin onClose={goBackSidebar} showToast={showToast}/>
+            <PlatformAdmin onClose={goBackSidebar} showToast={showToast} onOpenLeague={(id)=>{ if(leagueHandlers?.switchLeague) leagueHandlers.switchLeague(id); setLmDetailLeagueId(id); navigateSidebar("leagueManagement"); }}/>
           )}
           {sidebarView==="notifications" && (
             <NotificationCenter

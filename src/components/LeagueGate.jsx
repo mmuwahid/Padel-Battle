@@ -288,13 +288,18 @@ export function LeagueGate({ user, children }) {
   }, [loadUserLeagues]);
 
   const deleteLeague = useCallback(async (leagueId) => {
-    const { error } = await supabase.from("leagues").delete().eq("id", leagueId);
+    // S077 r16: atomic delete_league RPC (owner OR platform-admin).
+    // Hard-deletes the league + all children (matches, seasons, players, etc)
+    // via FK ON DELETE CASCADE inside a single transaction.
+    const { error } = await supabase.rpc("delete_league", { p_league_id: leagueId });
     if (error) throw error;
     if (selectedLeagueId === leagueId) {
       const remaining = await loadUserLeagues();
       setSelectedLeagueId(remaining[0]?.id || null);
     } else {
-      await loadUserLeagues();
+      // Fire-and-forget the membership refresh so the caller doesn't block
+      // on the network round-trip.
+      loadUserLeagues();
     }
   }, [selectedLeagueId, loadUserLeagues, setSelectedLeagueId]);
 

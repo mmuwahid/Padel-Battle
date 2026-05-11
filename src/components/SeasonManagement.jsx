@@ -172,21 +172,18 @@ export function SeasonManagement({ setSidebarView, goBack }) {
       return;
     }
     setDeleting(true);
-    // S077 r15: one retry-with-backoff so a transient "Load failed" /
-    // network race on the first attempt doesn't surface to the user.
-    const attempt = async () => supabase.rpc("delete_season", { p_season_id: seasonId });
+    // S077 r16: dropped the retry-with-backoff that was masking the underlying
+    // slowness (each retry added ~30s when the RPC was hanging). delete_season
+    // RPC is now atomic + no-matches-guard-free — one call, return on commit.
+    // loadLeagueData runs in background so UI unblocks immediately.
     try {
-      let { error } = await attempt();
-      if (error) {
-        await new Promise(r => setTimeout(r, 350));
-        const r2 = await attempt();
-        if (r2.error) throw r2.error;
-      }
+      const { error } = await supabase.rpc("delete_season", { p_season_id: seasonId });
+      if (error) throw error;
       showToast("Season deleted");
       setConfirmDelete(false);
       setDeleteSeasonTyped("");
       closeEdit();
-      await loadLeagueData();
+      loadLeagueData(); // fire-and-forget
     } catch (err) {
       showToast(err.message || "Failed to delete season", "error");
     }

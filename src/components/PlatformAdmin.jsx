@@ -13,7 +13,7 @@ export const PLATFORM_ADMIN_ID = "8362be01-8e73-49c1-90c8-065fc6a09159";
 // User decision S067 Q7=A: Active (7d) card dropped (3 stat cards only).
 // Type-to-confirm destructive flow preserved (typed name/email match before
 // platform_delete_league / platform_delete_user).
-export function PlatformAdmin({ onClose, showToast }) {
+export function PlatformAdmin({ onClose, showToast, onOpenLeague }) {
   const [stats, setStats] = useState(null);
   const [leagues, setLeagues] = useState([]);
   const [users, setUsers] = useState([]);
@@ -176,31 +176,16 @@ export function PlatformAdmin({ onClose, showToast }) {
               {filter === "leagues" && fLeagues.length === 0 && <div className="pa-empty">No leagues found</div>}
               {filter === "leagues" && fLeagues.map(l => (
                 <div key={l.id} className="paitem-wrap">
-                  <div className="paitem">
-                    <div className="paavi">{(l.name || "?")[0].toUpperCase()}</div>
+                  {/* S077 r16: clean league row — no avatar, no edit/delete
+                      (those live in League Management → league detail screen).
+                      Tap the card to open the league. */}
+                  <div className="paitem" onClick={() => onOpenLeague && onOpenLeague(l.id)} style={{cursor:"pointer"}}>
                     <div className="paib">
                       <div className="pain">{l.name}</div>
-                      <div className="paim">{l.member_count} players · {l.match_count} matches · {l.invite_code}</div>
+                      <div className="paim">{l.member_count} player{l.member_count === 1 ? "" : "s"} · {l.match_count} match{l.match_count === 1 ? "" : "es"} · {l.season_count} season{l.season_count === 1 ? "" : "s"}</div>
                     </div>
                     <div className="paia">
-                      {deleteConfirm !== l.id && renameId !== l.id && unlockedLeagueId !== l.id && (
-                        <button className="aib" title="Edit league" onClick={() => setUnlockedLeagueId(l.id)}>
-                          <Icon name="edit" size={13} />
-                        </button>
-                      )}
-                      {unlockedLeagueId === l.id && deleteConfirm !== l.id && renameId !== l.id && (
-                        <>
-                          <button className="aib" title="Rename league" onClick={() => { setRenameId(l.id); setRenameDraft(l.name); setUnlockedLeagueId(null); }}>
-                            <Icon name="edit" size={13} />
-                          </button>
-                          <button className="aib da" title="Delete league" onClick={() => { setDeleteConfirm(l.id); setDeleteTyped(""); setUnlockedLeagueId(null); }}>
-                            <Icon name="trash" size={13} />
-                          </button>
-                          <button className="aib" title="Lock" onClick={() => setUnlockedLeagueId(null)}>
-                            <Icon name="close" size={13} />
-                          </button>
-                        </>
-                      )}
+                      <Icon name="chevron" size={16} color="var(--muted-2)" />
                     </div>
                   </div>
                   {renameId === l.id && (

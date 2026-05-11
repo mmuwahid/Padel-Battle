@@ -61,10 +61,10 @@ export function LeagueManagement({
   const [renameDraft, setRenameDraft] = useState("");
   const [renaming, setRenaming] = useState(false);
 
-  // Delete-league modal — user types "delete" to confirm.
-  const [deleteId, setDeleteId] = useState(null);
-  const [deleteConfirm, setDeleteConfirm] = useState("");
-  const [deleting, setDeleting] = useState(false);
+  // S077 r16: Delete-league Danger Zone in detail view.
+  const [showDeleteLeague, setShowDeleteLeague] = useState(false);
+  const [deleteLeagueTyped, setDeleteLeagueTyped] = useState("");
+  const [deletingLeague, setDeletingLeague] = useState(false);
 
   // Once the active leagueId matches the league the user wanted to view,
   // clear the switching spinner.
@@ -171,20 +171,6 @@ export function LeagueManagement({
     setRenaming(false);
   };
 
-  const handleDelete = async (lid) => {
-    if (deleteConfirm.trim().toLowerCase() !== "delete") return;
-    setDeleting(true);
-    try {
-      await leagueHandlers.deleteLeague(lid);
-      showToast("League deleted");
-      setDeleteId(null);
-      setDeleteConfirm("");
-    } catch (err) {
-      showToast(err.message || "Failed to delete", "error");
-    }
-    setDeleting(false);
-  };
-
   // ── DETAIL VIEW ──────────────────────────────────────────────────────
   if (detailLeagueId && !switching) {
     return (
@@ -288,6 +274,60 @@ export function LeagueManagement({
               </button>
             </div>
           )}
+
+          {/* S077 r16: Danger Zone — Delete League at the bottom of detail
+              view, owner-only, with type-"delete" confirmation modal.
+              Matches the SettingsView delete-account pattern. */}
+          {isOwner && (
+            <div style={{marginTop:24}}>
+              {!showDeleteLeague ? (
+                <button
+                  onClick={() => { setShowDeleteLeague(true); setDeleteLeagueTyped(""); }}
+                  style={{width:"100%",padding:14,borderRadius:"var(--r-md)",background:"rgba(248,113,113,.08)",border:"1px solid rgba(248,113,113,.32)",fontFamily:"var(--font)",fontSize:14,fontWeight:700,color:"var(--danger)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}
+                >
+                  <Icon name="alert" size={16} color="var(--danger)"/>Delete League
+                </button>
+              ) : (
+                <div style={{padding:16,background:"rgba(248,113,113,.08)",border:"1px solid rgba(248,113,113,.32)",borderRadius:"var(--r-lg)"}}>
+                  <div style={{fontFamily:"var(--mono)",fontSize:11,fontWeight:800,letterSpacing:".12em",color:"var(--danger)",textTransform:"uppercase",marginBottom:10}}>Danger Zone</div>
+                  <p style={{fontSize:12,color:"var(--danger)",opacity:.9,marginBottom:14,lineHeight:1.5,fontFamily:"var(--font)"}}>
+                    Permanently delete <strong>{league?.name}</strong> and ALL of its data: members, players, seasons, matches, pair rosters, leaderboards. This cannot be undone.
+                  </p>
+                  <input
+                    className="shi"
+                    type="text"
+                    value={deleteLeagueTyped}
+                    onChange={(e) => setDeleteLeagueTyped(e.target.value)}
+                    placeholder='Type "delete" to confirm'
+                    style={{marginBottom:12,width:"100%"}}
+                    autoFocus
+                  />
+                  <div style={{display:"flex",gap:8}}>
+                    <button onClick={() => { setShowDeleteLeague(false); setDeleteLeagueTyped(""); }} disabled={deletingLeague} className="shcancel" style={{flex:1,padding:"12px 0",fontSize:13}}>Cancel</button>
+                    <button
+                      onClick={async () => {
+                        if (deleteLeagueTyped.trim().toLowerCase() !== "delete") { showToast('Type "delete" to confirm', "error"); return; }
+                        setDeletingLeague(true);
+                        try {
+                          await leagueHandlers.deleteLeague(leagueId);
+                          showToast("League deleted");
+                          // Pop back to list (lifted state).
+                          setDetailLeagueId(null);
+                          setShowDeleteLeague(false);
+                          setDeleteLeagueTyped("");
+                        } catch (err) {
+                          showToast(err.message || "Failed to delete league", "error");
+                        }
+                        setDeletingLeague(false);
+                      }}
+                      disabled={deletingLeague || deleteLeagueTyped.trim().toLowerCase() !== "delete"}
+                      style={{flex:1,padding:"12px 0",borderRadius:"var(--r-md)",background:"var(--danger)",border:"none",color:"#fff",fontFamily:"var(--font)",fontSize:13,fontWeight:800,cursor:deletingLeague?"not-allowed":"pointer",letterSpacing:".04em",opacity:(deletingLeague || deleteLeagueTyped.trim().toLowerCase() !== "delete")?.6:1}}
+                    >{deletingLeague ? "Deleting…" : "Yes, Delete"}</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -329,12 +369,11 @@ export function LeagueManagement({
             const isLOwner = l.created_by === user?.id;
             const isActive = l.id === leagueId;
             const isRenaming = renameId === l.id;
-            const isDeleting = deleteId === l.id;
             // Whole card is the open trigger (per user direction: no separate
             // "Open" button). Inline rename/delete forms stop propagation so
             // they don't bubble up to the card click.
             const cardOnClick = () => {
-              if (isRenaming || isDeleting) return;
+              if (isRenaming) return;
               openDetail(l.id);
             };
             return (
@@ -368,23 +407,6 @@ export function LeagueManagement({
                       <Icon name="check" size={12} />{renaming ? "..." : "Save"}
                     </button>
                     <button className="gbtn ghost" onClick={() => { setRenameId(null); setRenameDraft(""); }}>Cancel</button>
-                  </div>
-                ) : isDeleting ? (
-                  <div className="lm-list-form" onClick={(e) => e.stopPropagation()}>
-                    <input className="shi" type="text" value={deleteConfirm} onChange={(e) => setDeleteConfirm(e.target.value)} placeholder='Type "delete" to confirm' autoFocus />
-                    <button className="dbtn" disabled={deleting || deleteConfirm.trim().toLowerCase() !== "delete"} onClick={() => handleDelete(l.id)}>
-                      {deleting ? "..." : "Delete"}
-                    </button>
-                    <button className="gbtn ghost" onClick={() => { setDeleteId(null); setDeleteConfirm(""); }}>Cancel</button>
-                  </div>
-                ) : isLOwner ? (
-                  // S077 r15: dropped the Rename button — rename happens inside
-                  // the detail view. Only the icon-only Delete remains, aligned
-                  // to the right.
-                  <div className="secft secft-right" onClick={(e) => e.stopPropagation()}>
-                    <button className="dbtn pair-iconbtn" aria-label="Delete league" title="Delete" onClick={() => { setDeleteId(l.id); setDeleteConfirm(""); }}>
-                      <Icon name="trash" size={14} />
-                    </button>
                   </div>
                 ) : null}
               </div>
