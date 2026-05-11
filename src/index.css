@@ -2690,3 +2690,46 @@ input.linput[type="date"]::-webkit-calendar-picker-indicator {
 .mh-card .mh-vs b{font-weight:700;}
 .mh-card .mh-score{font-family:var(--mono);font-size:11px;font-weight:700;flex-shrink:0;}
 .mh-card .mh-score.w{color:var(--accent);} .mh-card .mh-score.l{color:var(--danger);}
+
+/* ─── Issue #92 Phase 4 — Analytics for pairs season (PairsList sub-tab) ─── */
+.an-body{padding:0 18px 24px;}
+.an-card-pair{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px;margin-bottom:12px;}
+.an-card-pair .an-card-h{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;font-weight:700;}
+
+/* 7-col Pair Standings table inside the League sub-tab */
+.prk-table-pair{display:grid;grid-template-columns:22px 1fr 26px 26px 26px 26px 40px;gap:5px;font-family:var(--mono);font-size:11px;}
+.prk-table-pair .prk-h{font-size:9px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;font-weight:700;padding:6px 0;border-bottom:1px solid var(--border);text-align:center;}
+.prk-table-pair .prk-h:nth-child(2){text-align:left;}
+.prk-table-pair .prk-c{padding:7px 0;align-self:center;text-align:center;color:var(--text);font-weight:700;font-family:var(--mono);font-size:11px;}
+.prk-table-pair .prk-c.gd{color:var(--gold);} .prk-table-pair .prk-c.si{color:var(--silver);} .prk-table-pair .prk-c.br{color:var(--bronze);}
+.prk-table-pair .prk-c.mw{color:var(--accent);} .prk-table-pair .prk-c.ml{color:var(--danger);} .prk-table-pair .prk-c.eff{color:var(--accent);}
+.prk-table-pair .prk-c.pair-cell{display:flex;align-items:center;gap:7px;text-align:left;min-width:0;}
+.prk-table-pair .prk-c.pair-cell .dpair .av{width:22px;height:22px;font-size:9px;border-width:2px;}
+.prk-table-pair .prk-c.pair-cell .dpair .av+.av{margin-left:-7px;}
+.prk-table-pair .prk-pn{font-family:var(--font);font-size:11px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.prk-table-pair .prk-row-1{background:linear-gradient(90deg, rgba(255,215,0,.06), transparent);}
+.prk-table-pair .prk-row-2{background:linear-gradient(90deg, rgba(192,201,213,.06), transparent);}
+.prk-table-pair .prk-row-3{background:linear-gradient(90deg, rgba(201,123,46,.06), transparent);}
+.see-all-pair{text-align:center;padding:10px 0 0;font-family:var(--mono);font-size:10px;color:var(--accent);}
+
+/* H2H selector + result */
+.pair-sel{flex:1;padding:9px 10px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-md);color:var(--text);font-family:var(--mono);font-size:11px;outline:none;-webkit-appearance:none;appearance:none;}
+.h2h-result{margin-top:12px;}
+.h2h-tally{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px;background:var(--surface-2);border-radius:var(--r-md);}
+.h2h-name{flex:1;font-family:var(--font);font-size:11px;font-weight:700;color:var(--text);}
+.h2h-name:last-child{text-align:right;}
+.h2h-score{font-family:var(--mono);font-size:18px;font-weight:800;color:var(--accent);}
+.h2h-empty,.h2h-hint{padding:14px 0 0;font-family:var(--mono);font-size:11px;color:var(--muted);text-align:center;}
+
+/* Synergy hint */
+.syn-hint{font-family:var(--mono);font-size:10px;color:var(--muted);padding:6px 4px 12px;line-height:1.5;}
+.syn-hint b{color:var(--text);font-family:var(--mono);}
+.syn-row{display:flex;gap:8px;}
+.syn-cell{flex:1;text-align:center;}
+.syn-v{font-family:var(--mono);font-size:13px;font-weight:800;color:var(--text);}
+.syn-l{font-family:var(--mono);font-size:8.5px;color:var(--muted);letter-spacing:.06em;margin-top:2px;}
+
+/* Insights cards */
+.insight-card .insight-row{display:flex;align-items:baseline;gap:10px;}
+.insight-title{flex:1;font-family:var(--font);font-size:14px;font-weight:800;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.insight-value{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--accent);}
