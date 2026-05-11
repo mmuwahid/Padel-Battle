@@ -2617,3 +2617,76 @@ input.linput[type="date"]::-webkit-calendar-picker-indicator {
   60%      { box-shadow: 0 0 0 8px rgba(74,222,128,.18); }
 }
 .omcard.om-flash { animation: om-flash-pulse 1.6s ease-out 1; }
+
+
+/* ─── Issue #92 — Pairs Players tab + drill-in (PairsList / PairStats) ─── */
+/* Pair card list in Players tab */
+.pcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px;cursor:pointer;transition:border-color 150ms,transform 100ms;}
+.pcard:active{transform:scale(.99);border-color:var(--accent-glow);}
+.pcard-top{display:flex;align-items:center;gap:10px;}
+.pcard-mid{flex:1;min-width:0;}
+.pcard-stats{display:flex;gap:14px;padding-top:9px;margin-top:9px;border-top:1px solid var(--border);}
+.pstat{display:flex;flex-direction:column;gap:2px;}
+.pstat .lbl{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;}
+.pstat .val{font-family:var(--mono);font-size:14px;font-weight:800;color:var(--text);}
+.pstat .val.acc{color:var(--accent);} .pstat .val.gd{color:var(--gold);} .pstat .val.dg{color:var(--danger);}
+.pname{font-family:var(--font);font-size:13px;font-weight:800;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.psub{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:1px;}
+
+/* Stacked overlapping avatars for a pair (re-used by list, drill-in, opponent cards) */
+.dpair{display:flex;align-items:center;flex-shrink:0;}
+.dpair .av{width:32px;height:32px;border-radius:50%;background:var(--surface-2);border:2px solid var(--bg);display:flex;align-items:center;justify-content:center;font-family:var(--font);font-size:11px;font-weight:800;color:var(--accent);}
+.dpair .av+.av{margin-left:-12px;}
+.dpair .av.g{color:var(--gold);}
+.dpair-hero .av{border-width:3px;}
+.dpair-hero .av+.av{margin-left:-20px;}
+
+/* Pair Stats drill-in (mirrors .dpro layout from PlayerStats) */
+.dpro-hero{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px 16px;margin-bottom:14px;display:flex;flex-direction:column;align-items:center;gap:10px;}
+.dpro-pn{font-family:var(--font);font-size:18px;font-weight:800;color:var(--text);text-align:center;}
+.dpro-ppl{font-family:var(--mono);font-size:11px;color:var(--muted);}
+.dpro-flags{display:flex;gap:7px;margin-top:4px;flex-wrap:wrap;justify-content:center;}
+.dpro-flag{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-full);padding:3px 9px;font-family:var(--mono);font-size:9.5px;color:var(--muted);letter-spacing:.04em;}
+.dpro-wr{margin-bottom:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;}
+.dpro-wr-l{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:8px;}
+.dpro-wr-l b{color:var(--accent);font-family:var(--mono);font-size:14px;}
+.dpro-bar{height:6px;background:var(--surface-2);border-radius:var(--r-full);overflow:hidden;}
+.dpro-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),#22c55e);transition:width 350ms ease;}
+
+/* 6-tile metric grid (used by Pair drill-in; identical visual to PlayerStats grid) */
+.mgrid-pair{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.mgrid-pair .mtile{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:11px 10px;text-align:center;}
+.mgrid-pair .mtile .v{font-family:var(--mono);font-size:18px;font-weight:800;color:var(--text);}
+.mgrid-pair .mtile .v.acc{color:var(--accent);} .mgrid-pair .mtile .v.dg{color:var(--danger);} .mgrid-pair .mtile .v.gd{color:var(--gold);}
+.mgrid-pair .mtile .l{font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:3px;letter-spacing:.06em;text-transform:uppercase;}
+
+/* Section headers + form strip + opponent cards */
+.sec-h-pair{font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:.12em;text-transform:uppercase;margin:6px 0 8px;font-weight:700;}
+.form-strip-pair{display:flex;gap:4px;margin-bottom:14px;}
+.form-strip-pair .fdot{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;font-weight:800;}
+.form-strip-pair .fdot.w{background:rgba(74,222,128,.18);color:var(--accent);}
+.form-strip-pair .fdot.l{background:rgba(248,113,113,.18);color:var(--danger);}
+
+.opp-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px;display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.opp-meta{flex:1;min-width:0;}
+.opp-rec{font-family:var(--mono);font-size:11px;font-weight:800;}
+.opp-rec.w{color:var(--accent);} .opp-rec.l{color:var(--danger);}
+
+/* Achievement tiles */
+.ach-grid-pair{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:14px;}
+.ach{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 6px;text-align:center;display:flex;flex-direction:column;gap:4px;align-items:center;}
+.ach.earned{border-color:var(--accent-glow);}
+.ach.locked{opacity:.4;}
+.ach-ico{width:30px;height:30px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--muted);}
+.ach.earned .ach-ico{background:rgba(74,222,128,.12);}
+.ach-nm{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;line-height:1.2;}
+.ach.earned .ach-nm{color:var(--text);}
+
+/* Pair Match History rows */
+.mh-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:9px 12px;margin-bottom:7px;}
+.mh-card .mh-row{display:flex;align-items:center;gap:10px;}
+.mh-card .mh-date{font-family:var(--mono);font-size:10px;color:var(--muted);width:60px;flex-shrink:0;}
+.mh-card .mh-vs{flex:1;min-width:0;font-family:var(--font);font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.mh-card .mh-vs b{font-weight:700;}
+.mh-card .mh-score{font-family:var(--mono);font-size:11px;font-weight:700;flex-shrink:0;}
+.mh-card .mh-score.w{color:var(--accent);} .mh-card .mh-score.l{color:var(--danger);}

@@ -39,6 +39,8 @@ import { LeaguesView } from './components/LeaguesView';
 import { AvatarCropModal } from './components/AvatarCropModal';
 import { LogMatch } from './components/LogMatch';
 const PlayerStats = lazy(() => import('./components/PlayerStats').then(m => ({default: m.PlayerStats})));
+const PairsList = lazy(() => import('./components/PairsList').then(m => ({default: m.PairsList})));
+const PairStats = lazy(() => import('./components/PairStats').then(m => ({default: m.PairStats})));
 import { ScheduleView } from './components/ScheduleView';
 import { MatchHistory } from './components/MatchHistory';
 const CombosView = lazy(() => import('./components/CombosView').then(m => ({default: m.CombosView})));
@@ -63,6 +65,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
   const [myMemberId,setMyMemberId]=useState(null);
   const [editingMatch,setEditingMatch]=useState(null);
   const [selectedPlayer,setSelectedPlayer]=useState(null);
+  const [selectedPair,setSelectedPair]=useState(null);
   // S068: track origin tab when a drill-in is opened from a non-Players tab
   // (e.g. Ranking podium → drill-in). On back chevron, restore origin tab so
   // user lands where they came from instead of always landing on Players grid.
@@ -499,6 +502,24 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
     [matches]
   );
 
+  // === Issue #92 — pair-format season isolation ===
+  // Source of truth: seasons.format. We compute the set of pair-format season IDs once,
+  // then derive parallel match slices so individual-player aggregations (ps / elo /
+  // form / streak) never include matches from pair-format seasons.
+  const pairFormatSeasonIds = useMemo(() => {
+    const set = new Set();
+    for (const sea of seasons) if (sea.format === 'pairs') set.add(sea.id);
+    return set;
+  }, [seasons]);
+  const individualMatches = useMemo(
+    () => approvedMatches.filter(m => !m.season_id || !pairFormatSeasonIds.has(m.season_id)),
+    [approvedMatches, pairFormatSeasonIds]
+  );
+  const pairsMatches = useMemo(
+    () => approvedMatches.filter(m => m.season_id && pairFormatSeasonIds.has(m.season_id)),
+    [approvedMatches, pairFormatSeasonIds]
+  );
+
   // Calculate season awards
   const calculateSeasonAwards = (seasonId) => {
     const seasonMatches = approvedMatches.filter(m => m.season_id === seasonId);
@@ -564,7 +585,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
   };
 
   const getForm = (pid) => {
-    const pMatches = approvedMatches.filter(m => m.team_a.includes(pid) || m.team_b.includes(pid));
+    const pMatches = individualMatches.filter(m => m.team_a.includes(pid) || m.team_b.includes(pid));
     const sorted = [...pMatches].sort((a,b) => new Date(b.date) - new Date(a.date));
     return sorted.slice(0, 5).map(m => {
       const w = win(m.sets);
@@ -801,7 +822,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
   // Compute stats for each player
   const ps = useMemo(()=>{
     return players.map(p=>{
-      const pMatches = approvedMatches.filter(m=>m.team_a.includes(p.id)||m.team_b.includes(p.id));
+      const pMatches = individualMatches.filter(m=>m.team_a.includes(p.id)||m.team_b.includes(p.id));
       const wins = pMatches.filter(m=>win(m.sets)===(m.team_a.includes(p.id)?"A":"B")).length;
       const losses = pMatches.length - wins;
       const winRate = pMatches.length>0?wins/pMatches.length:0;
@@ -830,19 +851,17 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
 
       // MOTM count
       let motm=0;
-      approvedMatches.forEach(m=>{
-        if(m.motm===p.id)motm++;
-      });
+      individualMatches.forEach(m=>{ if(m.motm===p.id)motm++; });
 
       return {
         ...p,
         wins,losses,winRate,games:pMatches.length,gamesWon,gamesLost,streak,comebacks,motm,
       };
     });
-  },[players,approvedMatches]);
+  },[players,individualMatches]);
 
   // ELO ratings — based on approved matches only (pending don't count)
-  const elo = useMemo(()=>calcElo(players,approvedMatches),[players,approvedMatches]);
+  const elo = useMemo(()=>calcElo(players,individualMatches),[players,individualMatches]);
 
   // Leaderboard — Ranked by Total Wins > Win Rate > ELO > Games Played
   const lb = useMemo(()=>{
@@ -1473,7 +1492,30 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
       )}
 
       {/* PLAYERS TAB */}
-      {!sidebarView && tab==="stats"&&(
+      {!sidebarView && tab==="stats" && seasons.find(s=>s.id===selectedSeason)?.format==="pairs" && (
+        selectedPair ? (
+          <ErrorBoundary><Suspense fallback={<LazyFallback/>}><PairStats
+            pair={(pairs||[]).find(pr=>pr.id===selectedPair)}
+            pairs={(pairs||[]).filter(pr=>pr.season_id===selectedSeason)}
+            matches={approvedMatches.filter(m=>m.season_id===selectedSeason)}
+            players={players}
+            getName={getName}
+            season={seasons.find(s=>s.id===selectedSeason)}
+            onBack={()=>setSelectedPair(null)}
+          /></Suspense></ErrorBoundary>
+        ) : (
+          <ErrorBoundary><Suspense fallback={<LazyFallback/>}><PairsList
+            pairs={(pairs||[]).filter(pr=>pr.season_id===selectedSeason)}
+            matches={approvedMatches.filter(m=>m.season_id===selectedSeason)}
+            players={players}
+            getName={getName}
+            onPairClick={(id)=>setSelectedPair(id)}
+          /></Suspense></ErrorBoundary>
+        )
+      )}
+
+      {/* PLAYERS TAB — individual format (default) */}
+      {!sidebarView && tab==="stats" && seasons.find(s=>s.id===selectedSeason)?.format!=="pairs" && (
         <ErrorBoundary><Suspense fallback={<LazyFallback/>}><PlayerStats
           players={players}
           ps={Object.fromEntries(ps.map(p=>[p.id,p]))}
