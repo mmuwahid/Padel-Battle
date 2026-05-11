@@ -15,7 +15,7 @@ export function LeagueManagement({ setSidebarView, goBack }) {
   const {
     supabase, league, leagueId,
     showToast, loadLeagueData,
-    isOwner, isAdmin, isSeasonAdminOfAny, players, approvedMatches, seasons,
+    isOwner, isAdmin, isSeasonAdminOfAny, seasonAdmins, players, approvedMatches, seasons,
   } = useLeague();
 
   const [editingName, setEditingName] = useState(false);
@@ -150,7 +150,7 @@ export function LeagueManagement({ setSidebarView, goBack }) {
           </div>
         </div>
 
-        {(isAdmin || isSeasonAdminOfAny) && (
+        {(isOwner || isSeasonAdminOfAny) && (
           <div>
             <div className="slbl">Seasons</div>
             <button className="crow" onClick={() => setSidebarView("seasonManagement")}>
@@ -165,6 +165,24 @@ export function LeagueManagement({ setSidebarView, goBack }) {
               </div>
               <div className="crchev"><Icon name="chevron" size={16} color="var(--muted-2)" /></div>
             </button>
+            {isOwner && (() => {
+              const totalAssign = (seasonAdmins || []).length;
+              const seasonsWithAdmins = new Set((seasonAdmins || []).map(sa => sa.season_id)).size;
+              return (
+                <button className="crow" onClick={() => setSidebarView("seasonAdmins")}>
+                  <div className="cricon"><Icon name="players" size={16} color="var(--accent)" /></div>
+                  <div className="crbody">
+                    <div className="crtitle">Season Admins</div>
+                    <div className="crsub">
+                      {totalAssign === 0
+                        ? 'No season admins assigned'
+                        : `${totalAssign} assignment${totalAssign === 1 ? '' : 's'} across ${seasonsWithAdmins} season${seasonsWithAdmins === 1 ? '' : 's'}`}
+                    </div>
+                  </div>
+                  <div className="crchev"><Icon name="chevron" size={16} color="var(--muted-2)" /></div>
+                </button>
+              );
+            })()}
           </div>
         )}
       </div>

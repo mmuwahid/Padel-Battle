@@ -1866,6 +1866,9 @@ body {
 .sm-admrow-flag{font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:2px 6px;border:1px solid var(--border);border-radius:8px;}
 .sm-admrow-flag.on{color:var(--accent);border-color:rgba(74,222,128,.35);background:rgba(74,222,128,.08);}
 .sm-admrow-acts{display:flex;gap:6px;flex-shrink:0;}
+/* S077 r5: avatar-as-image in pairs leaderboard + season admin cards. */
+.prk-avi-img{object-fit:cover;}
+.sm-pairavi-img{object-fit:cover;background:transparent;}
 /* S077 Season Awards — centered cards + SVG icons + Top Pair redesign. */
 .saw-title{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:800;color:var(--accent);margin:0 0 12px;text-transform:uppercase;letter-spacing:.05em;}
 .saw-card{padding:14px 12px;background:var(--surface-2);border-radius:10px;border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;}

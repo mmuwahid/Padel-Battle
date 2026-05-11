@@ -55,7 +55,10 @@ export function SeasonManagement({ setSidebarView, goBack }) {
 
   // S077: filter seasons by permission. League admins/owners see all;
   // season admins (without league-level role) see only their assigned seasons.
-  const visibleSeasons = isAdmin
+  // S077 r5: only owner sees all seasons. League admins (without explicit
+  // season-admin grant) no longer see season management. Season admins see
+  // only the seasons they are explicitly admin of.
+  const visibleSeasons = isOwner
     ? (seasons || [])
     : (seasons || []).filter(se => (seasonAdmins || []).some(sa => sa.season_id === se.id && sa.user_id === user?.id));
   const sortedSeasons = [...visibleSeasons].sort((a, b) => {
@@ -445,56 +448,16 @@ export function SeasonManagement({ setSidebarView, goBack }) {
             </div>
           )}
 
-          {/* S077: Per-season admins block. Owner can grant/revoke; everyone
-              else sees a read-only list. */}
+          {/* S077 r5: in-detail block is now read-only — full grant/revoke
+              management lives in the dedicated Season Admins screen
+              reachable from League Management. */}
           <div className="sm-roster sm-admins">
             <div className="sm-roster-h">
               <div className="slbl">Season Admins</div>
               <span className="sm-roster-ct">{adminsForOpen.length} assigned</span>
             </div>
-            <div className="sm-admins-help">
-              {isOwner
-                ? "League owner controls who can manage this season. Season admins gain rename / roster / end / pairs power for this season only."
-                : "League owner controls these assignments. League admins manage all seasons by default."}
-            </div>
-            {adminsForOpen.length === 0 && !isOwner && (
-              <div className="sm-empty">No additional season admins assigned.</div>
-            )}
-            {isOwner ? (
-              <div className="sm-roster-list">
-                {(players || [])
-                  .filter(pl => openRoster.has(pl.id))
-                  .map(pl => {
-                    const isAdminP = adminPlayerIds.has(pl.id);
-                    const isConfirmDel = confirmRevokeAdmin === pl.id;
-                    return (
-                      <div key={pl.id} className={`sm-admrow${isAdminP ? ' on' : ''}`}>
-                        <div className="sm-admrow-name">
-                          {pl.name}{pl.nickname ? ` (${pl.nickname})` : ''}
-                          {!pl.user_id && <span className="sm-admrow-flag">Unclaimed</span>}
-                        </div>
-                        {isAdminP ? (
-                          isConfirmDel ? (
-                            <div className="sm-admrow-acts">
-                              <button className="dbtn" onClick={() => handleRevokeAdmin(pl.id)} disabled={adminBusy}>
-                                {adminBusy ? '...' : 'Revoke'}
-                              </button>
-                              <button className="gbtn ghost" onClick={() => setConfirmRevokeAdmin(null)}>No</button>
-                            </div>
-                          ) : (
-                            <button className="gbtn" onClick={() => setConfirmRevokeAdmin(pl.id)}>
-                              <Icon name="check" size={12} />Admin
-                            </button>
-                          )
-                        ) : (
-                          <button className="gbtn ghost" disabled={!pl.user_id || adminBusy} onClick={() => handleGrantAdmin(pl.id)}>
-                            + Make admin
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
-              </div>
+            {adminsForOpen.length === 0 ? (
+              <div className="sm-empty">No additional season admins. The league owner can assign one in League Management → Season Admins.</div>
             ) : (
               <div className="sm-roster-list">
                 {adminsForOpen.map(sa => {
@@ -605,15 +568,14 @@ export function SeasonManagement({ setSidebarView, goBack }) {
       </div>
 
       <div className="sm-body">
-        {/* S077: show the seasons UI to league admins/owners AND to anyone
-            who is a season admin of at least one season. */}
-        {!isAdmin && visibleSeasons.length === 0 && (
-          <div className="sm-note">Admin or Owner only.</div>
+        {/* S077 r5: owner sees all; season admins see only their seasons. */}
+        {!isOwner && visibleSeasons.length === 0 && (
+          <div className="sm-note">You are not a season admin for any season.</div>
         )}
 
-        {(isAdmin || visibleSeasons.length > 0) && (
+        {(isOwner || visibleSeasons.length > 0) && (
           <>
-            {isAdmin && (
+            {isOwner && (
               <button className="pbtn pbtn-block" onClick={openCreate}>
                 <Icon name="plus" size={16} strokeWidth={2.5} />New Season
               </button>

@@ -14,6 +14,7 @@ import { AdminDashboard } from './components/AdminDashboard';
 import { PlayerManagement } from './components/PlayerManagement';
 import { ApprovalQueueScreen } from './components/ApprovalQueueScreen';
 import { SeasonManagement } from './components/SeasonManagement';
+import { SeasonAdminsManagement } from './components/SeasonAdminsManagement';
 import { PairsRanking } from './components/PairsRanking';
 import { LeagueManagement } from './components/LeagueManagement';
 import { PlatformAdmin } from './components/PlatformAdmin';
@@ -1062,6 +1063,9 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
           )}
           {sidebarView==="seasonManagement" && (
             <SeasonManagement setSidebarView={setSidebarView} goBack={goBackSidebar}/>
+          )}
+          {sidebarView==="seasonAdmins" && (
+            <SeasonAdminsManagement setSidebarView={setSidebarView} goBack={goBackSidebar}/>
           )}
           {sidebarView==="leagueManagement" && (
             <LeagueManagement setSidebarView={setSidebarView} goBack={goBackSidebar}/>

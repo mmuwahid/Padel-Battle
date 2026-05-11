@@ -63,6 +63,10 @@ export function PairsRanking({ pairs, matches, players, getName, onPairDrillIn }
     const p = playerOf(pid);
     return p?.nickname || p?.name || "?";
   };
+  const pAvatar = (pid) => {
+    const p = playerOf(pid);
+    return p?.avatar_url || null;
+  };
   const pFlag = (pid) => {
     const p = playerOf(pid);
     return p?.country ? flagEmoji(p.country) : "";
@@ -93,14 +97,14 @@ export function PairsRanking({ pairs, matches, players, getName, onPairDrillIn }
       <div className="prk-podh">{rank}</div>
       <div className="prk-podstack">
         <div className="prk-podrow">
-          <div className="prk-avi">{pInit(pr.player_a_id)}</div>
+          {pAvatar(pr.player_a_id) ? (<img className="prk-avi prk-avi-img" src={pAvatar(pr.player_a_id)} alt=""/>) : (<div className="prk-avi">{pInit(pr.player_a_id)}</div>)}
           <div className="prk-podpname">
             <span className="prk-podpnamea">{pName(pr.player_a_id)}</span>
             {pFlag(pr.player_a_id) && <span className="prk-podflag">{pFlag(pr.player_a_id)}</span>}
           </div>
         </div>
         <div className="prk-podrow">
-          <div className="prk-avi">{pInit(pr.player_b_id)}</div>
+          {pAvatar(pr.player_b_id) ? (<img className="prk-avi prk-avi-img" src={pAvatar(pr.player_b_id)} alt=""/>) : (<div className="prk-avi">{pInit(pr.player_b_id)}</div>)}
           <div className="prk-podpname">
             <span className="prk-podpnamea">{pName(pr.player_b_id)}</span>
             {pFlag(pr.player_b_id) && <span className="prk-podflag">{pFlag(pr.player_b_id)}</span>}
@@ -148,12 +152,12 @@ export function PairsRanking({ pairs, matches, players, getName, onPairDrillIn }
               <div className="prk-pairstack">
                 {pr.name && <div className="prk-pairname">{pr.name}</div>}
                 <div className="prk-pairrow">
-                  <div className="prk-avi">{pInit(pr.player_a_id)}</div>
+                  {pAvatar(pr.player_a_id) ? (<img className="prk-avi prk-avi-img" src={pAvatar(pr.player_a_id)} alt=""/>) : (<div className="prk-avi">{pInit(pr.player_a_id)}</div>)}
                   <span className="prk-pname">{pName(pr.player_a_id)}</span>
                   {pFlag(pr.player_a_id) && <span className="prk-pflag">{pFlag(pr.player_a_id)}</span>}
                 </div>
                 <div className="prk-pairrow">
-                  <div className="prk-avi">{pInit(pr.player_b_id)}</div>
+                  {pAvatar(pr.player_b_id) ? (<img className="prk-avi prk-avi-img" src={pAvatar(pr.player_b_id)} alt=""/>) : (<div className="prk-avi">{pInit(pr.player_b_id)}</div>)}
                   <span className="prk-pname">{pName(pr.player_b_id)}</span>
                   {pFlag(pr.player_b_id) && <span className="prk-pflag">{pFlag(pr.player_b_id)}</span>}
                 </div>
