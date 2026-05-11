@@ -237,6 +237,19 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
     setShowShuffler(true);
   }
 
+  // S078 Issue #71 polish: open-match read-only state. When LogMatch was
+  // opened from a locked open-match notification, lock the team picker so
+  // the user cannot inadvertently swap players. Provide a single Undo
+  // button that clears the link back to the open match and re-enables editing.
+  const isFromOpenMatch = !!openMatchId;
+  const undoPrefill = () => {
+    setOpenMatchId(null);
+    setTA(["",""]);
+    setTB(["",""]);
+    if (isPairsFormat) { setSelectedPairA(""); setSelectedPairB(""); }
+    if (onPrefilledHandled) onPrefilledHandled();
+  };
+
   // Manual mode results
   const manualSets = sets.slice(0,ns);
   const aWins = manualSets.filter(s=>s[0]>s[1]).length;
@@ -327,6 +340,12 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
         />
       )}
 
+      {isFromOpenMatch && !isE && (
+        <div className="ommfb">
+          <div className="ommfb-text"><Icon name="users" size={14} color="var(--accent)"/>From open match — players locked</div>
+          <button className="ommfb-undo" onClick={undoPrefill}>Undo</button>
+        </div>
+      )}
       {/* Players card (.tcard with .tinner — same as Schedule form). S076 FT-15: pair-aware in pairs seasons. */}
       <div className="tcard">
         <div className="tcardh">
@@ -348,8 +367,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
                 <select
                   className={`psel af${selectedPairA?' fi':''}`}
                   value={selectedPairA}
-                  onChange={e=>setSelectedPairA(e.target.value)}
-                >
+                  onChange={e=>setSelectedPairA(e.target.value)} disabled={isFromOpenMatch}>
                   <option value="">— Pick a pair —</option>
                   {seasonPairs.filter(pr => pr.id !== selectedPairB).map(pr => (
                     <option key={pr.id} value={pr.id}>{pairLabel(pr)}</option>
@@ -368,8 +386,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
                 <select
                   className={`psel bf${selectedPairB?' fi':''}`}
                   value={selectedPairB}
-                  onChange={e=>setSelectedPairB(e.target.value)}
-                >
+                  onChange={e=>setSelectedPairB(e.target.value)} disabled={isFromOpenMatch}>
                   <option value="">— Pick a pair —</option>
                   {seasonPairs.filter(pr => pr.id !== selectedPairA).map(pr => (
                     <option key={pr.id} value={pr.id}>{pairLabel(pr)}</option>
@@ -391,8 +408,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
                   <select
                     className={`psel af${pid?' fi':''}`}
                     value={pid}
-                    onChange={e=>{const t=[...tA];t[i]=e.target.value;setTA(t);}}
-                  >
+                    onChange={e=>{const t=[...tA];t[i]=e.target.value;setTA(t);}} disabled={isFromOpenMatch}>
                     <option value="">Player {i+1}</option>
                     {avail(pid).map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}
                   </select>
@@ -411,8 +427,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
                   <select
                     className={`psel bf${pid?' fi':''}`}
                     value={pid}
-                    onChange={e=>{const t=[...tB];t[i]=e.target.value;setTB(t);}}
-                  >
+                    onChange={e=>{const t=[...tB];t[i]=e.target.value;setTB(t);}} disabled={isFromOpenMatch}>
                     <option value="">Player {i+1}</option>
                     {avail(pid).map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}
                   </select>

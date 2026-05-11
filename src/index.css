@@ -2733,3 +2733,32 @@ input.linput[type="date"]::-webkit-calendar-picker-indicator {
 .insight-card .insight-row{display:flex;align-items:baseline;gap:10px;}
 .insight-title{flex:1;font-family:var(--font);font-size:14px;font-weight:800;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .insight-value{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--accent);}
+
+
+/* S078 Issue #71 polish — LogMatch "From open match" badge + undo */
+.ommfb{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 12px;margin:0 16px 10px;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.28);border-radius:var(--r-md);}
+.ommfb-text{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.04em;}
+.ommfb-undo{background:transparent;border:1px solid rgba(74,222,128,.42);color:var(--accent);font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:5px 11px;border-radius:var(--r-full);cursor:pointer;transition:background 150ms;}
+.ommfb-undo:hover{background:rgba(74,222,128,.12);}
+.ommfb-undo:active{transform:scale(.96);}
+
+
+/* S078 FT-15 polish — PairsRanking form strip + Awards section */
+.prk-formstrip{display:flex;gap:4px;margin-top:6px;align-items:center;}
+.prk-formstrip .fdot{width:8px;height:8px;border-radius:50%;}
+.prk-formstrip-empty{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.04em;}
+
+/* Awards section under the table */
+.prk-awards{margin:16px 16px 8px;padding:14px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);}
+.prk-awards-h{font-family:var(--font);font-size:14px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);text-align:center;margin-bottom:12px;}
+.prk-awards-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media(max-width:380px){.prk-awards-grid{grid-template-columns:1fr;}}
+.prk-award-card{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px;display:flex;flex-direction:column;gap:8px;}
+.prk-award-l{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);}
+.prk-award-row{display:flex;align-items:center;gap:9px;min-width:0;}
+.prk-award-stack{display:flex;}
+.prk-award-stack .prk-avi,.prk-award-stack .prk-avi-img{width:26px;height:26px;font-size:11px;}
+.prk-award-stack .prk-avi+.prk-avi,.prk-award-stack .prk-avi+.prk-avi-img,.prk-award-stack .prk-avi-img+.prk-avi,.prk-award-stack .prk-avi-img+.prk-avi-img{margin-left:-10px;border:2px solid var(--surface-2);}
+.prk-award-meta{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;}
+.prk-award-name{font-family:var(--font);font-size:12px;font-weight:800;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.prk-award-v{font-family:var(--mono);font-size:10px;color:var(--accent);font-weight:700;}

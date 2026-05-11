@@ -1174,7 +1174,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
               matches={approvedMatches.filter(m=>m.season_id===selectedSeason)}
               players={players}
               getName={getName}
-              onPairDrillIn={null}
+              onPairDrillIn={(pr)=>{setDrillInOrigin(tab); setSelectedPair(pr.id); setTab("stats");}}
             />
           ) : (<>
 
