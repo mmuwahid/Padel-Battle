@@ -57,7 +57,7 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, navigateS
         <div className="sbsec">
           <div className="sbsl">League</div>
           {league ? (
-            <div className="sbitem" onClick={()=>go("leagues")}>
+            <div className="sbitem" onClick={()=>go("leagueManagement")}>
               <div className="sbico"><Icon name="league" size={16}/></div>
               <div className="sbibd">
                 <div className="sbit">{league.name}</div>
@@ -73,7 +73,7 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, navigateS
               <span className="sb-chev"><Icon name="chevron" size={16} color="currentColor"/></span>
             </div>
           ) : (
-            <div className="sbitem" onClick={()=>go("leagues")}>
+            <div className="sbitem" onClick={()=>go("leagueManagement")}>
               <div className="sbico"><Icon name="league" size={16}/></div>
               <div className="sbibd">
                 <div className="sbit">Join or create</div>

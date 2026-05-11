@@ -975,7 +975,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
   // S022/S026: Plain object — NOT useMemo. Early returns above this line make useMemo violate Rules of Hooks.
   const leagueCtx = {
     supabase, user, leagueId, league, players, matches, approvedMatches, pendingMatches, incompleteMatches,
-    elo, seasons, selectedSeason, setSelectedSeason, isAdmin, isOwner, myMemberId, leagueMembers, memberProfiles,
+    user, elo, seasons, selectedSeason, setSelectedSeason, isAdmin, isOwner, myMemberId, leagueMembers, memberProfiles,
     getName, showToast, sendPushNotification, loadLeagueData,
     openMatches, openMatchPlayers, pairs, seasonRosters, claimedPlayer,
   };
@@ -1065,7 +1065,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
             <SeasonManagement setSidebarView={setSidebarView} goBack={goBackSidebar}/>
           )}
           {sidebarView==="leagueManagement" && (
-            <LeagueManagement setSidebarView={setSidebarView} goBack={goBackSidebar}/>
+            <LeagueManagement setSidebarView={setSidebarView} goBack={goBackSidebar} leagues={leagues||[]} leagueHandlers={leagueHandlers}/>
           )}
           {sidebarView==="settings" && (
             <SettingsView user={user} claimedPlayer={claimedPlayer} isAdmin={isAdmin} pushSubscribed={pushSubscribed} subscribeToPush={subscribeToPush} unsubscribeFromPush={unsubscribeFromPush} notifNewMatch={notifNewMatch} notifRankingChange={notifRankingChange} notifNewMembers={notifNewMembers} notifChallenges={notifChallenges} toggleNotification={toggleNotification} onSwitchLeague={onSwitchLeague} setSidebarView={setSidebarView} navigateSidebar={navigateSidebar} goBack={goBackSidebar} showToast={showToast} loadLeagueData={loadLeagueData} testPushNotification={testPushNotification}/>
@@ -1102,10 +1102,10 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
           <div className="empty-leagues-title">You're not in a league yet</div>
           <div className="empty-leagues-sub">Create your first league to start tracking matches and rankings, or join an existing one with an invite code.</div>
           <div className="empty-leagues-actions">
-            <button className="pbtn" style={{justifyContent:"center"}} onClick={()=>setSidebarView("leagues")}>
+            <button className="pbtn" style={{justifyContent:"center"}} onClick={()=>setSidebarView("leagueManagement")}>
               Create your first league
             </button>
-            <button className="gbtn" style={{justifyContent:"center"}} onClick={()=>setSidebarView("leagues")}>
+            <button className="gbtn" style={{justifyContent:"center"}} onClick={()=>setSidebarView("leagueManagement")}>
               Join with invite code
             </button>
           </div>
