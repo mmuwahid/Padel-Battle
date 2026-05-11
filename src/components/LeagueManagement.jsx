@@ -17,6 +17,13 @@ import { useLeague } from "../LeagueContext";
 export function LeagueManagement({
   setSidebarView, navigateSidebar, goBack,
   leagues = [], leagueHandlers = {},
+  leagueStats = {},
+  // S077 r13: detailLeagueId lifted to App.jsx so the back button from
+  // PlayerManagement / SeasonManagement returns to the SAME league's detail
+  // view, not the list. When these props aren't supplied (old callers) the
+  // component falls back to internal state.
+  detailLeagueId: detailLeagueIdProp,
+  setDetailLeagueId: setDetailLeagueIdProp,
 }) {
   // S077 r11: nav helper — push current view onto sidebar history so the
   // back button on Player/Season Management returns here, not the drawer.
@@ -28,8 +35,10 @@ export function LeagueManagement({
     user,
   } = useLeague();
 
-  // Mode: null = list, otherwise the league we're viewing detail for.
-  const [detailLeagueId, setDetailLeagueId] = useState(null);
+  // S077 r13: prefer lifted prop, fall back to local state.
+  const [detailLeagueIdLocal, setDetailLeagueIdLocal] = useState(null);
+  const detailLeagueId = detailLeagueIdProp !== undefined ? detailLeagueIdProp : detailLeagueIdLocal;
+  const setDetailLeagueId = setDetailLeagueIdProp || setDetailLeagueIdLocal;
   const [switching, setSwitching] = useState(false);
 
   // Detail-view state (preserved from previous LeagueManagement)
@@ -337,6 +346,17 @@ export function LeagueManagement({
                     {isLOwner ? "OWNER" : (l._userRole === "admin" ? "ADMIN" : "MEMBER")}
                   </div>
                 </div>
+                {/* S077 r13: per-league counts from get_league_stats RPC. */}
+                {(() => {
+                  const st = leagueStats[l.id] || { players: 0, matches: 0, seasons: 0 };
+                  return (
+                    <div className="secmr">
+                      <div className="secmi"><Icon name="players" size={12} color="var(--muted)" />{st.players} player{st.players === 1 ? "" : "s"}</div>
+                      <div className="secmi"><Icon name="racket" size={12} color="var(--muted)" />{st.matches} match{st.matches === 1 ? "" : "es"}</div>
+                      <div className="secmi"><Icon name="calendar" size={12} color="var(--muted)" />{st.seasons} season{st.seasons === 1 ? "" : "s"}</div>
+                    </div>
+                  );
+                })()}
                 {isRenaming ? (
                   <div className="lm-list-form" onClick={(e) => e.stopPropagation()}>
                     <input className="shi" type="text" value={renameDraft} onChange={(e) => setRenameDraft(e.target.value)} placeholder="New name" autoFocus />

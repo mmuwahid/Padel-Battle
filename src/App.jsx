@@ -95,6 +95,12 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
   // CURRENT view onto the stack; goBackSidebar pops it. Empty stack + back == reopen
   // the drawer (since the user originally entered from the drawer).
   const [sidebarHistory,setSidebarHistory]=useState([]);
+  // S077 r13: lifted from LeagueManagement so the detail-mode survives unmount
+  // when navigating to PlayerManagement / SeasonManagement (back button returns
+  // to the same league detail instead of falling back to the leagues list).
+  const [lmDetailLeagueId,setLmDetailLeagueId]=useState(null);
+  // S077 r13: per-league counts for League Management card subtitles.
+  const [leagueStats,setLeagueStats]=useState({});
   const navigateSidebar = useCallback((next) => {
     setSidebarHistory(prev => [...prev, sidebarView]);
     setSidebarView(next);
@@ -423,6 +429,14 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
       setOpenMatches(openMatchesData||[]);
       setOpenMatchPlayers((openMatchPlayersData||[]).filter(p=>omIds.has(p.open_match_id)));
       setPairs(pairsData||[]);
+      // S077 r13: fetch per-league counts via the new RPC. Best-effort — errors
+      // don't block the main load.
+      supabase.rpc("get_league_stats").then(({data, error}) => {
+        if (error || !data) return;
+        const map={};
+        data.forEach(r => { map[r.league_id] = { players: r.player_count, matches: r.match_count, seasons: r.season_count }; });
+        setLeagueStats(map);
+      });
       const rostersMap={};
       (seasonPlayersData||[]).forEach(r=>{
         if(!rostersMap[r.season_id]) rostersMap[r.season_id]=new Set();
@@ -949,7 +963,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
     return (
       <div className="pend-screen">
         <div className="pend-brand">
-          <div className="pend-brand-ico"><PadelLogoSmall size={28}/></div>
+          <div className="pend-brand-ico"><PadelHubMarkHeader size={28}/></div>
           <div className="pend-brand-tx">Padel<span className="accent">Hub</span></div>
         </div>
         <div className="pend-wrap">
@@ -1065,7 +1079,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
             <SeasonManagement setSidebarView={setSidebarView} goBack={goBackSidebar}/>
           )}
           {sidebarView==="leagueManagement" && (
-            <LeagueManagement setSidebarView={setSidebarView} navigateSidebar={navigateSidebar} goBack={goBackSidebar} leagues={leagues||[]} leagueHandlers={leagueHandlers}/>
+            <LeagueManagement setSidebarView={setSidebarView} navigateSidebar={navigateSidebar} goBack={goBackSidebar} leagues={leagues||[]} leagueHandlers={leagueHandlers} leagueStats={leagueStats} detailLeagueId={lmDetailLeagueId} setDetailLeagueId={setLmDetailLeagueId}/>
           )}
           {sidebarView==="settings" && (
             <SettingsView user={user} claimedPlayer={claimedPlayer} isAdmin={isAdmin} pushSubscribed={pushSubscribed} subscribeToPush={subscribeToPush} unsubscribeFromPush={unsubscribeFromPush} notifNewMatch={notifNewMatch} notifRankingChange={notifRankingChange} notifNewMembers={notifNewMembers} notifChallenges={notifChallenges} toggleNotification={toggleNotification} onSwitchLeague={onSwitchLeague} setSidebarView={setSidebarView} navigateSidebar={navigateSidebar} goBack={goBackSidebar} showToast={showToast} loadLeagueData={loadLeagueData} testPushNotification={testPushNotification}/>

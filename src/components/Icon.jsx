@@ -68,6 +68,9 @@ export default function Icon({ name, size = 20, color = "currentColor", strokeWi
     case "target":      return <svg style={s} viewBox="0 0 24 24" {...p}><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>;
     case "lock":        return <svg style={s} viewBox="0 0 24 24" {...p}><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>;
     case "trending-up": return <svg style={s} viewBox="0 0 24 24" {...p}><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>;
+    // S077 r13: tennis ball + bar chart icons for empty-state placeholders.
+    case "tennis-ball": return <svg style={s} viewBox="0 0 24 24" {...p}><circle cx="12" cy="12" r="10"/><path d="M5 5c3 3 3 11 0 14"/><path d="M19 5c-3 3-3 11 0 14"/></svg>;
+    case "bar-chart":   return <svg style={s} viewBox="0 0 24 24" {...p}><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>;
     case "clock":       return <svg style={s} viewBox="0 0 24 24" {...p}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>;
     case "award":       return <svg style={s} viewBox="0 0 24 24" {...p}><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>;
     // S074: grid (2x2) icon — used for Round Robin tournament indicator since

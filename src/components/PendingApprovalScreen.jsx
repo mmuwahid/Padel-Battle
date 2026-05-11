@@ -1,6 +1,6 @@
 import React from "react";
 import Icon from "./Icon";
-import { PadelLogoSmall } from "./icons";
+import { PadelHubMarkHeader } from "./icons";
 
 // S068 Issue #46: user-facing pending state. Spec ref: docs/PadelHub_Complete_v2.jsx lines 2250-2273.
 // Shown by LeagueGate when the user has a pending join_request and no active league memberships.
@@ -13,7 +13,7 @@ export function PendingApprovalScreen({ leagueName, request, onSignOut }) {
   return (
     <div className="pend-screen">
       <div className="pend-brand">
-        <div className="pend-brand-ico"><PadelLogoSmall size={28}/></div>
+        <div className="pend-brand-ico"><PadelHubMarkHeader size={28}/></div>
         <div className="pend-brand-tx">Padel<span className="accent">Hub</span></div>
       </div>
       <div className="pend-wrap">

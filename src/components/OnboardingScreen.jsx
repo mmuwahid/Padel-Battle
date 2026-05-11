@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { supabase } from '../supabase';
 import { CountrySelect } from './CountrySelect';
-import { PadelLogoSmall } from './icons';
+import { PadelHubMarkHeader } from "./icons";
 import Icon from './Icon';
 
 // S066 Phase 11: 3-step onboarding wizard for new users.
@@ -116,7 +116,7 @@ export function OnboardingScreen({ user, handlers, onComplete, showToast }) {
       <div className="obg"/>
       <div className="otop">
         <div className="logo">
-          <div className="lm"><PadelLogoSmall size={20}/></div>
+          <div className="lm"><PadelHubMarkHeader size={20}/></div>
           <div className="lt">Padel<span style={{color:"var(--accent)"}}>Hub</span></div>
         </div>
         {step > 1 && (

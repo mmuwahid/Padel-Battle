@@ -1,6 +1,6 @@
 import React from "react";
 import Icon from "./Icon";
-import { PadelLogoSmall } from "./icons";
+import { PadelHubMarkHeader } from "./icons";
 
 // S068 Issue #46: user-facing rejected state. Spec ref: docs/PadelHub_Complete_v2.jsx lines 2278-2304.
 // Shown by LeagueGate when the user's most recent join_request for a league is rejected
@@ -11,7 +11,7 @@ export function RejectedScreen({ leagueName, request, onTryAgain, onSignOut }) {
   return (
     <div className="pend-screen">
       <div className="pend-brand">
-        <div className="pend-brand-ico"><PadelLogoSmall size={28}/></div>
+        <div className="pend-brand-ico"><PadelHubMarkHeader size={28}/></div>
         <div className="pend-brand-tx">Padel<span className="accent">Hub</span></div>
       </div>
       <div className="pend-wrap">

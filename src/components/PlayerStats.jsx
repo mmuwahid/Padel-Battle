@@ -638,7 +638,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
         </div>
       ) : subTab==="analytics" ? (
         <div style={{textAlign:"center",padding:"40px 20px"}}>
-          <div style={{fontSize:40,marginBottom:12}}>📊</div>
+          <div style={{marginBottom:12,display:"flex",justifyContent:"center"}}><Icon name="bar-chart" size={56} color="var(--muted)" strokeWidth={1.5}/></div>
           <div style={{fontSize:15,fontWeight:600,color:TX,marginBottom:6}}>No analytics yet</div>
           <div style={{fontSize:12,color:MT}}>Play some matches to see league analytics.</div>
         </div>
