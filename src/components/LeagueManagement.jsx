@@ -15,7 +15,7 @@ export function LeagueManagement({ setSidebarView, goBack }) {
   const {
     supabase, league, leagueId,
     showToast, loadLeagueData,
-    isOwner, players, approvedMatches, seasons,
+    isOwner, isAdmin, players, approvedMatches, seasons,
   } = useLeague();
 
   const [editingName, setEditingName] = useState(false);
@@ -150,7 +150,7 @@ export function LeagueManagement({ setSidebarView, goBack }) {
           </div>
         </div>
 
-        {isOwner && (
+        {isAdmin && (
           <div>
             <div className="slbl">Seasons</div>
             <button className="crow" onClick={() => setSidebarView("seasonManagement")}>

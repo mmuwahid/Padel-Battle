@@ -335,11 +335,13 @@ body {
 }
 
 .lscreen {
-  min-height: 100vh;
-  /* S077: dvh is the iOS-aware viewport unit — 100dvh = visible area after
-     the URL bar is accounted for. Falls back to 100vh on browsers that
-     don't support dvh. */
-  min-height: 100dvh;
+  /* S077 r3: body has padding-top/bottom: env(safe-area-inset-*) which
+     consumes ~78px on notched iPhones. So min-height:100vh INSIDE that
+     body made .lscreen extend below the visible viewport, forcing scroll.
+     Subtract the safe-area insets from the height so .lscreen fits the
+     actually-visible content area. */
+  min-height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  min-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
   display: flex;
   flex-direction: column;
   position: relative;
