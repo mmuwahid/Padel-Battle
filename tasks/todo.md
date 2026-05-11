@@ -1,7 +1,66 @@
 # Active Work
 
-## NEXT SESSION (S076) — START HERE
-**Last session:** S075 (2026-05-11) — **1 push-direct commit `9c72c17`, SW v141 → v142, Edge Function `push-notify` v18 ACTIVE, Vercel deploy `dpl_2MUTDLtTriuAVnfWNJEJ1weQjV14` READY.** **FT-16 push-notify Edge Function branch:** `open_match` → `notif_challenges` pref + `/#schedule` deep-link + new `skip_in_app` flag (bypasses bell-row insertion when RPC has already inserted). **FT-16 client-side web push:** `sendPushNotification` signature extended with `opts.skip_in_app`; ScheduleView re-adds 3 push calls (create/lock/cancel) all with `skip_in_app:true`. **FT-16 LogMatch pre-fill:** `prefilledOpenMatch` + `onPrefilledHandled` props, useEffect pre-fills teams + date, insert includes `open_match_id` FK. **"Log Score" button** on locked `.omcard` visible only to participants. **App.jsx:** `prefilledOpenMatch` state + `handleLogOpenMatch` callback. **Login gap regression fix** (user screenshot mid-session): `.lhero` `flex:1` was leftover from splash sizing pushing auth form to bottom of viewport — moved `flex:1` to `.lscreen.splash .lhero` only. **SW v141 → v142.** **2 new validated patterns** (additive `skip_in_app` flag for migrating to RPC-inserted bell rows; CRLF line endings in /tmp break naive multi-line `.replace()`). **0 GitHub issues closed** — #71 ready to close after iPhone smoke test confirms end-to-end.
+## NEXT SESSION (S077) — START HERE
+**Last session:** S076 (2026-05-11) — **3 push-direct commits (`3dde01f` C2, `ecf33a9` C3, `fb21d37` C4), SW v142 → v143 → v144 → v145, ~585 net LOC across 11 file changes, 0 GitHub issues closed (#25 ready to close after iPhone smoke test).** Single-session ship of all 3 frontend commits from FT-15 v2 plan (plan estimated 2 sessions). **C2:** Pairs Roster admin UI in SeasonManagement + pairs state load in App.jsx + RPC wiring. **C3:** LogMatch pair-aware picker (2 dropdowns when format=pairs, shuffle hidden, edit-match reverse-resolves registered pair). **C4:** New `PairsRanking.jsx` (~200 LOC, 7-col Premier-Padel broadcast spec, podium with paired avatars, no ELO column visible) + App.jsx Ranking branch on format + PAIRS gold pill in `.lbbar`. **1 new mistake (#104) + 3 patterns** captured. FT-15 main features feature-complete. Both Issue #71 (FT-16) and Issue #25 (FT-15) ready to close after iPhone smoke test.
+
+### 🎯 S077 PRIORITY — smoke test S075 + S076 then close #71 + #25
+1. **iPhone smoke test of S076 ship (SW v145)** — verify (a) Pairs Roster admin in SeasonManagement when format=pairs: add/rename/delete pair flow, Add Pair button gated on 2+ roster (b) LogMatch pair-aware picker renders when current season is pairs, shuffle button hidden, pair selection sets tA/tB correctly, edit-match pre-selects registered pair (c) PairsRanking podium + table render with correct pair-ELO sort, EFF% computed correctly (d) PAIRS gold pill visible in Leaderboard title bar (e) individual-format seasons still render normal leaderboard.
+2. **Close GitHub Issue #71 (FT-16) + Issue #25 (FT-15)** after smoke test passes — both have shipped DB + frontend end-to-end.
+3. **FT-15 polish:**
+   - form strip (last-5 W/L dots per pair) on each table row
+   - Awards section (Most Active by pair, MOTM by player — Q9 keeps MOTM per-player)
+   - per-pair drill-in screen via existing `onPairDrillIn` prop hook (mirror PlayerStats for pairs)
+4. **LogMatch: read-only picker when `prefilledOpenMatch` is set** — leftover polish from S075. Show "From open match" badge + undo button.
+5. **PNG icon regen (#90 follow-up)** — export `/public/icons/icon.svg` → 192×192 + 512×512 PNGs + new `/og-image.png`.
+6. **Color sweep Note A from S069** — still awaiting user A1/A2/A3 decision.
+7. **Game Mode Phase 10 PR-D / PR-E** — SE/DE/RR active tournament views + BracketSVG color tokens.
+
+### S076 outcomes (this session — archived)
+- [x] C2: App.jsx loads pairs in loadLeagueData Promise.all
+- [x] C2: pairs state + LeagueContext exposure + reset on league switch
+- [x] C2: SeasonManagement pulls pairs from useLeague() context
+- [x] C2: Pair management state (showCreatePair / newPairA / newPairB / newPairName / pairBusy / editingPairId / editPairName / confirmDeletePair)
+- [x] C2: handleCreatePair → create_pair RPC
+- [x] C2: handleSavePairName → update_pair RPC
+- [x] C2: handleDeletePair → delete_pair RPC (DB refuses if pair has matches)
+- [x] C2: Pairs Roster section in Season Detail view (gated on format=pairs)
+- [x] C2: Overlapping-avatar pair cards + name/fallback display + inline rename + delete-with-confirm
+- [x] C2: Add Pair bottom-sheet modal with two-player dropdowns filtered to season roster
+- [x] C2: Add Pair button disabled until roster has 2+ players
+- [x] C2: `.sm-pairs / .sm-paircard / .sm-paircard-main / .sm-pairavi / .sm-pairnames-*` CSS
+- [x] C2: SW v142 → v143
+- [x] C2: Commit `3dde01f` pushed, Vercel READY
+- [x] C3: LogMatch `pairs` prop threaded from App.jsx
+- [x] C3: currentSeason / isPairsFormat / seasonPairs / selectedPairA / selectedPairB / pairLabel(pr) helper
+- [x] C3: useEffect selectedPairA → setTA([player_a_id, player_b_id])
+- [x] C3: useEffect selectedPairB → setTB([player_a_id, player_b_id])
+- [x] C3: useEffect em → reverse-resolve registered pair for edit pre-selection (unordered match)
+- [x] C3: Pair-aware picker JSX (2 dropdowns in pairs mode, 4 player slots in individual mode)
+- [x] C3: Shuffle button hidden in pairs mode
+- [x] C3: Empty-pair guard banner when seasonPairs.length < 2
+- [x] C3: SW v143 → v144
+- [x] C3: Commit `ecf33a9` pushed, Vercel READY
+- [x] C4: New PairsRanking.jsx (~200 LOC) — pairStats useMemo with MP/MW/ML/CW/EFF% computation
+- [x] C4: Unordered team-uuid[2] vs pair player_a/player_b detection
+- [x] C4: Sort by EFF% desc → MW desc → ELO desc tiebreakers
+- [x] C4: Empty state for "no pairs registered yet"
+- [x] C4: Podium (top 3) with paired-avatar cards + gold/silver/bronze styling
+- [x] C4: 7-column table per S072 user-approved mockup (# / Pair / MP / MW / ML / CW / EFF%, no ELO)
+- [x] C4: Top-3 rows tinted gold/silver/bronze
+- [x] C4: Info banner for "pairs exist but no matches yet"
+- [x] C4: App.jsx imports PairsRanking + Ranking tab branches on selectedSeason.format
+- [x] C4: PAIRS gold pill (.fmtpill-pairs) in season selector lbbar when format=pairs
+- [x] C4: New `.fmtpill / .fmtpill-pairs` + full `.prk-*` CSS class system
+- [x] C4: SW v144 → v145
+- [x] C4: Commit `fb21d37` pushed, Vercel QUEUED at session close
+- [x] Build clean after each of 3 commits (vite build)
+- [ ] iPhone smoke test pending (deferred to user)
+- [ ] Close GitHub Issue #25 + #71 after smoke test (deferred to S077)
+
+---
+
+## ARCHIVED — earlier session pointer (S075)
+**Earlier session:** S075 (2026-05-11) — **1 push-direct commit `9c72c17`, SW v141 → v142, Edge Function `push-notify` v18 ACTIVE, Vercel deploy `dpl_2MUTDLtTriuAVnfWNJEJ1weQjV14` READY.** **FT-16 push-notify Edge Function branch:** `open_match` → `notif_challenges` pref + `/#schedule` deep-link + new `skip_in_app` flag (bypasses bell-row insertion when RPC has already inserted). **FT-16 client-side web push:** `sendPushNotification` signature extended with `opts.skip_in_app`; ScheduleView re-adds 3 push calls (create/lock/cancel) all with `skip_in_app:true`. **FT-16 LogMatch pre-fill:** `prefilledOpenMatch` + `onPrefilledHandled` props, useEffect pre-fills teams + date, insert includes `open_match_id` FK. **"Log Score" button** on locked `.omcard` visible only to participants. **App.jsx:** `prefilledOpenMatch` state + `handleLogOpenMatch` callback. **Login gap regression fix** (user screenshot mid-session): `.lhero` `flex:1` was leftover from splash sizing pushing auth form to bottom of viewport — moved `flex:1` to `.lscreen.splash .lhero` only. **SW v141 → v142.** **2 new validated patterns** (additive `skip_in_app` flag for migrating to RPC-inserted bell rows; CRLF line endings in /tmp break naive multi-line `.replace()`). **0 GitHub issues closed** — #71 ready to close after iPhone smoke test confirms end-to-end.
 
 ### 🎯 S076 PRIORITY — smoke test S075 then close Issue #71
 1. **iPhone smoke test of S075 ship (SW v142)** — verify (a) login form no longer has gap below logo (b) FT-16 end-to-end: create open match → second account claims → 4th claim auto-shuffles teams → green-users notification fires → tap → ScheduleView green-flash on locked `.omcard` → tap "Log Score" button → LogMatch pre-filled with locked players + date → save → match appears in history with `open_match_id` FK + `open_matches.status='completed'`.
