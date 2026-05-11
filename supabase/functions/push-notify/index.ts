@@ -226,7 +226,7 @@ serve(async (req) => {
       });
     }
 
-    const { league_id, title, body, type, exclude_user_id, target_user_ids } = await req.json();
+    const { league_id, title, body, type, exclude_user_id, target_user_ids, skip_in_app } = await req.json();
 
     if (!league_id || !body) {
       return new Response(JSON.stringify({ error: "league_id and body required" }), {
@@ -257,6 +257,7 @@ serve(async (req) => {
       : type === "ranking" ? "notif_ranking"
       : type === "members" ? "notif_members"
       : type === "challenge" ? "notif_challenges"
+      : type === "open_match" ? "notif_challenges"
       : null;
 
     // Fetch push subscriptions via SECURITY DEFINER RPC (bypasses RLS)
@@ -287,6 +288,7 @@ serve(async (req) => {
 
     // Deep link: challenges → schedule tab, matches → history tab, others → home
     const pushUrl = type === "challenge" ? "/#schedule"
+      : type === "open_match" ? "/#schedule"
       : type === "match" ? "/#history"
       : "/";
     const payloadJson = JSON.stringify({
@@ -300,7 +302,8 @@ serve(async (req) => {
     // Insert in-app notifications — must respect user's notification preferences
     // (Bug #1 fix S038: previously ignored prefs and spammed bell for all members)
     // Use 'filtered' which has type-preference applied; fall back to membership for users without subscriptions.
-    try {
+    // S075: skip_in_app=true bypasses bell-row insertion when an RPC has already inserted them (avoids dupes for FT-16 open_match flows).
+    if (!skip_in_app) try {
       // Subscribed users who have this notification type enabled
       const subscribedAllowedIds = new Set(filtered.map((s: any) => s.user_id));
       // Users who have NOT subscribed to push at all → still get in-app bell unless they're the sender

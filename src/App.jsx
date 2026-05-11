@@ -70,6 +70,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
   // to the matching .mcard, flashes a highlight, then calls onScrolled() to clear.
   const [scrollToMatchId,setScrollToMatchId]=useState(null);
   // S074 FT-16: deep-link target for an open-match card (notification click-through).
+  const [prefilledOpenMatch,setPrefilledOpenMatch]=useState(null);
   const [scrollToOpenMatchId,setScrollToOpenMatchId]=useState(null);
   const [selectedSeason,setSelectedSeason]=useState(null);
   const [tournament,setTournament]=useState(null);
@@ -119,6 +120,12 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
 
   // S070 Issue #79: route a NotificationCenter click to its destination tab/screen.
   // Declared after sidebarHistory state so the setter is in TDZ-safe scope.
+  // S075 FT-16: navigate to LogMatch with an open_match pre-filled.
+  const handleLogOpenMatch = useCallback((om) => {
+    setPrefilledOpenMatch(om);
+    setTab("log");
+  }, []);
+
   const handleNotifNavigate = useCallback((target) => {
     if (!target) return;
     // Always close the notif drawer + sidebar overlay before routing.
@@ -663,13 +670,16 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
   };
 
   // Send push notification via Edge Function. target_user_ids = array of user IDs to notify (optional — defaults to all league members)
-  const sendPushNotification = async (type, title, body, body_text, target_user_ids) => {
+  const sendPushNotification = async (type, title, body, body_text, target_user_ids, opts) => {
     // Allow legacy 4-arg call: sendPushNotification(type, title, body, target_user_ids)
     // when arg 4 is array, treat it as target_user_ids and arg 3 as body
     if (Array.isArray(body_text)) { target_user_ids = body_text; body_text = undefined; }
+    // S075 FT-16: also accept opts object in body_text slot (when caller passes null body_text + opts)
+    if (body_text && typeof body_text === "object" && !Array.isArray(body_text) && body_text.skip_in_app !== undefined) { opts = body_text; body_text = undefined; }
     try {
       const payload = { league_id: leagueId, type, title, body, exclude_user_id: user.id };
       if (target_user_ids) payload.target_user_ids = target_user_ids;
+      if (opts && opts.skip_in_app) payload.skip_in_app = true;
       const { data, error } = await supabase.functions.invoke("push-notify", { body: payload });
       // Bug #4 fix S038: surface push send results in console for diagnostics (DEV-only since S042)
       if (import.meta.env.DEV) {
@@ -1324,6 +1334,8 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
           onSave={loadLeagueData}
           showToast={showToast}
           sendPushNotification={sendPushNotification}
+          prefilledOpenMatch={prefilledOpenMatch}
+          onPrefilledHandled={()=>setPrefilledOpenMatch(null)}
         />
       )}
 
@@ -1370,6 +1382,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
               claimedPlayer={claimedPlayer}
               scrollToOpenMatchId={scrollToOpenMatchId}
               onOpenMatchScrolled={()=>setScrollToOpenMatchId(null)}
+              onLogOpenMatch={handleLogOpenMatch}
               sel={{width:"100%",padding:"10px",background:CD2,border:`1px solid ${BD}`,borderRadius:8,color:TX,fontSize:13,fontFamily: "var(--font)"}}
             />
           </div>

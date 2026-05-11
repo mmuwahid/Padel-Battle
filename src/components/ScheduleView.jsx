@@ -6,7 +6,7 @@ import { ScoreStepper } from './ScoreStepper';
 import { validateMatch } from '../utils/scoringEngine';
 import Icon from './Icon';
 
-export function ScheduleView({challenges,players,matches,supabase,leagueId,user,getName,isAdmin,onUpdate,showToast,sendPushNotification,sel,elo,seasonId,openMatches,openMatchPlayers,claimedPlayer,scrollToOpenMatchId,onOpenMatchScrolled}){
+export function ScheduleView({challenges,players,matches,supabase,leagueId,user,getName,isAdmin,onUpdate,showToast,sendPushNotification,sel,elo,seasonId,openMatches,openMatchPlayers,claimedPlayer,scrollToOpenMatchId,onOpenMatchScrolled,onLogOpenMatch}){
   const [showForm,setShowForm]=useState(false);
   const [step,setStep]=useState(1); // 1=teams, 2=date/venue
   const [showShuffler,setShowShuffler]=useState(false); // FT-08
@@ -97,10 +97,13 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
       });
       if(error)throw error;
       showToast("Match opened to league — waiting for 3 more players");
-      // S074 FT-16: in-app notification rows for all league members are inserted by
-      // create_open_match RPC server-side (Lesson #54 — single source of truth to
-      // avoid duplicates with push-notify Edge Function). Web push delivery is a
-      // S074+ follow-up via pg_net / trigger pattern.
+      // S074 FT-16: in-app bell rows inserted by create_open_match RPC server-side
+      // (single source of truth — Lesson #54). S075 FT-16: web push fires here with
+      // skip_in_app=true so the Edge Function does not duplicate bell rows.
+      if(sendPushNotification){
+        const dateStr=formatDate(date);
+        sendPushNotification("open_match","New open match",`${getName(claimedPlayer)} opened a match on ${dateStr} — claim a spot.`,null,null,{skip_in_app:true});
+      }
       setShowForm(false);setStep(1);setMatchType("private");
       setNotes("");setLocation("");
       if(onUpdate)onUpdate();
@@ -116,8 +119,16 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
       if(error)throw error;
       if(data?.status==="locked"){
         showToast("Match locked in — teams shuffled!");
-        // S074 FT-16: 'locked' notification rows for all 4 participants are
-        // inserted by join_open_match RPC server-side (single source of truth).
+        // S074 FT-16: bell rows inserted by join_open_match RPC (single source).
+        // S075 FT-16: web push to all 4 participants with skip_in_app=true.
+        if(sendPushNotification && data?.team_a && data?.team_b){
+          const allUids=[...(data.team_a||[]),...(data.team_b||[])]
+            .map(pid=>players.find(p=>p.id===pid)?.user_id)
+            .filter(Boolean);
+          if(allUids.length){
+            sendPushNotification("open_match","Match locked in!","All 4 players in — teams shuffled. Tap to view.",null,allUids,{skip_in_app:true});
+          }
+        }
       } else {
         showToast(`Spot claimed (${data?.count||"?"}/4)`);
       }
@@ -141,8 +152,15 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
       const {error}=await supabase.rpc("cancel_open_match",{p_open_match_id:omId});
       if(error)throw error;
       showToast("Match cancelled");
-      // S074 FT-16: 'cancelled' notification rows for all signed-up players are
-      // inserted by cancel_open_match RPC server-side.
+      // S074 FT-16: bell rows inserted by cancel_open_match RPC (single source).
+      // S075 FT-16: web push to all previously signed-up players, skip_in_app=true.
+      if(sendPushNotification){
+        const signups=(openMatchPlayers||[]).filter(p=>p.open_match_id===omId);
+        const uids=signups.map(s=>players.find(p=>p.id===s.player_id)?.user_id).filter(Boolean);
+        if(uids.length){
+          sendPushNotification("open_match","Open match cancelled","Tap to see other open matches.",null,uids,{skip_in_app:true});
+        }
+      }
       if(onUpdate)onUpdate();
     }catch(err){showToast(err.message||"Failed to cancel","error");}
     finally{setOmBusy(false);}
@@ -299,6 +317,7 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
             const isOrganizer=claimedPlayer?.id===om.organizer_id;
             const youSignedUp=claimedPlayer?signedUpIds.includes(claimedPlayer.id):false;
             const isLocked=om.status==="locked";
+            const isParticipant = isLocked && claimedPlayer && ((om.team_a_player_ids||[]).includes(claimedPlayer.id) || (om.team_b_player_ids||[]).includes(claimedPlayer.id));
             const dt=new Date(om.scheduled_at);
             const dateStr=dt.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short"}).toUpperCase();
             const timeStr=dt.toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"});
@@ -352,6 +371,9 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
                   )}
                   {!isLocked && (isOrganizer || isAdmin) && (
                     <button className="omcard-btn danger" disabled={omBusy} onClick={()=>cancelOpenMatch(om.id)}>Cancel</button>
+                  )}
+                  {isLocked && isParticipant && onLogOpenMatch && (
+                    <button className="omcard-btn primary" onClick={()=>onLogOpenMatch(om)}>Log Score</button>
                   )}
                   {isLocked && (isOrganizer || isAdmin) && (
                     <button className="omcard-btn ghost" disabled={omBusy} onClick={()=>cancelOpenMatch(om.id)}>Cancel</button>

@@ -353,7 +353,6 @@ body {
   pointer-events: none;
 }
 .lhero {
-  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -367,6 +366,7 @@ body {
   z-index: 1;
 }
 .lscreen.splash .lhero {
+  flex: 1;
   /* S073: splash variant — logo positioned ~20% above true center for the
      opening loading screen (App.jsx splash). Form-bearing screens use the
      compact default above. */

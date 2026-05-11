@@ -9,7 +9,7 @@ import Icon from './Icon';
 // + Phase 9's new .modebar/.modebtn/.sccard/.cstep/.csbtn/.csval/.livebi/.acbtn/.mvpcard/.savebtn etc.
 // Behavior preserved: 2/3 set toggle, Manual entry, LIVE scoring engine, FT-09 approval flow,
 // FT-09b FIP validation, dead-rubber auto-truncate, post-save broadcast push.
-export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goBack,sel,lbl,getName,seasonId,seasons,setCurSeason,onSave,showToast,sendPushNotification}){
+export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goBack,sel,lbl,getName,seasonId,seasons,setCurSeason,onSave,showToast,sendPushNotification,prefilledOpenMatch,onPrefilledHandled}){
   const isE=!!em;
   const [tA,setTA]=useState(["",""]);
   const [tB,setTB]=useState(["",""]);
@@ -26,6 +26,25 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
   const [liveNs,setLiveNs]=useState(3);
   const [invalidIdx,setInvalidIdx]=useState([]);
   const [validationError,setValidationError]=useState("");
+  // S075 FT-16: hold the open_match id so we can attach it to the insert payload.
+  const [openMatchId,setOpenMatchId]=useState(null);
+
+  // S075 FT-16: pre-fill teams from a locked open_match.
+  useEffect(()=>{
+    if(!prefilledOpenMatch)return;
+    const ta=prefilledOpenMatch.team_a_player_ids||[];
+    const tb=prefilledOpenMatch.team_b_player_ids||[];
+    if(ta.length===2 && tb.length===2){
+      setTA([ta[0],ta[1]]);
+      setTB([tb[0],tb[1]]);
+      setOpenMatchId(prefilledOpenMatch.id);
+      // Pre-fill date from scheduled_at if it exists
+      if(prefilledOpenMatch.scheduled_at){
+        const d=new Date(prefilledOpenMatch.scheduled_at);
+        setDate(d.toISOString().split("T")[0]);
+      }
+    }
+  },[prefilledOpenMatch]);
 
   useEffect(()=>{
     if(em){
@@ -102,7 +121,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
       }else{
         const {data:inserted,error}=await supabase
           .from("matches")
-          .insert({league_id:leagueId,season_id:seasonId,date,team_a:[...tA],team_b:[...tB],sets:as,motm:motm||null,logged_by:user.id})
+          .insert({league_id:leagueId,season_id:seasonId,date,team_a:[...tA],team_b:[...tB],sets:as,motm:motm||null,logged_by:user.id,open_match_id:openMatchId||null})
           .select("status")
           .single();
         if(error)throw error;
@@ -124,6 +143,8 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
       setSaved(true);
       setTimeout(()=>setSaved(false),2000);
       if(onSave)onSave();
+      // S075 FT-16: clear the open_match handoff so a subsequent log doesnt re-attach.
+      if(openMatchId){ setOpenMatchId(null); if(onPrefilledHandled) onPrefilledHandled(); }
       const isPending = !isE && insertedStatus === "pending";
       const isIncompleteSaved = !isE && insertedStatus === "incomplete";
       if(showToast){
