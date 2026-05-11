@@ -1775,6 +1775,49 @@ body {
 .sm-rost-n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .sm-rost-s{font-family:var(--mono);font-size:10px;color:var(--muted);font-weight:700;display:inline-flex;align-items:center;gap:4px;}
 .sm-rost.on .sm-rost-s{color:var(--accent);}
+/* S076 FT-15 C4: PAIRS format pill in Leaderboard title bar */
+.fmtpill{display:inline-flex;align-items:center;justify-content:center;padding:3px 8px;border-radius:999px;font-family:var(--mono);font-size:9px;font-weight:800;letter-spacing:.05em;}
+.fmtpill-pairs{background:linear-gradient(135deg,rgba(245,158,11,.18),rgba(245,158,11,.08));color:#f59e0b;border:1px solid rgba(245,158,11,.45);}
+
+/* S076 FT-15 C4: Pairs Ranking screen (PairsRanking.jsx) */
+.prk{display:flex;flex-direction:column;gap:20px;}
+.prk-empty{padding:36px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--muted);}
+.prk-empty-t{font-family:var(--font);font-weight:800;font-size:15px;color:var(--text);}
+.prk-empty-s{font-size:12px;line-height:1.5;max-width:280px;}
+.prk-podium{display:grid;grid-template-columns:1fr 1.1fr 1fr;align-items:end;gap:8px;padding:8px 0;}
+.prk-pod{padding:14px 10px;border-radius:14px;background:var(--surface-2);border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;transition:transform .12s;}
+.prk-pod:active{transform:scale(.98);}
+.prk-pod.p1{padding-bottom:20px;background:linear-gradient(180deg,rgba(245,158,11,.15),var(--surface-2));border-color:rgba(245,158,11,.45);}
+.prk-pod.p2{background:linear-gradient(180deg,rgba(192,192,192,.08),var(--surface-2));}
+.prk-pod.p3{background:linear-gradient(180deg,rgba(205,127,50,.1),var(--surface-2));}
+.prk-podh{font-family:var(--mono);font-size:10px;font-weight:800;color:var(--muted);}
+.prk-pod.p1 .prk-podh{color:#f59e0b;font-size:13px;}
+.prk-podavi{display:flex;align-items:center;}
+.prk-podavi .prk-avi{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#22c55e);color:#000;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;font-family:var(--font);}
+.prk-podavi .prk-avi+.prk-avi{margin-left:-10px;border:2px solid var(--surface-2);}
+.prk-podname{font-family:var(--font);font-weight:700;font-size:11px;text-align:center;line-height:1.2;color:var(--text);}
+.prk-podwl{font-family:var(--mono);font-size:10px;display:flex;gap:6px;}
+.prk-podpct{font-family:var(--mono);font-weight:800;font-size:13px;color:var(--text);}
+.prk-tbl{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.prk-trow{display:grid;grid-template-columns:24px minmax(110px,1.5fr) 38px 38px 38px 38px 52px;align-items:center;gap:6px;padding:10px 10px;border-bottom:1px solid rgba(74,222,128,.04);cursor:pointer;}
+.prk-trow:last-child{border-bottom:0;}
+.prk-trow.prk-thead{background:rgba(74,222,128,.05);border-bottom:1px solid var(--border);cursor:default;font-family:var(--mono);font-size:9px;font-weight:800;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;}
+.prk-trow.prk-r1{background:linear-gradient(90deg,rgba(245,158,11,.06),transparent);}
+.prk-trow.prk-r2{background:linear-gradient(90deg,rgba(192,192,192,.04),transparent);}
+.prk-trow.prk-r3{background:linear-gradient(90deg,rgba(205,127,50,.05),transparent);}
+.prk-cell{font-family:var(--font);font-size:13px;color:var(--text);}
+.prk-c-num{font-family:var(--mono);font-weight:800;color:var(--muted);text-align:center;}
+.prk-c-pair{display:flex;align-items:center;gap:8px;min-width:0;}
+.prk-pairavis{display:flex;align-items:center;flex-shrink:0;}
+.prk-pairavis .prk-avi{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#22c55e);color:#000;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;font-family:var(--font);}
+.prk-pairavis .prk-avi+.prk-avi{margin-left:-9px;border:2px solid var(--surface);}
+.prk-pairmeta{min-width:0;flex:1;}
+.prk-pairtit{font-family:var(--font);font-weight:700;font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.prk-pairsub{font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.prk-c-stat{font-family:var(--mono);font-weight:700;text-align:center;font-size:12px;}
+.prk-c-eff{font-family:var(--mono);font-weight:800;text-align:right;font-size:13px;color:var(--accent);}
+.prk-note{display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:10px;font-size:11px;color:var(--muted);}
+
 /* S076 FT-15: Pairs Roster admin cards */
 .sm-pairs{margin-top:20px;}
 .sm-paircard{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;}

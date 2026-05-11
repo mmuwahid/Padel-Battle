@@ -14,6 +14,7 @@ import { AdminDashboard } from './components/AdminDashboard';
 import { PlayerManagement } from './components/PlayerManagement';
 import { ApprovalQueueScreen } from './components/ApprovalQueueScreen';
 import { SeasonManagement } from './components/SeasonManagement';
+import { PairsRanking } from './components/PairsRanking';
 import { LeagueManagement } from './components/LeagueManagement';
 import { PlatformAdmin } from './components/PlatformAdmin';
 import { SettingsView } from './components/SettingsView';
@@ -1105,12 +1106,26 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
           {/* Title + season selector */}
           <div className="lbbar">
             <h2 className="lbtitle">Leaderboard</h2>
+            {seasons.find(s=>s.id===selectedSeason)?.format==="pairs" && (
+              <span className="fmtpill fmtpill-pairs">PAIRS</span>
+            )}
             {seasons.length>0 && (
               <select className="spill" value={selectedSeason||""} onChange={e=>setSelectedSeason(e.target.value)}>
                 {seasons.map(s=><option key={s.id} value={s.id}>{s.name}{s.active?" (active)":""}</option>)}
               </select>
             )}
           </div>
+
+          {/* S076 FT-15 C4: branch to PairsRanking for pairs-format seasons */}
+          {selectedSeason && seasons.find(s=>s.id===selectedSeason)?.format==="pairs" ? (
+            <PairsRanking
+              pairs={(pairs||[]).filter(pr=>pr.season_id===selectedSeason)}
+              matches={approvedMatches.filter(m=>m.season_id===selectedSeason)}
+              players={players}
+              getName={getName}
+              onPairDrillIn={null}
+            />
+          ) : (<>
 
           {/* Season Awards Section — only shown for ended seasons */}
           {selectedSeason && !seasons.find(s=>s.id===selectedSeason)?.active && (() => {
@@ -1315,6 +1330,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
             </div>
           )}
 
+          </>)}
         </div>
       )}
 
