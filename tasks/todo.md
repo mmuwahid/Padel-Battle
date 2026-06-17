@@ -1,22 +1,39 @@
 # Active Work
 
-## NEXT SESSION (S078) — START HERE
-**Last session:** S077 (2026-05-11) — **~22 push-direct commits, SW v145 → v162, 16 named DB migrations, 2 GitHub issues closed (#71 FT-16, #25 FT-15), 1 new issue opened (#92 pairs season stats isolation), ~8h mega-session across 16 ship rounds.** Permission audit + reconciliation locked the 3-role model (owner / league admin / member). League Management restructured into single home with parent/detail pattern. Atomic create_league + delete_league + delete_season RPCs eliminate multi-step write races. Pending Review unlock root-caused and fixed via auto-player creation + backfill. Visual sweeps: logo PadelLogoSmall→PadelHubMarkHeader across 4 auth screens, all emoji→SVG (trophy/tennis-ball/bar-chart/star/users/flame/crown), avatars use player.avatar_url across PairsRanking + PlatformAdmin. Login fits notched iPhones via 100dvh + safe-area subtraction. Scroll-to-top on submenu nav. Danger Zone delete pattern adopted for leagues + seasons (hard delete with matches allowed for owner/platform-admin). All r16 tests confirmed PASS by user. Final commit `95b39b7` live on SW v162.
+## NEXT SESSION (S080) — START HERE
+**Last session:** S079 (2026-06-17) — **9 PRs merged (#97/#100/#101/#102/#103/#104/#105/#106/#107), SW v166 → v179, 1 DB migration (`s079_platform_admin_select_visibility`).** Cold-start after 37-day gap. /tmp/Padel-Battle re-cloned fresh. **Shipped Issues #95 (Liquid Glass V2 Standard), #96 (Partner Games Differential), #98 (Admin Management UI re-added), #99 (Platform Admin RLS visibility + client override + Pending Review lockout bypass).** Partnership Ranking iterated through 5 PRs (initial → medal/EFF%/last-5-under-name → leaderboard styling parity → pair-col left-align → flanking avatars + slash separator). Mockup-first cadence for #95 (4 variants reviewed before code). Best/Worst Pairs flashcards drop GD chip + use `/` separator. ScheduleView empty-state 📅 → calendar SVG. Platform Admin back-nav fixed (lmDetailFromPlatform flag). 2 new lessons + 5 validated patterns. Production live at padel-battle.vercel.app on SW v179.
 
-### 🎯 S078 PRIORITY — pairs season stats isolation (Issue #92)
-1. **Issue #92 — pairs season stats should not feed individual leaderboard/analytics.** Right now pair-format season matches are recomputing per-player stats (winRate, MP, MW, ML, MOTM rankings) and feeding into the individual leaderboard. Needs:
-   - Filter PlayerStats analytics queries by `season.format` — exclude pairs seasons from individual stat aggregations
-   - Add a Pairs sub-tab to the Players screen that shows per-pair stats (mirror PlayerStats layout but with pair grouping)
-   - Verify pair-ELO trigger only fires for `format='pairs'` matches (was wired in S072 — re-verify after this session's RPC churn)
-   - Ensure ranking screen for an individual-format season doesn't include matches from pair-format seasons
-2. **PNG icon regen** (#90 follow-up) — already shipped in S077 r5 (icon.svg + scripts/generate-pwa-icons.js) — verify WhatsApp/iMessage preview shows new green orb (cache-buster `?v=146`).
-3. **Color sweep Note A from S069** — still awaiting user A1/A2/A3 decision (`#9090a4` vs spec `#555555` vs redefine `--muted`).
-4. **Game Mode Phase 10 PR-D / PR-E** — SE/DE/RR active tournament views (needs state-based score input refactor first) + BracketSVG color tokens.
-5. **FT-15 polish (deferred from S076):**
+### 🎯 PENDING USER SMOKE-TEST (S079 ships)
+- **Issue #92 — pairs season stats isolation + PairsList + PairStats drill-in + Analytics** (from S078 ship, still 🔍 SMOKE-TEST PENDING from previous session)
+- **Issue #95 — Liquid Glass V2 Standard** (SW v172) → 🔍 SMOKE-TEST PENDING
+- **Issue #96 — Partner Games Differential + Partnership Ranking + clickable analytics + calendar SVG** (SW v171) → 🔍 SMOKE-TEST PENDING
+- **Issue #98 — Admin Management UI re-added (owner promote/demote)** (SW v173 via #101) → 🔍 SMOKE-TEST PENDING
+- **Issue #99 — Platform Admin RLS visibility + client override + Pending Review bypass** (SW v174 via #101+#102) → 🔍 SMOKE-TEST PENDING
+- **Platform Admin back-nav fix** (SW v175 via #103) → 🔍 SMOKE-TEST PENDING
+- **Partnership Ranking polish: medals 🥇🥈🥉, EFF%, Last-5 under name, leaderboard styling, pair-col left-align, flanking avatars, slash separator** (SW v175→v179 via #103/#104/#105/#106/#107) → 🔍 SMOKE-TEST PENDING
+
+**Smoke-test path for S079 ships:**
+1. Hard-refresh PWA to pick up SW v179
+2. Tap FAB / Sign In / Save Match / Schedule Match / league cards → Liquid Glass V2 effect plays (radial + scale + blur + tint)
+3. Player drill-in → Analytics → Partners → Best/Worst Pairs cards show "/" separator, no GD chip. Partnership Ranking shows medals on top 3, single-shade Last-5 dots beneath pair name, EFF% column, MW green / ML red, both player avatars flanking the pair name
+4. Tap any analytics row name (MOTM Ranking / Longest Winning Streak / Longest Losing Streak / Most Active / Highest Win Rates) → drills into player profile
+5. Tap any avatar in Partnership Ranking → drills into THAT specific player
+6. Matches → Schedule with no upcoming → calendar Icon SVG (not emoji)
+7. Owner of a league → Admin Dashboard → League Management → see Admin Management section with Promote/Demote per non-owner member
+8. Platform Admin → tap a league NOT owned by you → opens regular UI (NOT Pending Review lockout); Player Mgmt + Season Mgmt show real data; Back → returns to Platform Admin (not LM list)
+9. Report any iPhone-only render/spacing issues for fix-forward
+
+### 🎯 S080 PRIORITY (post-smoke-test next session)
+1. Address any feedback from S079 smoke-test
+2. Close Issues #92/#95/#96/#98/#99 via `gh issue close` once user confirms PASS
+3. **Issue #94 — UI responsive sizing for iPhone 13** (leaderboard name truncation) — still open, not addressed in S079
+4. **Color sweep Note A from S069** — still awaiting user A1/A2/A3 decision (`#9090a4` vs spec `#555555` vs redefine `--muted`).
+5. **Game Mode Phase 10 PR-D / PR-E** — SE/DE/RR active tournament views (needs state-based score input refactor first) + BracketSVG color tokens.
+4. **FT-15 polish (deferred from S076):**
    - form strip (last-5 W/L dots per pair) on each pairs leaderboard row
    - Awards section in pairs ranking (Most Active by pair, MOTM by player — keeps MOTM per-player)
-   - per-pair drill-in screen via existing `onPairDrillIn` prop hook
-6. **LogMatch read-only picker when `prefilledOpenMatch` is set** — show "From open match" badge + undo button. ~30 lines.
+   - per-pair drill-in screen via existing `onPairDrillIn` prop hook on PairsRanking (note: drill-in now exists via PairsList tap — may need to wire from PairsRanking too)
+5. **LogMatch read-only picker when `prefilledOpenMatch` is set** — show "From open match" badge + undo button. ~30 lines.
 
 ### S077 outcomes (this session — archived)
 - [x] Cross-PC cold start + retrospective S074 session log (was missing)
