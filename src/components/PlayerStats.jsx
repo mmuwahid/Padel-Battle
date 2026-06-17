@@ -455,7 +455,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                 <div className="pair-row">
                   <div className="pair-avi">{getAvatar(analyticsData.bestPartnership.a)?<img src={getAvatar(analyticsData.bestPartnership.a)} alt=""/>:getName(analyticsData.bestPartnership.a)[0]}</div>
                   <div className="pair-mid">
-                    <div className="pair-names">{getName(analyticsData.bestPartnership.a)} x {getName(analyticsData.bestPartnership.b)}</div>
+                    <div className="pair-names">{getName(analyticsData.bestPartnership.a)} / {getName(analyticsData.bestPartnership.b)}</div>
                     <div className="pair-rec">{analyticsData.bestPartnership.w}W-{analyticsData.bestPartnership.l}L ({Math.round(analyticsData.bestPartnership.w/(analyticsData.bestPartnership.w+analyticsData.bestPartnership.l)*100)}%)</div>
                   </div>
                   <div className="pair-avi">{getAvatar(analyticsData.bestPartnership.b)?<img src={getAvatar(analyticsData.bestPartnership.b)} alt=""/>:getName(analyticsData.bestPartnership.b)[0]}</div>
@@ -467,7 +467,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                   <div className="pair-row">
                     <div className="pair-avi dg">{getAvatar(analyticsData.worstPartnership.a)?<img src={getAvatar(analyticsData.worstPartnership.a)} alt=""/>:getName(analyticsData.worstPartnership.a)[0]}</div>
                     <div className="pair-mid">
-                      <div className="pair-names">{getName(analyticsData.worstPartnership.a)} x {getName(analyticsData.worstPartnership.b)}</div>
+                      <div className="pair-names">{getName(analyticsData.worstPartnership.a)} / {getName(analyticsData.worstPartnership.b)}</div>
                       <div className="pair-rec dg">{analyticsData.worstPartnership.w}W-{analyticsData.worstPartnership.l}L ({Math.round(analyticsData.worstPartnership.w/(analyticsData.worstPartnership.w+analyticsData.worstPartnership.l)*100)}%)</div>
                     </div>
                     <div className="pair-avi dg">{getAvatar(analyticsData.worstPartnership.b)?<img src={getAvatar(analyticsData.worstPartnership.b)} alt=""/>:getName(analyticsData.worstPartnership.b)[0]}</div>
