@@ -504,20 +504,44 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                       <div className={`lbrank ${i<3?"medal":"num"}`} style={{color:i===0?"#facc15":i===1?"#94a3b8":i===2?"#c97b2e":"#9090a4"}}>
                         {medal || (i+1)}
                       </div>
-                      <div className="lbpinfo" style={{alignItems:"flex-start",textAlign:"left",gap:4,minWidth:0}}>
+                      {/* S079: player A avatar | pair name + last5 | player B avatar.
+                          Avatars are clickable to drill into each player individually. */}
+                      <div style={{display:"flex",alignItems:"center",gap:6,minWidth:0}}>
                         <button
                           onClick={()=>setSp(p.a)}
-                          className="lbn"
-                          style={{background:"transparent",border:"none",padding:0,cursor:"pointer",color:"inherit",textAlign:"left",display:"block",width:"100%"}}
+                          className="lbavi"
+                          style={{width:24,height:24,fontSize:11,flexShrink:0,padding:0,cursor:"pointer"}}
                           title={`Open ${getName(p.a)}'s profile`}
                         >
-                          {getName(p.a)} <span style={{color:"#9090a4",fontWeight:400}}>x</span> {getName(p.b)}
+                          {getAvatar(p.a)
+                            ? <img src={getAvatar(p.a)} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                            : (getName(p.a)[0]||"?").toUpperCase()}
                         </button>
-                        {last5.length>0 && (
-                          <div className="form-dots" style={{justifyContent:"flex-start"}}>
-                            {last5.map((r,j)=><div key={j} className={`fdot ${r==="W"?"w":"l"}`}/>)}
-                          </div>
-                        )}
+                        <div className="lbpinfo" style={{alignItems:"flex-start",textAlign:"left",gap:4,minWidth:0,flex:1}}>
+                          <button
+                            onClick={()=>setSp(p.a)}
+                            className="lbn"
+                            style={{background:"transparent",border:"none",padding:0,cursor:"pointer",color:"inherit",textAlign:"left",display:"block",width:"100%"}}
+                            title={`Open ${getName(p.a)}'s profile`}
+                          >
+                            {getName(p.a)} <span style={{color:"#9090a4",fontWeight:400}}>/</span> {getName(p.b)}
+                          </button>
+                          {last5.length>0 && (
+                            <div className="form-dots" style={{justifyContent:"flex-start"}}>
+                              {last5.map((r,j)=><div key={j} className={`fdot ${r==="W"?"w":"l"}`}/>)}
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          onClick={()=>setSp(p.b)}
+                          className="lbavi"
+                          style={{width:24,height:24,fontSize:11,flexShrink:0,padding:0,cursor:"pointer"}}
+                          title={`Open ${getName(p.b)}'s profile`}
+                        >
+                          {getAvatar(p.b)
+                            ? <img src={getAvatar(p.b)} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                            : (getName(p.b)[0]||"?").toUpperCase()}
+                        </button>
                       </div>
                       <div className="lbc" style={{justifyContent:"center"}}>{mp}</div>
                       <div className="lbc w" style={{justifyContent:"center",color:p.w>0?"var(--win)":"#9090a4"}}>{p.w}</div>
