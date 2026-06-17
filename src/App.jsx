@@ -24,6 +24,7 @@ import { NotificationCenter } from './components/NotificationCenter';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { LeagueContext } from './LeagueContext';
 import { VAPID_PUBLIC_KEY } from './vapidPublicKey';
+import { PLATFORM_ADMIN_ID } from './components/PlatformAdmin';
 
 // Convert VAPID public key from base64 URL to Uint8Array (required by pushManager.subscribe)
 function urlBase64ToUint8Array(base64String) {
@@ -410,9 +411,12 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
       setLeague(leagueData);
       // S044/FT-09: Split owner vs admin. Owner = league creator (cannot be demoted).
       // Admin = owner OR league_members.role='admin' (can be promoted/demoted by owner).
-      const owner = leagueData?.created_by === user.id;
+      // S079 Issue #99: Platform Admin elevates to owner+admin in ANY league they're
+      // viewing, so Player/Season Management buttons unlock + data renders.
+      const isPlatform = user.id === PLATFORM_ADMIN_ID;
+      const owner = leagueData?.created_by === user.id || isPlatform;
       setIsOwner(owner);
-      setIsAdmin(owner || memberData?.role==="admin");
+      setIsAdmin(owner || memberData?.role==="admin" || isPlatform);
       setMyMemberId(memberData?.id || null);
 
       if(membersData){
@@ -1018,6 +1022,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
     user, elo, seasons, selectedSeason, setSelectedSeason, isAdmin, isOwner, myMemberId, leagueMembers, memberProfiles,
     getName, showToast, sendPushNotification, loadLeagueData,
     openMatches, openMatchPlayers, pairs, seasonRosters, claimedPlayer,
+    updateMemberRole,
   };
 
   return (
