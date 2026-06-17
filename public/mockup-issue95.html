@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0d0d14">
+<title>Issue #95 — Liquid Glass Mockup</title>
+<style>
+  :root {
+    --bg: #0d0d14;
+    --bg2: #12121a;
+    --surface: #1a1a26;
+    --border: #2a2a3a;
+    --tx: #e4e4ef;
+    --mt: #9090a4;
+    --accent: #4ADE80;
+    --danger: #f87171;
+    --gold: #FFD700;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--tx); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; overscroll-behavior-y: contain; }
+  body { padding: 14px 14px 80px; max-width: 480px; margin: 0 auto; }
+  h1 { font-size: 18px; margin: 4px 0 2px; font-weight: 800; }
+  .sub { font-size: 12px; color: var(--mt); margin-bottom: 14px; }
+  .var-section { margin-bottom: 18px; }
+  .var-h { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--bg2); border: 1px solid var(--border); border-radius: 12px 12px 0 0; border-bottom: none; }
+  .var-num { width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: #000; font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+  .var-title { font-size: 14px; font-weight: 700; }
+  .var-desc { font-size: 11px; color: var(--mt); margin-left: auto; text-align: right; max-width: 60%; line-height: 1.3; }
+  .var-body { background: var(--bg2); border: 1px solid var(--border); border-radius: 0 0 12px 12px; padding: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .var-body .col { display: flex; flex-direction: column; gap: 10px; }
+  .var-body .col-label { font-size: 9px; color: var(--mt); letter-spacing: 1px; text-transform: uppercase; font-weight: 700; }
+
+  /* Common base on all liquid-press surfaces */
+  .lp {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .lp::before {
+    /* Radial highlight from tap origin */
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(circle var(--lp-r, 0px) at var(--lp-x, 50%) var(--lp-y, 50%), var(--accent) 0%, transparent 70%);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 1;
+    mix-blend-mode: screen;
+  }
+  .lp::after {
+    /* Translucent accent overlay tint */
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: var(--accent);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 0;
+    transition: opacity 200ms ease;
+  }
+  .lp.pressing::before { animation: lp-radial 600ms ease-out forwards; }
+  .lp.pressing::after { opacity: var(--lp-tint, 0.08); }
+
+  @keyframes lp-radial {
+    0%   { opacity: var(--lp-h, 0.25); --lp-r: 0px; }
+    40%  { opacity: var(--lp-h, 0.25); }
+    100% { opacity: 0; --lp-r: 220px; }
+  }
+
+  /* ============ V1: SUBTLE ============ */
+  .v1 .lp { transition-duration: 180ms; --lp-tint: 0.05; --lp-h: 0.15; }
+  .v1 .lp.pressing { transform: scale(0.98); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+  .v1 .lp.pressing::after { transition-duration: 100ms; }
+
+  /* ============ V2: STANDARD ============ */
+  .v2 .lp { transition-duration: 220ms; --lp-tint: 0.10; --lp-h: 0.28; }
+  .v2 .lp.pressing { transform: scale(0.96); backdrop-filter: blur(4px) saturate(160%); -webkit-backdrop-filter: blur(4px) saturate(160%); }
+  .v2 .lp.pressing::after { transition-duration: 150ms; }
+
+  /* ============ V3: PRONOUNCED ============ */
+  .v3 .lp { transition-duration: 280ms; --lp-tint: 0.18; --lp-h: 0.42; }
+  .v3 .lp.pressing { transform: scale(0.94); backdrop-filter: blur(8px) saturate(180%); -webkit-backdrop-filter: blur(8px) saturate(180%); }
+  .v3 .lp.pressing::after { transition-duration: 180ms; }
+  .v3 .lp.pressing::before { animation-duration: 800ms; }
+
+  /* ============ V4: SPRINGY (V2 effects + extra bouncy spring) ============ */
+  .v4 .lp { transition: transform 380ms cubic-bezier(0.18, 1.55, 0.5, 0.99); --lp-tint: 0.10; --lp-h: 0.28; }
+  .v4 .lp.pressing { transform: scale(0.92); backdrop-filter: blur(4px) saturate(160%); -webkit-backdrop-filter: blur(4px) saturate(160%); }
+  .v4 .lp.pressing::after { transition-duration: 150ms; }
+
+  /* Surface styles (idle look — UNCHANGED across all variants per spec) */
+  .demo-btn {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 18px;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: center;
+  }
+  .demo-fab {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4ADE80, #22c55e);
+    color: #000;
+    font-size: 28px;
+    font-weight: 600;
+    box-shadow: 0 6px 18px -4px rgba(74, 222, 128, 0.5);
+    display: flex; align-items: center; justify-content: center;
+    border: none;
+    align-self: center;
+  }
+  .demo-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+  }
+  .demo-card h4 { margin: 0 0 4px; font-size: 13px; }
+  .demo-card p { margin: 0; font-size: 11px; color: var(--mt); }
+  .demo-nav {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 4px;
+    padding: 4px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+  }
+  .demo-nav .lp {
+    padding: 10px 6px;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--mt);
+  }
+  .demo-nav .lp.on { color: var(--accent); background: rgba(74, 222, 128, 0.10); }
+
+  .pick-row {
+    position: fixed;
+    bottom: 12px;
+    left: 12px;
+    right: 12px;
+    max-width: 460px;
+    margin: 0 auto;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 8px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    z-index: 99;
+    backdrop-filter: blur(16px);
+  }
+  .pick-btn {
+    padding: 10px 4px;
+    border-radius: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--tx);
+    font-size: 11px;
+    font-weight: 700;
+    text-align: center;
+    cursor: pointer;
+  }
+  .pick-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+  .footer-note { font-size: 10px; color: var(--mt); margin-top: 16px; text-align: center; line-height: 1.5; padding-bottom: 60px; }
+</style>
+</head>
+<body>
+
+<h1>Issue #95 — Liquid Glass</h1>
+<p class="sub">Tap each surface to feel the effect. Idle UI is identical across all 4 variants. Differences only appear on tap.</p>
+
+<!-- V1: Subtle -->
+<div class="var-section v1" id="v1">
+  <div class="var-h">
+    <div class="var-num">1</div>
+    <div class="var-title">Subtle</div>
+    <div class="var-desc">Scale 0.98, blur 2px, tint 5%, soft radial</div>
+  </div>
+  <div class="var-body">
+    <div class="col">
+      <div class="col-label">Button</div>
+      <button class="lp demo-btn">Save Match</button>
+      <div class="col-label" style="margin-top:6px">Card</div>
+      <div class="lp demo-card"><h4>Premier League · Doha</h4><p>12 members · Tap to open</p></div>
+    </div>
+    <div class="col">
+      <div class="col-label">FAB</div>
+      <button class="lp demo-fab">+</button>
+      <div class="col-label" style="margin-top:6px">Nav tabs</div>
+      <div class="demo-nav">
+        <div class="lp on">Ranking</div>
+        <div class="lp">Matches</div>
+        <div class="lp">Players</div>
+        <div class="lp">Game Mode</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- V2: Standard -->
+<div class="var-section v2" id="v2">
+  <div class="var-h">
+    <div class="var-num">2</div>
+    <div class="var-title">Standard</div>
+    <div class="var-desc">Scale 0.96, blur 4px+saturate, tint 10%, medium radial</div>
+  </div>
+  <div class="var-body">
+    <div class="col">
+      <div class="col-label">Button</div>
+      <button class="lp demo-btn">Save Match</button>
+      <div class="col-label" style="margin-top:6px">Card</div>
+      <div class="lp demo-card"><h4>Premier League · Doha</h4><p>12 members · Tap to open</p></div>
+    </div>
+    <div class="col">
+      <div class="col-label">FAB</div>
+      <button class="lp demo-fab">+</button>
+      <div class="col-label" style="margin-top:6px">Nav tabs</div>
+      <div class="demo-nav">
+        <div class="lp on">Ranking</div>
+        <div class="lp">Matches</div>
+        <div class="lp">Players</div>
+        <div class="lp">Game Mode</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- V3: Pronounced -->
+<div class="var-section v3" id="v3">
+  <div class="var-h">
+    <div class="var-num">3</div>
+    <div class="var-title">Pronounced</div>
+    <div class="var-desc">Scale 0.94, blur 8px+saturate, tint 18%, strong slow radial</div>
+  </div>
+  <div class="var-body">
+    <div class="col">
+      <div class="col-label">Button</div>
+      <button class="lp demo-btn">Save Match</button>
+      <div class="col-label" style="margin-top:6px">Card</div>
+      <div class="lp demo-card"><h4>Premier League · Doha</h4><p>12 members · Tap to open</p></div>
+    </div>
+    <div class="col">
+      <div class="col-label">FAB</div>
+      <button class="lp demo-fab">+</button>
+      <div class="col-label" style="margin-top:6px">Nav tabs</div>
+      <div class="demo-nav">
+        <div class="lp on">Ranking</div>
+        <div class="lp">Matches</div>
+        <div class="lp">Players</div>
+        <div class="lp">Game Mode</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- V4: Springy -->
+<div class="var-section v4" id="v4">
+  <div class="var-h">
+    <div class="var-num">4</div>
+    <div class="var-title">Springy</div>
+    <div class="var-desc">V2 effects + extra-bouncy spring (scale 0.92, 380ms)</div>
+  </div>
+  <div class="var-body">
+    <div class="col">
+      <div class="col-label">Button</div>
+      <button class="lp demo-btn">Save Match</button>
+      <div class="col-label" style="margin-top:6px">Card</div>
+      <div class="lp demo-card"><h4>Premier League · Doha</h4><p>12 members · Tap to open</p></div>
+    </div>
+    <div class="col">
+      <div class="col-label">FAB</div>
+      <button class="lp demo-fab">+</button>
+      <div class="col-label" style="margin-top:6px">Nav tabs</div>
+      <div class="demo-nav">
+        <div class="lp on">Ranking</div>
+        <div class="lp">Matches</div>
+        <div class="lp">Players</div>
+        <div class="lp">Game Mode</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer-note">
+  All variants share the same 4-effect stack:<br>
+  radial highlight from tap origin · brief backdrop blur (interaction-only)<br>
+  spring scale on press · translucent accent overlay tint<br><br>
+  Tap a number below to jump to that variant.
+</div>
+
+<div class="pick-row">
+  <a href="#v1" class="pick-btn">V1<br><span style="font-weight:400;font-size:9px">Subtle</span></a>
+  <a href="#v2" class="pick-btn">V2<br><span style="font-weight:400;font-size:9px">Standard</span></a>
+  <a href="#v3" class="pick-btn">V3<br><span style="font-weight:400;font-size:9px">Pronounced</span></a>
+  <a href="#v4" class="pick-btn">V4<br><span style="font-weight:400;font-size:9px">Springy</span></a>
+</div>
+
+<script>
+  // Pointer-driven press handler — captures tap origin for radial highlight
+  document.querySelectorAll('.lp').forEach(el => {
+    const start = (e) => {
+      const t = (e.touches ? e.touches[0] : e);
+      const rect = el.getBoundingClientRect();
+      const x = ((t.clientX - rect.left) / rect.width) * 100;
+      const y = ((t.clientY - rect.top) / rect.height) * 100;
+      el.style.setProperty('--lp-x', x + '%');
+      el.style.setProperty('--lp-y', y + '%');
+      el.classList.remove('pressing');
+      // Force reflow so the animation restarts cleanly on rapid taps
+      void el.offsetWidth;
+      el.classList.add('pressing');
+    };
+    const end = () => {
+      // Remove pressing AFTER the radial animation completes (variant-dependent),
+      // and AFTER the scale springs back. Setting on transitionend would race
+      // with the animation; use a fixed timeout matching the longest path.
+      setTimeout(() => el.classList.remove('pressing'), 700);
+    };
+    el.addEventListener('pointerdown', start, { passive: true });
+    el.addEventListener('pointerup', end, { passive: true });
+    el.addEventListener('pointercancel', end, { passive: true });
+    el.addEventListener('pointerleave', end, { passive: true });
+  });
+
+  // Smooth-scroll the variant picker
+  document.querySelectorAll('.pick-btn').forEach(a => {
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      const target = document.querySelector(a.getAttribute('href'));
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      document.querySelectorAll('.pick-btn').forEach(b => b.classList.remove('active'));
+      a.classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>
