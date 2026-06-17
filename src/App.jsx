@@ -989,7 +989,12 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
   // The legacy form would have let users bypass the approval queue (Lesson #92).
   // PlayerMgmt.deletePlayer (S067) closed the source of new orphans; this
   // closes the bypass for any pre-S068 orphans still in the DB.
-  if (claimedPlayer === null) {
+  //
+  // S079 Issue #99 follow-up: Platform Admin entering another user's league
+  // has no claimedPlayer (they're not a member), so this check would lock
+  // them out. Platform Admin already has RLS-elevated visibility into every
+  // league; they just need to bypass the claim-flow gate.
+  if (claimedPlayer === null && user?.id !== PLATFORM_ADMIN_ID) {
     return (
       <div className="pend-screen">
         <div className="pend-brand">
