@@ -1,7 +1,7 @@
 import Icon from "./Icon";
 import React, { useState, useMemo } from "react";
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, BL, PU } from '../theme';
-import { formatTeam, win } from '../utils/helpers';
+import { formatTeam, win, setTotals } from '../utils/helpers';
 
 export function CombosView({combos,players,matches,pm,getName}){
   const [view,setView]=useState("duos");
@@ -9,12 +9,13 @@ export function CombosView({combos,players,matches,pm,getName}){
 
   const matrix=useMemo(()=>{
     const m={};
-    players.forEach(p=>{m[p.id]={};players.forEach(q=>{if(p.id!==q.id)m[p.id][q.id]={w:0,l:0,games:0};});});
+    players.forEach(p=>{m[p.id]={};players.forEach(q=>{if(p.id!==q.id)m[p.id][q.id]={w:0,l:0,games:0,gamesDiff:0};});});
     matches.forEach(match=>{
       const w=win(match.sets);
-      [[match.team_a,w==="A"],[match.team_b,w==="B"]].forEach(([team,won])=>{
+      const [gA,gB]=setTotals(match.sets);
+      [[match.team_a,w==="A",gA-gB],[match.team_b,w==="B",gB-gA]].forEach(([team,won,diff])=>{
         const [a,b]=team;
-        if(m[a]&&m[a][b]){m[a][b].games++;m[b][a].games++;if(won){m[a][b].w++;m[b][a].w++;}else{m[a][b].l++;m[b][a].l++;}}
+        if(m[a]&&m[a][b]){m[a][b].games++;m[b][a].games++;m[a][b].gamesDiff+=diff;m[b][a].gamesDiff+=diff;if(won){m[a][b].w++;m[b][a].w++;}else{m[a][b].l++;m[b][a].l++;}}
       });
     });
     return m;
@@ -24,9 +25,11 @@ export function CombosView({combos,players,matches,pm,getName}){
   // S1-03: Fix combos — sort best by win rate desc, worst by win rate asc
   // Only show worst when 6+ unique combos exist to prevent overlap with top 3
   const activeCombos=combos.filter(c=>c.games>=1);
+  // Issue #96: secondary sort by gamesDiff (signed net games), then total games as final tiebreaker.
   const sortedByWinRate=[...activeCombos].sort((a,b)=>{
     const pA=a.games>0?a.wins/a.games:0, pB=b.games>0?b.wins/b.games:0;
     if(pB!==pA)return pB-pA;
+    if((b.gamesDiff||0)!==(a.gamesDiff||0))return (b.gamesDiff||0)-(a.gamesDiff||0);
     return b.games-a.games;
   });
   const top3=sortedByWinRate.slice(0,3);
@@ -37,6 +40,7 @@ export function CombosView({combos,players,matches,pm,getName}){
     .sort((a,b)=>{
       const pA=a.games>0?a.wins/a.games:0, pB=b.games>0?b.wins/b.games:0;
       if(pA!==pB)return pA-pB;
+      if((a.gamesDiff||0)!==(b.gamesDiff||0))return (a.gamesDiff||0)-(b.gamesDiff||0);
       return b.games-a.games;
     });
   const worst3=activeCombos.length>=6?worstCandidates.slice(0,3):[];
@@ -67,16 +71,19 @@ export function CombosView({combos,players,matches,pm,getName}){
           const pct=c.games>0?(c.wins/c.games*100):0;
           // S077 r15: emoji medals removed — just use rank numbers below.
           const colors=[GD,SV,BZ];
+          const gd=c.gamesDiff||0;
+          const gdColor=gd>0?A:gd<0?DG:MT;
           return (<div key={"t"+i} style={{background:CD,borderRadius:16,border:`1px solid ${colors[i]}30`,padding:16,marginBottom:10,position:"relative",overflow:"hidden"}}>
             <div style={{position:"absolute",top:-20,right:-20,width:80,height:80,borderRadius:"50%",background:`${colors[i]}08`,filter:"blur(20px)"}}/>
             <div style={{display:"flex",alignItems:"center",gap:12}}>
               <div style={{fontSize:32}}>{(i+1)}</div>
               <div style={{flex:1}}>
                 <div style={{fontSize:16,fontWeight:800,color:TX}}>{getName(c.players[0])} <span style={{color:MT,fontWeight:400}}>x</span> {getName(c.players[1])}</div>
-                <div style={{display:"flex",gap:12,marginTop:6}}>
+                <div style={{display:"flex",gap:12,marginTop:6,flexWrap:"wrap"}}>
                   <span style={{fontSize:13,color:A,fontWeight:700,fontFamily:"'JetBrains Mono'"}}>{c.wins}W</span>
                   <span style={{fontSize:13,color:DG,fontWeight:700,fontFamily:"'JetBrains Mono'"}}>{c.losses}L</span>
                   <span style={{fontSize:13,color:MT}}>{c.games} MP</span>
+                  <span style={{fontSize:13,color:gdColor,fontWeight:700,fontFamily:"'JetBrains Mono'"}} title="Games differential">{gd>0?"+":""}{gd} GD</span>
                 </div>
               </div>
               <div style={{textAlign:"center"}}>
@@ -93,16 +100,19 @@ export function CombosView({combos,players,matches,pm,getName}){
           {worst3.map((c,i)=>{
             const pct=c.games>0?(c.wins/c.games*100):0;
             const skulls=["💀","🥶","😅"];
+            const gd=c.gamesDiff||0;
+            const gdColor=gd>0?A:gd<0?DG:MT;
             return (<div key={"w"+i} style={{background:CD,borderRadius:16,border:`1px solid ${DG}20`,padding:16,marginBottom:10,position:"relative",overflow:"hidden"}}>
               <div style={{position:"absolute",top:-20,right:-20,width:80,height:80,borderRadius:"50%",background:`${DG}06`,filter:"blur(20px)"}}/>
               <div style={{display:"flex",alignItems:"center",gap:12}}>
                 <div style={{fontSize:32}}>{skulls[i]}</div>
                 <div style={{flex:1}}>
                   <div style={{fontSize:16,fontWeight:800,color:TX}}>{getName(c.players[0])} <span style={{color:MT,fontWeight:400}}>x</span> {getName(c.players[1])}</div>
-                  <div style={{display:"flex",gap:12,marginTop:6}}>
+                  <div style={{display:"flex",gap:12,marginTop:6,flexWrap:"wrap"}}>
                     <span style={{fontSize:13,color:A,fontWeight:700,fontFamily:"'JetBrains Mono'"}}>{c.wins}W</span>
                     <span style={{fontSize:13,color:DG,fontWeight:700,fontFamily:"'JetBrains Mono'"}}>{c.losses}L</span>
                     <span style={{fontSize:13,color:MT}}>{c.games} MP</span>
+                    <span style={{fontSize:13,color:gdColor,fontWeight:700,fontFamily:"'JetBrains Mono'"}} title="Games differential">{gd>0?"+":""}{gd} GD</span>
                   </div>
                 </div>
                 <div style={{textAlign:"center"}}>
@@ -126,12 +136,13 @@ export function CombosView({combos,players,matches,pm,getName}){
         </div>
         {selPlayer&&<div>
           {(() => {
+            // Issue #96: secondary sort by gamesDiff, then games as final tiebreaker.
             const partners=Object.entries(matrix[selPlayer]||{})
               .filter(([,v])=>v.games>0)
               .map(([pid,v])=>({pid,...v,pct:v.games>0?(v.w/v.games*100):0}))
-              .sort((a,b)=>b.pct-a.pct||b.games-a.games);
+              .sort((a,b)=>b.pct-a.pct||(b.gamesDiff||0)-(a.gamesDiff||0)||b.games-a.games);
             const best=partners[0];
-            const worst=[...partners].sort((a,b)=>a.pct-b.pct||b.games-a.games)[0];
+            const worst=[...partners].sort((a,b)=>a.pct-b.pct||(a.gamesDiff||0)-(b.gamesDiff||0)||b.games-a.games)[0];
             if(!partners.length) return (<p style={{fontSize:13,color:MT}}>No partnerships recorded for {getName(selPlayer)}</p>);
             return (<div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
@@ -142,6 +153,7 @@ export function CombosView({combos,players,matches,pm,getName}){
                   <div style={{fontSize:15,fontWeight:700,marginTop:4}}>{getName(best.pid)}</div>
                   <div style={{fontSize:22,fontWeight:900,color:A,fontFamily:"'JetBrains Mono'",marginTop:4}}>{best.pct.toFixed(0)}%</div>
                   <div style={{fontSize:11,color:MT}}>{best.w}W {best.l}L · {best.games} MP</div>
+                  <div style={{fontSize:12,fontWeight:700,fontFamily:"'JetBrains Mono'",marginTop:2,color:(best.gamesDiff||0)>0?A:(best.gamesDiff||0)<0?DG:MT}} title="Games differential">{(best.gamesDiff||0)>0?"+":""}{best.gamesDiff||0} GD</div>
                 </div>
                 {worst&&worst.pid!==best.pid&&worst.pct<best.pct&&<div style={{background:CD,borderRadius:12,border:`1px solid ${DG}30`,padding:14,textAlign:"center"}}>
                   <div style={{fontSize:10,color:DG,fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>Worst Partner</div>
@@ -149,15 +161,18 @@ export function CombosView({combos,players,matches,pm,getName}){
                   <div style={{fontSize:15,fontWeight:700,marginTop:4}}>{getName(worst.pid)}</div>
                   <div style={{fontSize:22,fontWeight:900,color:DG,fontFamily:"'JetBrains Mono'",marginTop:4}}>{worst.pct.toFixed(0)}%</div>
                   <div style={{fontSize:11,color:MT}}>{worst.w}W {worst.l}L · {worst.games} MP</div>
+                  <div style={{fontSize:12,fontWeight:700,fontFamily:"'JetBrains Mono'",marginTop:2,color:(worst.gamesDiff||0)>0?A:(worst.gamesDiff||0)<0?DG:MT}} title="Games differential">{(worst.gamesDiff||0)>0?"+":""}{worst.gamesDiff||0} GD</div>
                 </div>}
               </div>
               {partners.map((p,i)=>{
                 const barW=Math.max(p.pct,5);
+                const gd=p.gamesDiff||0;
                 return (<div key={p.pid} style={{marginBottom:8}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
                     <span style={{fontSize:13,fontWeight:600}}>{getName(p.pid)}</span>
                     <div style={{display:"flex",gap:8,alignItems:"center"}}>
                       <span style={{fontSize:11,color:MT}}>{p.games} MP</span>
+                      <span style={{fontSize:11,fontWeight:700,fontFamily:"'JetBrains Mono'",color:gd>0?A:gd<0?DG:MT,minWidth:36,textAlign:"right"}} title="Games differential">{gd>0?"+":""}{gd}</span>
                       <span style={{fontSize:14,fontWeight:800,color:pctColor(p.pct,p.games),fontFamily:"'JetBrains Mono'",width:42,textAlign:"right"}}>{p.pct.toFixed(0)}%</span>
                     </div>
                   </div>

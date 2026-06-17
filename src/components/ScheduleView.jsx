@@ -589,7 +589,10 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
           challenges and no schedule form open. */}
       {upcoming.length===0 && !showForm && (
         <div className="sched-empty">
-          <div className="sched-empty-icon">{"\uD83D\uDCC5"}</div>
+          {/* S079: emoji 📅 → Icon SVG per app-wide no-emoji rule. */}
+          <div className="sched-empty-icon" style={{display:"flex",justifyContent:"center"}}>
+            <Icon name="calendar" size={56} color="var(--muted)" strokeWidth={1.5}/>
+          </div>
           <div className="sched-empty-title">No matches scheduled</div>
           <div className="sched-empty-sub">Tap "+ Schedule" to set up your next game.</div>
         </div>

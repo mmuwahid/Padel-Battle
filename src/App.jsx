@@ -905,18 +905,17 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
     });
   }, [players, selectedSeasonMatches, seasonElo]);
 
-  // Combos (most common team-ups)
+  // Combos (most common team-ups). Issue #96: gamesDiff = signed sum of (myGames - oppGames) across all sets.
   const combos = useMemo(()=>{
     const combo={};
     matches.forEach(m=>{
-      const teams=[m.team_a,m.team_b];
-      teams.forEach(t=>{
+      const w=win(m.sets);
+      const [gA,gB]=setTotals(m.sets);
+      [[m.team_a,w==="A",gA-gB],[m.team_b,w==="B",gB-gA]].forEach(([t,won,diff])=>{
         const key=t.slice().sort().join(",");
-        if(!combo[key])combo[key]={players:t,wins:0,losses:0};
-        const w=win(m.sets);
-        const isTeamA=m.team_a===t;
-        if((isTeamA&&w==="A")||(!isTeamA&&w==="B"))combo[key].wins++;
-        else combo[key].losses++;
+        if(!combo[key])combo[key]={players:t,wins:0,losses:0,gamesDiff:0};
+        if(won)combo[key].wins++;else combo[key].losses++;
+        combo[key].gamesDiff+=diff;
       });
     });
     return Object.values(combo).map(c=>({...c,games:c.wins+c.losses})).sort((a,b)=>b.games-a.games);
