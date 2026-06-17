@@ -115,14 +115,18 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
     const monthly={};matches.forEach(m=>{const key=m.date?.substring(0,7);if(key)monthly[key]=(monthly[key]||0)+1;});
     const monthlyArr=Object.entries(monthly).sort().slice(-6);
     // Issue #96: gamesDiff = signed (myGames - oppGames) summed across all matches and sets.
+    // S079 follow-up: also accumulate chronological W/L results per partnership so the
+    // Partnership Ranking row can render a Last-5 form strip (matching the player ranking).
     const partnerStats={};
-    matches.forEach(m=>{const w=win(m.sets);
+    const sortedForPartners=[...matches].sort((a,b)=>new Date(a.date)-new Date(b.date));
+    sortedForPartners.forEach(m=>{const w=win(m.sets);
       const [gA,gB]=setTotals(m.sets);
       [[m.team_a,w==="A",gA-gB],[m.team_b,w==="B",gB-gA]].forEach(([team,won,diff])=>{
         if(team.length===2){const [a,b]=team.sort();const k=`${a}|${b}`;
-          if(!partnerStats[k])partnerStats[k]={a,b,w:0,l:0,gamesDiff:0};
+          if(!partnerStats[k])partnerStats[k]={a,b,w:0,l:0,gamesDiff:0,results:[]};
           if(won)partnerStats[k].w++;else partnerStats[k].l++;
-          partnerStats[k].gamesDiff+=diff;}
+          partnerStats[k].gamesDiff+=diff;
+          partnerStats[k].results.push(won?"W":"L");}
       });
     });
     const partnershipsRaw=Object.values(partnerStats).filter(p=>p.w+p.l>=1);
@@ -368,11 +372,12 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
               </div>
             </div>
 
+            {/* S079: rows are now clickable to drill into the player profile (setSp). */}
             <section className="dpro-sec" style={{padding:0}}>
               <h3 className="dpro-sectitle">Most Active Players</h3>
               <div className="dpro-sec-card">
                 {analyticsData.mostActive.map(x=>(
-                  <div key={x.pid} className="lrow">
+                  <div key={x.pid} className="lrow" onClick={()=>setSp(x.pid)} style={{cursor:"pointer"}} role="button" tabIndex={0} aria-label={`Open ${getName(x.pid)}'s profile`}>
                     <div className="lrow-l">
                       <div className="lrow-avi">{getAvatar(x.pid)?<img src={getAvatar(x.pid)} alt=""/>:getName(x.pid)[0]}</div>
                       <span className="lrow-name">{getName(x.pid)}</span>
@@ -383,12 +388,16 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
               </div>
             </section>
 
+            {/* S079: avatar added + rows clickable to drill into player profile. */}
             <section className="dpro-sec" style={{padding:0}}>
               <h3 className="dpro-sectitle">Highest Win Rates</h3>
               <div className="dpro-sec-card">
                 {analyticsData.topWinRate.map(x=>(
-                  <div key={x.pid} className="lrow">
-                    <div className="lrow-l"><span className="lrow-name">{getName(x.pid)}</span></div>
+                  <div key={x.pid} className="lrow" onClick={()=>setSp(x.pid)} style={{cursor:"pointer"}} role="button" tabIndex={0} aria-label={`Open ${getName(x.pid)}'s profile`}>
+                    <div className="lrow-l">
+                      <div className="lrow-avi">{getAvatar(x.pid)?<img src={getAvatar(x.pid)} alt=""/>:getName(x.pid)[0]}</div>
+                      <span className="lrow-name">{getName(x.pid)}</span>
+                    </div>
                     <div className="lrow-r">
                       <span className="lrow-wl">{x.w}W-{x.l}L</span>
                       <span className={`lrow-pct${x.pct>=60?"":x.pct>=40?" mid":" lo"}`}>{x.pct.toFixed(0)}%</span>
@@ -468,23 +477,42 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
               </div>
             </div>
 
+            {/* S079: renamed "All Partnerships" → "Partnership Ranking" with full
+                stat columns (MP/MW/ML/Win%) and Last-5 W/L dot strip, mirroring
+                the player Ranking screen. Each pair name is clickable to drill
+                into either player. */}
             <section className="dpro-sec" style={{padding:0}}>
-              <h3 className="dpro-sectitle">All Partnerships</h3>
+              <h3 className="dpro-sectitle">Partnership Ranking</h3>
               <div className="dpro-sec-card">
+                <div style={{display:"grid",gridTemplateColumns:"22px 1fr 30px 30px 30px 42px 54px",alignItems:"center",gap:6,padding:"4px 10px 6px",borderBottom:`1px solid ${BD}`,fontSize:9,fontWeight:800,letterSpacing:".06em",color:MT,textTransform:"uppercase",fontFamily:"'JetBrains Mono'"}}>
+                  <span>#</span>
+                  <span>Pair</span>
+                  <span style={{textAlign:"center"}}>MP</span>
+                  <span style={{textAlign:"center"}}>MW</span>
+                  <span style={{textAlign:"center"}}>ML</span>
+                  <span style={{textAlign:"right"}}>Win%</span>
+                  <span style={{textAlign:"right"}}>Last 5</span>
+                </div>
                 {analyticsData.partnerships.slice(0,10).map((p,i)=>{
-                  const pct=Math.round(p.w/(p.w+p.l)*100);
-                  const mod=pct>=60?"":pct>=40?"mid":"dg";
-                  const gd=p.gamesDiff||0;
-                  const gdColor=gd>0?A:gd<0?DG:MT;
+                  const mp=p.w+p.l;
+                  const pct=Math.round(p.w/mp*100);
+                  const pctColor=pct>=60?A:pct>=40?TX:DG;
+                  const last5=(p.results||[]).slice(-5);
                   return (
-                    <div key={i} className="pp-row">
-                      <span className="pp-name">{getName(p.a)} x {getName(p.b)}</span>
-                      <div className="pp-r">
-                        <span className="pp-mp">{p.w+p.l} MP</span>
-                        <span style={{fontSize:11,fontWeight:700,fontFamily:"'JetBrains Mono'",color:gdColor,minWidth:32,textAlign:"right"}} title="Games differential">{gd>0?"+":""}{gd}</span>
-                        <div className="pp-bar"><div className={`pp-bar-f${mod?" "+mod:""}`} style={{width:`${pct}%`}}/></div>
-                        <span className={`pp-pct${mod?" "+mod:""}`}>{pct}%</span>
-                      </div>
+                    <div key={i} style={{display:"grid",gridTemplateColumns:"22px 1fr 30px 30px 30px 42px 54px",alignItems:"center",gap:6,padding:"8px 10px",borderBottom:i<analyticsData.partnerships.slice(0,10).length-1?`1px solid ${BD}40`:"none",fontFamily:"var(--font)"}}>
+                      <span style={{fontSize:11,fontWeight:700,color:MT,fontFamily:"'JetBrains Mono'"}}>{i+1}</span>
+                      <button
+                        onClick={()=>setSp(p.a)}
+                        style={{background:"transparent",border:"none",padding:0,cursor:"pointer",color:TX,fontSize:12,fontWeight:600,fontFamily:"var(--font)",textAlign:"left",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}
+                        title={`Open ${getName(p.a)}'s profile`}
+                      >
+                        {getName(p.a)} <span style={{color:MT,fontWeight:400}}>x</span> {getName(p.b)}
+                      </button>
+                      <span style={{fontSize:12,fontWeight:700,fontFamily:"'JetBrains Mono'",color:TX,textAlign:"center"}}>{mp}</span>
+                      <span style={{fontSize:12,fontWeight:700,fontFamily:"'JetBrains Mono'",color:p.w>0?A:MT,textAlign:"center"}}>{p.w}</span>
+                      <span style={{fontSize:12,fontWeight:700,fontFamily:"'JetBrains Mono'",color:p.l>0?DG:MT,textAlign:"center"}}>{p.l}</span>
+                      <span style={{fontSize:12,fontWeight:800,fontFamily:"'JetBrains Mono'",color:pctColor,textAlign:"right"}}>{pct}%</span>
+                      <span style={{display:"flex",justifyContent:"flex-end"}}><FD f={last5}/></span>
                     </div>
                   );
                 })}
@@ -598,11 +626,12 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
               </div>
             </div>
 
+            {/* S079: rows clickable to drill into player profile. */}
             {analyticsData.topMotm.length>0&&<section className="dpro-sec" style={{padding:0}}>
               <h3 className="dpro-sectitle gold" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="star" size={14} color="var(--gold)"/>MOTM Ranking</h3>
               <div className="dpro-sec-card">
                 {analyticsData.topMotm.map((x,i)=>(
-                  <div key={x.pid} className="lrow">
+                  <div key={x.pid} className="lrow" onClick={()=>setSp(x.pid)} style={{cursor:"pointer"}} role="button" tabIndex={0} aria-label={`Open ${getName(x.pid)}'s profile`}>
                     <div className="lrow-l">
                       <span className="lrow-rank">{i+1}.</span>
                       <div className="lrow-avi gold">{getAvatar(x.pid)?<img src={getAvatar(x.pid)} alt=""/>:getName(x.pid)[0]}</div>
@@ -618,7 +647,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
               <h3 className="dpro-sectitle">Longest Winning Streak</h3>
               <div className="dpro-sec-card">
                 {analyticsData.longestWinStreaks.map((x,i)=>(
-                  <div key={x.pid} className="lrow">
+                  <div key={x.pid} className="lrow" onClick={()=>setSp(x.pid)} style={{cursor:"pointer"}} role="button" tabIndex={0} aria-label={`Open ${getName(x.pid)}'s profile`}>
                     <div className="lrow-l">
                       <span className="lrow-rank">{i+1}.</span>
                       <div className="lrow-avi">{getAvatar(x.pid)?<img src={getAvatar(x.pid)} alt=""/>:getName(x.pid)[0]}</div>
@@ -634,7 +663,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
               <h3 className="dpro-sectitle">Longest Losing Streak</h3>
               <div className="dpro-sec-card">
                 {analyticsData.longestLossStreaks.map((x,i)=>(
-                  <div key={x.pid} className="lrow">
+                  <div key={x.pid} className="lrow" onClick={()=>setSp(x.pid)} style={{cursor:"pointer"}} role="button" tabIndex={0} aria-label={`Open ${getName(x.pid)}'s profile`}>
                     <div className="lrow-l">
                       <span className="lrow-rank">{i+1}.</span>
                       <div className="lrow-avi">{getAvatar(x.pid)?<img src={getAvatar(x.pid)} alt=""/>:getName(x.pid)[0]}</div>
