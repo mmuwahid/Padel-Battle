@@ -504,17 +504,17 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                       <div className={`lbrank ${i<3?"medal":"num"}`} style={{color:i===0?"#facc15":i===1?"#94a3b8":i===2?"#c97b2e":"#9090a4"}}>
                         {medal || (i+1)}
                       </div>
-                      <div className="lbpinfo" style={{alignItems:"center",textAlign:"center",gap:4}}>
+                      <div className="lbpinfo" style={{alignItems:"flex-start",textAlign:"left",gap:4,minWidth:0}}>
                         <button
                           onClick={()=>setSp(p.a)}
                           className="lbn"
-                          style={{background:"transparent",border:"none",padding:0,cursor:"pointer",color:"inherit",textAlign:"center",display:"block",width:"100%"}}
+                          style={{background:"transparent",border:"none",padding:0,cursor:"pointer",color:"inherit",textAlign:"left",display:"block",width:"100%"}}
                           title={`Open ${getName(p.a)}'s profile`}
                         >
                           {getName(p.a)} <span style={{color:"#9090a4",fontWeight:400}}>x</span> {getName(p.b)}
                         </button>
                         {last5.length>0 && (
-                          <div className="form-dots" style={{justifyContent:"center"}}>
+                          <div className="form-dots" style={{justifyContent:"flex-start"}}>
                             {last5.map((r,j)=><div key={j} className={`fdot ${r==="W"?"w":"l"}`}/>)}
                           </div>
                         )}
