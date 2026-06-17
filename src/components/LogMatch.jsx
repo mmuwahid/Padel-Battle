@@ -598,7 +598,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
 
       {/* Save */}
       <div>
-        <button onClick={submit} disabled={saving||!canSave} className={`savebtn${canSave&&!saving?' on':' off'}`}>
+        <button onClick={submit} disabled={saving||!canSave} className={`savebtn lp${canSave&&!saving?' on':' off'}`}>
           {canSave && !saving && <Icon name="check" size={18} color="#000" strokeWidth={2.5}/>}
           {saving?"Saving…":isE?"Update Match":"Save Match"}
         </button>

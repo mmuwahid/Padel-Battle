@@ -159,7 +159,7 @@ export function MatchApprovalsQueue() {
                   </div>
                 ) : (
                   <>
-                    <button className="mab approve" onClick={()=>approveMatch(m.id)} disabled={actionBusy === m.id + "-approve"}>{actionBusy === m.id + "-approve" ? "..." : "\u2713 Approve"}</button>
+                    <button className="mab approve lp" onClick={()=>approveMatch(m.id)} disabled={actionBusy === m.id + "-approve"}>{actionBusy === m.id + "-approve" ? "..." : "\u2713 Approve"}</button>
                     <button className="mab edit" onClick={()=>setEditingMatch(m)}>{"\u270E"} Edit</button>
                     <button className="mab reject" onClick={()=>setConfirmReject(m.id)}>{"\u2715"} Reject</button>
                   </>

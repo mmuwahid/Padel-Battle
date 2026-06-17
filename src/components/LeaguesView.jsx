@@ -167,7 +167,7 @@ export function LeaguesView({
                   ) : (
                     <>
                       <button
-                        className="lv-card-main"
+                        className="lv-card-main lp"
                         onClick={() => { handlers.switchLeague(l.id); onClose?.(); }}
                       >
 
