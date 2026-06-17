@@ -7,6 +7,7 @@ import { RULES, ARGUED } from './data/rules';
 import { CourtIcon, PadelLogo, PadelLogoSmall, PadelHubMark, PadelHubMarkHeader } from './components/icons';
 import { NavIcon } from './components/NavIcons';
 import Icon from './components/Icon';
+import { LiquidPressDelegate } from './components/LiquidPress';
 import { FD } from './components/FormDots';
 import { Sidebar } from './components/Sidebar';
 import { ProfileView } from './components/ProfileView';
@@ -1636,7 +1637,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
           </button>
         ))}
         <div className="fab-wrap">
-          <button className="fab" onClick={()=>{setEditingMatch(null);setTab("log");setSidebarOpen(false);setSidebarView(null);}} aria-label="Log a match">
+          <button className="fab lp" onClick={()=>{setEditingMatch(null);setTab("log");setSidebarOpen(false);setSidebarView(null);}} aria-label="Log a match">
             +
           </button>
         </div>
@@ -1655,19 +1656,22 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
 
 export default function App(){
   return (
-    <AuthGate>
-      {(user)=>(
-        <LeagueGate user={user}>
-          {({ leagueId, leagues, handlers })=>(
-            <AppContent
-              leagueId={leagueId}
-              user={user}
-              leagues={leagues}
-              leagueHandlers={handlers}
-            />
-          )}
-        </LeagueGate>
-      )}
-    </AuthGate>
+    <>
+      <LiquidPressDelegate/>
+      <AuthGate>
+        {(user)=>(
+          <LeagueGate user={user}>
+            {({ leagueId, leagues, handlers })=>(
+              <AppContent
+                leagueId={leagueId}
+                user={user}
+                leagues={leagues}
+                leagueHandlers={handlers}
+              />
+            )}
+          </LeagueGate>
+        )}
+      </AuthGate>
+    </>
   );
 }

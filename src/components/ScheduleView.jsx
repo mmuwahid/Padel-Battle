@@ -504,7 +504,7 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
             const canContinue = matchType==="open" ? !!claimedPlayer : (tA[0] && tA[1] && tB[0] && tB[1]);
             return (<>
               <div style={{display:"grid",gridTemplateColumns:"3fr 2fr",gap:8,marginTop:10}}>
-                <button className={`savebtn ${canContinue?"on":"off"}`} disabled={!canContinue} onClick={()=>canContinue && setStep(2)}>
+                <button className={`savebtn lp ${canContinue?"on":"off"}`} disabled={!canContinue} onClick={()=>canContinue && setStep(2)}>
                   {canContinue && <Icon name="arrow-right" size={16} color="#000" strokeWidth={2}/>}Continue
                 </button>
                 <button className="shcancel" onClick={()=>{setShowForm(false);setStep(1);setTA(["",""]);setTB(["",""]);setMatchType("private");}}>Cancel</button>
@@ -576,7 +576,7 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
 
           {/* Actions: 3fr / 2fr (Schedule Match / Back) */}
           <div style={{display:"grid",gridTemplateColumns:"3fr 2fr",gap:8,marginTop:10}}>
-            <button className={`savebtn ${saving?"off":"on"}`} disabled={saving} onClick={matchType==="open"?createOpenMatch:createChallenge}>
+            <button className={`savebtn lp ${saving?"off":"on"}`} disabled={saving} onClick={matchType==="open"?createOpenMatch:createChallenge}>
               {!saving && <Icon name="check" size={16} color="#000" strokeWidth={2.5}/>}{saving?(matchType==="open"?"Opening...":"Scheduling..."):(matchType==="open"?"Open to League":"Schedule Match")}
             </button>
             <button className="shcancel" onClick={()=>setStep(1)}>Back</button>
@@ -644,7 +644,7 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
               </div>
             );
             return (
-              <div key={ch.id} className="scard">
+              <div key={ch.id} className="scard lp">
                 <div className="scard-hd">
                   <div className="scard-when">
                     <span className="scard-date">{dateShort}</span>

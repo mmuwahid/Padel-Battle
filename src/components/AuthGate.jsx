@@ -231,7 +231,7 @@ export function AuthGate({children}){
             <label className="flbl">Confirm Password</label>
             <PasswordField value={confirmPassword} onChange={(e)=>setConfirmPassword(e.target.value)} placeholder="Re-enter password" show={showConfirmPassword} setShow={setShowConfirmPassword}/>
           </div>
-          <button type="submit" className="lcta" disabled={resetLoading}>
+          <button type="submit" className="lcta lp" disabled={resetLoading}>
             {resetLoading ? "Updating…" : "Update Password"}
           </button>
           <div style={{textAlign:"center"}}>
@@ -266,7 +266,7 @@ export function AuthGate({children}){
               <label className="flbl">Password</label>
               <PasswordField value={password} onChange={(e)=>setPassword(e.target.value)} placeholder="Enter password" show={showPassword} setShow={setShowPassword}/>
             </div>
-            <button type="submit" className="lcta">Sign In</button>
+            <button type="submit" className="lcta lp">Sign In</button>
             <div style={{display:"flex",justifyContent:"space-between"}}>
               <button type="button" className="llink" onClick={handleForgotPassword}>Forgot password?</button>
               <button type="button" className="llink" onClick={handleResendConfirmation}>Resend confirmation</button>
@@ -299,7 +299,7 @@ export function AuthGate({children}){
               <label className="flbl">Password</label>
               <PasswordField value={password} onChange={(e)=>setPassword(e.target.value)} placeholder="Min 6 characters" show={showPassword} setShow={setShowPassword}/>
             </div>
-            <button type="submit" className="lcta">Create Account</button>
+            <button type="submit" className="lcta lp">Create Account</button>
             <div style={{textAlign:"center",fontFamily:"var(--mono)",fontSize:11,color:"var(--muted)"}}>
               Already have an account?{" "}
               <button type="button" className="llink" onClick={()=>{setAuthMode("signin");clearForm();}}>Sign In</button>
