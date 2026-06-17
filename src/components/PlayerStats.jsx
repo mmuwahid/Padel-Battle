@@ -114,18 +114,23 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
     const topMotm=Object.entries(motmCount).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([pid,count])=>({pid,count}));
     const monthly={};matches.forEach(m=>{const key=m.date?.substring(0,7);if(key)monthly[key]=(monthly[key]||0)+1;});
     const monthlyArr=Object.entries(monthly).sort().slice(-6);
+    // Issue #96: gamesDiff = signed (myGames - oppGames) summed across all matches and sets.
     const partnerStats={};
     matches.forEach(m=>{const w=win(m.sets);
-      [[m.team_a,w==="A"],[m.team_b,w==="B"]].forEach(([team,won])=>{
+      const [gA,gB]=setTotals(m.sets);
+      [[m.team_a,w==="A",gA-gB],[m.team_b,w==="B",gB-gA]].forEach(([team,won,diff])=>{
         if(team.length===2){const [a,b]=team.sort();const k=`${a}|${b}`;
-          if(!partnerStats[k])partnerStats[k]={a,b,w:0,l:0};
-          if(won)partnerStats[k].w++;else partnerStats[k].l++;}
+          if(!partnerStats[k])partnerStats[k]={a,b,w:0,l:0,gamesDiff:0};
+          if(won)partnerStats[k].w++;else partnerStats[k].l++;
+          partnerStats[k].gamesDiff+=diff;}
       });
     });
     const partnershipsRaw=Object.values(partnerStats).filter(p=>p.w+p.l>=1);
+    // Issue #96: secondary sort by gamesDiff, then games as final tiebreaker.
     const partnerships=[...partnershipsRaw].sort((a,b)=>{
       const pA=a.w/(a.w+a.l), pB=b.w/(b.w+b.l);
       if(pB!==pA)return pB-pA;
+      if((b.gamesDiff||0)!==(a.gamesDiff||0))return (b.gamesDiff||0)-(a.gamesDiff||0);
       return (b.w+b.l)-(a.w+a.l);
     });
     const bestPartnership=partnerships[0]||null;
@@ -133,6 +138,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
     const worstSorted=[...partnershipsRaw].filter(p=>[p.a,p.b].slice().sort().join('|')!==bestKey).sort((a,b)=>{
       const pA=a.w/(a.w+a.l), pB=b.w/(b.w+b.l);
       if(pA!==pB)return pA-pB;
+      if((a.gamesDiff||0)!==(b.gamesDiff||0))return (a.gamesDiff||0)-(b.gamesDiff||0);
       return (b.w+b.l)-(a.w+a.l);
     });
     // S053 Issue #23 follow-up: removed `partnerships.length >= 6` gate so the per-player
@@ -432,29 +438,31 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
           {/* PARTNERS — preserves S053 dual-avatar layout, swaps frame to Phase 6b cards */}
           {analyticsSection==="partnership"&&<>
             <div className="pair-grid">
-              {analyticsData.bestPartnership&&<div className="pair-card">
-                <div className="pair-title">Best Pairs</div>
-                <div className="pair-row">
-                  <div className="pair-avi">{getAvatar(analyticsData.bestPartnership.a)?<img src={getAvatar(analyticsData.bestPartnership.a)} alt=""/>:getName(analyticsData.bestPartnership.a)[0]}</div>
-                  <div className="pair-mid">
-                    <div className="pair-names">{getName(analyticsData.bestPartnership.a)} x {getName(analyticsData.bestPartnership.b)}</div>
-                    <div className="pair-rec">{analyticsData.bestPartnership.w}W-{analyticsData.bestPartnership.l}L ({Math.round(analyticsData.bestPartnership.w/(analyticsData.bestPartnership.w+analyticsData.bestPartnership.l)*100)}%)</div>
+              {analyticsData.bestPartnership&&(()=>{const bp=analyticsData.bestPartnership;const gd=bp.gamesDiff||0;const gdColor=gd>0?A:gd<0?DG:MT;return (
+                <div className="pair-card">
+                  <div className="pair-title">Best Pairs</div>
+                  <div className="pair-row">
+                    <div className="pair-avi">{getAvatar(bp.a)?<img src={getAvatar(bp.a)} alt=""/>:getName(bp.a)[0]}</div>
+                    <div className="pair-mid">
+                      <div className="pair-names">{getName(bp.a)} x {getName(bp.b)}</div>
+                      <div className="pair-rec">{bp.w}W-{bp.l}L ({Math.round(bp.w/(bp.w+bp.l)*100)}%) <span style={{color:gdColor,fontWeight:700}} title="Games differential">· {gd>0?"+":""}{gd} GD</span></div>
+                    </div>
+                    <div className="pair-avi">{getAvatar(bp.b)?<img src={getAvatar(bp.b)} alt=""/>:getName(bp.b)[0]}</div>
                   </div>
-                  <div className="pair-avi">{getAvatar(analyticsData.bestPartnership.b)?<img src={getAvatar(analyticsData.bestPartnership.b)} alt=""/>:getName(analyticsData.bestPartnership.b)[0]}</div>
                 </div>
-              </div>}
+              );})()}
               <div className="pair-card">
                 <div className="pair-title">Worst Pairs</div>
-                {analyticsData.worstPartnership ? (
+                {analyticsData.worstPartnership ? (()=>{const wp=analyticsData.worstPartnership;const gd=wp.gamesDiff||0;const gdColor=gd>0?A:gd<0?DG:MT;return (
                   <div className="pair-row">
-                    <div className="pair-avi dg">{getAvatar(analyticsData.worstPartnership.a)?<img src={getAvatar(analyticsData.worstPartnership.a)} alt=""/>:getName(analyticsData.worstPartnership.a)[0]}</div>
+                    <div className="pair-avi dg">{getAvatar(wp.a)?<img src={getAvatar(wp.a)} alt=""/>:getName(wp.a)[0]}</div>
                     <div className="pair-mid">
-                      <div className="pair-names">{getName(analyticsData.worstPartnership.a)} x {getName(analyticsData.worstPartnership.b)}</div>
-                      <div className="pair-rec dg">{analyticsData.worstPartnership.w}W-{analyticsData.worstPartnership.l}L ({Math.round(analyticsData.worstPartnership.w/(analyticsData.worstPartnership.w+analyticsData.worstPartnership.l)*100)}%)</div>
+                      <div className="pair-names">{getName(wp.a)} x {getName(wp.b)}</div>
+                      <div className="pair-rec dg">{wp.w}W-{wp.l}L ({Math.round(wp.w/(wp.w+wp.l)*100)}%) <span style={{color:gdColor,fontWeight:700}} title="Games differential">· {gd>0?"+":""}{gd} GD</span></div>
                     </div>
-                    <div className="pair-avi dg">{getAvatar(analyticsData.worstPartnership.b)?<img src={getAvatar(analyticsData.worstPartnership.b)} alt=""/>:getName(analyticsData.worstPartnership.b)[0]}</div>
+                    <div className="pair-avi dg">{getAvatar(wp.b)?<img src={getAvatar(wp.b)} alt=""/>:getName(wp.b)[0]}</div>
                   </div>
-                ) : (
+                );})() : (
                   <div className="pair-empty">No losing partnerships yet</div>
                 )}
               </div>
@@ -466,11 +474,14 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                 {analyticsData.partnerships.slice(0,10).map((p,i)=>{
                   const pct=Math.round(p.w/(p.w+p.l)*100);
                   const mod=pct>=60?"":pct>=40?"mid":"dg";
+                  const gd=p.gamesDiff||0;
+                  const gdColor=gd>0?A:gd<0?DG:MT;
                   return (
                     <div key={i} className="pp-row">
                       <span className="pp-name">{getName(p.a)} x {getName(p.b)}</span>
                       <div className="pp-r">
                         <span className="pp-mp">{p.w+p.l} MP</span>
+                        <span style={{fontSize:11,fontWeight:700,fontFamily:"'JetBrains Mono'",color:gdColor,minWidth:32,textAlign:"right"}} title="Games differential">{gd>0?"+":""}{gd}</span>
                         <div className="pp-bar"><div className={`pp-bar-f${mod?" "+mod:""}`} style={{width:`${pct}%`}}/></div>
                         <span className={`pp-pct${mod?" "+mod:""}`}>{pct}%</span>
                       </div>
