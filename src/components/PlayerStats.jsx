@@ -478,44 +478,51 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
               </div>
             </div>
 
-            {/* S079: Partnership Ranking — header "Rank", medal emojis for top 3
-                matching the regular player leaderboard, EFF% (efficiency), MW
-                green when >0, ML red when >0, Last-5 dot strip rendered under
-                the pair name (no separate column). 6-column grid. */}
+            {/* S079: Partnership Ranking — restyled to use the EXACT same CSS
+                classes as the main player leaderboard (.lbtable / .lbth /
+                .lbrow / .lbrank / .lbn / .lbc / .form-dots / .fdot.w/.l) so
+                fonts, colors, and Last-5 dot shades match. Every data cell
+                is horizontally + vertically centered. */}
             <section className="dpro-sec" style={{padding:0}}>
               <h3 className="dpro-sectitle">Partnership Ranking</h3>
-              <div className="dpro-sec-card">
-                <div style={{display:"grid",gridTemplateColumns:"34px 1fr 30px 30px 30px 46px",alignItems:"center",gap:6,padding:"4px 10px 6px",borderBottom:`1px solid ${BD}`,fontSize:9,fontWeight:800,letterSpacing:".06em",color:MT,textTransform:"uppercase",fontFamily:"'JetBrains Mono'"}}>
-                  <span>Rank</span>
-                  <span>Pair</span>
-                  <span style={{textAlign:"center"}}>MP</span>
-                  <span style={{textAlign:"center"}}>MW</span>
-                  <span style={{textAlign:"center"}}>ML</span>
-                  <span style={{textAlign:"right"}}>EFF%</span>
+              <div className="lbtable">
+                <div className="lbth" style={{gridTemplateColumns:"36px 1fr 28px 28px 28px 38px"}}>
+                  <div className="lbh c">Rank</div>
+                  <div className="lbh c">Pair</div>
+                  <div className="lbh" style={{justifyContent:"center"}}>MP</div>
+                  <div className="lbh" style={{justifyContent:"center",color:"var(--win)"}}>MW</div>
+                  <div className="lbh" style={{justifyContent:"center",color:"var(--loss)"}}>ML</div>
+                  <div className="lbh" style={{justifyContent:"center"}}>EFF%</div>
                 </div>
                 {analyticsData.partnerships.slice(0,10).map((p,i)=>{
                   const mp=p.w+p.l;
                   const pct=Math.round(p.w/mp*100);
-                  const pctColor=pct>=60?A:pct>=40?TX:DG;
                   const last5=(p.results||[]).slice(-5);
                   const medal=i===0?"\uD83E\uDD47":i===1?"\uD83E\uDD48":i===2?"\uD83E\uDD49":null;
                   return (
-                    <div key={i} style={{display:"grid",gridTemplateColumns:"34px 1fr 30px 30px 30px 46px",alignItems:"center",gap:6,padding:"8px 10px",borderBottom:i<analyticsData.partnerships.slice(0,10).length-1?`1px solid ${BD}40`:"none",fontFamily:"var(--font)"}}>
-                      <span style={{fontSize:medal?20:11,fontWeight:700,color:MT,fontFamily:medal?"inherit":"'JetBrains Mono'",lineHeight:1,textAlign:"center"}}>{medal||(i+1)}</span>
-                      <div style={{minWidth:0}}>
+                    <div key={i} className="lbrow" style={{gridTemplateColumns:"36px 1fr 28px 28px 28px 38px",cursor:"default"}}>
+                      <div className={`lbrank ${i<3?"medal":"num"}`} style={{color:i===0?"#facc15":i===1?"#94a3b8":i===2?"#c97b2e":"#9090a4"}}>
+                        {medal || (i+1)}
+                      </div>
+                      <div className="lbpinfo" style={{alignItems:"center",textAlign:"center",gap:4}}>
                         <button
                           onClick={()=>setSp(p.a)}
-                          style={{background:"transparent",border:"none",padding:0,cursor:"pointer",color:TX,fontSize:12,fontWeight:600,fontFamily:"var(--font)",textAlign:"left",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",display:"block",width:"100%"}}
+                          className="lbn"
+                          style={{background:"transparent",border:"none",padding:0,cursor:"pointer",color:"inherit",textAlign:"center",display:"block",width:"100%"}}
                           title={`Open ${getName(p.a)}'s profile`}
                         >
-                          {getName(p.a)} <span style={{color:MT,fontWeight:400}}>x</span> {getName(p.b)}
+                          {getName(p.a)} <span style={{color:"#9090a4",fontWeight:400}}>x</span> {getName(p.b)}
                         </button>
-                        {last5.length>0 && <div style={{marginTop:3}}><FD f={last5}/></div>}
+                        {last5.length>0 && (
+                          <div className="form-dots" style={{justifyContent:"center"}}>
+                            {last5.map((r,j)=><div key={j} className={`fdot ${r==="W"?"w":"l"}`}/>)}
+                          </div>
+                        )}
                       </div>
-                      <span style={{fontSize:12,fontWeight:700,fontFamily:"'JetBrains Mono'",color:TX,textAlign:"center"}}>{mp}</span>
-                      <span style={{fontSize:12,fontWeight:700,fontFamily:"'JetBrains Mono'",color:p.w>0?A:MT,textAlign:"center"}}>{p.w}</span>
-                      <span style={{fontSize:12,fontWeight:700,fontFamily:"'JetBrains Mono'",color:p.l>0?DG:MT,textAlign:"center"}}>{p.l}</span>
-                      <span style={{fontSize:12,fontWeight:800,fontFamily:"'JetBrains Mono'",color:pctColor,textAlign:"right"}}>{pct}%</span>
+                      <div className="lbc" style={{justifyContent:"center"}}>{mp}</div>
+                      <div className="lbc w" style={{justifyContent:"center",color:p.w>0?"var(--win)":"#9090a4"}}>{p.w}</div>
+                      <div className="lbc l" style={{justifyContent:"center",color:p.l>0?"var(--loss)":"#9090a4"}}>{p.l>0?p.l:"–"}</div>
+                      <div className={`lbc ${pct>=50?"hi":"lo"}`} style={{justifyContent:"center"}}>{pct}%</div>
                     </div>
                   );
                 })}
