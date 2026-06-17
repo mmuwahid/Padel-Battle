@@ -32,7 +32,7 @@ export function LeagueManagement({
     supabase, league, leagueId,
     showToast, loadLeagueData,
     isOwner, isAdmin, players, approvedMatches, seasons,
-    user,
+    user, leagueMembers, memberProfiles, updateMemberRole,
   } = useLeague();
 
   // S077 r13: prefer lifted prop, fall back to local state.
@@ -272,6 +272,66 @@ export function LeagueManagement({
                 </div>
                 <div className="crchev"><Icon name="chevron" size={16} color="var(--muted-2)" /></div>
               </button>
+            </div>
+          )}
+
+          {/* S079 Issue #98: Admin Management — owner can promote/demote
+              other league members to/from admin. Re-added after S077 r7
+              collapsed the per-season role model and inadvertently dropped
+              the UI; the underlying RPC + direct UPDATE still works. */}
+          {isOwner && (
+            <div>
+              <div className="slbl">Admin Management</div>
+              <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                {(leagueMembers || [])
+                  .filter(m => m.user_id !== league?.created_by)
+                  .map(m => {
+                    const isMemberAdmin = m.role === "admin";
+                    const prof = (memberProfiles || {})[m.user_id] || {};
+                    const dispName = prof.display_name || prof.email?.split("@")[0] || "—";
+                    const isSelf = m.user_id === user?.id;
+                    return (
+                      <div key={m.id} className="crow" style={{cursor:"default"}}>
+                        <div className="cricon">
+                          {prof.avatar_url ? (
+                            <img src={prof.avatar_url} alt="" style={{width:"100%",height:"100%",borderRadius:"50%",objectFit:"cover"}}/>
+                          ) : (
+                            <Icon name={isMemberAdmin ? "shield" : "user"} size={16} color={isMemberAdmin ? "var(--gold)" : "var(--muted)"}/>
+                          )}
+                        </div>
+                        <div className="crbody">
+                          <div className="crtitle">{dispName}{isSelf ? " (you)" : ""}</div>
+                          <div className="crsub">{isMemberAdmin ? "Admin" : "Member"}</div>
+                        </div>
+                        {!isSelf && (
+                          <button
+                            onClick={() => updateMemberRole && updateMemberRole(m.user_id, isMemberAdmin ? "member" : "admin")}
+                            style={{
+                              padding:"6px 12px",
+                              borderRadius:"var(--r-md)",
+                              border:`1px solid ${isMemberAdmin ? "rgba(248,113,113,.32)" : "rgba(255,215,0,.32)"}`,
+                              background: isMemberAdmin ? "rgba(248,113,113,.08)" : "rgba(255,215,0,.08)",
+                              color: isMemberAdmin ? "var(--danger)" : "var(--gold)",
+                              fontFamily:"var(--font)",
+                              fontSize:11,
+                              fontWeight:700,
+                              letterSpacing:".04em",
+                              cursor:"pointer",
+                              whiteSpace:"nowrap",
+                            }}
+                          >
+                            {isMemberAdmin ? "Demote" : "Promote"}
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                {(leagueMembers || []).filter(m => m.user_id !== league?.created_by).length === 0 && (
+                  <div style={{padding:14,borderRadius:"var(--r-md)",border:"1px dashed var(--border)",fontSize:12,color:"var(--muted)",textAlign:"center"}}>
+                    No other members yet. Invite players to your league to manage admins.
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
