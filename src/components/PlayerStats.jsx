@@ -447,72 +447,75 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
           {/* PARTNERS — preserves S053 dual-avatar layout, swaps frame to Phase 6b cards */}
           {analyticsSection==="partnership"&&<>
             <div className="pair-grid">
-              {analyticsData.bestPartnership&&(()=>{const bp=analyticsData.bestPartnership;const gd=bp.gamesDiff||0;const gdColor=gd>0?A:gd<0?DG:MT;return (
-                <div className="pair-card">
-                  <div className="pair-title">Best Pairs</div>
-                  <div className="pair-row">
-                    <div className="pair-avi">{getAvatar(bp.a)?<img src={getAvatar(bp.a)} alt=""/>:getName(bp.a)[0]}</div>
-                    <div className="pair-mid">
-                      <div className="pair-names">{getName(bp.a)} x {getName(bp.b)}</div>
-                      <div className="pair-rec">{bp.w}W-{bp.l}L ({Math.round(bp.w/(bp.w+bp.l)*100)}%) <span style={{color:gdColor,fontWeight:700}} title="Games differential">· {gd>0?"+":""}{gd} GD</span></div>
-                    </div>
-                    <div className="pair-avi">{getAvatar(bp.b)?<img src={getAvatar(bp.b)} alt=""/>:getName(bp.b)[0]}</div>
+              {/* S079: GD chip removed from cards per user request — it was
+                  pushing the layout. GD remains visible on the Partnership
+                  Ranking sort tiebreaker (under the hood). */}
+              {analyticsData.bestPartnership&&<div className="pair-card">
+                <div className="pair-title">Best Pairs</div>
+                <div className="pair-row">
+                  <div className="pair-avi">{getAvatar(analyticsData.bestPartnership.a)?<img src={getAvatar(analyticsData.bestPartnership.a)} alt=""/>:getName(analyticsData.bestPartnership.a)[0]}</div>
+                  <div className="pair-mid">
+                    <div className="pair-names">{getName(analyticsData.bestPartnership.a)} x {getName(analyticsData.bestPartnership.b)}</div>
+                    <div className="pair-rec">{analyticsData.bestPartnership.w}W-{analyticsData.bestPartnership.l}L ({Math.round(analyticsData.bestPartnership.w/(analyticsData.bestPartnership.w+analyticsData.bestPartnership.l)*100)}%)</div>
                   </div>
+                  <div className="pair-avi">{getAvatar(analyticsData.bestPartnership.b)?<img src={getAvatar(analyticsData.bestPartnership.b)} alt=""/>:getName(analyticsData.bestPartnership.b)[0]}</div>
                 </div>
-              );})()}
+              </div>}
               <div className="pair-card">
                 <div className="pair-title">Worst Pairs</div>
-                {analyticsData.worstPartnership ? (()=>{const wp=analyticsData.worstPartnership;const gd=wp.gamesDiff||0;const gdColor=gd>0?A:gd<0?DG:MT;return (
+                {analyticsData.worstPartnership ? (
                   <div className="pair-row">
-                    <div className="pair-avi dg">{getAvatar(wp.a)?<img src={getAvatar(wp.a)} alt=""/>:getName(wp.a)[0]}</div>
+                    <div className="pair-avi dg">{getAvatar(analyticsData.worstPartnership.a)?<img src={getAvatar(analyticsData.worstPartnership.a)} alt=""/>:getName(analyticsData.worstPartnership.a)[0]}</div>
                     <div className="pair-mid">
-                      <div className="pair-names">{getName(wp.a)} x {getName(wp.b)}</div>
-                      <div className="pair-rec dg">{wp.w}W-{wp.l}L ({Math.round(wp.w/(wp.w+wp.l)*100)}%) <span style={{color:gdColor,fontWeight:700}} title="Games differential">· {gd>0?"+":""}{gd} GD</span></div>
+                      <div className="pair-names">{getName(analyticsData.worstPartnership.a)} x {getName(analyticsData.worstPartnership.b)}</div>
+                      <div className="pair-rec dg">{analyticsData.worstPartnership.w}W-{analyticsData.worstPartnership.l}L ({Math.round(analyticsData.worstPartnership.w/(analyticsData.worstPartnership.w+analyticsData.worstPartnership.l)*100)}%)</div>
                     </div>
-                    <div className="pair-avi dg">{getAvatar(wp.b)?<img src={getAvatar(wp.b)} alt=""/>:getName(wp.b)[0]}</div>
+                    <div className="pair-avi dg">{getAvatar(analyticsData.worstPartnership.b)?<img src={getAvatar(analyticsData.worstPartnership.b)} alt=""/>:getName(analyticsData.worstPartnership.b)[0]}</div>
                   </div>
-                );})() : (
+                ) : (
                   <div className="pair-empty">No losing partnerships yet</div>
                 )}
               </div>
             </div>
 
-            {/* S079: renamed "All Partnerships" → "Partnership Ranking" with full
-                stat columns (MP/MW/ML/Win%) and Last-5 W/L dot strip, mirroring
-                the player Ranking screen. Each pair name is clickable to drill
-                into either player. */}
+            {/* S079: Partnership Ranking — header "Rank", medal emojis for top 3
+                matching the regular player leaderboard, EFF% (efficiency), MW
+                green when >0, ML red when >0, Last-5 dot strip rendered under
+                the pair name (no separate column). 6-column grid. */}
             <section className="dpro-sec" style={{padding:0}}>
               <h3 className="dpro-sectitle">Partnership Ranking</h3>
               <div className="dpro-sec-card">
-                <div style={{display:"grid",gridTemplateColumns:"22px 1fr 30px 30px 30px 42px 54px",alignItems:"center",gap:6,padding:"4px 10px 6px",borderBottom:`1px solid ${BD}`,fontSize:9,fontWeight:800,letterSpacing:".06em",color:MT,textTransform:"uppercase",fontFamily:"'JetBrains Mono'"}}>
-                  <span>#</span>
+                <div style={{display:"grid",gridTemplateColumns:"34px 1fr 30px 30px 30px 46px",alignItems:"center",gap:6,padding:"4px 10px 6px",borderBottom:`1px solid ${BD}`,fontSize:9,fontWeight:800,letterSpacing:".06em",color:MT,textTransform:"uppercase",fontFamily:"'JetBrains Mono'"}}>
+                  <span>Rank</span>
                   <span>Pair</span>
                   <span style={{textAlign:"center"}}>MP</span>
                   <span style={{textAlign:"center"}}>MW</span>
                   <span style={{textAlign:"center"}}>ML</span>
-                  <span style={{textAlign:"right"}}>Win%</span>
-                  <span style={{textAlign:"right"}}>Last 5</span>
+                  <span style={{textAlign:"right"}}>EFF%</span>
                 </div>
                 {analyticsData.partnerships.slice(0,10).map((p,i)=>{
                   const mp=p.w+p.l;
                   const pct=Math.round(p.w/mp*100);
                   const pctColor=pct>=60?A:pct>=40?TX:DG;
                   const last5=(p.results||[]).slice(-5);
+                  const medal=i===0?"\uD83E\uDD47":i===1?"\uD83E\uDD48":i===2?"\uD83E\uDD49":null;
                   return (
-                    <div key={i} style={{display:"grid",gridTemplateColumns:"22px 1fr 30px 30px 30px 42px 54px",alignItems:"center",gap:6,padding:"8px 10px",borderBottom:i<analyticsData.partnerships.slice(0,10).length-1?`1px solid ${BD}40`:"none",fontFamily:"var(--font)"}}>
-                      <span style={{fontSize:11,fontWeight:700,color:MT,fontFamily:"'JetBrains Mono'"}}>{i+1}</span>
-                      <button
-                        onClick={()=>setSp(p.a)}
-                        style={{background:"transparent",border:"none",padding:0,cursor:"pointer",color:TX,fontSize:12,fontWeight:600,fontFamily:"var(--font)",textAlign:"left",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}
-                        title={`Open ${getName(p.a)}'s profile`}
-                      >
-                        {getName(p.a)} <span style={{color:MT,fontWeight:400}}>x</span> {getName(p.b)}
-                      </button>
+                    <div key={i} style={{display:"grid",gridTemplateColumns:"34px 1fr 30px 30px 30px 46px",alignItems:"center",gap:6,padding:"8px 10px",borderBottom:i<analyticsData.partnerships.slice(0,10).length-1?`1px solid ${BD}40`:"none",fontFamily:"var(--font)"}}>
+                      <span style={{fontSize:medal?20:11,fontWeight:700,color:MT,fontFamily:medal?"inherit":"'JetBrains Mono'",lineHeight:1,textAlign:"center"}}>{medal||(i+1)}</span>
+                      <div style={{minWidth:0}}>
+                        <button
+                          onClick={()=>setSp(p.a)}
+                          style={{background:"transparent",border:"none",padding:0,cursor:"pointer",color:TX,fontSize:12,fontWeight:600,fontFamily:"var(--font)",textAlign:"left",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",display:"block",width:"100%"}}
+                          title={`Open ${getName(p.a)}'s profile`}
+                        >
+                          {getName(p.a)} <span style={{color:MT,fontWeight:400}}>x</span> {getName(p.b)}
+                        </button>
+                        {last5.length>0 && <div style={{marginTop:3}}><FD f={last5}/></div>}
+                      </div>
                       <span style={{fontSize:12,fontWeight:700,fontFamily:"'JetBrains Mono'",color:TX,textAlign:"center"}}>{mp}</span>
                       <span style={{fontSize:12,fontWeight:700,fontFamily:"'JetBrains Mono'",color:p.w>0?A:MT,textAlign:"center"}}>{p.w}</span>
                       <span style={{fontSize:12,fontWeight:700,fontFamily:"'JetBrains Mono'",color:p.l>0?DG:MT,textAlign:"center"}}>{p.l}</span>
                       <span style={{fontSize:12,fontWeight:800,fontFamily:"'JetBrains Mono'",color:pctColor,textAlign:"right"}}>{pct}%</span>
-                      <span style={{display:"flex",justifyContent:"flex-end"}}><FD f={last5}/></span>
                     </div>
                   );
                 })}

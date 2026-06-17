@@ -24,6 +24,11 @@ export function LeagueManagement({
   // component falls back to internal state.
   detailLeagueId: detailLeagueIdProp,
   setDetailLeagueId: setDetailLeagueIdProp,
+  // S079: when set, the detail view was opened from PlatformAdmin —
+  // closeDetail must goBack() to return to PlatformAdmin instead of the
+  // LeagueManagement list (which shows the user's OWN leagues only).
+  detailFromPlatform = false,
+  setDetailFromPlatform,
 }) {
   // S077 r11: nav helper — push current view onto sidebar history so the
   // back button on Player/Season Management returns here, not the drawer.
@@ -96,6 +101,17 @@ export function LeagueManagement({
   };
 
   const closeDetail = () => {
+    // S079: if the detail view was opened from PlatformAdmin, back returns
+    // to the platform list rather than to the LM list (which only shows
+    // the user's own leagues — confusing for a platform admin who tapped
+    // a league they don't own).
+    if (detailFromPlatform) {
+      if (setDetailFromPlatform) setDetailFromPlatform(false);
+      setDetailLeagueId(null);
+      setEditingName(false);
+      if (goBack) goBack();
+      return;
+    }
     setDetailLeagueId(null);
     setEditingName(false);
   };

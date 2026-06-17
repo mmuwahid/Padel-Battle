@@ -104,6 +104,9 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
   // when navigating to PlayerManagement / SeasonManagement (back button returns
   // to the same league detail instead of falling back to the leagues list).
   const [lmDetailLeagueId,setLmDetailLeagueId]=useState(null);
+  // S079: track when LeagueManagement detail was opened from PlatformAdmin so
+  // the back button returns to PlatformAdmin instead of the LM list view.
+  const [lmDetailFromPlatform,setLmDetailFromPlatform]=useState(false);
   // S077 r13: per-league counts for League Management card subtitles.
   const [leagueStats,setLeagueStats]=useState({});
   const navigateSidebar = useCallback((next) => {
@@ -1115,13 +1118,13 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
             <SeasonManagement setSidebarView={setSidebarView} goBack={goBackSidebar}/>
           )}
           {sidebarView==="leagueManagement" && (
-            <LeagueManagement setSidebarView={setSidebarView} navigateSidebar={navigateSidebar} goBack={goBackSidebar} leagues={leagues||[]} leagueHandlers={leagueHandlers} leagueStats={leagueStats} detailLeagueId={lmDetailLeagueId} setDetailLeagueId={setLmDetailLeagueId}/>
+            <LeagueManagement setSidebarView={setSidebarView} navigateSidebar={navigateSidebar} goBack={goBackSidebar} leagues={leagues||[]} leagueHandlers={leagueHandlers} leagueStats={leagueStats} detailLeagueId={lmDetailLeagueId} setDetailLeagueId={setLmDetailLeagueId} detailFromPlatform={lmDetailFromPlatform} setDetailFromPlatform={setLmDetailFromPlatform}/>
           )}
           {sidebarView==="settings" && (
             <SettingsView user={user} claimedPlayer={claimedPlayer} isAdmin={isAdmin} pushSubscribed={pushSubscribed} subscribeToPush={subscribeToPush} unsubscribeFromPush={unsubscribeFromPush} notifNewMatch={notifNewMatch} notifRankingChange={notifRankingChange} notifNewMembers={notifNewMembers} notifChallenges={notifChallenges} toggleNotification={toggleNotification} onSwitchLeague={onSwitchLeague} setSidebarView={setSidebarView} navigateSidebar={navigateSidebar} goBack={goBackSidebar} showToast={showToast} loadLeagueData={loadLeagueData} testPushNotification={testPushNotification}/>
           )}
           {sidebarView==="platform" && (
-            <PlatformAdmin onClose={goBackSidebar} showToast={showToast} onOpenLeague={(id)=>{ if(leagueHandlers?.switchLeague) leagueHandlers.switchLeague(id); setLmDetailLeagueId(id); navigateSidebar("leagueManagement"); }}/>
+            <PlatformAdmin onClose={goBackSidebar} showToast={showToast} onOpenLeague={(id)=>{ if(leagueHandlers?.switchLeague) leagueHandlers.switchLeague(id); setLmDetailLeagueId(id); setLmDetailFromPlatform(true); navigateSidebar("leagueManagement"); }}/>
           )}
           {sidebarView==="notifications" && (
             <NotificationCenter
