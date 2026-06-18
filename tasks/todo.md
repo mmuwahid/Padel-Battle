@@ -1,7 +1,25 @@
 # Active Work
 
-## NEXT SESSION (S080) — START HERE
-**Last session:** S079 (2026-06-17) — **9 PRs merged (#97/#100/#101/#102/#103/#104/#105/#106/#107), SW v166 → v179, 1 DB migration (`s079_platform_admin_select_visibility`).** Cold-start after 37-day gap. /tmp/Padel-Battle re-cloned fresh. **Shipped Issues #95 (Liquid Glass V2 Standard), #96 (Partner Games Differential), #98 (Admin Management UI re-added), #99 (Platform Admin RLS visibility + client override + Pending Review lockout bypass).** Partnership Ranking iterated through 5 PRs (initial → medal/EFF%/last-5-under-name → leaderboard styling parity → pair-col left-align → flanking avatars + slash separator). Mockup-first cadence for #95 (4 variants reviewed before code). Best/Worst Pairs flashcards drop GD chip + use `/` separator. ScheduleView empty-state 📅 → calendar SVG. Platform Admin back-nav fixed (lmDetailFromPlatform flag). 2 new lessons + 5 validated patterns. Production live at padel-battle.vercel.app on SW v179.
+## NEXT SESSION (S081) — START HERE
+**Last session:** S080 (2026-06-18) — **1 commit (`b698996`), SW v179 → v180, 1 DB migration (`s080_season_ruleset`), 2 issues closed (#92, #99 after iPhone smoke PASS).** Shipped the **season ruleset** feature: each season picks `'fip'` (default, unchanged) or `'casual'` at creation, **immutable for life of season**. Casual = any 1–5 sets, any score where a≠b, no FIP shape rule, no `incomplete` status, manual entry only, decisive winner required (so ELO/`win()` work unchanged). DB: `seasons.ruleset` column + `is_valid_casual_set()` + shared `assert_valid_match_sets(sets, ruleset)` called by INSERT + new BEFORE UPDATE triggers; dropped CHECK `matches_sets_valid_or_incomplete` (ruleset lookup needs a subquery). Frontend: `validateMatch(rawSets, ruleset)` + `validateCasualMatch` + `isValidCasualSet` in scoringEngine.js; ruleset toggle in SeasonManagement create sheet + detail pill; LogMatch `isCasual` branch; EditMatchModal ruleset-aware. Deploy READY. Production live at padel-battle.vercel.app on SW v180.
+
+### 🎯 PENDING USER SMOKE-TEST (S080 ship)
+- **Season ruleset — Casual flow** (SW v180): create a Casual season → log a multi-set match with arbitrary non-equal scores (e.g. 8-3 / 1-6 / 10-5) → confirm validates, ranks, no LIVE mode, no incomplete state. Then confirm an FIP season still enforces best-of-3 + FIP shapes + LIVE mode. No issue to close (feature was not issue-tracked) — just confirm to user.
+
+### 🎯 S081 PRIORITY
+1. Address any feedback from the S080 Casual-ruleset smoke-test.
+2. **Issue #94 — UI responsive sizing for iPhone 13** (leaderboard name truncation) — still open, untouched.
+3. **Color sweep Note A from S069** — still awaiting user A1/A2/A3 decision (`#9090a4` vs spec `#555555` vs redefine `--muted`).
+4. **Game Mode Phase 10 PR-D / PR-E** — SE/DE/RR active tournament views (needs state-based score input refactor first) + BracketSVG color tokens.
+
+### S080 outcomes (this session — archived)
+- [x] S079 smoke-test triage: closed Issues #92 (pairs season stats isolation) + #99 (Platform Admin RLS visibility) via gh after user PASS
+- [x] Skipped Issue #94, deferred color sweep Note A
+- [x] Season ruleset feature: spec doc + DB migration `s080_season_ruleset` + scoringEngine.js + App.jsx + SeasonManagement.jsx + LogMatch.jsx + EditMatchModal.jsx + sw.js v180
+- [x] Committed `b698996`, pushed, Vercel deploy `dpl_GpHzC8jNUo6L5Pr4y7xWkeeNdDHR` READY
+
+### S079 outcomes (archived)
+**S079 (2026-06-17):** **9 PRs merged (#97/#100/#101/#102/#103/#104/#105/#106/#107), SW v166 → v179, 1 DB migration (`s079_platform_admin_select_visibility`).** Cold-start after 37-day gap. /tmp/Padel-Battle re-cloned fresh. **Shipped Issues #95 (Liquid Glass V2 Standard), #96 (Partner Games Differential), #98 (Admin Management UI re-added), #99 (Platform Admin RLS visibility + client override + Pending Review lockout bypass).** Partnership Ranking iterated through 5 PRs (initial → medal/EFF%/last-5-under-name → leaderboard styling parity → pair-col left-align → flanking avatars + slash separator). Mockup-first cadence for #95 (4 variants reviewed before code). Best/Worst Pairs flashcards drop GD chip + use `/` separator. ScheduleView empty-state 📅 → calendar SVG. Platform Admin back-nav fixed (lmDetailFromPlatform flag). 2 new lessons + 5 validated patterns.
 
 ### 🎯 PENDING USER SMOKE-TEST (S079 ships)
 - **Issue #92 — pairs season stats isolation + PairsList + PairStats drill-in + Analytics** (from S078 ship, still 🔍 SMOKE-TEST PENDING from previous session)
