@@ -402,7 +402,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
         supabase.from("league_members").select("id,user_id,role,profiles(id,email,display_name,avatar_url)").eq("league_id",leagueId),
         supabase.from("players").select("id,name,nickname,user_id,created_by,created_at,avatar_url,country,playing_position,gender,date_of_birth,handedness").eq("league_id",leagueId).order("name"),
         supabase.from("matches").select("id,team_a,team_b,sets,motm,date,season_id,league_id,status,logged_by,created_at,open_match_id").eq("league_id",leagueId).order("date",{ascending:false}).limit(500),
-        supabase.from("seasons").select("id,name,active,start_date,end_date,location,format").eq("league_id",leagueId).order("start_date"),
+        supabase.from("seasons").select("id,name,active,start_date,end_date,location,format,ruleset").eq("league_id",leagueId).order("start_date"),
         supabase.from("challenges").select("id,team_a,team_b,status,date,time,location,notes,created_by,match_id,responses,duration,league_id").eq("league_id",leagueId).in("status",["open","pending","confirmed","played"]).order("date",{ascending:true}),
         supabase.from("open_matches").select("id,league_id,season_id,organizer_id,scheduled_at,duration_minutes,court,notes,status,team_a_player_ids,team_b_player_ids,locked_at,created_at").eq("league_id",leagueId).in("status",["open","locked"]).order("scheduled_at",{ascending:true}),
         supabase.from("open_match_players").select("id,open_match_id,player_id,joined_at"),

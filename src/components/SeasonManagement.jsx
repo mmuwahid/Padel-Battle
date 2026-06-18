@@ -27,6 +27,7 @@ export function SeasonManagement({ setSidebarView, goBack }) {
   const [newLocation, setNewLocation] = useState("");
   const [cloneFrom, setCloneFrom] = useState("");
   const [newFormat, setNewFormat] = useState("individual"); // S073 FT-15
+  const [newRuleset, setNewRuleset] = useState("fip"); // S080: season ruleset
   const [creating, setCreating] = useState(false);
 
   // Edit form
@@ -66,6 +67,7 @@ export function SeasonManagement({ setSidebarView, goBack }) {
     setNewStart(new Date().toISOString().slice(0, 10));
     setNewLocation("");
     setCloneFrom(sortedSeasons[0]?.id || "");
+    setNewRuleset("fip");
     setShowCreate(true);
   };
 
@@ -81,6 +83,7 @@ export function SeasonManagement({ setSidebarView, goBack }) {
         p_clone_from: cloneFrom || null,
         p_location: newLocation.trim() || null,
         p_format: newFormat,
+        p_ruleset: newRuleset,
       });
       if (error) throw error;
       showToast("Season created");
@@ -281,6 +284,7 @@ export function SeasonManagement({ setSidebarView, goBack }) {
           <div className="adh1-row">
             <div className="adh1">{openSeason.name}</div>
             <div className={openSeason.active ? "badgea" : "badgee"}>{openSeason.active ? "ACTIVE" : "ENDED"}</div>
+            <div className="badgee" style={{textTransform:"uppercase"}}>{openSeason.ruleset === "casual" ? "Casual" : "FIP"}</div>
           </div>
         </div>
 
@@ -458,7 +462,22 @@ export function SeasonManagement({ setSidebarView, goBack }) {
                   <div className="shlbl"><Icon name="trophy" size={12} color="var(--muted)" />Pair Name (optional)</div>
                   <input className="shi" type="text" value={newPairName} onChange={(e) => setNewPairName(e.target.value)} placeholder='e.g. "Thunder"' />
                 </div>
-                <div className="inote">
+                {/* S080: ruleset toggle -- immutable after creation */}
+              <div className="shf">
+                <div className="shlbl"><Icon name="shield" size={12} color="var(--muted)" />Ruleset</div>
+                <div className="sform-typetoggle">
+                  <button type="button" className={`sform-typebtn${newRuleset==="fip"?" on":""}`} onClick={()=>setNewRuleset("fip")}>
+                    Official (FIP)
+                    <span className="sform-typebtn-sub">Best of 3, FIP scores</span>
+                  </button>
+                  <button type="button" className={`sform-typebtn${newRuleset==="casual"?" on":""}`} onClick={()=>setNewRuleset("casual")}>
+                    Casual
+                    <span className="sform-typebtn-sub">Any sets & scores</span>
+                  </button>
+                </div>
+                <div style={{fontSize:10,color:"var(--muted)",marginTop:6}}>Ruleset is locked for the life of the season.</div>
+              </div>
+              <div className="inote">
                   <Icon name="info" size={14} color="rgba(74,222,128,.85)" />
                   <div className="inotet">Both players must be in this season's roster. Pair ELO starts at 1500.</div>
                 </div>

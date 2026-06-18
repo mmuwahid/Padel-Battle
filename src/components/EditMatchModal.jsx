@@ -7,7 +7,8 @@ import Icon from './Icon';
 // S066 Phase 9: restyled to use spec classes (.tcard / .sccard / .cstep / .savebtn / .mvpcard).
 // Keeps modal-overlay container; the inner card stack uses the same vocab as LogMatch.
 export function EditMatchModal({ match, onClose, onSaved }) {
-  const { supabase, players, getName, showToast } = useLeague();
+  const { supabase, players, getName, showToast, seasons } = useLeague();
+  const ruleset = (seasons || []).find(s => s.id === match.season_id)?.ruleset === 'casual' ? 'casual' : 'fip'; // S080
 
   const [date, setDate] = useState(match.date);
   const [teamA, setTeamA] = useState(match.team_a || []);
@@ -17,7 +18,7 @@ export function EditMatchModal({ match, onClose, onSaved }) {
   const [saving, setSaving] = useState(false);
 
   const matchPlayerIds = useMemo(() => [...teamA, ...teamB].filter(Boolean), [teamA, teamB]);
-  const validation = useMemo(() => validateMatch(sets), [sets]);
+  const validation = useMemo(() => validateMatch(sets, ruleset), [sets, ruleset]);
   const invalidIdx = validation.invalidIndexes || [];
   const canApprove = validation.status === 'complete';
 

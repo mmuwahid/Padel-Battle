@@ -29,6 +29,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
   // S076 FT-15: pair-aware picker state (pairs-format seasons only)
   const currentSeason = (seasons || []).find(sea => sea.id === seasonId);
   const isPairsFormat = currentSeason?.format === "pairs";
+  const isCasual = currentSeason?.ruleset === "casual"; // S080
   const seasonPairs = isPairsFormat ? (pairs || []).filter(pr => pr.season_id === seasonId) : [];
   const [selectedPairA,setSelectedPairA]=useState("");
   const [selectedPairB,setSelectedPairB]=useState("");
@@ -138,7 +139,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
     if(date>new Date().toISOString().split("T")[0]){if(showToast)showToast("Cannot log a match for a future date","error");return;}
 
     const rawSets = mode==='live' ? liveToSets(liveState) : sets.slice(0,ns);
-    const result = validateMatch(rawSets);
+    const result = validateMatch(rawSets, isCasual ? 'casual' : 'fip');
 
     if(result.status === 'invalid'){
       setInvalidIdx(result.invalidIndexes);
@@ -284,7 +285,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
       )}
 
       {/* Manual / LIVE mode bar (hidden in edit mode) */}
-      {!isE && (
+      {!isE && !isCasual && (
         <div className="modebar" style={{margin:0}}>
           <button className={`modebtn ${mode==='manual'?'man':''}`} onClick={()=>handleModeChange('manual')}>
             <Icon name="edit" size={15} color={mode==='manual'?"var(--text)":"#9090a4"}/>Manual
@@ -450,7 +451,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
           <div className="sccardh">
             <div className="sccardhT">Score</div>
             <div className="stog">
-              {[2,3].map(n=>(
+              {(isCasual?[1,2,3,4,5]:[2,3]).map(n=>(
                 <button key={n} className={`stogbtn${ns===n?' on':''}`} onClick={()=>setNs(n)}>{n} sets</button>
               ))}
             </div>
@@ -461,6 +462,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
               const inv=invalidIdx.includes(i);
               const setVal=(idx,val)=>{
                 const x=sets.map(y=>[...y]);
+                while(x.length<=i)x.push([0,0]);
                 x[i]=idx===0?[val,x[i][1]]:[x[i][0],val];
                 setSets(x);
                 if(invalidIdx.length)setInvalidIdx([]);
@@ -472,13 +474,13 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
                   <div className={`cstep a${inv?' invalid':''}`}>
                     <button className="csbtn" onClick={()=>setVal(0,Math.max(0,s[0]-1))}><Icon name="minus" size={14} strokeWidth={2.5} color="var(--accent)"/></button>
                     <div className="csval">{s[0]}</div>
-                    <button className="csbtn" onClick={()=>setVal(0,Math.min(9,s[0]+1))}><Icon name="plus" size={14} strokeWidth={2.5} color="var(--accent)"/></button>
+                    <button className="csbtn" onClick={()=>setVal(0,Math.min(isCasual?99:9,s[0]+1))}><Icon name="plus" size={14} strokeWidth={2.5} color="var(--accent)"/></button>
                   </div>
                   <div className="scrows">—</div>
                   <div className={`cstep b${inv?' invalid':''}`}>
                     <button className="csbtn" onClick={()=>setVal(1,Math.max(0,s[1]-1))}><Icon name="minus" size={14} strokeWidth={2.5} color="var(--gold)"/></button>
                     <div className="csval">{s[1]}</div>
-                    <button className="csbtn" onClick={()=>setVal(1,Math.min(9,s[1]+1))}><Icon name="plus" size={14} strokeWidth={2.5} color="var(--gold)"/></button>
+                    <button className="csbtn" onClick={()=>setVal(1,Math.min(isCasual?99:9,s[1]+1))}><Icon name="plus" size={14} strokeWidth={2.5} color="var(--gold)"/></button>
                   </div>
                 </div>
               );
@@ -507,7 +509,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
               <div className="livedot"/> LIVE Score
             </div>
             <div className="stog">
-              {[2,3].map(n=>(
+              {(isCasual?[1,2,3,4,5]:[2,3]).map(n=>(
                 <button key={n} className={`stogbtn${liveNs===n?' on':''}`} onClick={()=>setLiveNs(n)}>{n} sets</button>
               ))}
             </div>

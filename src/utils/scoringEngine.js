@@ -141,7 +141,8 @@ export function isValidSet(s) {
 //   invalidIndexes: indexes (in stripped array) of FIP-invalid sets
 //   winner: 'A' | 'B' | null
 //   droppedSets: count of dead-rubber sets auto-truncated (informational)
-export function validateMatch(rawSets) {
+export function validateMatch(rawSets, ruleset = "fip") {
+  if (ruleset === "casual") return validateCasualMatch(rawSets);
   const empty = {
     status: 'invalid', error: 'No sets entered',
     completedSets: [], invalidIndexes: [], winner: null, droppedSets: 0
@@ -192,4 +193,54 @@ export function validateMatch(rawSets) {
   }
   // Incomplete: all valid but no 2-set winner
   return { status: 'incomplete', error: null, completedSets: sets, invalidIndexes: [], winner: null, droppedSets: 0 };
+}
+
+// --- S080: Casual ruleset validation ---
+// Casual sets: any two non-negative integers that are NOT equal (no FIP shape rule).
+export function isValidCasualSet(s) {
+  if (!Array.isArray(s) || s.length !== 2) return false;
+  const [a, b] = s;
+  if (!Number.isInteger(a) || !Number.isInteger(b)) return false;
+  if (a < 0 || b < 0) return false;
+  return a !== b;
+}
+
+// Casual match: >= 1 set, each a valid casual set, decisive winner (more sets won).
+// Never returns 'incomplete' -- casual matches are always either invalid or complete.
+function validateCasualMatch(rawSets) {
+  const empty = {
+    status: 'invalid', error: 'No sets entered',
+    completedSets: [], invalidIndexes: [], winner: null, droppedSets: 0
+  };
+  if (!Array.isArray(rawSets) || rawSets.length === 0) return empty;
+  const sets = [...rawSets];
+  while (sets.length > 0) {
+    const last = sets[sets.length - 1];
+    if (Array.isArray(last) && last.length === 2 && last[0] === 0 && last[1] === 0) sets.pop();
+    else break;
+  }
+  if (sets.length === 0) return empty;
+  const invalidIndexes = [];
+  sets.forEach((s, i) => { if (!isValidCasualSet(s)) invalidIndexes.push(i); });
+  if (invalidIndexes.length > 0) {
+    const nums = invalidIndexes.map(i => i + 1).join(', ');
+    const verb = invalidIndexes.length === 1 ? 'is' : 'are';
+    return {
+      status: 'invalid',
+      error: `Set ${nums} ${verb} not valid -- each set needs two different scores.`,
+      completedSets: sets, invalidIndexes, winner: null, droppedSets: 0
+    };
+  }
+  let aWins = 0, bWins = 0;
+  for (const [a, b] of sets) { if (a > b) aWins++; else if (b > a) bWins++; }
+  if (aWins === bWins) {
+    return {
+      status: 'invalid', error: 'Scores are level -- a casual match needs a decisive winner.',
+      completedSets: sets, invalidIndexes: [], winner: null, droppedSets: 0
+    };
+  }
+  return {
+    status: 'complete', error: null, completedSets: sets,
+    invalidIndexes: [], winner: aWins > bWins ? 'A' : 'B', droppedSets: 0
+  };
 }
