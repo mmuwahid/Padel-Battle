@@ -118,7 +118,7 @@ export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, re
         <>
           <div className="prostrip">
             <div className="prosc"><div className="proscl">Match Won</div><div className="proscv win">{wins}</div></div>
-            <div className="prosc"><div className="proscl">Match Lost</div><div className="proscv">{losses}</div></div>
+            <div className="prosc"><div className="proscl">Match Lost</div><div className={`proscv${losses>0?" loss":""}`}>{losses}</div></div>
             <div className="prosc"><div className="proscl">ELO</div><div className="proscv elo">{myElo}</div></div>
           </div>
 

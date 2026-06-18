@@ -895,6 +895,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
 
   // Season-specific leaderboard (ranking tab only)
   const seasonLb = useMemo(() => {
+    const rosterSet = seasonRosters[selectedSeason];
     const sps = players.map(p => {
       const pM = selectedSeasonMatches.filter(m => m.team_a.includes(p.id) || m.team_b.includes(p.id));
       const wins = pM.filter(m => win(m.sets) === (m.team_a.includes(p.id) ? 'A' : 'B')).length;
@@ -902,7 +903,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
       const winRate = pM.length > 0 ? wins / pM.length : 0;
       return { ...p, wins, losses, winRate, games: pM.length };
     });
-    return sps.filter(p => p.games > 0).sort((a, b) => {
+    return sps.filter(p => p.games > 0 && (!rosterSet || rosterSet.size === 0 || rosterSet.has(p.id))).sort((a, b) => {
       if (b.wins !== a.wins) return b.wins - a.wins;
       const wrA = Math.round(a.winRate * 1000), wrB = Math.round(b.winRate * 1000);
       if (wrB !== wrA) return wrB - wrA;
@@ -911,7 +912,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
       if (b.games !== a.games) return b.games - a.games;
       return a.name.localeCompare(b.name);
     });
-  }, [players, selectedSeasonMatches, seasonElo]);
+  }, [players, selectedSeasonMatches, seasonElo, seasonRosters, selectedSeason]);
 
   // Combos (most common team-ups). Issue #96: gamesDiff = signed sum of (myGames - oppGames) across all sets.
   const combos = useMemo(()=>{
@@ -1433,6 +1434,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
           getName={getName}
           seasonId={selectedSeason}
           seasons={seasons}
+          roster={seasonRosters[selectedSeason]}
           setCurSeason={setSelectedSeason}
           onSave={loadLeagueData}
           showToast={showToast}

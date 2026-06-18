@@ -9,7 +9,7 @@ import Icon from './Icon';
 // + Phase 9's new .modebar/.modebtn/.sccard/.cstep/.csbtn/.csval/.livebi/.acbtn/.mvpcard/.savebtn etc.
 // Behavior preserved: 2/3 set toggle, Manual entry, LIVE scoring engine, FT-09 approval flow,
 // FT-09b FIP validation, dead-rubber auto-truncate, post-save broadcast push.
-export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goBack,sel,lbl,getName,seasonId,seasons,setCurSeason,onSave,showToast,sendPushNotification,prefilledOpenMatch,onPrefilledHandled,pairs}){
+export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goBack,sel,lbl,getName,seasonId,seasons,setCurSeason,onSave,showToast,sendPushNotification,prefilledOpenMatch,onPrefilledHandled,pairs,roster}){
   const isE=!!em;
   const [tA,setTA]=useState(["",""]);
   const [tB,setTB]=useState(["",""]);
@@ -131,7 +131,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
   }
 
   const all=[...tA,...tB].filter(Boolean);
-  const avail=c=>players.filter(p=>!all.includes(p.id)||p.id===c);
+  const avail=c=>players.filter(p=>(!all.includes(p.id)||p.id===c) && (roster&&roster.size>0?roster.has(p.id):true));
   const playerName=(pid)=>pm[pid]?.nickname||pm[pid]?.name||"";
 
   async function submit(){

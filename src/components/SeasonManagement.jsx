@@ -13,7 +13,7 @@ import { useLeague } from "../LeagueContext";
 // User decision S067 Q6=A: keep S055 full-screen Season Detail pattern for
 // edit (rich roster toggle UX doesn't fit a sheet). List + Create restyled.
 export function SeasonManagement({ setSidebarView, goBack }) {
-  const { supabase, leagueId, players, seasons, pairs, seasonRosters, showToast, loadLeagueData, isOwner, isAdmin } = useLeague();
+  const { supabase, leagueId, players, seasons, pairs, seasonRosters, showToast, loadLeagueData, isOwner, isAdmin, setSelectedSeason } = useLeague();
 
   // S077 r9: read seasonRosters from context (no separate round-trip).
   const rosters = seasonRosters || {};
@@ -24,6 +24,7 @@ export function SeasonManagement({ setSidebarView, goBack }) {
   // Create form
   const [newName, setNewName] = useState("");
   const [newStart, setNewStart] = useState(new Date().toISOString().slice(0, 10));
+  const [newEnd, setNewEnd] = useState("");
   const [newLocation, setNewLocation] = useState("");
   const [cloneFrom, setCloneFrom] = useState("");
   const [newFormat, setNewFormat] = useState("individual"); // S073 FT-15
@@ -65,6 +66,7 @@ export function SeasonManagement({ setSidebarView, goBack }) {
   const openCreate = () => {
     setNewName("");
     setNewStart(new Date().toISOString().slice(0, 10));
+    setNewEnd("");
     setNewLocation("");
     setCloneFrom(sortedSeasons[0]?.id || "");
     setNewRuleset("fip");
@@ -84,19 +86,24 @@ export function SeasonManagement({ setSidebarView, goBack }) {
         p_location: newLocation.trim() || null,
         p_format: newFormat,
         p_ruleset: newRuleset,
+        p_end_date: newEnd || null,
       };
       // S081: Safari/WebKit can reuse a dead keep-alive socket after the app
       // sits idle, surfacing the first request as "TypeError: Load failed"
       // before it reaches the server. The request never lands, so a single
       // retry is safe (no duplicate season).
-      let { error } = await supabase.rpc("create_season", args);
+      let { data: newId, error } = await supabase.rpc("create_season", args);
       if (error && /load failed|failed to fetch|network/i.test(error.message || "")) {
-        ({ error } = await supabase.rpc("create_season", args));
+        ({ data: newId, error } = await supabase.rpc("create_season", args));
       }
       if (error) throw error;
       showToast("Season created");
       setShowCreate(false);
       await loadLeagueData();
+      // S081: switch the app context to the season just created so logging,
+      // leaderboard and ruleset all immediately reflect it (was stuck on the
+      // previously-active season, breaking the Casual ruleset at log time).
+      if (newId) setSelectedSeason(newId);
     } catch (err) {
       showToast(err.message || "Failed to create season", "error");
     }
@@ -577,9 +584,15 @@ export function SeasonManagement({ setSidebarView, goBack }) {
                 <div className="shlbl"><Icon name="globe" size={12} color="var(--muted)" />Location</div>
                 <input className="shi" type="text" value={newLocation} onChange={(e) => setNewLocation(e.target.value)} placeholder="e.g. Sports Club A" />
               </div>
-              <div className="shf">
-                <div className="shlbl"><Icon name="calendar" size={12} color="var(--muted)" />Start Date</div>
-                <input className="shi" type="date" value={newStart} onChange={(e) => setNewStart(e.target.value)} />
+              <div className="shf-row">
+                <div className="shf">
+                  <div className="shlbl"><Icon name="calendar" size={12} color="var(--muted)" />Start Date</div>
+                  <input className="shi" type="date" value={newStart} onChange={(e) => setNewStart(e.target.value)} />
+                </div>
+                <div className="shf">
+                  <div className="shlbl"><Icon name="calendar" size={12} color="var(--muted)" />End Date</div>
+                  <input className="shi" type="date" value={newEnd} onChange={(e) => setNewEnd(e.target.value)} />
+                </div>
               </div>
               <div className="shf">
                 <div className="shlbl"><Icon name="players" size={12} color="var(--muted)" />Clone Roster From</div>

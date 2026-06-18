@@ -1569,6 +1569,7 @@ body {
 .proscl{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#9090a4;font-weight:700;margin-bottom:6px;}
 .proscv{font-family:var(--mono);font-size:24px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums;}
 .proscv.win{color:var(--accent);}
+.proscv.loss{color:#f87171;}
 .proscv.elo{color:var(--gold);}
 
 .wrsec{padding:14px 18px 0;}

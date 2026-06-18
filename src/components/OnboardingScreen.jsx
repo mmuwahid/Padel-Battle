@@ -25,6 +25,7 @@ export function OnboardingScreen({ user, handlers, onComplete, showToast }) {
   const [dob, setDob] = useState("");
   const [gender, setGender] = useState("");
   const [side, setSide] = useState("");
+  const [handedness, setHandedness] = useState("");
   const [code, setCode] = useState("");
   const [lgName, setLgName] = useState("");
   const [attempted, setAttempt] = useState(false);
@@ -32,7 +33,7 @@ export function OnboardingScreen({ user, handlers, onComplete, showToast }) {
   const [busyAction, setBusyAction] = useState(null); // 'join' | 'create'
 
   const canStep1 = name.trim().length >= 2 && country;
-  const canStep2 = canStep1 && dob && gender && side;
+  const canStep2 = canStep1 && dob && gender && side && (handedness === "left" || handedness === "right");
   const canStep3 = code.trim().length > 0 || lgName.trim().length > 0;
 
   const today = new Date().toISOString().split("T")[0];
@@ -65,6 +66,7 @@ export function OnboardingScreen({ user, handlers, onComplete, showToast }) {
         p_dob: dob || null,
         p_gender: gender || null,
         p_position: side || null,
+        p_handedness: handedness || null,
       });
       if (rqErr) throw rqErr;
 
@@ -95,6 +97,7 @@ export function OnboardingScreen({ user, handlers, onComplete, showToast }) {
           country: country || null,
           gender: gender || null,
           playing_position: (side === 'left' || side === 'right') ? side : null,
+          handedness: (handedness === 'left' || handedness === 'right') ? handedness : null,
           date_of_birth: dob || null,
           user_id: user.id,
           created_by: user.id,
@@ -207,9 +210,21 @@ export function OnboardingScreen({ user, handlers, onComplete, showToast }) {
               {attempted && !gender && <div className="ferr">Please select your gender</div>}
             </div>
 
-            {/* S070 Issue #83: renamed "Playing Side" → "Court Position".
-                Handedness is captured later in EditMyProfile (kept off the
-                onboarding wizard to keep step 2 short). */}
+            {/* S081: Handedness — left/right hand (matches Edit Profile). */}
+            <div className="fgrp">
+              <div className="fl2"><Icon name="user" size={12}/>Handedness<span className="req">*</span></div>
+              <div className="gtog">
+                <button className={`gbtn2${handedness==="left"?" on":""}`} onClick={()=>setHandedness("left")}>
+                  <Icon name="user" size={16} color={handedness==="left"?"var(--accent)":"#9090a4"}/>Left Hand
+                </button>
+                <button className={`gbtn2${handedness==="right"?" on":""}`} onClick={()=>setHandedness("right")}>
+                  <Icon name="user" size={16} color={handedness==="right"?"var(--accent)":"#9090a4"}/>Right Hand
+                </button>
+              </div>
+              {attempted && !(handedness==="left"||handedness==="right") && <div className="ferr">Handedness is required</div>}
+            </div>
+
+            {/* S070 Issue #83: renamed "Playing Side" → "Court Position". */}
             <div className="fgrp">
               <div className="fl2"><Icon name="court-l" size={12}/>Court Position<span className="req">*</span></div>
               <div className="stog2">

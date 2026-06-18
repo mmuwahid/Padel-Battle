@@ -21,7 +21,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
   const [showAddPlayer,setShowAddPlayer]=useState(false);
   const [newName,setNewName]=useState("");
   const [newNick,setNewNick]=useState("");
-  const [analyticsSection,setAnalyticsSection]=useState("league");
+  const [analyticsSection,setAnalyticsSection]=useState("partnership");
   const [h2hP1,setH2hP1]=useState(null);
   const [h2hP2,setH2hP2]=useState(null);
   // S069: tap drill-in avatar to expand WhatsApp/Instagram-style.
@@ -352,7 +352,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
         <div className="an-body">
           {/* 4-section sub-tab bar (Q6=B Phase 5 .seg/.sb 4-col variant) */}
           <div className="seg-4">
-            {[["league","trending-up","League"],["partnership","users","Partners"],["opponent","swords","H2H"],["insights","bulb","Insights"]].map(([k,ic,l])=>(
+            {[["partnership","users","Partners"],["league","trending-up","League"],["opponent","swords","H2H"],["insights","bulb","Insights"]].map(([k,ic,l])=>(
               <button key={k} className={`sb-4${analyticsSection===k?" on":""}`} onClick={()=>setAnalyticsSection(k)}>
                 <Icon name={ic} size={13}/>{l}
               </button>
