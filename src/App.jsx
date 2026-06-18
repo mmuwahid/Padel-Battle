@@ -1310,7 +1310,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
                 <Icon name="trophy" size={56} color="var(--muted)" strokeWidth={1.5}/>
               </div>
               <div style={{fontSize:15,fontWeight:600,color:TX,marginBottom:6}}>No rankings yet</div>
-              <div style={{fontSize:12,color:MT,lineHeight:1.5}}>Play your first match to appear in the ranking.</div>
+              <div style={{fontSize:12,color:MT,lineHeight:1.5}}>{seasons.length===0?"Create a season, then play your first match to appear here.":"Play your first match to appear in the ranking."}</div>
             </div>
           )}
 

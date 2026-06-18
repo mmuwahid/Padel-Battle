@@ -4,17 +4,21 @@ import { CountrySelect } from './CountrySelect';
 import { PadelHubMarkHeader } from "./icons";
 import Icon from './Icon';
 
-// S066 Phase 11: 3-step onboarding wizard for new users.
+// S066 Phase 11 / S082: 2-step onboarding wizard for new users.
 // Shown by LeagueGate when the authenticated user has 0 league memberships.
-// Step 1: Display name + country.
-// Step 2: DOB + gender + playing-side (name + country pre-filled, editable).
-// Step 3: Join existing league via invite code, OR create new league.
+// Step 1: Full player profile (display name, country, DOB, gender, handedness,
+//         court position) — each field captured exactly once (S082 de-dup of
+//         the old step1/step2 which both asked for name + country).
+// Step 2: Join existing league via invite code, OR create a new league.
 //
-// On step 3 submit:
-//   - "Create new league" path: createLeague() then insert player row with all
-//     profile data + user_id (user becomes owner+claimed in one go).
-//   - "Join via invite code" path: joinLeague() only. Player claim happens
-//     post-join (admin creates player; user claims via existing flow).
+// On step 2 submit:
+//   - "Create new league" path: createLeague({ autoSeason:false }) then insert
+//     player row with all profile data + user_id (user becomes owner+claimed in
+//     one go). autoSeason:false (S082) — the new owner creates the first season
+//     (and chooses its ruleset) deliberately instead of getting a default FIP
+//     "Season 1".
+//   - "Join via invite code" path: create_join_request only. Player claim
+//     happens post-approval.
 //
 // Player creation is skipped for join-via-code because RLS on players insert
 // requires admin role; joined users start as members. Creator gets full insert.
@@ -32,13 +36,13 @@ export function OnboardingScreen({ user, handlers, onComplete, showToast }) {
   const [busy, setBusy] = useState(false);
   const [busyAction, setBusyAction] = useState(null); // 'join' | 'create'
 
-  const canStep1 = name.trim().length >= 2 && country;
-  const canStep2 = canStep1 && dob && gender && side && (handedness === "left" || handedness === "right");
-  const canStep3 = code.trim().length > 0 || lgName.trim().length > 0;
+  // S082: the single profile step now gates on the full field set.
+  const canStep1 = name.trim().length >= 2 && country && dob && gender && side && (handedness === "left" || handedness === "right");
+  const canStep2 = code.trim().length > 0 || lgName.trim().length > 0;
 
   const today = new Date().toISOString().split("T")[0];
 
-  // S068 Issue #46: invite-code submit now creates a join_request (pending) instead of
+  // S068 Issue #46: invite-code submit creates a join_request (pending) instead of
   // immediately joining. Admin must approve before user gets league access. Owner-creates-
   // new-league path still bypasses the queue (creator IS the admin — see handleCreate).
   const handleJoin = async () => {
@@ -54,7 +58,7 @@ export function OnboardingScreen({ user, handlers, onComplete, showToast }) {
       const lg = rpcData?.[0] || null;
       if (lgErr || !lg) throw new Error("Invalid invite code");
 
-      // 2. Submit a new_profile join request. The data captured in step 1+2 becomes the
+      // 2. Submit a new_profile join request. The data captured in step 1 becomes the
       //    snapshot the admin reviews. Claim-during-onboarding (picking an unclaimed
       //    player at this point) is a follow-up; for now requests are always new_profile.
       const { error: rqErr } = await supabase.rpc("create_join_request", {
@@ -86,7 +90,10 @@ export function OnboardingScreen({ user, handlers, onComplete, showToast }) {
     if (!lgName.trim() || busy) return;
     setBusy(true); setBusyAction('create');
     try {
-      const newLeague = await handlers.createLeague({ name: lgName.trim() });
+      // S082: autoSeason:false — do NOT auto-create a default FIP "Season 1".
+      // The new owner creates their first season (and picks its ruleset, e.g.
+      // Casual) deliberately from the Seasons screen.
+      const newLeague = await handlers.createLeague({ name: lgName.trim(), autoSeason: false });
       // Create the user's own player record in the new league with all profile data.
       // RLS allows owners to insert players in their own leagues.
       const { error: playerErr } = await supabase
@@ -122,48 +129,27 @@ export function OnboardingScreen({ user, handlers, onComplete, showToast }) {
           <div className="lm"><PadelHubMarkHeader size={20}/></div>
           <div className="lt">Padel<span style={{color:"var(--accent)"}}>Hub</span></div>
         </div>
-        {step > 1 && (
-          <button className="bbtn" onClick={()=>setStep(step-1)}>
-            <Icon name="back" size={14}/> Back
-          </button>
-        )}
       </div>
 
       <div className="obody">
+        {/* S082: back button now matches the app-wide top-left chevron convention
+            (.back-btn-row / .back-btn) instead of the old top-right .bbtn pill. */}
+        {step > 1 && (
+          <div className="back-btn-row">
+            <button className="back-btn" onClick={()=>setStep(step-1)} aria-label="Back">
+              <Icon name="chevron-left" size={18} color="currentColor"/>
+            </button>
+          </div>
+        )}
+
         <div className="pdots">
-          {[1,2,3].map(n=><div key={n} className={`dot ${step===n?"on":step>n?"dn":""}`}/>)}
+          {[1,2].map(n=><div key={n} className={`dot ${step===n?"on":step>n?"dn":""}`}/>)}
         </div>
 
         {step === 1 && (
           <>
-            <div className="oey">Step 1 of 3</div>
-            <div className="oth1">Who are you?</div>
-            <div className="osub">Set up your player profile.</div>
-
-            <div className="ocard">
-              <div className="ocard-lbl">New profile</div>
-
-              <div className="fgrp">
-                <div className="fl2"><Icon name="user" size={12}/>Display Name<span className="req">*</span></div>
-                <input className="fi2" placeholder="How you appear on the leaderboard" value={name} onChange={e=>setName(e.target.value)} maxLength={40}/>
-              </div>
-
-              <div className="fgrp" style={{marginBottom:0}}>
-                <div className="fl2"><Icon name="globe" size={12}/>Country<span className="req">*</span></div>
-                <CountrySelect value={country} onChange={setCountry}/>
-              </div>
-            </div>
-
-            <button className={`octa${canStep1?'':' off'}`} disabled={!canStep1} onClick={()=>setStep(2)}>
-              Continue <Icon name="arrow-right" size={16} color={canStep1?"#000":"#9090a4"} strokeWidth={2}/>
-            </button>
-          </>
-        )}
-
-        {step === 2 && (
-          <>
-            <div className="oey">Step 2 of 3</div>
-            <div className="oth1">Complete your profile</div>
+            <div className="oey">Step 1 of 2</div>
+            <div className="oth1">Your profile</div>
             <div className="osub">All fields are required before you can join.</div>
 
             {/* Photo placeholder (visual only — actual upload deferred per Phase 11 Q3) */}
@@ -175,11 +161,18 @@ export function OnboardingScreen({ user, handlers, onComplete, showToast }) {
               <div style={{fontFamily:"var(--mono)",fontSize:10,color:"#9090a4"}}>Skip for now</div>
             </div>
 
-            {/* Display Name (pre-filled from step 1, editable) */}
+            {/* Display Name */}
             <div className="fgrp">
               <div className="fl2"><Icon name="user" size={12}/>Display Name<span className="req">*</span></div>
               <input className="fi2" placeholder="How you appear on the leaderboard" value={name} onChange={e=>setName(e.target.value)} maxLength={40}/>
               {attempted && name.trim().length<2 && <div className="ferr">Min 2 characters required</div>}
+            </div>
+
+            {/* Country */}
+            <div className="fgrp">
+              <div className="fl2"><Icon name="globe" size={12}/>Country<span className="req">*</span></div>
+              <CountrySelect value={country} onChange={setCountry}/>
+              {attempted && !country && <div className="ferr">Country is required</div>}
             </div>
 
             {/* DOB */}
@@ -187,13 +180,6 @@ export function OnboardingScreen({ user, handlers, onComplete, showToast }) {
               <div className="fl2"><Icon name="calendar" size={12}/>Date of Birth<span className="req">*</span></div>
               <input className="fi2" type="date" value={dob} max={today} onChange={e=>setDob(e.target.value)} style={{colorScheme:"dark"}}/>
               {attempted && !dob && <div className="ferr">Date of birth is required</div>}
-            </div>
-
-            {/* Country (pre-filled from step 1, editable) */}
-            <div className="fgrp">
-              <div className="fl2"><Icon name="globe" size={12}/>Country<span className="req">*</span></div>
-              <CountrySelect value={country} onChange={setCountry}/>
-              {attempted && !country && <div className="ferr">Country is required</div>}
             </div>
 
             {/* Gender — blue/pink active per Phase 8 */}
@@ -242,15 +228,15 @@ export function OnboardingScreen({ user, handlers, onComplete, showToast }) {
               {attempted && !side && <div className="ferr">Court position is required</div>}
             </div>
 
-            <button className={`octa${canStep2?'':' off'}`} onClick={()=>{setAttempt(true); if(canStep2) setStep(3);}}>
-              Continue <Icon name="arrow-right" size={16} color={canStep2?"#000":"#9090a4"} strokeWidth={2}/>
+            <button className={`octa${canStep1?'':' off'}`} onClick={()=>{setAttempt(true); if(canStep1) setStep(2);}}>
+              Continue <Icon name="arrow-right" size={16} color={canStep1?"#000":"#9090a4"} strokeWidth={2}/>
             </button>
           </>
         )}
 
-        {step === 3 && (
+        {step === 2 && (
           <>
-            <div className="oey">Step 3 of 3</div>
+            <div className="oey">Step 2 of 2</div>
             <div className="oth1">Find your league</div>
             <div className="osub">Join with an invite code or start a new league.</div>
 

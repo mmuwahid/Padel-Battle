@@ -88,14 +88,9 @@ export function SeasonManagement({ setSidebarView, goBack }) {
         p_ruleset: newRuleset,
         p_end_date: newEnd || null,
       };
-      // S081: Safari/WebKit can reuse a dead keep-alive socket after the app
-      // sits idle, surfacing the first request as "TypeError: Load failed"
-      // before it reaches the server. The request never lands, so a single
-      // retry is safe (no duplicate season).
-      let { data: newId, error } = await supabase.rpc("create_season", args);
-      if (error && /load failed|failed to fetch|network/i.test(error.message || "")) {
-        ({ data: newId, error } = await supabase.rpc("create_season", args));
-      }
+      // S082: transient "Load failed" retries are now handled globally by the
+      // fetch wrapper in supabase.js, so no per-call retry is needed here.
+      const { data: newId, error } = await supabase.rpc("create_season", args);
       if (error) throw error;
       showToast("Season created");
       setShowCreate(false);
