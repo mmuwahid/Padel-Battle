@@ -76,7 +76,7 @@ export function SeasonManagement({ setSidebarView, goBack }) {
     if (!name) { showToast("Season name is required", "error"); return; }
     setCreating(true);
     try {
-      const { error } = await supabase.rpc("create_season", {
+      const args = {
         p_league_id: leagueId,
         p_name: name,
         p_start_date: newStart,
@@ -84,7 +84,15 @@ export function SeasonManagement({ setSidebarView, goBack }) {
         p_location: newLocation.trim() || null,
         p_format: newFormat,
         p_ruleset: newRuleset,
-      });
+      };
+      // S081: Safari/WebKit can reuse a dead keep-alive socket after the app
+      // sits idle, surfacing the first request as "TypeError: Load failed"
+      // before it reaches the server. The request never lands, so a single
+      // retry is safe (no duplicate season).
+      let { error } = await supabase.rpc("create_season", args);
+      if (error && /load failed|failed to fetch|network/i.test(error.message || "")) {
+        ({ error } = await supabase.rpc("create_season", args));
+      }
       if (error) throw error;
       showToast("Season created");
       setShowCreate(false);
@@ -462,21 +470,6 @@ export function SeasonManagement({ setSidebarView, goBack }) {
                   <div className="shlbl"><Icon name="trophy" size={12} color="var(--muted)" />Pair Name (optional)</div>
                   <input className="shi" type="text" value={newPairName} onChange={(e) => setNewPairName(e.target.value)} placeholder='e.g. "Thunder"' />
                 </div>
-                {/* S080: ruleset toggle -- immutable after creation */}
-              <div className="shf">
-                <div className="shlbl"><Icon name="shield" size={12} color="var(--muted)" />Ruleset</div>
-                <div className="sform-typetoggle">
-                  <button type="button" className={`sform-typebtn${newRuleset==="fip"?" on":""}`} onClick={()=>setNewRuleset("fip")}>
-                    Official (FIP)
-                    <span className="sform-typebtn-sub">Best of 3, FIP scores</span>
-                  </button>
-                  <button type="button" className={`sform-typebtn${newRuleset==="casual"?" on":""}`} onClick={()=>setNewRuleset("casual")}>
-                    Casual
-                    <span className="sform-typebtn-sub">Any sets & scores</span>
-                  </button>
-                </div>
-                <div style={{fontSize:10,color:"var(--muted)",marginTop:6}}>Ruleset is locked for the life of the season.</div>
-              </div>
               <div className="inote">
                   <Icon name="info" size={14} color="rgba(74,222,128,.85)" />
                   <div className="inotet">Both players must be in this season's roster. Pair ELO starts at 1500.</div>
@@ -610,6 +603,21 @@ export function SeasonManagement({ setSidebarView, goBack }) {
                     <span className="sform-typebtn-sub">Fixed teams</span>
                   </button>
                 </div>
+              </div>
+              {/* S080: ruleset toggle — chosen once, immutable for the life of the season. */}
+              <div className="shf">
+                <div className="shlbl"><Icon name="shield" size={12} color="var(--muted)" />Ruleset</div>
+                <div className="sform-typetoggle">
+                  <button type="button" className={`sform-typebtn${newRuleset==="fip"?" on":""}`} onClick={()=>setNewRuleset("fip")}>
+                    Official (FIP)
+                    <span className="sform-typebtn-sub">Best of 3, FIP scores</span>
+                  </button>
+                  <button type="button" className={`sform-typebtn${newRuleset==="casual"?" on":""}`} onClick={()=>setNewRuleset("casual")}>
+                    Casual
+                    <span className="sform-typebtn-sub">Any sets & scores</span>
+                  </button>
+                </div>
+                <div style={{fontSize:10,color:"var(--muted)",marginTop:6}}>Ruleset is locked for the life of the season.</div>
               </div>
               <div className="inote">
                 <Icon name="info" size={14} color="rgba(245,158,11,.85)" />
