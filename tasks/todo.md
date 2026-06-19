@@ -1,18 +1,114 @@
 # Active Work
 
-## NEXT SESSION (S081) — START HERE
-**Last session:** S080 (2026-06-18) — **1 commit (`b698996`), SW v179 → v180, 1 DB migration (`s080_season_ruleset`), 2 issues closed (#92, #99 after iPhone smoke PASS).** Shipped the **season ruleset** feature: each season picks `'fip'` (default, unchanged) or `'casual'` at creation, **immutable for life of season**. Casual = any 1–5 sets, any score where a≠b, no FIP shape rule, no `incomplete` status, manual entry only, decisive winner required (so ELO/`win()` work unchanged). DB: `seasons.ruleset` column + `is_valid_casual_set()` + shared `assert_valid_match_sets(sets, ruleset)` called by INSERT + new BEFORE UPDATE triggers; dropped CHECK `matches_sets_valid_or_incomplete` (ruleset lookup needs a subquery). Frontend: `validateMatch(rawSets, ruleset)` + `validateCasualMatch` + `isValidCasualSet` in scoringEngine.js; ruleset toggle in SeasonManagement create sheet + detail pill; LogMatch `isCasual` branch; EditMatchModal ruleset-aware. Deploy READY. Production live at padel-battle.vercel.app on SW v180.
+## NEXT SESSION (S088) — START HERE
+**Last session:** S087 (2026-06-19) — **Issue #108 League Invite fully fixed + closed.** 1 commit `f1a08bb`, DB migration `s108_approve_join_request_carry_over`, SW v193→v194, 5 files. Both invite paths (link `tryAutoJoin` + in-app `joinLeague`) now create PENDING join_requests (approval queue) instead of direct `league_members` insert (#1 — empty-queue root cause); `approve_join_request` backfills the new player row (country/DOB/gender/court/handedness/**avatar**/nickname/grade) from the user's most-recent existing claimed player (#2); `LeagueManagement.copyLink` copies the raw invite code, Share keeps the URL (#3); league isolation verified — players/matches per `league_id` (#4); approval-gating + lock-screen "Switch to another league" escape means pending users keep access to other leagues (#5). **#6** (invite link opens Safari, not the installed PWA) DEFERRED to the Capacitor native wrap (Universal Links — unsolvable in a pure iOS PWA). Husain's orphaned Intermediate membership reset (re-joins via fixed flow). Deploy `dpl_3VJurEmFjqvrhBFqUEkAVc9tEP7Z` READY. **Production live on SW v194, main `f1a08bb`.**
 
-### 🎯 PENDING USER SMOKE-TEST (S080 ship)
-- **Season ruleset — Casual flow** (SW v180): create a Casual season → log a multi-set match with arbitrary non-equal scores (e.g. 8-3 / 1-6 / 10-5) → confirm validates, ranks, no LIVE mode, no incomplete state. Then confirm an FIP season still enforces best-of-3 + FIP shapes + LIVE mode. No issue to close (feature was not issue-tracked) — just confirm to user.
+### 🎯 PENDING USER SMOKE-TEST (S087 ship — SW v194)
+- Husain re-joins Intermediate (link or code) → sees "Waiting for approval" (not added silently); admin gets a "New join request" notification.
+- Admin Dashboard → Approval Queue shows Husain with details prefilled; Approve → his player appears with avatar/country/handedness/court/grade carried over from Padel Stars League.
+- League Management copy button → pastes the raw code (e.g. `11030f72`), not a URL.
+- While pending in Intermediate, Husain still uses Padel Stars normally (no global lockout).
 
-### 🎯 S081 PRIORITY
-1. Address any feedback from the S080 Casual-ruleset smoke-test.
+### 🎯 S088 PRIORITY
+1. Address any S087 smoke-test feedback.
+2. **Reconcile stale git meta-docs** — the git repo's `tasks/`, `sessions/`, `CLAUDE.md` are frozen at S080; S081–S087 docs live only in OneDrive. Commit them so git history is complete (see S087 log + lessons).
+3. Resume App Store + Google Play launch prep (Capacitor wrap) — includes **#6 Universal Links** for invite deep-links. G1 Apple login pending Apple Developer account.
+4. **Issue #94** — UI responsive sizing for iPhone 13.
+5. Color sweep Note A — verify whether S084's `--muted`→`#9090a4` already closes it.
+
+---
+
+## NEXT SESSION (S087) — DONE (archived)
+**Last session:** S086 (2026-06-19) — **Pre-store-launch polish batch (`8b4ba43`, SW v192→v193, 0 DB migrations).** FT-17 wording (in single-source `utils/grade.js`): Groundstrokes "FH/BH"→"Forehand/backhand", Glass footer→"Backglass · sideglass · double glass", Net Play first answer→"Volleys pop up and float or go into the net; not confident at the net". GradeAssessmentModal: removed the VISIBLE running-total bar + ×N weight multiplier (computation untouched — weights still drive `computeGrade`, result still shows total). Grade pill now `Grade: {grade}` in a two-row pill layout (Row 1 Country/Age/Grade, Row 2 Handedness/Court) on ProfileView + PlayerStats drill-in. Tournament final results (SE/DE/RR): new shared `src/components/tournamentResults.jsx` (`rankBadge`+`TeamPlayers`) → champion/runner-up/standings show player avatars+names + 🏆🥈🥉 medals + green-W/red-L colors. Two bug fixes: SE "View Bracket" no-op (added `viewBracket` state + "Back to Results") and SE/DE/RR "New Tournament" reset race (`await endTournament()` before `resetTournament()`). Deploy `dpl_GLEnioykoMJncM9tgtxz7o23Le6v` READY. **Production live on SW v193, main `8b4ba43`.**
+
+### 🎯 PENDING USER SMOKE-TEST (S086 ship — SW v193)
+- **FT-17 wording:** Groundstrokes reads "Forehand/backhand"; Glass/Wall footer reads "Backglass · sideglass · double glass"; Net Play first answer reads "Volleys pop up and float or go into the net; not confident at the net".
+- **Assessment display:** no running-total bar and no ×N weight multiplier visible during the questions — but the result screen still shows a grade with its total (e.g. 54/72 → B). Step counter still shows.
+- **Grade pill:** shows as `Grade: C` (label prefix) in a two-row pill layout — Row 1 Country/Age/Grade, Row 2 Handedness/Court — on My Profile and player drill-in. Admin override (EditPlayerModal) still works; a brand-new player shows NO grade.
+- **Tournament results (SE/DE/RR):** champion + runner-up + standings show player avatars+names (not "Team A/B"); ranks show 🏆🥈🥉 for top-3; W green, L red when >0.
+- **SE View Bracket:** "View Bracket" now opens the bracket; "Back to Results" returns to the final standings.
+- **New Tournament:** resets fully to Game Mode (no auto-re-render of Final Standings) without an app restart, on SE/DE/RR.
+
+### S086 outcomes (this session — archived)
+- [x] FT-17 wording fixes in `utils/grade.js` (forehand/backhand, glass footer, net-play answer)
+- [x] GradeAssessmentModal: hide running-total + weight multiplier (computation intact)
+- [x] ProfileView + PlayerStats: `Grade:` label + two-row pill order
+- [x] New shared `components/tournamentResults.jsx` (`rankBadge` + `TeamPlayers`)
+- [x] SE/DE/RR champion+standings avatars/medals/W-L colors
+- [x] SE "View Bracket" fix (`viewBracket` state + Back to Results)
+- [x] SE/DE/RR "New Tournament" reset-race fix (await endTournament)
+- [x] SW v193, esbuild syntax check (8 files), commit `8b4ba43`, push, deploy READY, OneDrive synced
+
+### 🎯 S087 PRIORITY
+1. Smoke-test SW v193 (FT-17 polish + tournament results) — see pending section above.
+2. Resume **App Store + Google Play launch** prep (Capacitor wrap) — see project_store_launch memory. G1 Apple login pending Apple Developer account.
+3. **Issue #94 — UI responsive sizing for iPhone 13** (leaderboard name truncation) — still open.
+4. **Color sweep Note A from S069** — verify whether S084's `--muted` → `#9090a4` (the A3 recommendation) already closes Note A.
+
+---
+
+### (Archived) S083 cold-start block
+**Last session:** S083 (2026-06-19) — **4 commits (`fe094fc`, `92ef726`, `b8adbbf`, `5fcf057`), SW v183 → v187, 0 DB migrations.** Pre-store-launch polish: executed the approved ~12-item feedback batch in 4 deploys. **Batch 1** (`fe094fc`, v184): A1 Ranking empty-state CTA button, A2 format relabel (Individual/Pairs-Team Leaderboard) + explanatory footer, D1 invite icon-only copy + Share, D2 League Mgmt detail reorder, D3 remove redundant Admin Mgmt, D4 Player Mgmt footer action copy, E1 left/right-hand handedness icons, F1 LogMatch green-active season pill + caret, F2 "Select players/pairs" flashcard title, B3 duplicate player-name guard. **Batch 2** (`92ef726`, v185): B1/B2 — Players grid scoped to season roster + season filter dropdown (defaults to active season, "All league players" option). **Batch 3** (`b8adbbf`, v186): C1 — create/save handlers fire-and-forget `loadLeagueData()` so UI unblocks immediately (mirrors delete_season pattern). **Batch 4** (`5fcf057`, v187): F3 team-lock flow ("Accept & use" locks lineup into a Team A vs Team B avatar flashcard; scores/MOTM/Save reveal only when locked; "Edit teams" unlocks; auto-locks on open-match prefill / edit / shuffle / queued-next) + F4 combined side-by-side live Undo (new undo icon) / Reset (soft-red, no arrow) row. **G1 Apple login DEFERRED** (blocked on Apple Developer account). **Then 3 post-close smoke-fix deploys** (`f009d32` v188, `0658c21` v189, `eb4c736` v190): Batch 2 prop-wiring fix (seasons/seasonRosters weren't reaching PlayerStats so the season filter never rendered) + F1 `.ctxchip` 32px height parity + green-active selector parity (Leaderboard/MatchHistory); last-5 form pills flipped newest-on-RIGHT everywhere (Individual/Pairs leaderboards, PairStats, FormDots; Partnership Ranking already correct) + LogMatch TeamShuffler scoped to active-season roster + date-pill `appearance:none` height; handedness tag now renders `hand-left`/`hand-right` (was generic `user`) in ProfileView + PlayerStats + optimistic roster toggle in SeasonManagement (instant chip flip + serialized writes, killed ~3s lag). **Production live on SW v190, main `eb4c736`.**
+
+### 🎯 PENDING USER SMOKE-TEST (S083 ships — SW v190)
+- **Handedness icon (v190):** My Profile + player drill-in show an actual hand icon (left/right), not the person silhouette.
+- **Roster toggle (v190):** adding/removing a player to a season roster flips the chip instantly (no ~3s lag); rapid taps don't drop entries.
+- **Last-5 newest-right (v189):** form pills show the most recent match on the FAR RIGHT everywhere (Individual + Pairs leaderboards, PairStats, drill-in). Partnership Ranking unchanged (already correct).
+- **LogMatch roster scoping (v189):** the shuffle layer + player dropdowns list only the active season's roster.
+- **LogMatch team-lock (F3):** pick 4 players or Shuffle → "Accept & use" appears → tap it → lineup flips to Team A vs Team B avatar flashcard, score/MOTM/Save now visible → "Edit teams" returns to dropdowns. Confirm pairs-format seasons lock the same way, and open-match prefill shows the flashcard with the Undo (not Edit teams) control.
+- **Live controls (F4):** in LIVE mode, Undo last point + Reset sit side-by-side; Reset is soft-red.
+- **Players grid (B1/B2):** grid lists only the selected season's roster; season dropdown defaults to active season with "All league players" option.
+- **Performance (C1):** creating a season / saving a player no longer blocks on the full reload spinner.
+- **Batch 1 spot-checks:** Ranking empty-state CTA button, leaderboard relabels + footer, invite copy/share icons, season-pill height parity.
+
+### 🎯 S084 PRIORITY
+1. Address any feedback from the S083 smoke-test (above).
+2. Resume **App Store + Google Play launch** prep (Capacitor wrap) now that polish batches 1-4 have shipped — see project_store_launch memory. G1 Apple login still pending Apple Developer account.
+3. **Issue #94 — UI responsive sizing for iPhone 13** (leaderboard name truncation) — still open, untouched.
+4. **Color sweep Note A from S069** — still awaiting user A1/A2/A3 decision.
+
+### S083 outcomes (this session — archived)
+- [x] Batch 1 (A1,A2,D1,D2,D3,D4,E1,F1,F2,B3) — `fe094fc`, SW v184
+- [x] Batch 2 (B1/B2 roster scoping + season filter) — `92ef726`, SW v185
+- [x] Batch 3 (C1 background data refresh on create/save) — `b8adbbf`, SW v186
+- [x] Batch 4 (F3 team-lock flow + F4 live undo/reset) — `5fcf057`, SW v187
+- [x] Post-close: Batch 2 prop-wiring fix + F1 32px height parity + selector parity — `f009d32`, SW v188
+- [x] Post-close: last-5 newest-on-right everywhere + LogMatch roster scoping + date-pill height — `0658c21`, SW v189
+- [x] Post-close: handedness hand icon (ProfileView + PlayerStats) + optimistic roster toggle (SeasonManagement) — `eb4c736`, SW v190
+- [DEFERRED] G1 Apple login — blocked on Apple Developer account
+
+### 🎯 PENDING USER SMOKE-TEST (S082 ship — SW v183)
+- **Onboarding** is now 2 steps — no duplicated Display Name/Country, back chevron top-left (matches rest of app).
+- **New league** → Ranking shows "Create a season, then play your first match to appear here." (no auto Season 1); create the first season as **Casual** and confirm it works end-to-end.
+- **"Load failed"** no longer surfaces when saving matches / creating seasons (global retry).
+
+### 🎯 PENDING USER SMOKE-TEST (S081 ship — SW v182) — carry-over if not yet run
+- Create season with End Date + casual ruleset → casual scores log without FIP error; new onboarding captures handedness; subset-roster season scopes Ranking + LogMatch picker; profile Match Lost red when >0; Analytics opens on Partners.
+
+### 🎯 S083 PRIORITY
+1. Address any feedback from the S082 (and carry-over S081) smoke-tests (above).
 2. **Issue #94 — UI responsive sizing for iPhone 13** (leaderboard name truncation) — still open, untouched.
 3. **Color sweep Note A from S069** — still awaiting user A1/A2/A3 decision (`#9090a4` vs spec `#555555` vs redefine `--muted`).
 4. **Game Mode Phase 10 PR-D / PR-E** — SE/DE/RR active tournament views (needs state-based score input refactor first) + BracketSVG color tokens.
 
-### S080 outcomes (this session — archived)
+### S082 outcomes (this session — archived)
+- [x] A — onboarding 3→2 steps, single profile step, no name/country dup (`OnboardingScreen.jsx`)
+- [x] B — back button moved to app-standard `.back-btn` / `.back-btn-row` top-left chevron
+- [x] C — `handleCreate` passes `autoSeason:false`; App.jsx Ranking empty state conditional copy when `seasons.length===0` (text-only, trophy Icon, no emoji); admin create-league flows untouched
+- [x] D — `fetchWithRetry` global wrapper in `supabase.js`; removed per-call retry in `SeasonManagement.handleCreate`
+- [x] Built, SW v183, synced OneDrive, committed `d555cdf`, pushed, Vercel deploy `dpl_5ZSh77BAkKDEG3JC7ECLbK65Lyzg` READY
+
+### S081 outcomes (archived)
+- [x] Phase A: restored ruleset selector in season create sheet + Safari "Load failed" retry; SW v181, commit `f241cd5`
+- [x] #1 Handedness in onboarding (create + invite-code join) + DB migration `s081_handedness_and_season_end` (join_requests.handedness, create_join_request p_handedness, approve_join_request mapping, players insert)
+- [x] #2 Optional End Date field in New Season create sheet + create_season p_end_date (rejects end<start)
+- [x] #3 Casual ruleset fix — SeasonManagement.handleCreate sets newly created season as selectedSeason (root cause: App.jsx `!selectedSeason` init guard kept it on the old FIP season)
+- [x] #4 Match Lost flashcard red when >0 (.proscv.loss)
+- [x] #5 Ranking leaderboard (seasonLb) + LogMatch picker (avail) scoped to season roster (admin Player Management untouched per user)
+- [x] #6 Analytics pills Partners-first + default section
+- [x] Built, SW v182, synced OneDrive, committed `d90fcdf`, pushed, Vercel deploy `dpl_4aCkrm5SXCCQahTDfApEremDMWd9` READY
+
+### S080 outcomes (archived)
 - [x] S079 smoke-test triage: closed Issues #92 (pairs season stats isolation) + #99 (Platform Admin RLS visibility) via gh after user PASS
 - [x] Skipped Issue #94, deferred color sweep Note A
 - [x] Season ruleset feature: spec doc + DB migration `s080_season_ruleset` + scoringEngine.js + App.jsx + SeasonManagement.jsx + LogMatch.jsx + EditMatchModal.jsx + sw.js v180
