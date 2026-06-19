@@ -8,7 +8,7 @@ import { useLeague } from "../LeagueContext";
 // or Reject (with optional free-text reason, max 120 chars). Approved/rejected items collapse
 // to a single-line summary. Reachable from AdminDashboard nav card and Matches-tab inline banner.
 export function ApprovalQueueScreen({ setSidebarView, goBack }) {
-  const { supabase, leagueId, league, showToast, loadLeagueData, isAdmin } = useLeague();
+  const { supabase, leagueId, league, showToast, loadLeagueData, isAdmin, sendPushNotification } = useLeague();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState(null);
@@ -70,6 +70,20 @@ export function ApprovalQueueScreen({ setSidebarView, goBack }) {
       setDoneRows(p => ({ ...p, [req.id]: { status: "approved", name: req.display_name } }));
       setTimeout(() => setRequests(p => p.filter(r => r.id !== req.id)), 1500);
       loadLeagueData().catch(() => {});
+      // S087: approve_join_request already inserts the in-app "Welcome" bell row;
+      // also fire a web PUSH so the approved user is alerted even with the app
+      // closed (skip_in_app avoids a duplicate bell row). Mirrors the role-change
+      // push pattern. Best-effort: only lands if they enabled notifications.
+      if (req.user_id && sendPushNotification) {
+        sendPushNotification(
+          "members",
+          `Welcome to ${league?.name || "the league"}`,
+          "Your join request was approved — open PadelHub and switch to the league.",
+          null,
+          [req.user_id],
+          { skip_in_app: true }
+        ).catch(() => {});
+      }
     } catch (err) {
       showToast(err.message || "Failed to approve", "error");
     }
