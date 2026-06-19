@@ -328,13 +328,13 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
           max={new Date().toISOString().split("T")[0]}
           onChange={e=>setDate(e.target.value)}
           className="ctxchip"
-          style={{colorScheme:"dark",cursor:"pointer"}}
+          style={{colorScheme:"dark",cursor:"pointer",appearance:"none",WebkitAppearance:"none"}}
         />
       </div>
 
       {!isE && showShuffler && (
         <TeamShuffler
-          players={players}
+          players={roster&&roster.size>0?players.filter(p=>roster.has(p.id)):players}
           getName={getName}
           onAccept={({matches})=>{
             if(matches.length===0){setShowShuffler(false);return;}

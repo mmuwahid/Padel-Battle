@@ -1402,7 +1402,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
                         <div className="lbn">{p.nickname||p.name}</div>
                         {form.length>0&&(
                           <div className="form-dots">
-                            {form.map((r,i)=><div key={i} className={`fdot ${r==="W"?"w":"l"}`}/>)}
+                            {[...form].reverse().map((r,i)=><div key={i} className={`fdot ${r==="W"?"w":"l"}`}/>)}
                           </div>
                         )}
                       </div>

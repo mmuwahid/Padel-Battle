@@ -178,7 +178,7 @@ export function PairStats({ pair, pairs, matches, players, getName, season, onBa
           <>
             <div className="sec-h sec-h-pair">Last 5</div>
             <div className="form-strip form-strip-pair">
-              {last5.map((r, i) => (
+              {[...last5].reverse().map((r, i) => (
                 <div key={i} className={`fdot ${r === "W" ? "w" : (r === "L" ? "l" : "")}`}>{r}</div>
               ))}
             </div>

@@ -167,7 +167,7 @@ export function PairsRanking({ pairs, matches, players, getName, onPairDrillIn }
                   {pFlag(pr.player_b_id) && <span className="prk-pflag">{pFlag(pr.player_b_id)}</span>}
                 </div>
                 <div className="prk-formstrip">
-                  {pr.last5 && pr.last5.length > 0 ? pr.last5.map((r, k) => (
+                  {pr.last5 && pr.last5.length > 0 ? [...pr.last5].reverse().map((r, k) => (
                     <span key={k} className={"fdot " + (r === "W" ? "w" : "l")} />
                   )) : (<span className="prk-formstrip-empty">no matches yet</span>)}
                 </div>
