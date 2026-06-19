@@ -729,6 +729,23 @@ body {
 .lbc.lo{color:var(--danger);}
 .lbc.cw{color:var(--gold);}
 
+/* ─── S087 Issue #94 — small-screen leaderboard density (≤400px) ──────────
+   On narrow phones (iPhone 13/14/15 = 390/393, mini/SE = 375) the fixed stat
+   columns + gaps + padding consumed most of the row, starving the 1fr player
+   column so names truncated to "ABDULR…". This tightens the rank/flag/stat
+   columns, gaps, row padding and avatar so the player column gains ~50px and
+   names fit. Mobile-first, additive: screens ≥401px (larger iPhones, Pro Max,
+   tablets, desktop) keep the original layout byte-for-byte — no regression. */
+@media (max-width: 400px){
+  .lbth,.lbrow{grid-template-columns:30px 1fr 22px 22px 22px 22px 26px 32px;gap:3px;padding:9px 8px;}
+  .lbavi{width:26px;height:26px;}
+  .lbply{gap:6px;}
+  .lbn{font-size:10.5px;letter-spacing:0;}
+  .lbc{font-size:11px;}
+  .lbrank.num{font-size:11px;}
+  .lbrank.medal{font-size:19px;}
+}
+
 /* ─── Phase 5 — Players (hybrid 2-col grid + .prow card styling) ──────── */
 /* Segmented control (Players / Analytics) */
 .seg{display:grid;grid-template-columns:1fr 1fr;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:4px;margin:14px 18px 0;}
