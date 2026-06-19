@@ -351,9 +351,15 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
 
   // S026: Debounced reload — prevents thundering herd from rapid realtime events
   const reloadTimerRef = useRef(null);
+  // S087: debouncedReload is memoized once ([]), but loadLeagueData is recreated
+  // each render closing over the CURRENT leagueId. Calling loadLeagueData directly
+  // pinned this debounced realtime reload to the INITIAL league — so after
+  // switching leagues, a realtime tick reloaded the OLD league's data (only an
+  // app restart fixed it). Route through a ref that always holds the latest fn.
+  const loadLeagueDataRef = useRef(null);
   const debouncedReload = useCallback(() => {
     if (reloadTimerRef.current) clearTimeout(reloadTimerRef.current);
-    reloadTimerRef.current = setTimeout(() => { loadLeagueData(); }, 500);
+    reloadTimerRef.current = setTimeout(() => { loadLeagueDataRef.current?.(); }, 500);
   }, []);
 
   // Load league data from Supabase
@@ -499,6 +505,9 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
       showToast("Failed to load data — tap refresh to retry", "error");
     }
   };
+  // S087: keep the ref pointing at the latest loadLeagueData (current leagueId)
+  // so the memoized debouncedReload always reloads the ACTIVE league.
+  loadLeagueDataRef.current = loadLeagueData;
 
   // Helper functions
   const getName = (pid) => {
@@ -834,13 +843,16 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
     else{navigator.clipboard.writeText(text);showToast("Match result copied!");}
   };
 
-  // Set initial season
+  // Set initial season. S087: also re-pick when the current selection isn't in
+  // the loaded seasons (i.e. after a league switch the old league's season id is
+  // stale) — otherwise the season-scoped leaderboard filters against a season
+  // that doesn't exist in the new league and renders empty.
   useEffect(() => {
-    if(seasons.length > 0 && !selectedSeason){
+    if(seasons.length > 0 && (!selectedSeason || !seasons.some(s => s.id === selectedSeason))){
       const activeSeason = seasons.find(s => s.active);
       setSelectedSeason(activeSeason?.id || seasons[0]?.id);
     }
-  }, [seasons]);
+  }, [seasons, selectedSeason]);
 
   // Compute stats for each player
   const ps = useMemo(()=>{
