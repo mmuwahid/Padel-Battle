@@ -161,8 +161,9 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
     setSidebarHistory([]);
     setSidebarOpen(false);
     if (target.sidebarView) {
-      // Re-open sidebar overlay with the requested view (e.g. approvalQueue).
-      setSidebarOpen(true);
+      // S087: render the requested sub-view (e.g. approvalQueue) in the main
+      // content area; keep the drawer CLOSED. Previously this opened the drawer
+      // (setSidebarOpen(true)) which stacked the menu OVER the approval queue.
       setSidebarView(target.sidebarView);
       return;
     }

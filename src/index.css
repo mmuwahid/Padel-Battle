@@ -2096,6 +2096,7 @@ body {
 .aqtype{font-family:var(--mono);font-size:9px;font-weight:800;letter-spacing:.1em;padding:3px 8px;border-radius:4px;text-transform:uppercase;}
 .aqtype.cl{background:rgba(74,222,128,.16);color:var(--accent);border:1px solid rgba(74,222,128,.35);}
 .aqtype.np{background:rgba(255, 215, 0,.14);color:var(--gold);border:1px solid rgba(255, 215, 0,.4);}
+.aqtype.ex{background:rgba(77,166,255,.14);color:#4da6ff;border:1px solid rgba(77,166,255,.4);}
 .aqname{font-size:15px;font-weight:800;color:var(--text);}
 .aqname.cl{color:var(--gold);}
 .aqmeta{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;color:var(--muted);}

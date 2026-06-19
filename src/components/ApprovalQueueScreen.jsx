@@ -16,6 +16,9 @@ export function ApprovalQueueScreen({ setSidebarView, goBack }) {
   const [rejectReason, setRejectReason] = useState("");
   // After action, keep the row visible for 1.5s with the success/fail summary.
   const [doneRows, setDoneRows] = useState({}); // { id: { status:'approved'|'rejected', name } }
+  // S087: requesters who already have a player in another league → "EXISTING USER"
+  // (don't mislabel an existing PadelHub member's join as a brand-new profile).
+  const [existingIds, setExistingIds] = useState(() => new Set());
 
   const loadRequests = useCallback(async () => {
     if (!leagueId) return;
@@ -23,12 +26,21 @@ export function ApprovalQueueScreen({ setSidebarView, goBack }) {
     try {
       const { data, error } = await supabase
         .from("join_requests")
-        .select("id, type, player_id, display_name, country, gender, playing_position, status, created_at")
+        .select("id, type, player_id, user_id, display_name, country, gender, playing_position, status, created_at")
         .eq("league_id", leagueId)
         .eq("status", "pending")
         .order("created_at", { ascending: true });
       if (error) throw error;
       setRequests(data || []);
+      // Flag requesters who already play in a league we can see (other than this one).
+      const uids = [...new Set((data || []).map(r => r.user_id).filter(Boolean))];
+      if (uids.length) {
+        const { data: pl } = await supabase
+          .from("players").select("user_id").in("user_id", uids).neq("league_id", leagueId);
+        setExistingIds(new Set((pl || []).map(p => p.user_id)));
+      } else {
+        setExistingIds(new Set());
+      }
     } catch (err) {
       showToast(err.message || "Failed to load queue", "error");
     }
@@ -160,6 +172,7 @@ export function ApprovalQueueScreen({ setSidebarView, goBack }) {
           }
 
           const isClaim = r.type === "claim";
+          const isExisting = !isClaim && existingIds.has(r.user_id);
           const isRejectOpen = rejectOpen === r.id;
           const initial = (r.display_name || "?")[0].toUpperCase();
           return (
@@ -168,7 +181,7 @@ export function ApprovalQueueScreen({ setSidebarView, goBack }) {
                 <div className="aqavi">{initial}</div>
                 <div className="aqinfo">
                   <div className="aqtyprow">
-                    <div className={`aqtype ${isClaim ? "cl" : "np"}`}>{isClaim ? "CLAIM" : "NEW PROFILE"}</div>
+                    <div className={`aqtype ${isClaim ? "cl" : isExisting ? "ex" : "np"}`}>{isClaim ? "CLAIM" : isExisting ? "EXISTING USER" : "NEW PLAYER"}</div>
                     {r.gender && (
                       <Icon name={r.gender === "male" ? "male" : "female"} size={11} color="var(--muted)"/>
                     )}
