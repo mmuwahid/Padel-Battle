@@ -26,6 +26,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
   const [liveNs,setLiveNs]=useState(3);
   const [invalidIdx,setInvalidIdx]=useState([]);
   const [validationError,setValidationError]=useState("");
+  const [teamsLocked,setTeamsLocked]=useState(false); // F3: lock teams before scoring
   // S076 FT-15: pair-aware picker state (pairs-format seasons only)
   const currentSeason = (seasons || []).find(sea => sea.id === seasonId);
   const isPairsFormat = currentSeason?.format === "pairs";
@@ -83,6 +84,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
       setTA([ta[0],ta[1]]);
       setTB([tb[0],tb[1]]);
       setOpenMatchId(prefilledOpenMatch.id);
+      setTeamsLocked(true);
       // Pre-fill date from scheduled_at if it exists
       if(prefilledOpenMatch.scheduled_at){
         const d=new Date(prefilledOpenMatch.scheduled_at);
@@ -101,6 +103,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
       setNs(em.sets.length);
       setMotm(em.motm||"");
       setDate(em.date);
+      setTeamsLocked(true);
     }
   },[em]);
 
@@ -133,6 +136,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
   const all=[...tA,...tB].filter(Boolean);
   const avail=c=>players.filter(p=>(!all.includes(p.id)||p.id===c) && (roster&&roster.size>0?roster.has(p.id):true));
   const playerName=(pid)=>pm[pid]?.nickname||pm[pid]?.name||"";
+  const getAvatar=(pid)=>players.find(p=>p.id===pid)?.avatar_url;
 
   async function submit(){
     if(tA.some(x=>!x)||tB.some(x=>!x))return;
@@ -182,6 +186,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
         setNs(2);
         setQueue(queue.slice(1));
         setLiveState(createInitialLiveState());
+        setTeamsLocked(true);
       } else {
         reset();
       }
@@ -227,6 +232,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
     setLiveState(createInitialLiveState());
     setLiveNs(3);
     setMode('manual');
+    setTeamsLocked(false);
   }
 
   function cancel(){
@@ -248,6 +254,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
     setTA(["",""]);
     setTB(["",""]);
     if (isPairsFormat) { setSelectedPairA(""); setSelectedPairB(""); }
+    setTeamsLocked(false);
     if (onPrefilledHandled) onPrefilledHandled();
   };
 
@@ -340,6 +347,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
             setQueue(matches.slice(1));
             setLiveState(createInitialLiveState());
             setShowShuffler(false);
+            setTeamsLocked(true);
             if(showToast)showToast(matches.length>1?`Locked in! ${matches.length-1} more match${matches.length-1===1?"":"es"} queued.`:"Teams locked in — enter the score.");
           }}
           onCancel={()=>setShowShuffler(false)}
@@ -355,14 +363,40 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
       {/* Players card (.tcard with .tinner — same as Schedule form). S076 FT-15: pair-aware in pairs seasons. */}
       <div className="tcard">
         <div className="tcardh">
-          <div className="tcardtit">{isPairsFormat ? "Select pairs" : "Select players"}</div>
-          {!isE && !showShuffler && !isPairsFormat && (
+          <div className="tcardtit">{teamsLocked ? (isPairsFormat ? "Pairs locked" : "Teams locked") : (isPairsFormat ? "Select pairs" : "Select players")}</div>
+          {teamsLocked ? (!isFromOpenMatch && (
+            <button className="shufbtn" onClick={()=>setTeamsLocked(false)}>
+              <Icon name="edit" size={13}/>Edit {isPairsFormat?"pairs":"teams"}
+            </button>
+          )) : (!isE && !showShuffler && !isPairsFormat && (
             <button className="shufbtn" onClick={shuffleNow}>
               <Icon name="shuffle" size={13}/>Shuffle{queue.length>0?` · ${queue.length}`:''}
             </button>
-          )}
+          ))}
         </div>
-        {isPairsFormat ? (
+        {teamsLocked ? (
+          <div className="tlock">
+            <div className="tlock-team a">
+              <div className="tlock-h tlock-ha">{isPairsFormat?"Pair A":"Team A"}</div>
+              {tA.filter(Boolean).map(pid=>(
+                <div key={pid} className="tlock-p">
+                  {getAvatar(pid)?<img className="tlock-avi" src={getAvatar(pid)} alt=""/>:<div className="tlock-avi tlock-ph">{(playerName(pid)||"?").charAt(0).toUpperCase()}</div>}
+                  <span className="tlock-nm">{playerName(pid)}</span>
+                </div>
+              ))}
+            </div>
+            <div className="tlock-vs">VS</div>
+            <div className="tlock-team b">
+              <div className="tlock-h tlock-hb">{isPairsFormat?"Pair B":"Team B"}</div>
+              {tB.filter(Boolean).map(pid=>(
+                <div key={pid} className="tlock-p">
+                  {getAvatar(pid)?<img className="tlock-avi" src={getAvatar(pid)} alt=""/>:<div className="tlock-avi tlock-ph">{(playerName(pid)||"?").charAt(0).toUpperCase()}</div>}
+                  <span className="tlock-nm">{playerName(pid)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : isPairsFormat ? (
           <div className="tinner">
             <div>
               <div className="tcolh">
@@ -443,6 +477,13 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
             </div>
           </div>
         )}
+        {!teamsLocked && allFilled && !isFromOpenMatch && (
+          <div style={{padding:"0 14px 14px"}}>
+            <button className="acceptbtn" onClick={()=>setTeamsLocked(true)}>
+              <Icon name="check" size={15} color="#000" strokeWidth={2.5}/>Accept & use
+            </button>
+          </div>
+        )}
         {isPairsFormat && seasonPairs.length < 2 && (
           <div className="sm-empty" style={{marginTop:8,fontSize:12}}>
             Register at least 2 pairs in Season Management before logging matches.
@@ -451,7 +492,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
       </div>
 
       {/* Score card — Manual mode */}
-      {mode==='manual' && (
+      {teamsLocked && mode==='manual' && (
         <div className="sccard">
           <div className="sccardh">
             <div className="sccardhT">Score</div>
@@ -507,7 +548,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
       )}
 
       {/* Score card — LIVE mode */}
-      {mode==='live' && !showShuffler && (
+      {teamsLocked && mode==='live' && !showShuffler && (
         <div className="sccard">
           <div className="sccardh">
             <div className="sccardhT" style={{display:"flex",alignItems:"center",gap:6}}>
@@ -556,13 +597,6 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
                 </button>
               </div>
             )}
-            {liveHistory.length>0 && (
-              <div className="undorow">
-                <button className="undobtn" onClick={()=>setLiveState(undoPoint)}>
-                  <Icon name="back" size={11}/>Undo last point
-                </button>
-              </div>
-            )}
             {matchOver && (() => {
               const tied = sA===sB;
               const winnerIsA = sA>sB;
@@ -578,10 +612,13 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
               );
             })()}
             {(liveHistory.length>0||matchOver) && (
-              <div style={{display:"flex",justifyContent:"center",marginBottom:10}}>
-                <button className="undobtn" onClick={()=>setLiveState(createInitialLiveState())}>
-                  <Icon name="back" size={11}/>Reset
-                </button>
+              <div className="livectrls">
+                {liveHistory.length>0 && (
+                  <button className="undobtn" onClick={()=>setLiveState(undoPoint)}>
+                    <Icon name="undo" size={12}/>Undo last point
+                  </button>
+                )}
+                <button className="resetbtn" onClick={()=>setLiveState(createInitialLiveState())}>Reset</button>
               </div>
             )}
           </div>
@@ -589,6 +626,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
       )}
 
       {/* MOTM card */}
+      {teamsLocked && (
       <div className="mvpcard">
         <div className="mvpiw"><Icon name="star" size={18} color="var(--gold)"/></div>
         <div className="mvpsw">
@@ -602,8 +640,10 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
           <div className="mvpch"><Icon name="chevron" size={14}/></div>
         </div>
       </div>
+      )}
 
       {/* Save */}
+      {teamsLocked && (
       <div>
         <button onClick={submit} disabled={saving||!canSave} className={`savebtn lp${canSave&&!saving?' on':' off'}`}>
           {canSave && !saving && <Icon name="check" size={18} color="#000" strokeWidth={2.5}/>}
@@ -611,6 +651,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
         </button>
         {!canSave && saveHint && <div className="savehint">{saveHint}</div>}
       </div>
+      )}
     </div>
   );
 }

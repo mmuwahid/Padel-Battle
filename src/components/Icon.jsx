@@ -98,6 +98,7 @@ export default function Icon({ name, size = 20, color = "currentColor", strokeWi
        shoulder and elbow. fill={color} overrides the SVG-level fill:none
        so the shape renders solid like the emoji, not stroke-only. */
     case "muscle":      return <svg style={s} viewBox="0 0 24 24" {...p}><path fill={color} stroke="none" d="M2 20h16V4h-4v8c0-8-10-6-12 3z"/><line x1="14" y1="7" x2="18" y2="7" strokeWidth={strokeWidth*0.5} stroke={color === 'currentColor' ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.4)'}/><line x1="14" y1="10" x2="18" y2="10" strokeWidth={strokeWidth*0.5} stroke={color === 'currentColor' ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.4)'}/></svg>;
+    case "undo":        return <svg style={s} viewBox="0 0 24 24" {...p}><path d="M3 7v6h6"/><path d="M3.51 13a9 9 0 1 0 2.13-9.36L3 7"/></svg>;
     default:            return null;
   }
 }
