@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, PU } from '../theme';
 import { BracketSVG } from './BracketSVG';
+import { ScoreStepper } from './ScoreStepper';
 import Icon from './Icon';
 
 const TEAM_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -8,6 +9,9 @@ const getTeamLabel = (idx) => TEAM_LETTERS[idx] ? `Team ${TEAM_LETTERS[idx]}` : 
 
 export function SingleElimination({ players, getName, supabase, leagueId, tournament, setTournament, sel, endTournament, resetTournament, deleteTournament, setScreen, showToast }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  // Controlled score-entry drafts keyed by `${ri}-${mi}` (S084: replaced getElementById inputs).
+  const [draftScores, setDraftScores] = useState({});
+  const setDraft = (key, side, n) => setDraftScores(s => ({ ...s, [key]: { ...(s[key] || { a: 0, b: 0 }), [side]: n } }));
   // ── State ──
   const [tournamentName, setTournamentName] = useState("");
   const [seTeams, setSeTeams] = useState([
@@ -323,15 +327,14 @@ export function SingleElimination({ players, getName, supabase, leagueId, tourna
                       <div style={{ fontSize: 11, color: MT, fontFamily: "var(--mono)", marginTop: 1 }}>{m.team_b?.filter(Boolean).map(pid => getName(pid)).join(" / ") || "TBD"}</div>
                     </div>
                   </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 2, alignItems: "center" }}>
-                    <input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="0" id={`se-a-${ri}-${mi}`} style={{ width: 44, padding: "4px", borderRadius: 6, border: `1px solid ${BD}`, background: CD2, color: TX, textAlign: "center", fontSize: 13, fontFamily: "'JetBrains Mono'" }} />
-                    <input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="0" id={`se-b-${ri}-${mi}`} style={{ width: 44, padding: "4px", borderRadius: 6, border: `1px solid ${BD}`, background: CD2, color: TX, textAlign: "center", fontSize: 13, fontFamily: "'JetBrains Mono'" }} />
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "center" }}>
+                    <ScoreStepper value={draftScores[`${ri}-${mi}`]?.a || 0} aColor={A} ariaLabel={`${m.team_a_name || "Team A"} score`} onChange={(n) => setDraft(`${ri}-${mi}`, "a", n)} />
+                    <ScoreStepper value={draftScores[`${ri}-${mi}`]?.b || 0} aColor={DG} ariaLabel={`${m.team_b_name || "Team B"} score`} onChange={(n) => setDraft(`${ri}-${mi}`, "b", n)} />
                     <button onClick={() => {
-                      const a = parseInt(document.getElementById(`se-a-${ri}-${mi}`).value) || 0;
-                      const b = parseInt(document.getElementById(`se-b-${ri}-${mi}`).value) || 0;
-                      if (a === b) return;
-                      recordSEScore(ri, mi, a, b);
-                    }} style={{ padding: "4px 10px", borderRadius: 6, border: "none", background: A, color: BG, fontSize: 9, fontWeight: 700, cursor: "pointer" }}>Save</button>
+                      const d = draftScores[`${ri}-${mi}`] || { a: 0, b: 0 };
+                      if (d.a === d.b) { if (showToast) showToast("Scores can't be equal", "error"); return; }
+                      recordSEScore(ri, mi, d.a, d.b);
+                    }} style={{ padding: "6px 16px", borderRadius: 8, border: "none", background: A, color: BG, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font)" }}>Save</button>
                   </div>
                 </div>
               </div>

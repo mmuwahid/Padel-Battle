@@ -122,8 +122,8 @@ export function EditPlayerModal({ player, onClose, onSaved }) {
           {/* S067: dropped capture="environment" — that attr forced iOS to open the rear camera and skip the gallery. Without it, iOS shows the standard sheet (Photo Library / Take Photo / Choose File). */}
           <input ref={fileRef} type="file" accept="image/*" onChange={e => { pickPhoto(e.target.files?.[0]); e.target.value = ""; }} style={{ display: "none" }} />
           <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-            <button onClick={() => fileRef.current?.click()} disabled={uploading} style={{ padding: "8px 14px", background: `${A}15`, border: `1px solid ${A}`, borderRadius: 8, color: A, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font)", opacity: uploading ? 0.5 : 1 }}>📷 {avatarUrl ? "Change Photo" : "Upload Photo"}</button>
-            {avatarUrl && <button onClick={removePhoto} disabled={uploading} style={{ padding: "8px 14px", background: "transparent", border: `1px solid ${BD}`, borderRadius: 8, color: MT, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font)", opacity: uploading ? 0.5 : 1 }}>Remove</button>}
+            <button onClick={() => fileRef.current?.click()} disabled={uploading} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", background: `${A}15`, border: `1px solid ${A}`, borderRadius: 8, color: A, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font)", opacity: uploading ? 0.5 : 1 }}><Icon name="camera" size={14} color={A} />{avatarUrl ? "Edit Photo" : "Upload Photo"}</button>
+            {avatarUrl && <button onClick={removePhoto} disabled={uploading} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", background: "transparent", border: `1px solid ${DG}`, borderRadius: 8, color: DG, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font)", opacity: uploading ? 0.5 : 1 }}>Delete</button>}
           </div>
         </div>
 
@@ -162,10 +162,10 @@ export function EditPlayerModal({ player, onClose, onSaved }) {
           <div className="fl2"><Icon name="user" size={12} />Handedness</div>
           <div className="gtog">
             <button className={`gbtn2${handedness === "left" ? " on" : ""}`} onClick={() => setHandedness(handedness === "left" ? "" : "left")}>
-              <Icon name="user" size={16} color={handedness === "left" ? "var(--accent)" : "#9090a4"} />Left Hand
+              <Icon name="hand-left" size={16} color={handedness === "left" ? "#000" : "#9090a4"} />Left Hand
             </button>
             <button className={`gbtn2${handedness === "right" ? " on" : ""}`} onClick={() => setHandedness(handedness === "right" ? "" : "right")}>
-              <Icon name="user" size={16} color={handedness === "right" ? "var(--accent)" : "#9090a4"} />Right Hand
+              <Icon name="hand-right" size={16} color={handedness === "right" ? "#000" : "#9090a4"} />Right Hand
             </button>
           </div>
         </div>

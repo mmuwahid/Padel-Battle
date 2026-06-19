@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, PU } from '../theme';
 import { BracketSVG } from './BracketSVG';
+import { ScoreStepper } from './ScoreStepper';
 import Icon from './Icon';
 
 const TEAM_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -8,6 +9,9 @@ const getTeamLabel = (idx) => TEAM_LETTERS[idx] ? `Team ${TEAM_LETTERS[idx]}` : 
 
 export function DoubleElimination({ players, getName, supabase, leagueId, tournament, setTournament, sel, endTournament, resetTournament, deleteTournament, setScreen, showToast }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  // Controlled score-entry drafts keyed `w-/l-${ri}-${mi}` and `gf` (S084: replaced getElementById inputs).
+  const [draftScores, setDraftScores] = useState({});
+  const setDraft = (key, side, n) => setDraftScores(s => ({ ...s, [key]: { ...(s[key] || { a: 0, b: 0 }), [side]: n } }));
   // ── State ──
   const [deTeams, setDeTeams] = useState([
     { name: "Team A", p1: "", p2: "" },
@@ -303,6 +307,41 @@ export function DoubleElimination({ players, getName, supabase, leagueId, tourna
       <h3 style={{ fontSize: 13, fontWeight: 700, color: GD, marginBottom: 8, textTransform: "uppercase", letterSpacing: 1 }}>{"\uD83C\uDFC6"} Winners Bracket</h3>
       <BracketSVG bracket={tournament.schedule?.winners} getName={getName} scores={Object.fromEntries(Object.entries(tournament.scores||{}).filter(([k])=>k.startsWith("w-")).map(([k,v])=>[k.replace("w-","").replace(/-(d+)/,"-"),v]).map(([k,v])=>{const p=k.split("-");return[p[0]+"-"+p[1],v];}))} onSaveScore={(ri,mi,a,b)=>recordDEScore("winners",ri,mi,a,b)} />
 
+      {(tournament.schedule?.winners || []).map((round, ri) => {
+        const pending = (round.matches || []).map((m, mi) => ({ m, mi })).filter(({ m, mi }) => !tournament.scores?.[`w-${ri}-${mi}`] && m.team_a && m.team_b);
+        if (!pending.length) return null;
+        return (
+          <div key={"wentry-" + ri} style={{ background: CD, borderRadius: 12, border: `1px solid ${GD}30`, padding: 14, marginBottom: 8 }}>
+            <h4 style={{ fontSize: 11, fontWeight: 700, color: GD, marginBottom: 8 }}>Enter Scores — Winners Round {ri + 1}</h4>
+            {pending.map(({ m, mi }) => {
+              const dk = `w-${ri}-${mi}`;
+              const tAN = m.team_a_name || "TBD"; const tBN = m.team_b_name || "TBD";
+              const tAP = m.team_a?.filter(Boolean).map(pid => getName(pid)).join(" / ") || "";
+              const tBP = m.team_b?.filter(Boolean).map(pid => getName(pid)).join(" / ") || "";
+              return (
+                <div key={mi} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 10, paddingBottom: 8, borderBottom: `1px solid ${BD}30` }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ marginBottom: 6 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: TX }}>{tAN}</div>
+                      {tAP && <div style={{ fontSize: 11, color: MT, fontFamily: "var(--mono)", marginTop: 1 }}>{tAP}</div>}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: TX }}>{tBN}</div>
+                      {tBP && <div style={{ fontSize: 11, color: MT, fontFamily: "var(--mono)", marginTop: 1 }}>{tBP}</div>}
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "center" }}>
+                    <ScoreStepper value={draftScores[dk]?.a || 0} aColor={A} ariaLabel={`${tAN} score`} onChange={(n) => setDraft(dk, "a", n)} />
+                    <ScoreStepper value={draftScores[dk]?.b || 0} aColor={DG} ariaLabel={`${tBN} score`} onChange={(n) => setDraft(dk, "b", n)} />
+                    <button onClick={() => { const d = draftScores[dk] || { a: 0, b: 0 }; if (d.a === d.b) { if (showToast) showToast("Scores can't be equal", "error"); return; } recordDEScore("winners", ri, mi, d.a, d.b); }} style={{ padding: "6px 16px", borderRadius: 8, border: "none", background: A, color: BG, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font)" }}>Save</button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        );
+      })}
+
       <h3 style={{ fontSize: 13, fontWeight: 700, color: DG, marginBottom: 8, marginTop: 16, textTransform: "uppercase", letterSpacing: 1 }}>{"\uD83D\uDCA5"} Losers Bracket</h3>
       {(tournament.schedule?.losers || []).map((round, ri) => {
         const matches = round.matches || [];
@@ -330,10 +369,10 @@ export function DoubleElimination({ players, getName, supabase, leagueId, tourna
                     </div>
                   </div>
                   {!sc && m.team_a && m.team_b && (
-                    <div style={{ display:"flex", alignItems:"center", gap:6, justifyContent:"center" }}>
-                      <input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="0" id={"de-la-"+ri+"-"+mi} style={{ width:44, padding:"4px", borderRadius:6, border:"1px solid "+BD, background:CD2, color:TX, textAlign:"center", fontSize:13, fontFamily:"JetBrains Mono" }} />
-                      <input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="0" id={"de-lb-"+ri+"-"+mi} style={{ width:44, padding:"4px", borderRadius:6, border:"1px solid "+BD, background:CD2, color:TX, textAlign:"center", fontSize:13, fontFamily:"JetBrains Mono" }} />
-                      <button onClick={()=>{const a=parseInt(document.getElementById("de-la-"+ri+"-"+mi).value)||0;const b=parseInt(document.getElementById("de-lb-"+ri+"-"+mi).value)||0;if(a===b)return;recordDEScore("losers",ri,mi,a,b);}} style={{ padding:"4px 10px", borderRadius:6, border:"none", background:A, color:BG, fontSize:9, fontWeight:700, cursor:"pointer" }}>Save</button>
+                    <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:6 }}>
+                      <ScoreStepper value={draftScores[`l-${ri}-${mi}`]?.a || 0} aColor={A} ariaLabel={`${tAN} score`} onChange={(n) => setDraft(`l-${ri}-${mi}`, "a", n)} />
+                      <ScoreStepper value={draftScores[`l-${ri}-${mi}`]?.b || 0} aColor={DG} ariaLabel={`${tBN} score`} onChange={(n) => setDraft(`l-${ri}-${mi}`, "b", n)} />
+                      <button onClick={()=>{const d=draftScores[`l-${ri}-${mi}`]||{a:0,b:0};if(d.a===d.b){if(showToast)showToast("Scores can't be equal","error");return;}recordDEScore("losers",ri,mi,d.a,d.b);}} style={{ padding:"6px 12px", borderRadius:8, border:"none", background:A, color:BG, fontSize:11, fontWeight:700, cursor:"pointer", fontFamily:"var(--font)" }}>Save</button>
                     </div>
                   )}
                   {sc && <div style={{ textAlign:"center", fontSize:13, fontWeight:700, fontFamily:"JetBrains Mono", color:MT }}>{sc.a} - {sc.b}</div>}
@@ -359,11 +398,10 @@ export function DoubleElimination({ players, getName, supabase, leagueId, tourna
             </div>
           </div>
           {!gfScore && gf.team_a && gf.team_b && (
-            <div style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
-              <input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="0" id="de-gf-a" style={{ width:50, padding:"6px", borderRadius:8, border:"1px solid "+GD+"40", background:CD2, color:TX, textAlign:"center", fontSize:16, fontWeight:700, fontFamily:"JetBrains Mono" }} />
-              <span style={{ color: MT, fontWeight: 700 }}>-</span>
-              <input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="0" id="de-gf-b" style={{ width:50, padding:"6px", borderRadius:8, border:"1px solid "+GD+"40", background:CD2, color:TX, textAlign:"center", fontSize:16, fontWeight:700, fontFamily:"JetBrains Mono" }} />
-              <button onClick={()=>{const a=parseInt(document.getElementById("de-gf-a").value)||0;const b=parseInt(document.getElementById("de-gf-b").value)||0;if(a===b)return;recordDEScore("grand_final",0,0,a,b);}} style={{ padding:"6px 14px", borderRadius:8, border:"none", background:GD, color:BG, fontSize:11, fontWeight:700, cursor:"pointer" }}>Save</button>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+              <ScoreStepper value={draftScores["gf"]?.a || 0} aColor={GD} ariaLabel={`${gf.team_a_name || "Team A"} score`} onChange={(n) => setDraft("gf", "a", n)} />
+              <ScoreStepper value={draftScores["gf"]?.b || 0} aColor={GD} ariaLabel={`${gf.team_b_name || "Team B"} score`} onChange={(n) => setDraft("gf", "b", n)} />
+              <button onClick={()=>{const d=draftScores["gf"]||{a:0,b:0};if(d.a===d.b){if(showToast)showToast("Scores can't be equal","error");return;}recordDEScore("grand_final",0,0,d.a,d.b);}} style={{ padding:"6px 16px", borderRadius:8, border:"none", background:GD, color:BG, fontSize:11, fontWeight:700, cursor:"pointer", fontFamily:"var(--font)" }}>Save</button>
             </div>
           )}
           {gfScore && <div style={{ textAlign:"center", fontSize:18, fontWeight:800, fontFamily:"JetBrains Mono", color:GD }}>{gfScore.a} - {gfScore.b}</div>}

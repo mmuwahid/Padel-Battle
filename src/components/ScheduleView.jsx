@@ -568,7 +568,7 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
             {/* Info note */}
             <div style={{margin:"0 14px 14px"}}>
               <div className="inote">
-                <Icon name="info" size={14} color="rgba(245,158,11,.8)"/>
+                <Icon name="info" size={14} color="rgba(255, 215, 0,.8)"/>
                 <div className="inotet">All players will be notified when the match is scheduled.</div>
               </div>
             </div>

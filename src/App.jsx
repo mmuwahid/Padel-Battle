@@ -1250,7 +1250,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
                     const tpL = awards.topPair.total - awards.topPair.wins;
                     return (
                       <div className="saw-card saw-toppair">
-                        <div className="saw-cardh"><Icon name="crown" size={12} color="#f59e0b" strokeWidth={2}/>Top Pair</div>
+                        <div className="saw-cardh"><Icon name="crown" size={12} color="#FFD700" strokeWidth={2}/>Top Pair</div>
                         <div className="saw-tpstack">
                           <div className="saw-tpplayer">
                             <Avatar pid={awards.topPair.playerIds[0]} size={34}/>

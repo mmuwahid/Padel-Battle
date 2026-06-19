@@ -652,7 +652,7 @@ export function SeasonManagement({ setSidebarView, goBack, autoCreate, clearAuto
                 <div style={{fontSize:10,color:"var(--muted)",marginTop:6}}>Ruleset is locked for the life of the season.</div>
               </div>
               <div className="inote">
-                <Icon name="info" size={14} color="rgba(245,158,11,.85)" />
+                <Icon name="info" size={14} color="rgba(255, 215, 0,.85)" />
                 <div className="inotet">Active seasons will be auto-ended when this one starts.</div>
               </div>
             </div>

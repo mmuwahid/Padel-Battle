@@ -143,7 +143,7 @@ export function EditMatchModal({ match, onClose, onSaved }) {
                       <option value="">— Select player —</option>
                       {playerOpts([teamB[1-idx],...teamA].filter(Boolean)).map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}
                     </select>
-                    <div className="pselch"><Icon name="chevron" size={13} color="rgba(245,158,11,.45)"/></div>
+                    <div className="pselch"><Icon name="chevron" size={13} color="rgba(255, 215, 0,.45)"/></div>
                   </div>
                 ))}
               </div>

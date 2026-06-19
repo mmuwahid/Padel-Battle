@@ -120,7 +120,7 @@ export function ApprovalQueueScreen({ setSidebarView, goBack }) {
       </div>
       <div style={{margin:"0 18px 14px"}}>
         <div className="inote">
-          <Icon name="alert" size={14} color="rgba(245,158,11,.85)"/>
+          <Icon name="alert" size={14} color="rgba(255, 215, 0,.85)"/>
           <div className="inotet">Approved players get immediate access. Rejected players can try again.</div>
         </div>
       </div>

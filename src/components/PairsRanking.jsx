@@ -229,7 +229,7 @@ export function PairsRanking({ pairs, matches, players, getName, onPairDrillIn }
 
       {pairStats.length > 0 && pairStats.every(p => p.mp === 0) && (
         <div className="prk-note">
-          <Icon name="info" size={14} color="rgba(245,158,11,.85)" />
+          <Icon name="info" size={14} color="rgba(255, 215, 0,.85)" />
           <span>No matches logged yet. Pair stats will populate as matches are recorded.</span>
         </div>
       )}

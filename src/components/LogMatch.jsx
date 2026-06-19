@@ -432,7 +432,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
                     <option key={pr.id} value={pr.id}>{pairLabel(pr)}</option>
                   ))}
                 </select>
-                <div className="pselch"><Icon name="chevron" size={13} color="rgba(245,158,11,.45)"/></div>
+                <div className="pselch"><Icon name="chevron" size={13} color="rgba(255, 215, 0,.45)"/></div>
               </div>
             </div>
           </div>
@@ -471,7 +471,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
                     <option value="">Player {i+1}</option>
                     {avail(pid).map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}
                   </select>
-                  <div className="pselch"><Icon name="chevron" size={13} color="rgba(245,158,11,.45)"/></div>
+                  <div className="pselch"><Icon name="chevron" size={13} color="rgba(255, 215, 0,.45)"/></div>
                 </div>
               ))}
             </div>
