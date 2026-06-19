@@ -1,8 +1,11 @@
 # Session Log — 2026-06-19 — Session087 — Issue 108 League Invite Approval Workflow
 
 **Project:** PadelHub
+**Type:** Build/Fix
 **Phase:** Pre-store-launch
-**Commits:** `f1a08bb` · **DB migration:** `s108_approve_join_request_carry_over` · **SW v193 → v194**
+**BU:** Muwahid Dev
+**Duration:** Deep (45 min+)
+**Commits:** `f1a08bb`, `b2905cf`, `5ddec3e`, `55e0a3e`, `0e2ccde`, `12ddf27`, `28aefde`, `8681d21`, `b54c0b0`, `e9df6ec`, `f8ec030` · **DB migrations:** `s108_approve_join_request_carry_over`, `s108b_create_league_carry_over_owner_profile` · **SW v193 → v198** · **Issues #108 + #94 closed (0 open)**
 
 ---
 
@@ -83,11 +86,26 @@ User: switching leagues didn't update the leaderboard/players screens — only a
 1. **`debouncedReload` stale closure.** It's `useCallback(..., [])` (memoized once) but called `loadLeagueData()` directly. `loadLeagueData` is recreated each render closing over the current `leagueId`, so `debouncedReload` was pinned to the FIRST render's closure (initial league). After switching, any realtime tick reloaded the OLD league's data over the new one. Restart "fixed" it because the initial leagueId then was the switched league (localStorage). Fix: `loadLeagueDataRef` (assigned each render) + `debouncedReload` calls `loadLeagueDataRef.current?.()`.
 2. **Season selector not re-picked on switch.** The "set initial season" effect guarded on `!selectedSeason`, so a switch kept the old league's season id; the season-scoped leaderboard then filtered against a season absent from the new league (→ empty/stale). Fix: re-pick the active season when `selectedSeason` isn't among the loaded league's seasons (`!seasons.some(s=>s.id===selectedSeason)`), deps `[seasons, selectedSeason]`.
 
+## Next Actions
+- [ ] Resume App Store + Google Play launch prep (Capacitor wrap) — carries the deferred #108 point #6 (invite-link Universal Links). G1 Apple login pending Apple Developer account.
+- [ ] Color sweep Note A (S069) — verify whether S084's `--muted`→`#9090a4` already closes it.
+- [ ] Optional: relocate the working git clone off `/tmp` to a persistent path to stop the recurring `.git` corruption.
+
 ## Commits & Deploy
-- **`f1a08bb`** — `fix: route league invites through approval queue + data carry-over (#108)` + migration `s108_approve_join_request_carry_over` (Supabase nkvqbwdsoxylkqhubhig). Deploy `dpl_3VJurEmFjqvrhBFqUEkAVc9tEP7Z` READY (SW v194). **Issue #108 closed.**
-- **`b2905cf`** — `docs: reconcile session logs, tasks, planning + project CLAUDE.md with OneDrive` (docs-only, +91/~36 files).
-- **`5ddec3e`** — `fix: responsive leaderboard for small screens (iPhone 13) — issue #94` (SW v194→v195). **Production live on SW v195.** Issue #94 still OPEN pending iPhone 13 smoke-test.
+- **`f1a08bb`** — route league invites through approval queue + data carry-over (#108) + migration `s108_approve_join_request_carry_over`. SW v194. **Issue #108 closed.**
+- **`b2905cf`** — reconcile git meta-docs with OneDrive (back-filled session logs S017–S087 + planning + tasks + CLAUDE.md; +91/~36 files, docs-only).
+- **`5ddec3e`** — responsive leaderboard for small screens / iPhone 13 (#94). SW v195. **Issue #94 closed** (user-confirmed).
+- **`55e0a3e`** — docs: record #94 + reconcile in session log/todo/INDEX/CLAUDE.
+- **`0e2ccde`** — avatar carry-over on league CREATE via migration `s108b_create_league_carry_over_owner_profile` (+ Moody Intermediate avatar data-fix; docs).
+- **`12ddf27`** — notification → Approval Queue routing (no drawer over it) + "EXISTING USER" vs "NEW PLAYER" tag. SW v196.
+- **`28aefde`** — docs: round-2 fixes.
+- **`8681d21`** — web push to the approved user on join approval. SW v197.
+- **`b54c0b0`** — docs: approval push.
+- **`e9df6ec`** — league-switch staleness fix (debouncedReload ref + season re-pick). SW v198.
+- **`f8ec030`** — docs: league-switch fix.
+- **DB data-fixes:** removed Husain's orphaned Intermediate membership; backfilled Moody's Intermediate player avatar + full profile (country/handedness/etc.) from Padel Stars.
+- **Production live on SW v198**, main `f8ec030` (+ this log commit). All items user-tested and confirmed working; **0 open GitHub issues.**
 - **Live:** padel-battle.vercel.app
 
 ---
-_Session logged: 2026-06-19 | Logged by: Claude | Session087_
+_Session logged: 2026-06-19 | Logged by: Claude (session-log skill) | Session087_

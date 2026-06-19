@@ -1,23 +1,17 @@
 # Active Work
 
 ## NEXT SESSION (S088) — START HERE
-**Last session:** S087 (2026-06-19) — **Issue #108 League Invite fully fixed + closed.** 1 commit `f1a08bb`, DB migration `s108_approve_join_request_carry_over`, SW v193→v194, 5 files. Both invite paths (link `tryAutoJoin` + in-app `joinLeague`) now create PENDING join_requests (approval queue) instead of direct `league_members` insert (#1 — empty-queue root cause); `approve_join_request` backfills the new player row (country/DOB/gender/court/handedness/**avatar**/nickname/grade) from the user's most-recent existing claimed player (#2); `LeagueManagement.copyLink` copies the raw invite code, Share keeps the URL (#3); league isolation verified — players/matches per `league_id` (#4); approval-gating + lock-screen "Switch to another league" escape means pending users keep access to other leagues (#5). **#6** (invite link opens Safari, not the installed PWA) DEFERRED to the Capacitor native wrap (Universal Links — unsolvable in a pure iOS PWA). Husain's orphaned Intermediate membership reset (re-joins via fixed flow). Deploy `dpl_3VJurEmFjqvrhBFqUEkAVc9tEP7Z` READY. **Production live on SW v194, main `f1a08bb`.**
+**Last session:** S087 (2026-06-19) — **Issues #108 + #94 fixed, closed + user-confirmed. 0 open GitHub issues.** 11 commits (`f1a08bb`…`f8ec030`), 2 DB migrations (`s108`, `s108b`), SW v193→v198. **#108 league invite (6 pts):** both invite paths (`tryAutoJoin` + `joinLeague`) now create PENDING join_requests → admin Approval Queue (was empty because they inserted membership directly); `approve_join_request` carries existing-user profile/avatar into the new player; copy button copies raw code; league isolation verified; pending users keep access to other leagues; #6 (invite link → Safari not PWA) deferred to the Capacitor wrap (iOS limitation). **#94:** mobile-first `@media(max-width:400px)` leaderboard so names don't truncate on iPhone 13, ≥401px unchanged. **Reconciled stale git meta-docs** (`b2905cf`, back-filled S017–S087). **5 live-testing fixes:** avatar/country carry-over on league CREATE (`s108b` + data-fix); notification→Approval-Queue routing (no drawer over it); "EXISTING USER" vs "NEW PLAYER" tag; web push to approved user; **league-switch staleness** (debouncedReload stale-closure ref + season re-pick — was showing old league until restart). **Production live on SW v198, main `f8ec030`.**
 
-### 🎯 PENDING USER SMOKE-TEST (S087 ship — SW v195)
-- Husain re-joins Intermediate (link or code) → sees "Waiting for approval" (not added silently); admin gets a "New join request" notification.
-- Admin Dashboard → Approval Queue shows Husain with details prefilled; Approve → his player appears with avatar/country/handedness/court/grade carried over from Padel Stars League.
-- League Management copy button → pastes the raw code (e.g. `11030f72`), not a URL.
-- While pending in Intermediate, Husain still uses Padel Stars normally (no global lockout).
-- **Issue #94 (SW v195):** on iPhone 13 (390px) the Ranking leaderboard shows full player names (no "ABDULR…" truncation); stat columns slightly tighter. On a larger phone/tablet/desktop the leaderboard looks UNCHANGED from before. → close #94 on PASS.
-- **Round-2 fixes (SW v196 + DB):** (a) owner's country flag + profile now show in Intermediate (data-fixed; `create_league` carries it forward); (b) tapping a "join request" notification goes straight to the Approval Queue (no sidebar drawer over it); (c) the queue tags an existing PadelHub member "EXISTING USER" (blue), brand-new "NEW PLAYER", claims "CLAIM".
+### ✅ SMOKE-TEST PASSED (S087) — all confirmed by user
+- #108 approval flow end-to-end (request → notify → queue → approve → data carried over); copy-code; no lockout; country flag + profile in Intermediate; notification routing; existing-user tag; approval push; **league switching now instant** (no restart). #94 leaderboard on iPhone 13. → both issues closed.
 
 ### 🎯 S088 PRIORITY
-1. Address S087 smoke-test feedback (#108 approval flow SW v194 + #94 responsive leaderboard SW v195); close #94 on PASS.
-2. Resume App Store + Google Play launch prep (Capacitor wrap) — includes **#6 Universal Links** for invite deep-links. G1 Apple login pending Apple Developer account.
-3. Color sweep Note A — verify whether S084's `--muted`→`#9090a4` already closes it.
-4. (Optional cleanup) Relocate the working git clone off `/tmp` to a persistent path to stop the recurring `.git` corruption.
+1. Resume App Store + Google Play launch prep (Capacitor wrap) — includes **#6 Universal Links** for invite deep-links. G1 Apple login pending Apple Developer account.
+2. Color sweep Note A — verify whether S084's `--muted`→`#9090a4` already closes it.
+3. (Optional cleanup) Relocate the working git clone off `/tmp` to a persistent path to stop the recurring `.git` corruption.
 
-_Done in S087: git meta-doc reconciliation (`b2905cf` — back-filled S017–S087 logs + docs into the repo); going forward, commit doc updates each session._
+_S087 note: git meta-docs are now reconciled + committed; keep committing doc updates each session (don't let them drift to OneDrive-only again)._
 
 ---
 
