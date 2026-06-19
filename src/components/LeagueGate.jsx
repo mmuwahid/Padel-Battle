@@ -134,15 +134,26 @@ export function LeagueGate({ user, children }) {
         const code = params.get("invite");
         let userLeagues = await loadUserLeagues();
         if (code) {
-          const joined = await tryAutoJoin(code, userLeagues);
-          if (joined) {
+          const res = await tryAutoJoin(code, userLeagues);
+          window.history.replaceState(null, "", window.location.pathname);
+          // Already a member → open that league directly.
+          if (res?.kind === "member" && res.leagueId) {
             userLeagues = await loadUserLeagues();
-            setSelectedLeagueIdRaw(joined);
-            try { localStorage.setItem(LAST_LEAGUE_LS_KEY, joined); } catch { /* noop */ }
-            window.history.replaceState(null, "", window.location.pathname);
+            setSelectedLeagueIdRaw(res.leagueId);
+            try { localStorage.setItem(LAST_LEAGUE_LS_KEY, res.leagueId); } catch { /* noop */ }
             return;
           }
-          window.history.replaceState(null, "", window.location.pathname);
+          // S108 Issue #108: a pending approval request was created. Existing
+          // members keep full access to their other leagues (a one-time toast
+          // surfaces in-app); 0-league users see PendingApprovalScreen below.
+          if (res?.kind === "requested") {
+            await loadJoinRequest();
+            if (userLeagues.length > 0) {
+              try { sessionStorage.setItem("padelhub_join_pending", res.leagueName || "the league"); } catch { /* noop */ }
+            }
+            resolveSelectedLeague(userLeagues);
+            return;
+          }
         }
         resolveSelectedLeague(userLeagues);
         // Load any open join_request so the 0-leagues branch knows whether to show
@@ -208,6 +219,34 @@ export function LeagueGate({ user, children }) {
   }, [loading, leagues.length, joinRequest, loadUserLeagues, setSelectedLeagueId]);
 
   // ── Handlers exposed to children ──
+  // S108 Issue #108: invite joins (link OR in-app code) now go through the
+  // approval queue via create_join_request — NOT a direct league_members insert.
+  // Prefill the request snapshot from the user's most-recent claimed player so
+  // the admin reviewing the queue sees real data and the approved player row
+  // carries over their profile (avatar/grade are backfilled DB-side on approve).
+  const submitJoinRequest = useCallback(async (leagueId) => {
+    const { data: eps } = await supabase
+      .from("players")
+      .select("name, country, date_of_birth, gender, playing_position, handedness")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1);
+    const ep = eps?.[0] || {};
+    const dn = ep.name || user.user_metadata?.display_name || user.email?.split("@")[0] || "Player";
+    const { error } = await supabase.rpc("create_join_request", {
+      p_league_id: leagueId,
+      p_type: "new_profile",
+      p_player_id: null,
+      p_display_name: dn,
+      p_country: ep.country || null,
+      p_dob: ep.date_of_birth || null,
+      p_gender: ep.gender || null,
+      p_position: ep.playing_position || null,
+      p_handedness: ep.handedness || null,
+    });
+    return { error };
+  }, [user]);
+
   const tryAutoJoin = async (code, currentLeagues) => {
     try {
       const { data: rpcData, error: findErr } = await supabase
@@ -215,16 +254,14 @@ export function LeagueGate({ user, children }) {
       const found = rpcData?.[0] || null;
       if (findErr || !found) return null;
       const already = currentLeagues.find(l => l.id === found.id);
-      if (already) return found.id;
-      const { error: addErr } = await supabase
-        .from("league_members")
-        .insert({ league_id: found.id, user_id: user.id, role: "member" });
-      if (addErr) return null;
-      const dn = user.user_metadata?.display_name || user.email?.split("@")[0] || "Someone";
-      supabase.functions.invoke("push-notify", {
-        body: { league_id: found.id, type: "members", title: "New Member Joined!", body: `${dn} joined the league`, exclude_user_id: user.id },
-      }).catch(() => {});
-      return found.id;
+      if (already) return { kind: "member", leagueId: found.id };
+      const { error } = await submitJoinRequest(found.id);
+      // "Already a member" race (e.g. approved between fetch and submit).
+      if (error && /already a member/i.test(error.message || "")) {
+        return { kind: "member", leagueId: found.id };
+      }
+      if (error) return null;
+      return { kind: "requested", leagueName: found.name };
     } catch { return null; }
   };
 
@@ -257,6 +294,9 @@ export function LeagueGate({ user, children }) {
     return newLeague || { id: leagueId, name: name.trim(), invite_code: data.invite_code };
   }, [loadUserLeagues, setSelectedLeagueId]);
 
+  // S108 Issue #108: in-app "Join by code" now submits a pending approval
+  // request instead of joining instantly. Returns { kind, league } so the
+  // caller can show the right feedback ("Request sent" vs "Opened").
   const joinLeague = useCallback(async (code) => {
     if (!code?.trim()) throw new Error("Invite code required");
     const { data: rpcData, error: findErr } = await supabase
@@ -266,19 +306,17 @@ export function LeagueGate({ user, children }) {
     const leagueId = found.id;
     const { data: existing } = await supabase
       .from("league_members").select("id").eq("league_id", leagueId).eq("user_id", user.id).single();
-    if (!existing) {
-      const { error: addErr } = await supabase
-        .from("league_members").insert({ league_id: leagueId, user_id: user.id, role: "member" });
-      if (addErr) throw addErr;
-      const dn = user.user_metadata?.display_name || user.email?.split("@")[0] || "Someone";
-      supabase.functions.invoke("push-notify", {
-        body: { league_id: leagueId, type: "members", title: "New Member Joined!", body: `${dn} joined the league`, exclude_user_id: user.id },
-      }).catch(() => {});
+    if (existing) {
+      // Already a member — just open it.
+      await loadUserLeagues();
+      setSelectedLeagueId(leagueId);
+      return { kind: "member", league: found };
     }
-    await loadUserLeagues();
-    setSelectedLeagueId(leagueId);
-    return found;
-  }, [user.id, loadUserLeagues, setSelectedLeagueId]);
+    const { error } = await submitJoinRequest(leagueId);
+    if (error && !/already a member/i.test(error.message || "")) throw error;
+    await loadJoinRequest();
+    return { kind: "requested", league: found };
+  }, [user.id, loadUserLeagues, loadJoinRequest, setSelectedLeagueId, submitJoinRequest]);
 
   const renameLeague = useCallback(async (leagueId, newName) => {
     if (!newName?.trim()) throw new Error("Name required");

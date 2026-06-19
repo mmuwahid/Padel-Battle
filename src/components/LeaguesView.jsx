@@ -85,8 +85,12 @@ export function LeaguesView({
     if (!inviteCode.trim()) { setJoinErr("Invite code required"); return; }
     setJoinBusy(true);
     try {
-      const found = await handlers.joinLeague(inviteCode.trim());
-      showToast?.(`Joined "${found.name}".`);
+      const res = await handlers.joinLeague(inviteCode.trim());
+      if (res?.kind === "requested") {
+        showToast?.(`Request sent to "${res.league?.name}". Waiting for admin approval.`);
+      } else {
+        showToast?.(`Opened "${res.league?.name}".`);
+      }
       setInviteCode(""); setSection(null);
       onClose?.();
     } catch (err) {

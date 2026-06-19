@@ -297,6 +297,19 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
     import('./components/GameMode');
   },[]);
 
+  // S108 Issue #108: an existing member who clicked an invite link for ANOTHER
+  // league had a pending approval request created (LeagueGate). They keep full
+  // access here, so surface a one-time toast letting them know it's pending.
+  useEffect(()=>{
+    try {
+      const lg = sessionStorage.getItem("padelhub_join_pending");
+      if (lg) {
+        sessionStorage.removeItem("padelhub_join_pending");
+        showToast(`Request sent to "${lg}". Waiting for admin approval.`);
+      }
+    } catch { /* sessionStorage may be unavailable */ }
+  },[]);
+
   // GN-09 / Issue #16: Scroll to top on tab change AND on sidebar-view change
   // (opening Admin Dashboard / Platform Admin / Settings / Profile / etc. should always start at the top)
   useEffect(()=>{window.scrollTo({top:0,behavior:"smooth"});},[tab,sidebarView]);
@@ -1017,6 +1030,14 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
             <Icon name="bell" size={15} color="var(--accent)"/>
             You'll be notified once approved
           </div>
+          {leagues && leagues.length > 1 && (
+            <button className="pend-signout" onClick={()=>{
+              const other = leagues.find(l => l.id !== leagueId);
+              if (other && leagueHandlers?.switchLeague) leagueHandlers.switchLeague(other.id);
+            }}>
+              Switch to another league
+            </button>
+          )}
           <button className="pend-signout" onClick={async ()=>{ await supabase.auth.signOut(); }}>
             Sign out
           </button>

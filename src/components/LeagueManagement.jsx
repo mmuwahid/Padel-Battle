@@ -148,8 +148,10 @@ export function LeagueManagement({
     setRegenerating(false);
   };
 
+  // S108 Issue #108: the copy button copies the raw invite CODE only (e.g.
+  // "11030f72"), not a URL. The Share button (shareInvite) still shares the link.
   const copyLink = () => {
-    navigator.clipboard.writeText(`${window.location.origin}?invite=${league?.invite_code}`);
+    navigator.clipboard.writeText(league?.invite_code || "");
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -297,7 +299,7 @@ export function LeagueManagement({
                 )}
               </div>
               <div style={{display:"flex",gap:8}}>
-                <button className="pbtn" style={{padding:"9px 11px"}} onClick={copyLink} title="Copy invite link" aria-label="Copy invite link">
+                <button className="pbtn" style={{padding:"9px 11px"}} onClick={copyLink} title="Copy invite code" aria-label="Copy invite code">
                   {copied ? <Icon name="check" size={16} strokeWidth={2.5} /> : <Icon name="copy" size={16} />}
                 </button>
                 <button className="pbtn" style={{padding:"9px 11px"}} onClick={shareInvite} title="Share invite" aria-label="Share invite">
