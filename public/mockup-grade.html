@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>FT-17 Player Grade — Mockup v4</title>
+<style>
+  :root{
+    --bg:#0a0a0f; --cd:#12121a; --cd2:#1a1a26; --bd:#2a2a3a; --tx:#e4e4ef;
+    --mt:#9090a4; --accent:#4ADE80; --danger:#f87171; --gold:#FFD700;
+    --blue:#4da6ff; --silver:#C0C0C0;
+    --font:'Syne',system-ui,sans-serif; --mono:'DM Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--tx);font-family:var(--font);
+    -webkit-font-smoothing:antialiased;padding:0 0 70px;}
+  .wrap{max-width:480px;margin:0 auto;padding:18px 16px;}
+  h1{font-size:18px;font-weight:800;letter-spacing:.02em;margin:6px 0 2px;}
+  .sub{color:var(--mt);font-size:12px;font-family:var(--mono);margin:0 0 18px;}
+  .sectitle{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;
+    color:var(--mt);margin:26px 0 10px;border-top:1px solid var(--bd);padding-top:16px;}
+
+  /* ---- grade pill ---- */
+  .gpill{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:999px;
+    font-size:12px;font-weight:800;font-family:var(--mono);letter-spacing:.04em;border:1px solid;}
+  .g-A{color:var(--gold);background:rgba(255,215,0,.12);border-color:rgba(255,215,0,.45);}
+  .g-B{color:var(--accent);background:rgba(74,222,128,.12);border-color:rgba(74,222,128,.45);}
+  .g-C{color:var(--blue);background:rgba(77,166,255,.12);border-color:rgba(77,166,255,.45);}
+  .g-D{color:var(--mt);background:rgba(144,144,164,.12);border-color:rgba(144,144,164,.4);}
+
+  /* ---- profile preview ---- */
+  .card{background:var(--cd);border:1px solid var(--bd);border-radius:16px;padding:18px;text-align:center;}
+  .avi{width:84px;height:84px;border-radius:50%;margin:0 auto 10px;
+    background:linear-gradient(135deg,rgba(74,222,128,.25),rgba(74,222,128,.05));
+    border:2px solid rgba(74,222,128,.4);display:flex;align-items:center;justify-content:center;
+    font-size:30px;font-weight:800;color:var(--accent);}
+  .pname{font-size:18px;font-weight:800;}
+  .pemail{color:var(--mt);font-size:12px;font-family:var(--mono);margin-top:2px;}
+  .tags{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px;}
+  .tag{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:999px;
+    background:var(--cd2);border:1px solid var(--bd);color:var(--mt);font-size:11px;font-weight:600;}
+  .profacts{display:flex;gap:8px;justify-content:center;margin-top:14px;}
+  .pa{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:9px;
+    border:1px solid var(--bd);background:var(--cd2);color:var(--mt);font-size:12px;font-weight:700;
+    font-family:var(--font);cursor:pointer;}
+  .pa.assess{border-color:var(--accent);background:rgba(74,222,128,.1);color:var(--accent);}
+  .callout{font-size:10px;color:var(--gold);font-family:var(--mono);margin-top:8px;}
+
+  /* ---- edit-screen rows ---- */
+  .erow{display:flex;align-items:center;justify-content:space-between;gap:12px;
+    background:var(--cd);border:1px solid var(--bd);border-radius:12px;padding:12px 14px;margin-bottom:10px;}
+  .erow .lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--mt);}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:9px;
+    border:1px solid var(--accent);background:rgba(74,222,128,.12);color:var(--accent);
+    font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;}
+  .seg{display:flex;gap:4px;flex-wrap:wrap;}
+  .seg button{padding:6px 9px;border-radius:8px;border:1px solid var(--bd);background:var(--cd2);
+    color:var(--mt);font-size:12px;font-weight:800;font-family:var(--mono);cursor:pointer;min-width:34px;}
+  .seg button.on{border-color:var(--gold);background:rgba(255,215,0,.15);color:var(--gold);}
+
+  /* ---- spine ---- */
+  .spine{width:100%;border-collapse:collapse;font-size:11px;line-height:1.35;}
+  .spine td{border:1px solid var(--bd);padding:8px 9px;vertical-align:top;}
+  .spine td.ov{font-family:var(--mono);font-weight:800;color:var(--accent);width:30px;text-align:center;}
+
+  /* ---- matrix table ---- */
+  .mtx{width:100%;border-collapse:collapse;font-size:10px;line-height:1.3;}
+  .mtx th,.mtx td{border:1px solid var(--bd);padding:6px 6px;vertical-align:top;text-align:left;}
+  .mtx thead th{background:var(--cd2);color:var(--mt);font-family:var(--mono);font-size:9px;
+    text-transform:uppercase;letter-spacing:.03em;position:sticky;top:0;}
+  .mtx td.dim{font-weight:800;background:var(--cd);width:90px;}
+  .mtx td.dim small{display:block;font-weight:400;color:var(--mt);font-size:8.5px;margin-top:2px;}
+  .mtx td.dim .w{display:inline-block;margin-top:4px;font-family:var(--mono);font-size:9px;font-weight:800;
+    color:var(--gold);background:rgba(255,215,0,.12);border:1px solid rgba(255,215,0,.35);
+    border-radius:5px;padding:1px 5px;}
+  .mtx .opthd{font-family:var(--mono);color:var(--accent);font-weight:800;}
+  .mtx .opthd small{color:var(--mt);font-weight:400;}
+  .adv{box-shadow:inset 3px 0 0 0 var(--gold);}
+
+  /* ---- compute walkthrough ---- */
+  .calc{width:100%;border-collapse:collapse;font-size:11px;font-family:var(--mono);}
+  .calc th,.calc td{border:1px solid var(--bd);padding:7px 8px;text-align:center;}
+  .calc thead th{background:var(--cd2);color:var(--mt);font-size:9px;text-transform:uppercase;letter-spacing:.03em;}
+  .calc td.d{text-align:left;font-family:var(--font);font-weight:700;font-size:11px;}
+  .calc td.pts{font-weight:800;color:var(--accent);}
+  .calc tr.adv td.d{color:var(--gold);}
+  .calc tfoot td{background:var(--cd2);font-weight:800;font-size:12px;}
+
+  /* ---- questionnaire ---- */
+  .q{background:var(--cd);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:12px;}
+  .qh{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+  .qnum{font-size:10px;font-family:var(--mono);color:var(--mt);}
+  .qt{font-size:15px;font-weight:800;margin:0 0 2px;display:flex;align-items:center;gap:8px;}
+  .qt .w{font-family:var(--mono);font-size:10px;font-weight:800;color:var(--gold);
+    background:rgba(255,215,0,.12);border:1px solid rgba(255,215,0,.35);border-radius:5px;padding:1px 6px;}
+  .qhint{font-size:11px;color:var(--mt);margin:0 0 10px;}
+  .opt{display:flex;align-items:flex-start;gap:9px;width:100%;text-align:left;padding:10px 12px;border-radius:10px;
+    border:1px solid var(--bd);background:var(--cd2);color:var(--tx);font-size:13px;
+    font-family:var(--font);cursor:pointer;margin-bottom:7px;line-height:1.35;transition:.12s;}
+  .opt:hover{border-color:var(--mt);}
+  .opt.on{border-color:var(--accent);background:rgba(74,222,128,.1);}
+  .opt .ov{flex-shrink:0;font-family:var(--mono);font-weight:800;color:var(--accent);font-size:11px;
+    min-width:20px;text-align:center;}
+
+  /* ---- result ---- */
+  .total{position:sticky;bottom:0;background:rgba(10,10,15,.95);backdrop-filter:blur(8px);
+    border-top:1px solid var(--bd);padding:12px 16px;display:flex;align-items:center;
+    justify-content:space-between;margin:0 -16px;}
+  .total .n{font-family:var(--mono);font-weight:800;font-size:14px;}
+  .result{text-align:center;background:var(--cd);border:1px solid var(--bd);border-radius:16px;padding:24px 18px;}
+  .result .big{font-size:48px;font-weight:800;font-family:var(--mono);line-height:1;margin:8px 0;}
+  .result .rl{color:var(--mt);font-size:13px;}
+  .ladder{display:flex;gap:2px;justify-content:center;margin:16px 0 6px;flex-wrap:wrap;}
+  .ladder span{flex:1;min-width:30px;text-align:center;padding:6px 0;border-radius:6px;font-size:10px;font-weight:800;
+    font-family:var(--mono);background:var(--cd2);color:var(--mt);border:1px solid var(--bd);}
+  .note{font-size:11px;color:var(--mt);font-family:var(--mono);background:var(--cd2);
+    border:1px solid var(--bd);border-radius:10px;padding:10px 12px;margin-top:14px;line-height:1.5;}
+  .note b{color:var(--tx);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Player Grade — FT-17 mockup v4</h1>
+  <p class="sub">8-dim · weighted · spine · descriptions sharpened from sources · Playtomic ref</p>
+
+  <!-- 1. Grade pill variants (10 tiers) -->
+  <div class="sectitle">1 · Grade pill — all 10 tiers</div>
+  <div class="tags" style="justify-content:flex-start;">
+    <span class="gpill g-D">D-</span><span class="gpill g-D">D</span><span class="gpill g-D">D+</span>
+    <span class="gpill g-C">C-</span><span class="gpill g-C">C</span><span class="gpill g-C">C+</span>
+    <span class="gpill g-B">B-</span><span class="gpill g-B">B</span><span class="gpill g-B">B+</span>
+    <span class="gpill g-A">A</span>
+  </div>
+
+  <!-- 2. On profile + retake placement -->
+  <div class="sectitle">2 · Profile (pill in tags · Self-Assessment entry point)</div>
+  <div class="card">
+    <div class="avi">M</div>
+    <div class="pname">Moody</div>
+    <div class="pemail">moody@example.com</div>
+    <div class="tags">
+      <span class="gpill g-B">B</span>
+      <span class="tag">🇦🇪 ARE</span>
+      <span class="tag">28 yrs</span>
+      <span class="tag">Right Hand</span>
+      <span class="tag">Left Side</span>
+    </div>
+    <div class="profacts">
+      <button class="pa">✎ Edit Profile</button>
+      <button class="pa assess">★ Self-Assessment</button>
+    </div>
+    <div class="callout">↑ Retake assessment lands here, beside Edit Profile</div>
+  </div>
+
+  <!-- 3. Edit profile rows -->
+  <div class="sectitle">3 · In Edit Profile</div>
+  <div class="erow">
+    <div>
+      <div class="lbl">Your Grade</div>
+      <div style="margin-top:6px;"><span class="gpill g-B">B</span></div>
+    </div>
+    <button class="btn">Retake assessment</button>
+  </div>
+  <div class="erow"><div><div class="lbl">Admin override</div>
+    <div class="qhint" style="margin:6px 0 0;">Set a player's grade directly</div></div></div>
+  <div class="seg" style="margin:-2px 0 4px;">
+    <button>D-</button><button>D</button><button>D+</button><button>C-</button><button>C</button>
+    <button>C+</button><button>B-</button><button class="on">B</button><button>B+</button><button>A</button>
+  </div>
+
+  <!-- 4. The answer spine -->
+  <div class="sectitle">4 · The answer scale (consistency + pressure = the spine)</div>
+  <p class="qhint" style="margin:-4px 0 10px;">Every dimension is scored on this same i–v ladder. Consistency &amp; "holds under pressure" are baked in here, so they are <b style="color:var(--tx)">not</b> separate dimensions.</p>
+  <table class="spine">
+    <tr><td class="ov">i</td><td><b>0</b> — Error-driven; slow pace only; shot avoided</td></tr>
+    <tr><td class="ov">ii</td><td><b>1</b> — Structured but medium-pace only; loses shape when rushed</td></tr>
+    <tr><td class="ov">iii</td><td><b>2</b> — Reliable &amp; consistent at a medium pace</td></tr>
+    <tr><td class="ov">iv</td><td><b>3</b> — Reliable at medium-high pace, under pressure</td></tr>
+    <tr><td class="ov">v</td><td><b>4</b> — Sustains high pace &amp; intensity across a full match; weaponised</td></tr>
+  </table>
+
+  <!-- 5. Full grading matrix -->
+  <div class="sectitle">5 · The grading matrix (8 dimensions × 5 options · weighted)</div>
+  <p class="qhint" style="margin:-4px 0 10px;"><span class="gpill g-A" style="font-size:10px;padding:1px 7px;">gold edge</span> = advanced technique, weighted ×3. Each cell = raw points 0–4 (× the dimension weight).</p>
+  <table class="mtx">
+    <thead><tr>
+      <th>Dimension</th>
+      <th class="opthd">i<br><small>0</small></th>
+      <th class="opthd">ii<br><small>1</small></th>
+      <th class="opthd">iii<br><small>2</small></th>
+      <th class="opthd">iv<br><small>3</small></th>
+      <th class="opthd">v<br><small>4</small></th>
+    </tr></thead>
+    <tbody>
+      <tr><td class="dim">Groundstrokes<small>FH/BH off the bounce</small><span class="w">×2</span></td>
+        <td>Contact unreliable; mishits common, slow pace only</td>
+        <td>Basic FH/BH exist but control is weak; loses shape when rushed</td>
+        <td>Rallies with reliable depth &amp; direction at a steady pace</td>
+        <td>Controls depth, pace &amp; cross/down-the-line under pressure</td>
+        <td>Strong shot package — varies pace, spin &amp; angle to dictate</td></tr>
+      <tr><td class="dim">Serve &amp; Return<small>start of the point</small><span class="w">×1</span></td>
+        <td>Serve just starts the point; return floats or errors</td>
+        <td>Reliable serve placement; return blocks back at medium pace</td>
+        <td>Consistent serve to body/T; return neutralises most serves</td>
+        <td>Serves with intent &amp; variation; aggressive returns under pressure</td>
+        <td>Serve &amp; return are weapons — on the attack from the first ball</td></tr>
+      <tr class="adv"><td class="dim">Overheads &amp; Smash<small>bandeja · víbora · smash · x3/x4 · rulo · gancho</small><span class="w">×3</span></td>
+        <td>Overheads avoided; smash mishit or netted</td>
+        <td>Bandeja emerging to hold net; flat smash inconsistent</td>
+        <td>Reliable bandeja; controlled smash on easy balls</td>
+        <td>Working víbora + controlled smash; attacks under pressure</td>
+        <td>Full range incl. x3/x4, rulo &amp; gancho, executed under pressure</td></tr>
+      <tr class="adv"><td class="dim">Glass / Wall Usage<small>back &amp; side glass</small><span class="w">×3</span></td>
+        <td>Doesn't read rebounds; ball off the wall usually lost</td>
+        <td>Reads back glass late; side glass not trusted</td>
+        <td>Comfortable off both walls; handles standard rebounds</td>
+        <td>Defends &amp; resets off back + side glass under pressure</td>
+        <td>Anticipates rebounds; attacks off x3/x4 — glass is a weapon</td></tr>
+      <tr><td class="dim">Net Play &amp; Volleys<small>at the net</small><span class="w">×2</span></td>
+        <td>Volleys pop up or net; unstable at the net</td>
+        <td>Blocks easy volleys; basic control with no pressure</td>
+        <td>Controls volleys with reliable placement</td>
+        <td>Punches &amp; angles volleys; holds the net under pressure</td>
+        <td>Dominates net exchanges — put-aways &amp; drop volleys by choice</td></tr>
+      <tr class="adv"><td class="dim">Transition &amp; Soft Game<small>chiquita · lob · bajada · drop</small><span class="w">×3</span></td>
+        <td>No feel for drops or soft blocks; lob hit or miss</td>
+        <td>Limited touch; lob to escape pressure only</td>
+        <td>Reliable lob &amp; chiquita to reset the point</td>
+        <td>Bajada &amp; drops used tactically — turns defence into attack</td>
+        <td>World-class touch, disguise &amp; tempo control under pressure</td></tr>
+      <tr><td class="dim">Positioning &amp; Movement<small>court coverage &amp; footwork</small><span class="w">×2</span></td>
+        <td>Both players chase the ball; limited movement &amp; balance</td>
+        <td>Knows up/back roles but slow to react, often out of place</td>
+        <td>Moves as a pair; covers court with adequate footwork</td>
+        <td>Efficient footwork &amp; recovery; covers court under pressure</td>
+        <td>Reads play early; elite speed &amp; balance set traps, close space</td></tr>
+      <tr><td class="dim">Tactics &amp; Attack/Defence<small>point construction</small><span class="w">×2</span></td>
+        <td>Defends only; cannot build a point</td>
+        <td>Defends well; basic attacking shots inconsistent</td>
+        <td>Attacks &amp; defends comfortably; understands spacing</td>
+        <td>Builds points with intent; adjusts the game plan mid-match</td>
+        <td>Dominates tempo; exploits weaknesses systematically by choice</td></tr>
+    </tbody>
+  </table>
+
+  <!-- 6. How it computes -->
+  <div class="sectitle">6 · How answers compute to a grade (worked example)</div>
+  <p class="qhint" style="margin:-4px 0 10px;">An advanced all-court player. Each answer's raw points (0–4) × the dimension weight = weighted points. Sum → band.</p>
+  <table class="calc">
+    <thead><tr><th>Dimension</th><th>Wt</th><th>Answer</th><th>Raw</th><th>Pts</th></tr></thead>
+    <tbody>
+      <tr><td class="d">Groundstrokes</td><td>×2</td><td>iv</td><td>3</td><td class="pts">6</td></tr>
+      <tr><td class="d">Serve &amp; Return</td><td>×1</td><td>iv</td><td>3</td><td class="pts">3</td></tr>
+      <tr class="adv"><td class="d">Overheads &amp; Smash</td><td>×3</td><td>v</td><td>4</td><td class="pts">12</td></tr>
+      <tr class="adv"><td class="d">Glass / Wall Usage</td><td>×3</td><td>iv</td><td>3</td><td class="pts">9</td></tr>
+      <tr><td class="d">Net Play &amp; Volleys</td><td>×2</td><td>iv</td><td>3</td><td class="pts">6</td></tr>
+      <tr class="adv"><td class="d">Transition &amp; Soft Game</td><td>×3</td><td>iii</td><td>2</td><td class="pts">6</td></tr>
+      <tr><td class="d">Positioning &amp; Movement</td><td>×2</td><td>iv</td><td>3</td><td class="pts">6</td></tr>
+      <tr><td class="d">Tactics &amp; Attack/Defence</td><td>×2</td><td>iv</td><td>3</td><td class="pts">6</td></tr>
+    </tbody>
+    <tfoot><tr><td class="d">TOTAL</td><td colspan="3">sum of weighted points</td><td style="color:var(--accent);">54 / 72</td></tr>
+    <tr><td class="d">GRADE</td><td colspan="3">band 51–57</td><td style="color:var(--accent);">B</td></tr></tfoot>
+  </table>
+  <div class="note">
+    <b>Why weighting matters:</b> a player who maxes every <i>fundamental</i> (groundstrokes, serve, net, positioning) but owns <b>no</b> advanced shots (overheads / glass / transition all at i) tops out at <b>32/72 → C</b>. The advanced ×3 dimensions are what carry you into B and A territory — exactly as you asked.
+  </div>
+
+  <!-- 7. Banding -->
+  <div class="sectitle">7 · Banding (weighted total 0–72 → tier · ≈ Playtomic)</div>
+  <div class="ladder" style="margin-top:0;">
+    <span class="g-D">D-<br>0–6<br><small style="color:var(--mt);font-size:8px;">~0.5</small></span><span class="g-D">D<br>7–14<br><small style="color:var(--mt);font-size:8px;">~1.0</small></span><span class="g-D">D+<br>15–21<br><small style="color:var(--mt);font-size:8px;">~1.5</small></span>
+    <span class="g-C">C-<br>22–28<br><small style="color:var(--mt);font-size:8px;">~2.0</small></span><span class="g-C">C<br>29–35<br><small style="color:var(--mt);font-size:8px;">~2.5</small></span><span class="g-C">C+<br>36–43<br><small style="color:var(--mt);font-size:8px;">~3.0</small></span>
+    <span class="g-B">B-<br>44–50<br><small style="color:var(--mt);font-size:8px;">~3.5</small></span><span class="g-B">B<br>51–57<br><small style="color:var(--mt);font-size:8px;">~4.0</small></span><span class="g-B">B+<br>58–65<br><small style="color:var(--mt);font-size:8px;">4.5–5</small></span>
+    <span class="g-A">A<br>66–72<br><small style="color:var(--mt);font-size:8px;">5.5–7</small></span>
+  </div>
+  <div class="note">
+    Main letter = tier; modifier (− · plain · +) = position within the tier. <b>A</b> is the single elite top (needs ~66+/72 = near-max, heavily in the advanced dimensions). The <b>≈ Playtomic</b> row is an external reference only (anchored to the deep-research source, ~3.0 ≈ strong C/B) — the grade is computed from the matrix, not from Playtomic. Cutoffs tunable.
+  </div>
+
+  <!-- 8. Questionnaire (i–v labels) -->
+  <div class="sectitle">8 · Self-assessment card (i–v options, weight shown)</div>
+  <div class="q">
+    <div class="qh"><span class="qnum">3 / 8</span></div>
+    <div class="qt">Overheads &amp; Smash <span class="w">×3</span></div>
+    <div class="qhint">Bandeja · víbora · smash · x3/x4 · rulo · gancho — padel's defining attacking shots</div>
+    <button class="opt"><span class="ov">i</span>Overheads avoided; smash mishit or netted</button>
+    <button class="opt"><span class="ov">ii</span>Bandeja emerging to hold net; flat smash inconsistent</button>
+    <button class="opt"><span class="ov">iii</span>Reliable bandeja; controlled smash on easy balls</button>
+    <button class="opt on"><span class="ov">iv</span>Working víbora + controlled smash; attacks under pressure</button>
+    <button class="opt"><span class="ov">v</span>Full range incl. x3/x4, rulo &amp; gancho, executed under pressure</button>
+  </div>
+
+  <!-- 9. Result -->
+  <div class="sectitle">9 · Result screen</div>
+  <div class="result">
+    <div class="rl">Your computed grade</div>
+    <div class="big" style="color:var(--accent);">B</div>
+    <div class="rl">54 / 72 · Strong</div>
+    <div class="ladder">
+      <span class="g-D">D-</span><span class="g-D">D</span><span class="g-D">D+</span>
+      <span class="g-C">C-</span><span class="g-C">C</span><span class="g-C">C+</span>
+      <span class="g-B">B-</span>
+      <span class="g-B" style="background:rgba(74,222,128,.18);color:var(--accent);border-color:var(--accent);transform:scale(1.12);">B</span>
+      <span class="g-B">B+</span>
+      <span class="g-A">A</span>
+    </div>
+    <button class="btn" style="margin-top:14px;justify-content:center;width:100%;">Save grade</button>
+  </div>
+</div>
+
+<div class="total">
+  <span style="color:var(--mt);font-size:12px;">Running total</span>
+  <span class="n" style="color:var(--accent);">54 / 72 → <span class="g-B" style="border:none;padding:0;background:none;">B</span></span>
+</div>
+</body>
+</html>

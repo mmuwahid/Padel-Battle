@@ -5,6 +5,7 @@ import { flagEmoji } from "../utils/helpers";
 import { useLeague } from "../LeagueContext";
 import { CountrySelect } from "./CountrySelect";
 import { AvatarCropModal } from "./AvatarCropModal";
+import { GRADE_ORDER, GRADE_META, gradeColor } from "../utils/grade";
 
 // S050: COUNTRIES moved to ./CountrySelect (full UN list, sorted by name,
 // Israel excluded). EditPlayerModal renders <CountrySelect/> instead of a
@@ -20,6 +21,7 @@ export function EditPlayerModal({ player, onClose, onSaved }) {
   const [position, setPosition] = useState(player.playing_position || "");
   const [gender, setGender] = useState(player.gender || ""); // S066 Phase 8
   const [handedness, setHandedness] = useState(player.handedness || ""); // S070 Issue #83
+  const [grade, setGrade] = useState(player.grade || ""); // FT-17 admin override
   const [avatarUrl, setAvatarUrl] = useState(player.avatar_url || null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -82,16 +84,23 @@ export function EditPlayerModal({ player, onClose, onSaved }) {
     if (!name.trim()) { showToast("Name is required", "error"); return; }
     setSaving(true);
     try {
+      const payload = {
+        name: name.trim(),
+        nickname: nickname.trim() || null,
+        country: country || null,
+        playing_position: position || null,
+        gender: gender || null,
+        handedness: handedness || null,
+        avatar_url: avatarUrl || null,
+      };
+      // FT-17: only touch grade fields when the admin actually changed the tier,
+      // so an untouched self-set grade keeps its grade_source='self'.
+      if ((grade || "") !== (player.grade || "")) {
+        payload.grade = grade || null;
+        payload.grade_source = grade ? "admin" : null;
+      }
       const { error } = await supabase.from("players")
-        .update({
-          name: name.trim(),
-          nickname: nickname.trim() || null,
-          country: country || null,
-          playing_position: position || null,
-          gender: gender || null,
-          handedness: handedness || null,
-          avatar_url: avatarUrl || null,
-        })
+        .update(payload)
         .eq("id", player.id);
       if (error) throw error;
       showToast("Player updated");
@@ -185,6 +194,24 @@ export function EditPlayerModal({ player, onClose, onSaved }) {
               </button>
             ))}
           </div>
+        </div>
+
+        {/* FT-17: admin grade override — sets grade_source='admin'. The 10-tier
+            ladder; tap a tier to set, tap again to clear. */}
+        <div className="fgrp" style={{ marginBottom: 18 }}>
+          <div className="fl2"><Icon name="star" size={12} />Skill Grade
+            {grade && <span style={{ marginLeft: 6, color: gradeColor(grade), fontWeight: 800 }}>{grade} · {GRADE_META[grade]?.label}</span>}
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {GRADE_ORDER.map(g => {
+              const on = grade === g;
+              const c = gradeColor(g);
+              return (
+                <button key={g} type="button" onClick={() => setGrade(on ? "" : g)} style={{ fontFamily: "var(--mono)", fontSize: 12, fontWeight: 700, padding: "7px 0", flex: "1 0 16%", minWidth: 40, borderRadius: 8, cursor: "pointer", color: on ? c : MT, background: on ? `${c}22` : CD2, border: `1px solid ${on ? c : BD}` }}>{g}</button>
+              );
+            })}
+          </div>
+          <div style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: MT, marginTop: 6 }}>Admin override. Replaces the player's self-assessment grade until they retake it.</div>
         </div>
 
         {/* S069: crop/zoom modal — opens when user picks a file. */}

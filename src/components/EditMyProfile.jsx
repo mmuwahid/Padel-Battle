@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useLeague } from "../LeagueContext";
 import { CountrySelect } from "./CountrySelect";
+import { gradeColor, GRADE_META } from "../utils/grade";
 import Icon from "./Icon";
 
 // S050: User self-edit modal for the player record they've claimed.
@@ -8,7 +9,7 @@ import Icon from "./Icon";
 // mandatory-field validation. All 5 profile fields (name, DOB, country,
 // gender, playing-side) are required. Nickname remains optional.
 // Backed by RLS policy `players_update_self` (user_id = auth.uid()).
-export function EditMyProfile({ player, onClose }) {
+export function EditMyProfile({ player, onClose, onRetake }) {
   const { supabase, showToast, loadLeagueData } = useLeague();
 
   const [name, setName] = useState(player.name || "");
@@ -148,6 +149,24 @@ export function EditMyProfile({ player, onClose }) {
             ))}
           </div>
           {attempted && !sideOk && <div className="ferr">Court position is required</div>}
+        </div>
+
+        {/* FT-17: Skill grade — read-only here; set via the self-assessment. */}
+        <div className="fgrp" style={{marginBottom:18}}>
+          <div className="fl2"><Icon name="star" size={12}/>Your Grade</div>
+          <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:"var(--surface)",border:"1px solid var(--border)",borderRadius:10}}>
+            {player.grade ? (
+              <>
+                <span style={{fontFamily:"var(--mono)",fontSize:18,fontWeight:800,color:gradeColor(player.grade)}}>{player.grade}</span>
+                <span style={{fontSize:12,color:"#9090a4"}}>{GRADE_META[player.grade]?.label}</span>
+              </>
+            ) : (
+              <span style={{fontFamily:"var(--mono)",fontSize:11,color:"#9090a4"}}>Not yet assessed</span>
+            )}
+            <button type="button" onClick={()=>{onClose();onRetake&&onRetake();}} style={{marginLeft:"auto",display:"inline-flex",alignItems:"center",gap:5,padding:"7px 11px",background:"transparent",border:"1px solid var(--accent)",borderRadius:8,color:"var(--accent)",fontFamily:"var(--font)",fontSize:11,fontWeight:700,cursor:"pointer"}}>
+              <Icon name="star" size={12} color="var(--accent)"/>{player.grade?"Retake":"Take assessment"}
+            </button>
+          </div>
         </div>
 
         {/* Actions */}

@@ -3,7 +3,9 @@ import { formatTeam, win, formatDate, flagEmoji, getAge } from '../utils/helpers
 import { calcElo } from '../utils/elo';
 import { ACHS } from '../data/achievements';
 import { EditMyProfile } from './EditMyProfile';
+import { GradeAssessmentModal } from './GradeAssessmentModal';
 import { AvatarLightbox } from './AvatarLightbox';
+import { gradeColor } from '../utils/grade';
 import Icon from './Icon';
 
 // S066 Phase 12: spec-faithful header restyle.
@@ -15,6 +17,7 @@ import Icon from './Icon';
 // minor token cleanup but still render below the spec header.
 export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, removeAvatar, claimedPlayer, ps, elo, matches, players, isAdmin, getName, getStreak, setSidebarView, navigateSidebar, goBack, setTab, setSidebarOpen }) {
   const [editingMyProfile, setEditingMyProfile] = useState(false);
+  const [showGrade, setShowGrade] = useState(false);
   const [showLightbox, setShowLightbox] = useState(false);
   const fileInputRef = React.useRef(null);
 
@@ -70,6 +73,12 @@ export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, re
         )}
         {claimedPlayer && (
           <div className="protags">
+            {/* FT-17: player grade pill (letter only, coloured by tier) */}
+            {claimedPlayer.grade && (
+              <div className="protag" style={{color:gradeColor(claimedPlayer.grade),borderColor:gradeColor(claimedPlayer.grade),background:`${gradeColor(claimedPlayer.grade)}1a`,fontWeight:800}}>
+                {claimedPlayer.grade}
+              </div>
+            )}
             {claimedPlayer.country && (
               <div className="protag"><span className="flag">{flagEmoji(claimedPlayer.country)}</span>{claimedPlayer.country}</div>
             )}
@@ -99,14 +108,29 @@ export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, re
           </div>
         )}
         {claimedPlayer && (
-          <button className="proedit" onClick={()=>setEditingMyProfile(true)}>
-            <Icon name="edit" size={14} color="#9090a4"/>Edit Profile
-          </button>
+          <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}>
+            <button className="proedit" onClick={()=>setEditingMyProfile(true)}>
+              <Icon name="edit" size={14} color="#9090a4"/>Edit Profile
+            </button>
+            <button className="proedit" onClick={()=>setShowGrade(true)}>
+              <Icon name="star" size={14} color="var(--gold)"/>{claimedPlayer.grade?"Retake Assessment":"Self-Assessment"}
+            </button>
+          </div>
+        )}
+        {/* FT-17: grade callout when not yet rated */}
+        {claimedPlayer && !claimedPlayer.grade && (
+          <div style={{fontFamily:"var(--mono)",fontSize:10,color:"#9090a4",marginTop:8,textAlign:"center"}}>
+            Take the self-assessment to set your skill grade.
+          </div>
         )}
       </div>
 
       {editingMyProfile && claimedPlayer && (
-        <EditMyProfile player={claimedPlayer} onClose={()=>setEditingMyProfile(false)}/>
+        <EditMyProfile player={claimedPlayer} onClose={()=>setEditingMyProfile(false)} onRetake={()=>setShowGrade(true)}/>
+      )}
+
+      {showGrade && claimedPlayer && (
+        <GradeAssessmentModal player={claimedPlayer} onClose={()=>setShowGrade(false)}/>
       )}
 
       {showLightbox && avatarUrl && (

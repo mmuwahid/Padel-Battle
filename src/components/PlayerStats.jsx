@@ -5,6 +5,7 @@ import { FD } from './FormDots';
 import Icon from './Icon';
 import { AvatarLightbox } from './AvatarLightbox';
 import { formatTeam, win, formatDate, setTotals, flagEmoji, getAge } from '../utils/helpers';
+import { gradeColor } from '../utils/grade';
 
 export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matches,supabase,leagueId,isAdmin,getName,sel,onPlayersChange,showToast,claimedPlayer,leagueMembers,league,seasonId,seasons,seasonRosters}){
   const player=sp?pm[sp]:null;
@@ -233,8 +234,12 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
               {roleLabel}
             </div>
           )}
-          {(player.country || positionLabel || player.handedness || getAge(player.date_of_birth) != null) && (
+          {(player.grade || player.country || positionLabel || player.handedness || getAge(player.date_of_birth) != null) && (
             <div className="dpro-tags">
+              {/* FT-17: read-only grade pill (letter, coloured by tier) */}
+              {player.grade && (
+                <div className="dpro-tag" style={{color:gradeColor(player.grade),borderColor:gradeColor(player.grade),background:`${gradeColor(player.grade)}1a`,fontWeight:800}}>{player.grade}</div>
+              )}
               {player.country && flagEmoji(player.country) && (
                 <div className="dpro-tag"><span className="flag">{flagEmoji(player.country)}</span>{player.country.toUpperCase()}</div>
               )}
