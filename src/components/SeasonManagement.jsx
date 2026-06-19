@@ -99,7 +99,7 @@ export function SeasonManagement({ setSidebarView, goBack, autoCreate, clearAuto
       if (error) throw error;
       showToast("Season created");
       setShowCreate(false);
-      await loadLeagueData();
+      loadLeagueData(); // C1: background refresh, UI unblocks immediately
       // S081: switch the app context to the season just created so logging,
       // leaderboard and ruleset all immediately reflect it (was stuck on the
       // previously-active season, breaking the Casual ruleset at log time).
@@ -136,7 +136,7 @@ export function SeasonManagement({ setSidebarView, goBack, autoCreate, clearAuto
       });
       if (error) throw error;
       showToast("Season updated");
-      await loadLeagueData();
+      loadLeagueData(); // C1: background refresh, UI unblocks immediately
     } catch (err) {
       showToast(err.message || "Failed to save", "error");
     }
@@ -154,7 +154,7 @@ export function SeasonManagement({ setSidebarView, goBack, autoCreate, clearAuto
       });
       if (error) throw error;
       // S077 r9: seasonRosters refreshes via loadLeagueData on next load.
-      await loadLeagueData();
+      loadLeagueData(); // C1: background refresh, UI unblocks immediately
     } catch (err) {
       showToast(err.message || "Failed to update roster", "error");
     }
@@ -167,7 +167,7 @@ export function SeasonManagement({ setSidebarView, goBack, autoCreate, clearAuto
       if (error) throw error;
       showToast("Season ended");
       setConfirmEnd(false);
-      await loadLeagueData();
+      loadLeagueData(); // C1: background refresh, UI unblocks immediately
     } catch (err) {
       showToast(err.message || "Failed to end season", "error");
     }
@@ -178,7 +178,7 @@ export function SeasonManagement({ setSidebarView, goBack, autoCreate, clearAuto
       const { error } = await supabase.rpc("reactivate_season", { p_season_id: seasonId });
       if (error) throw error;
       showToast("Season reactivated");
-      await loadLeagueData();
+      loadLeagueData(); // C1: background refresh, UI unblocks immediately
     } catch (err) {
       showToast(err.message || "Failed to reactivate", "error");
     }
@@ -230,7 +230,7 @@ export function SeasonManagement({ setSidebarView, goBack, autoCreate, clearAuto
       if (error) throw error;
       showToast("Pair created");
       setShowCreatePair(false);
-      await loadLeagueData();
+      loadLeagueData(); // C1: background refresh, UI unblocks immediately
     } catch (err) {
       showToast(err.message || "Failed to create pair", "error");
     }
@@ -252,7 +252,7 @@ export function SeasonManagement({ setSidebarView, goBack, autoCreate, clearAuto
       if (error) throw error;
       showToast("Pair updated");
       setEditingPairId(null);
-      await loadLeagueData();
+      loadLeagueData(); // C1: background refresh, UI unblocks immediately
     } catch (err) {
       showToast(err.message || "Failed to update pair", "error");
     }
@@ -265,7 +265,7 @@ export function SeasonManagement({ setSidebarView, goBack, autoCreate, clearAuto
       if (error) throw error;
       showToast("Pair deleted");
       setConfirmDeletePair(null);
-      await loadLeagueData();
+      loadLeagueData(); // C1: background refresh, UI unblocks immediately
     } catch (err) {
       showToast(err.message || "Failed to delete pair", "error");
     }

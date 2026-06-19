@@ -66,7 +66,7 @@ export function PlayerManagement({ memberProfiles, setSidebarView, goBack }) {
       if (error) throw error;
       setNewName(""); setNewNick(""); setShowAdd(false);
       showToast("Player added");
-      await loadLeagueData();
+      loadLeagueData(); // C1: background refresh, UI unblocks immediately
     } catch (err) {
       showToast(err.message || "Failed to add player", "error");
     }
@@ -98,7 +98,7 @@ export function PlayerManagement({ memberProfiles, setSidebarView, goBack }) {
       }
 
       showToast(claimedUserId ? "Player deleted + user removed from league" : "Player deleted");
-      await loadLeagueData();
+      loadLeagueData(); // C1: background refresh, UI unblocks immediately
     } catch (_err) {
       showToast("Failed to delete — they may have match history", "error");
     }
@@ -118,7 +118,7 @@ export function PlayerManagement({ memberProfiles, setSidebarView, goBack }) {
       // Keep the RPC as the single source of truth for in-app; the trade-off is no
       // separate web/PWA push for role changes — acceptable since the user lands
       // on the in-app notification next time they open the app.
-      await loadLeagueData();
+      loadLeagueData(); // C1: background refresh, UI unblocks immediately
     } catch (err) {
       showToast(err.message || "Failed to change role", "error");
     }

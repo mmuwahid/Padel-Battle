@@ -124,7 +124,7 @@ export function LeagueManagement({
     try {
       const { error } = await supabase.rpc("update_league_name", { p_league_id: leagueId, p_name: trimmed });
       if (error) throw error;
-      await loadLeagueData();
+      loadLeagueData(); // C1: background refresh, UI unblocks immediately
       showToast("League renamed");
       setEditingName(false);
     } catch (err) {
@@ -139,7 +139,7 @@ export function LeagueManagement({
       const newCode = Math.random().toString(36).substring(2, 8).toUpperCase();
       const { error } = await supabase.from("leagues").update({ invite_code: newCode }).eq("id", leagueId);
       if (error) throw error;
-      await loadLeagueData();
+      loadLeagueData(); // C1: background refresh, UI unblocks immediately
       setConfirmRegen(false);
       showToast("Invite code regenerated");
     } catch (_err) {

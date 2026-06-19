@@ -95,7 +95,7 @@ export function EditPlayerModal({ player, onClose, onSaved }) {
         .eq("id", player.id);
       if (error) throw error;
       showToast("Player updated");
-      await loadLeagueData();
+      loadLeagueData(); // C1: background refresh, UI unblocks immediately
       if (onSaved) onSaved();
       onClose();
     } catch (err) {
