@@ -6,7 +6,7 @@ import Icon from './Icon';
 import { AvatarLightbox } from './AvatarLightbox';
 import { formatTeam, win, formatDate, setTotals, flagEmoji, getAge } from '../utils/helpers';
 
-export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matches,supabase,leagueId,isAdmin,getName,sel,onPlayersChange,showToast,claimedPlayer,leagueMembers,league}){
+export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matches,supabase,leagueId,isAdmin,getName,sel,onPlayersChange,showToast,claimedPlayer,leagueMembers,league,seasonId,seasons,seasonRosters}){
   const player=sp?pm[sp]:null;
   const stats=sp?ps[sp]:null;
   const [subTab,setSubTab]=useState("roster"); // roster | analytics
@@ -26,6 +26,8 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
   const [h2hP2,setH2hP2]=useState(null);
   // S069: tap drill-in avatar to expand WhatsApp/Instagram-style.
   const [showLightbox,setShowLightbox]=useState(false);
+  // B1/B2: Players grid scoped to a season's roster, defaulting to the active season.
+  const [rosterSeason,setRosterSeason]=useState(()=>(seasons||[]).find(s=>s.active)?.id||seasonId||"all");
 
   const h2h=useMemo(()=>{
     if(!sp)return[];
@@ -51,9 +53,15 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
   const getAvatar=(pid)=>players.find(pp=>pp.id===pid)?.avatar_url;
 
   async function addPlayer(){
-    if(!newName.trim())return;
+    const nm=newName.trim();
+    if(!nm)return;
+    // B3: block exact duplicate names so players stay distinguishable.
+    if((players||[]).some(p=>(p.name||"").trim().toLowerCase()===nm.toLowerCase())){
+      if(showToast)showToast("That name is already taken — add a last name or initial to tell players apart.","error");
+      return;
+    }
     try{
-      const {error}=await supabase.from("players").insert({league_id:leagueId,name:newName.trim(),nickname:newNick.trim()||null});
+      const {error}=await supabase.from("players").insert({league_id:leagueId,name:nm,nickname:newNick.trim()||null});
       if(error)throw error;
       setNewName("");
       setNewNick("");
@@ -719,11 +727,16 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
       ) : null}
 
       {subTab==="roster" && (() => {
+        // B1: scope the grid to the selected season's roster. Empty/absent roster
+        // set = no restriction (mirrors the Ranking seasonLb semantics).
+        const rosterSet = rosterSeason==="all" ? null : seasonRosters?.[rosterSeason];
+        const rosterScoped = (!rosterSet || rosterSet.size===0) ? players : players.filter(p=>rosterSet.has(p.id));
+        const rosterSeasonObj = (seasons||[]).find(s=>s.id===rosterSeason);
         // Search filter: simple displayed-name startsWith only.
         // Typing "a" matches only players whose displayed name starts with "a"
         // (NOT players with "a" anywhere in the name). Per user: same behavior
         // applies in every search bar in the app.
-        const searchFiltered = q==="" ? players : players.filter(p => {
+        const searchFiltered = q==="" ? rosterScoped : rosterScoped.filter(p => {
           const display = (p.nickname || p.name || "").toLowerCase();
           return display.startsWith(q.toLowerCase());
         });
@@ -758,6 +771,30 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
               </>}
             </div>
           </div>
+
+          {/* B2: season roster filter — defaults to the active season, with an
+              "All league players" escape hatch. Green when an active season is
+              selected, muted otherwise (mirrors the LogMatch season pill). */}
+          {(seasons||[]).length>0 && (
+            <div style={{padding:"0 18px 10px"}}>
+              <div style={{position:"relative",display:"inline-flex",alignItems:"center"}}>
+                <select
+                  value={rosterSeason}
+                  onChange={e=>setRosterSeason(e.target.value)}
+                  className="ctxchip"
+                  style={{appearance:"none",WebkitAppearance:"none",cursor:"pointer",paddingRight:26,backgroundImage:"none",color:rosterSeasonObj?.active?"var(--accent)":"#9090a4",fontWeight:rosterSeasonObj?.active?700:400}}
+                >
+                  {seasons.map(s=>(
+                    <option key={s.id} value={s.id} style={{color:"#fff"}}>{s.name}{s.active?" • active":" • ended"}</option>
+                  ))}
+                  <option value="all" style={{color:"#fff"}}>All league players</option>
+                </select>
+                <span style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%) rotate(90deg)",pointerEvents:"none",display:"flex"}}>
+                  <Icon name="chevron" size={12} color={rosterSeasonObj?.active?"var(--accent)":"#9090a4"}/>
+                </span>
+              </div>
+            </div>
+          )}
 
           {/* Phase 5: search input */}
           <div className="srchw">

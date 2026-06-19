@@ -1487,6 +1487,8 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
               sendPushNotification={sendPushNotification}
               elo={elo}
               seasonId={selectedSeason}
+          seasons={seasons}
+          seasonRosters={seasonRosters}
               openMatches={openMatches}
               openMatchPlayers={openMatchPlayers}
               claimedPlayer={claimedPlayer}
