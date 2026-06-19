@@ -9,6 +9,7 @@
 - League Management copy button → pastes the raw code (e.g. `11030f72`), not a URL.
 - While pending in Intermediate, Husain still uses Padel Stars normally (no global lockout).
 - **Issue #94 (SW v195):** on iPhone 13 (390px) the Ranking leaderboard shows full player names (no "ABDULR…" truncation); stat columns slightly tighter. On a larger phone/tablet/desktop the leaderboard looks UNCHANGED from before. → close #94 on PASS.
+- **Round-2 fixes (SW v196 + DB):** (a) owner's country flag + profile now show in Intermediate (data-fixed; `create_league` carries it forward); (b) tapping a "join request" notification goes straight to the Approval Queue (no sidebar drawer over it); (c) the queue tags an existing PadelHub member "EXISTING USER" (blue), brand-new "NEW PLAYER", claims "CLAIM".
 
 ### 🎯 S088 PRIORITY
 1. Address S087 smoke-test feedback (#108 approval flow SW v194 + #94 responsive leaderboard SW v195); close #94 on PASS.
