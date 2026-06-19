@@ -122,10 +122,10 @@ export function EditMyProfile({ player, onClose }) {
           <div className="fl2"><Icon name="user" size={12}/>Handedness<span className="req">*</span></div>
           <div className="gtog">
             <button className={`gbtn2${handedness==="left"?" on":""}`} onClick={()=>setHandedness("left")}>
-              <Icon name="user" size={16} color={handedness==="left"?"var(--accent)":"#9090a4"}/>Left Hand
+              <Icon name="hand-left" size={16} color={handedness==="left"?"var(--accent)":"#9090a4"}/>Left Hand
             </button>
             <button className={`gbtn2${handedness==="right"?" on":""}`} onClick={()=>setHandedness("right")}>
-              <Icon name="user" size={16} color={handedness==="right"?"var(--accent)":"#9090a4"}/>Right Hand
+              <Icon name="hand-right" size={16} color={handedness==="right"?"var(--accent)":"#9090a4"}/>Right Hand
             </button>
           </div>
           {attempted && !handednessOk && <div className="ferr">Handedness is required</div>}

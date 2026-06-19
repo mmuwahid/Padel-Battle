@@ -90,6 +90,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
   // S077 r9: per-season rosters (seasonId -> Set of playerIds). Loaded once
   // on loadLeagueData so SeasonManagement doesn't have to round-trip on open.
   const [seasonRosters,setSeasonRosters]=useState({});
+  const [smAutoCreate,setSmAutoCreate]=useState(false); // A1: auto-open Season create from Ranking CTA
   const [matchSubTab,setMatchSubTab]=useState(()=>{const h=window.location.hash.replace("#","");return h==="schedule"?"schedule":"history";}); // history | schedule
   const [claimedPlayer,setClaimedPlayer]=useState(undefined); // undefined=loading, null=unclaimed, object=claimed
   // Sidebar and view management
@@ -1116,7 +1117,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
             <PlayerManagement memberProfiles={memberProfiles} setSidebarView={setSidebarView} goBack={goBackSidebar}/>
           )}
           {sidebarView==="seasonManagement" && (
-            <SeasonManagement setSidebarView={setSidebarView} goBack={goBackSidebar}/>
+            <SeasonManagement setSidebarView={setSidebarView} goBack={goBackSidebar} autoCreate={smAutoCreate} clearAutoCreate={()=>setSmAutoCreate(false)}/>
           )}
           {sidebarView==="leagueManagement" && (
             <LeagueManagement setSidebarView={setSidebarView} navigateSidebar={navigateSidebar} goBack={goBackSidebar} leagues={leagues||[]} leagueHandlers={leagueHandlers} leagueStats={leagueStats} detailLeagueId={lmDetailLeagueId} setDetailLeagueId={setLmDetailLeagueId} detailFromPlatform={lmDetailFromPlatform} setDetailFromPlatform={setLmDetailFromPlatform}/>
@@ -1311,6 +1312,9 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
               </div>
               <div style={{fontSize:15,fontWeight:600,color:TX,marginBottom:6}}>No rankings yet</div>
               <div style={{fontSize:12,color:MT,lineHeight:1.5}}>{seasons.length===0?"Create a season, then play your first match to appear here.":"Play your first match to appear in the ranking."}</div>
+              {isAdmin&&seasons.length===0&&(
+                <button className="pbtn" style={{margin:"16px auto 0"}} onClick={()=>{setSmAutoCreate(true);navigateSidebar("seasonManagement");}}>+ Create a Season</button>
+              )}
             </div>
           )}
 

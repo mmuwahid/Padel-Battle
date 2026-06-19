@@ -299,16 +299,21 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
       {/* Date + Season context bar */}
       <div className="ctxbar" style={{padding:"8px 0",borderBottom:"none"}}>
         {!isE && seasons && seasons.length > 0 && (
-          <select
-            value={seasonId||""}
-            onChange={e=>setCurSeason(e.target.value)}
-            className="ctxchip"
-            style={{appearance:"none",WebkitAppearance:"none",cursor:"pointer",paddingRight:24,backgroundImage:"none"}}
-          >
-            {seasons.filter(s=>s.active||s.id===seasonId).map(s=>(
-              <option key={s.id} value={s.id}>{s.name}{s.active?" • active":""}</option>
-            ))}
-          </select>
+          <div style={{position:"relative",display:"inline-flex",alignItems:"center"}}>
+            <select
+              value={seasonId||""}
+              onChange={e=>setCurSeason(e.target.value)}
+              className="ctxchip"
+              style={{appearance:"none",WebkitAppearance:"none",cursor:"pointer",paddingRight:26,backgroundImage:"none",color:currentSeason?.active?"var(--accent)":"#9090a4",fontWeight:currentSeason?.active?700:400}}
+            >
+              {seasons.filter(s=>s.active||s.id===seasonId).map(s=>(
+                <option key={s.id} value={s.id} style={{color:"#fff"}}>{s.name}{s.active?" • active":""}</option>
+              ))}
+            </select>
+            <span style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%) rotate(90deg)",pointerEvents:"none",display:"flex"}}>
+              <Icon name="chevron" size={12} color={currentSeason?.active?"var(--accent)":"#9090a4"}/>
+            </span>
+          </div>
         )}
         <input
           type="date"
@@ -350,7 +355,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
       {/* Players card (.tcard with .tinner — same as Schedule form). S076 FT-15: pair-aware in pairs seasons. */}
       <div className="tcard">
         <div className="tcardh">
-          <div className="tcardtit">{isPairsFormat ? "Pairs" : "Players"}</div>
+          <div className="tcardtit">{isPairsFormat ? "Select pairs" : "Select players"}</div>
           {!isE && !showShuffler && !isPairsFormat && (
             <button className="shufbtn" onClick={shuffleNow}>
               <Icon name="shuffle" size={13}/>Shuffle{queue.length>0?` · ${queue.length}`:''}

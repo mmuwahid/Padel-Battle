@@ -55,10 +55,14 @@ export function PlayerManagement({ memberProfiles, setSidebarView, goBack }) {
   });
 
   const addPlayer = async () => {
-    if (!newName.trim()) return;
+    const nm = newName.trim();
+    if (!nm) return;
+    // B3: block exact duplicate names so players stay distinguishable.
+    const dup = (players || []).some(p => (p.name || "").trim().toLowerCase() === nm.toLowerCase());
+    if (dup) { showToast("That name is already taken — add a last name or initial to tell players apart.", "error"); return; }
     setAdding(true);
     try {
-      const { error } = await supabase.from("players").insert({ league_id: leagueId, name: newName.trim(), nickname: newNick.trim() || null });
+      const { error } = await supabase.from("players").insert({ league_id: leagueId, name: nm, nickname: newNick.trim() || null });
       if (error) throw error;
       setNewName(""); setNewNick(""); setShowAdd(false);
       showToast("Player added");
@@ -132,7 +136,7 @@ export function PlayerManagement({ memberProfiles, setSidebarView, goBack }) {
 
       <div className="ad-h">
         <div className="adh1">Player Management</div>
-        <div className="adsub">{filtered.length} player{filtered.length === 1 ? "" : "s"}</div>
+        <div className="adsub">Edit, promote to admin, or delete players.</div>
       </div>
 
       <div className="plmhr">

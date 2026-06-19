@@ -154,6 +154,17 @@ export function LeagueManagement({
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // D1: native share of the invite link (mirrors Sidebar "Invite Players").
+  const shareInvite = () => {
+    const url = `${window.location.origin}${window.location.pathname}?invite=${league?.invite_code}`;
+    if (navigator.share) {
+      navigator.share({ title: "Join my PadelHub league", text: `Join "${league?.name}" on PadelHub!`, url });
+    } else {
+      navigator.clipboard.writeText(url);
+      showToast("Invite link copied!");
+    }
+  };
+
   // ── List-view handlers ────────────────────────────────────────────────
   const handleCreate = async () => {
     const name = createName.trim();
@@ -209,6 +220,38 @@ export function LeagueManagement({
             <div className="lmsc"><div className="lmscv">{seasonShort}</div><div className="lmscl">Season</div></div>
           </div>
 
+          {isAdmin && (
+            <div>
+              <div className="slbl">Seasons</div>
+              <button className="crow" onClick={() => goTo("seasonManagement")}>
+                <div className="cricon"><Icon name="calendar" size={16} color="var(--accent)" /></div>
+                <div className="crbody">
+                  <div className="crtitle">Season Management</div>
+                  <div className="crsub">
+                    {activeSeason
+                      ? `${activeSeason.name} active${activeSeason.start_date ? ` · ${fmtDate(activeSeason.start_date)}` : ""}`
+                      : `${(seasons || []).length} season${(seasons || []).length === 1 ? "" : "s"} · none active`}
+                  </div>
+                </div>
+                <div className="crchev"><Icon name="chevron" size={16} color="var(--muted-2)" /></div>
+              </button>
+            </div>
+          )}
+
+          {isAdmin && (
+            <div>
+              <div className="slbl">Players</div>
+              <button className="crow" onClick={() => goTo("playerManagement")}>
+                <div className="cricon"><Icon name="players" size={16} color="var(--accent)" /></div>
+                <div className="crbody">
+                  <div className="crtitle">Player Management</div>
+                  <div className="crsub">{(players || []).length} player{(players || []).length === 1 ? "" : "s"} in this league</div>
+                </div>
+                <div className="crchev"><Icon name="chevron" size={16} color="var(--muted-2)" /></div>
+              </button>
+            </div>
+          )}
+
           <div>
             <div className="slbl">League Name</div>
             <div className="lmnamerow">
@@ -253,103 +296,16 @@ export function LeagueManagement({
                   )
                 )}
               </div>
-              <button className="pbtn" onClick={copyLink}>
-                {copied ? <><Icon name="check" size={14} strokeWidth={2.5} />Copied</> : <><Icon name="copy" size={14} />Copy Link</>}
-              </button>
-            </div>
-          </div>
-
-          {isAdmin && (
-            <div>
-              <div className="slbl">Players</div>
-              <button className="crow" onClick={() => goTo("playerManagement")}>
-                <div className="cricon"><Icon name="players" size={16} color="var(--accent)" /></div>
-                <div className="crbody">
-                  <div className="crtitle">Player Management</div>
-                  <div className="crsub">{(players || []).length} player{(players || []).length === 1 ? "" : "s"} in this league</div>
-                </div>
-                <div className="crchev"><Icon name="chevron" size={16} color="var(--muted-2)" /></div>
-              </button>
-            </div>
-          )}
-
-          {isAdmin && (
-            <div>
-              <div className="slbl">Seasons</div>
-              <button className="crow" onClick={() => goTo("seasonManagement")}>
-                <div className="cricon"><Icon name="calendar" size={16} color="var(--accent)" /></div>
-                <div className="crbody">
-                  <div className="crtitle">Season Management</div>
-                  <div className="crsub">
-                    {activeSeason
-                      ? `${activeSeason.name} active${activeSeason.start_date ? ` · ${fmtDate(activeSeason.start_date)}` : ""}`
-                      : `${(seasons || []).length} season${(seasons || []).length === 1 ? "" : "s"} · none active`}
-                  </div>
-                </div>
-                <div className="crchev"><Icon name="chevron" size={16} color="var(--muted-2)" /></div>
-              </button>
-            </div>
-          )}
-
-          {/* S079 Issue #98: Admin Management — owner can promote/demote
-              other league members to/from admin. Re-added after S077 r7
-              collapsed the per-season role model and inadvertently dropped
-              the UI; the underlying RPC + direct UPDATE still works. */}
-          {isOwner && (
-            <div>
-              <div className="slbl">Admin Management</div>
-              <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                {(leagueMembers || [])
-                  .filter(m => m.user_id !== league?.created_by)
-                  .map(m => {
-                    const isMemberAdmin = m.role === "admin";
-                    const prof = (memberProfiles || {})[m.user_id] || {};
-                    const dispName = prof.display_name || prof.email?.split("@")[0] || "—";
-                    const isSelf = m.user_id === user?.id;
-                    return (
-                      <div key={m.id} className="crow" style={{cursor:"default"}}>
-                        <div className="cricon">
-                          {prof.avatar_url ? (
-                            <img src={prof.avatar_url} alt="" style={{width:"100%",height:"100%",borderRadius:"50%",objectFit:"cover"}}/>
-                          ) : (
-                            <Icon name={isMemberAdmin ? "shield" : "user"} size={16} color={isMemberAdmin ? "var(--gold)" : "var(--muted)"}/>
-                          )}
-                        </div>
-                        <div className="crbody">
-                          <div className="crtitle">{dispName}{isSelf ? " (you)" : ""}</div>
-                          <div className="crsub">{isMemberAdmin ? "Admin" : "Member"}</div>
-                        </div>
-                        {!isSelf && (
-                          <button
-                            onClick={() => updateMemberRole && updateMemberRole(m.user_id, isMemberAdmin ? "member" : "admin")}
-                            style={{
-                              padding:"6px 12px",
-                              borderRadius:"var(--r-md)",
-                              border:`1px solid ${isMemberAdmin ? "rgba(248,113,113,.32)" : "rgba(255,215,0,.32)"}`,
-                              background: isMemberAdmin ? "rgba(248,113,113,.08)" : "rgba(255,215,0,.08)",
-                              color: isMemberAdmin ? "var(--danger)" : "var(--gold)",
-                              fontFamily:"var(--font)",
-                              fontSize:11,
-                              fontWeight:700,
-                              letterSpacing:".04em",
-                              cursor:"pointer",
-                              whiteSpace:"nowrap",
-                            }}
-                          >
-                            {isMemberAdmin ? "Demote" : "Promote"}
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
-                {(leagueMembers || []).filter(m => m.user_id !== league?.created_by).length === 0 && (
-                  <div style={{padding:14,borderRadius:"var(--r-md)",border:"1px dashed var(--border)",fontSize:12,color:"var(--muted)",textAlign:"center"}}>
-                    No other members yet. Invite players to your league to manage admins.
-                  </div>
-                )}
+              <div style={{display:"flex",gap:8}}>
+                <button className="pbtn" style={{padding:"9px 11px"}} onClick={copyLink} title="Copy invite link" aria-label="Copy invite link">
+                  {copied ? <Icon name="check" size={16} strokeWidth={2.5} /> : <Icon name="copy" size={16} />}
+                </button>
+                <button className="pbtn" style={{padding:"9px 11px"}} onClick={shareInvite} title="Share invite" aria-label="Share invite">
+                  <Icon name="share" size={16} />
+                </button>
               </div>
             </div>
-          )}
+          </div>
 
           {/* S077 r16: Danger Zone — Delete League at the bottom of detail
               view, owner-only, with type-"delete" confirmation modal.

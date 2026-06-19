@@ -12,7 +12,7 @@ import { useLeague } from "../LeagueContext";
 //   .shsubmit — bottom-sheet create form
 // User decision S067 Q6=A: keep S055 full-screen Season Detail pattern for
 // edit (rich roster toggle UX doesn't fit a sheet). List + Create restyled.
-export function SeasonManagement({ setSidebarView, goBack }) {
+export function SeasonManagement({ setSidebarView, goBack, autoCreate, clearAutoCreate }) {
   const { supabase, leagueId, players, seasons, pairs, seasonRosters, showToast, loadLeagueData, isOwner, isAdmin, setSelectedSeason } = useLeague();
 
   // S077 r9: read seasonRosters from context (no separate round-trip).
@@ -72,6 +72,11 @@ export function SeasonManagement({ setSidebarView, goBack }) {
     setNewRuleset("fip");
     setShowCreate(true);
   };
+
+  // A1: auto-open the create sheet when arriving from the Ranking empty-state CTA.
+  useEffect(() => {
+    if (autoCreate) { openCreate(); if (clearAutoCreate) clearAutoCreate(); }
+  }, [autoCreate]);
 
   const handleCreate = async () => {
     const name = newName.trim();
@@ -603,13 +608,18 @@ export function SeasonManagement({ setSidebarView, goBack }) {
                 <div className="shlbl"><Icon name="trophy" size={12} color="var(--muted)" />Format</div>
                 <div className="sform-typetoggle">
                   <button type="button" className={`sform-typebtn${newFormat==="individual"?" on":""}`} onClick={()=>setNewFormat("individual")}>
-                    Individual
-                    <span className="sform-typebtn-sub">Random partners</span>
+                    Individual Leaderboard
+                    <span className="sform-typebtn-sub">Any partner</span>
                   </button>
                   <button type="button" className={`sform-typebtn${newFormat==="pairs"?" on":""}`} onClick={()=>setNewFormat("pairs")}>
-                    Pairs
+                    Pairs/Team Leaderboard
                     <span className="sform-typebtn-sub">Fixed teams</span>
                   </button>
+                </div>
+                <div style={{fontSize:10,color:"var(--muted)",marginTop:6,lineHeight:1.5}}>
+                  {newFormat==="pairs"
+                    ? "Pairs/Team tracks fixed teams that stay together for the whole season."
+                    : "Individual tracks each player's own scores — they can play with any partner."}
                 </div>
               </div>
               {/* S080: ruleset toggle — chosen once, immutable for the life of the season. */}
@@ -618,7 +628,7 @@ export function SeasonManagement({ setSidebarView, goBack }) {
                 <div className="sform-typetoggle">
                   <button type="button" className={`sform-typebtn${newRuleset==="fip"?" on":""}`} onClick={()=>setNewRuleset("fip")}>
                     Official (FIP)
-                    <span className="sform-typebtn-sub">Best of 3, FIP scores</span>
+                    <span className="sform-typebtn-sub">Premier Padel · Best of 3</span>
                   </button>
                   <button type="button" className={`sform-typebtn${newRuleset==="casual"?" on":""}`} onClick={()=>setNewRuleset("casual")}>
                     Casual
