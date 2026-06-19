@@ -43,10 +43,10 @@ export const ANSWER_SPINE = [
 // opts[] are the per-dimension descriptors shown in the questionnaire.
 export const GRADE_RUBRIC = [
   {
-    key: "groundstrokes", name: "Groundstrokes", sub: "FH/BH off the bounce", weight: 2,
+    key: "groundstrokes", name: "Groundstrokes", sub: "Forehand/backhand off the bounce", weight: 2,
     opts: [
       "Contact unreliable; mishits common, slow pace only",
-      "Basic FH/BH exist but control is weak; loses shape when rushed",
+      "Basic forehand/backhand exist but control is weak; loses shape when rushed",
       "Rallies with reliable depth & direction at a steady pace",
       "Controls depth, pace & cross/down-the-line under pressure",
       "Strong shot package — varies pace, spin & angle to dictate",
@@ -73,7 +73,7 @@ export const GRADE_RUBRIC = [
     ],
   },
   {
-    key: "glass", name: "Glass / Wall Usage", sub: "back & side glass", weight: 3,
+    key: "glass", name: "Glass / Wall Usage", sub: "Backglass · sideglass · double glass", weight: 3,
     opts: [
       "Doesn't read rebounds; ball off the wall usually lost",
       "Reads back glass late; side glass not trusted",
@@ -85,7 +85,7 @@ export const GRADE_RUBRIC = [
   {
     key: "net", name: "Net Play & Volleys", sub: "", weight: 2,
     opts: [
-      "Volleys pop up or net; unstable at the net",
+      "Volleys pop up and float or go into the net; not confident at the net",
       "Blocks easy volleys; basic control with no pressure",
       "Controls volleys with reliable placement",
       "Punches & angles volleys; holds the net under pressure",

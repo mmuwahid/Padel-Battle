@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, PU } from '../theme';
 import { ScoreStepper } from './ScoreStepper';
+import { rankBadge, TeamPlayers } from './tournamentResults';
 import Icon from './Icon';
 
 const TEAM_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -191,15 +192,15 @@ export function RoundRobin({ players, getName, supabase, leagueId, tournament, s
       <div style={{ padding: "20px 16px", maxWidth: "600px", margin: "0 auto" }}>
         <div style={{ margin: "0 0 16px", padding: 24, background: "linear-gradient(135deg, " + GD + "14 0%, " + GD + "05 100%)", border: "2px solid " + GD, borderRadius: 18, textAlign: "center" }}>
           <div style={{ fontSize: 48, marginBottom: 8 }}>{"\uD83C\uDFC6"}</div>
-          <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.5, color: GD, marginBottom: 4 }}>Round Robin Champion</div>
-          <div style={{ fontSize: 22, fontWeight: 800, color: TX, marginBottom: 4 }}>{champion?.name || "TBD"}</div>
-          <div style={{ fontSize: 12, color: MT }}>{champion?.players?.map(pid => getName(pid)).join(" x ")}</div>
+          <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.5, color: GD, marginBottom: 8 }}>Round Robin Champion</div>
+          <div style={{ fontSize: 22, fontWeight: 800, color: TX, marginBottom: 10 }}>{champion?.name || "TBD"}</div>
+          <TeamPlayers playerIds={champion?.players} players={players} getName={getName} size={28} fontSize={13} color={TX} weight={700} justify="center" />
         </div>
         {runnerUp && (
           <div style={{ margin: "0 0 20px", padding: 16, background: SV + "0a", border: "1px solid " + SV + "40", borderRadius: 14, textAlign: "center" }}>
-            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: SV, marginBottom: 4 }}>{"\uD83E\uDD48"} Runner-Up</div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: TX }}>{runnerUp.name}</div>
-            <div style={{ fontSize: 11, color: MT, marginTop: 2 }}>{runnerUp.players?.map(pid => getName(pid)).join(" x ")}</div>
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: SV, marginBottom: 6 }}>{"\uD83E\uDD48"} Runner-Up</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: TX, marginBottom: 8 }}>{runnerUp.name}</div>
+            <TeamPlayers playerIds={runnerUp.players} players={players} getName={getName} size={22} fontSize={12} color={MT} justify="center" />
           </div>
         )}
         <div style={{ marginBottom: 16 }}>
@@ -207,24 +208,25 @@ export function RoundRobin({ players, getName, supabase, leagueId, tournament, s
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: "0 4px" }}>
               <thead><tr>
-                {["#","Team","P","W","L","PTS","GD"].map(h=><th key={h} style={{ fontSize:10, fontWeight:600, color:MT, textTransform:"uppercase", padding:"6px 6px", textAlign: h==="Team"?"left":"center" }}>{h}</th>)}
+                {["#","Players","P","W","L","PTS","GD"].map(h=><th key={h} style={{ fontSize:10, fontWeight:600, color:MT, textTransform:"uppercase", padding:"6px 6px", textAlign: h==="Players"?"left":"center" }}>{h}</th>)}
               </tr></thead>
-              <tbody>{standings.map((t,i) => {
-                const rc = i===0?GD:i===1?SV:i===2?BZ:MT;
-                return (<tr key={t.name}>
-                  <td style={{ background:CD, padding:"8px 6px", fontSize:12, fontWeight:700, fontFamily:"JetBrains Mono", color:rc, borderRadius:"8px 0 0 8px", textAlign:"center" }}>{i+1}</td>
-                  <td style={{ background:CD, padding:"8px 6px", fontSize:12, fontWeight:i<2?700:500, color:i===0?GD:TX, textAlign:"left" }}>{t.name}</td>
+              <tbody>{standings.map((t,i) => (
+                <tr key={t.name}>
+                  <td style={{ background:CD, padding:"8px 6px", fontSize:i<3?15:12, fontWeight:700, fontFamily:"JetBrains Mono", color:i===0?GD:i===1?SV:i===2?BZ:MT, borderRadius:"8px 0 0 8px", textAlign:"center" }}>{rankBadge(i)}</td>
+                  <td style={{ background:CD, padding:"8px 6px", textAlign:"left" }}>
+                    <TeamPlayers playerIds={t.players} players={players} getName={getName} size={18} fontSize={12} color={i<3?TX:MT} weight={i===0?700:600} />
+                  </td>
                   <td style={{ background:CD, padding:"8px 6px", fontSize:11, fontFamily:"JetBrains Mono", color:MT, textAlign:"center" }}>{t.played}</td>
                   <td style={{ background:CD, padding:"8px 6px", fontSize:11, fontFamily:"JetBrains Mono", color:A, textAlign:"center" }}>{t.wins}</td>
-                  <td style={{ background:CD, padding:"8px 6px", fontSize:11, fontFamily:"JetBrains Mono", color:DG, textAlign:"center" }}>{t.losses}</td>
+                  <td style={{ background:CD, padding:"8px 6px", fontSize:11, fontFamily:"JetBrains Mono", color:t.losses>0?DG:A, textAlign:"center" }}>{t.losses}</td>
                   <td style={{ background:CD, padding:"8px 6px", fontSize:12, fontWeight:700, fontFamily:"JetBrains Mono", color:i===0?GD:TX, textAlign:"center" }}>{t.pts}</td>
                   <td style={{ background:CD, padding:"8px 6px", fontSize:11, fontFamily:"JetBrains Mono", color:MT, textAlign:"center", borderRadius:"0 8px 8px 0" }}>{t.pf-t.pa>0?"+"+(t.pf-t.pa):t.pf-t.pa}</td>
-                </tr>);
-              })}</tbody>
+                </tr>
+              ))}</tbody>
             </table>
           </div>
         </div>
-        <button onClick={()=>{endTournament();resetTournament();}} style={{ width:"100%", padding:12, borderRadius:12, border:"none", background:A, color:BG, fontSize:13, fontWeight:600, cursor:"pointer" }}>New Tournament</button>
+        <button onClick={async ()=>{ await endTournament(); resetTournament(); }} style={{ width:"100%", padding:12, borderRadius:12, border:"none", background:A, color:BG, fontSize:13, fontWeight:600, cursor:"pointer" }}>New Tournament</button>
       </div>
     );
   }

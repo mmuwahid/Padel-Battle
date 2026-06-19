@@ -72,40 +72,48 @@ export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, re
           </div>
         )}
         {claimedPlayer && (
-          <div className="protags">
-            {/* FT-17: player grade pill (letter only, coloured by tier) */}
-            {claimedPlayer.grade && (
-              <div className="protag" style={{color:gradeColor(claimedPlayer.grade),borderColor:gradeColor(claimedPlayer.grade),background:`${gradeColor(claimedPlayer.grade)}1a`,fontWeight:800}}>
-                {claimedPlayer.grade}
+          <>
+            {/* Row 1: Country · Age · Grade */}
+            <div className="protags">
+              {claimedPlayer.country && (
+                <div className="protag"><span className="flag">{flagEmoji(claimedPlayer.country)}</span>{claimedPlayer.country}</div>
+              )}
+              {/* S067: age tag — uses date_of_birth column added in Phase 11 */}
+              {getAge(claimedPlayer.date_of_birth) != null && (
+                <div className="protag">
+                  <Icon name="calendar" size={12} color="#9090a4"/>{getAge(claimedPlayer.date_of_birth)} yrs
+                </div>
+              )}
+              {/* FT-17: player grade pill (coloured by tier, "Grade:" prefixed) */}
+              {claimedPlayer.grade && (
+                <div className="protag" style={{color:gradeColor(claimedPlayer.grade),borderColor:gradeColor(claimedPlayer.grade),background:`${gradeColor(claimedPlayer.grade)}1a`,fontWeight:800}}>
+                  Grade: {claimedPlayer.grade}
+                </div>
+              )}
+            </div>
+            {/* Row 2: Handedness · Court position (+ nickname) */}
+            {(claimedPlayer.handedness || claimedPlayer.playing_position || claimedPlayer.nickname) && (
+              <div className="protags">
+                {/* S070 Issue #83: handedness tag — rendered before court position
+                    per spec ("Handedness should be read before the player position"). */}
+                {claimedPlayer.handedness && (
+                  <div className="protag">
+                    <Icon name={claimedPlayer.handedness==="left"?"hand-left":"hand-right"} size={13} color="#9090a4"/>
+                    {claimedPlayer.handedness==="left"?"Left Hand":"Right Hand"}
+                  </div>
+                )}
+                {claimedPlayer.playing_position && (
+                  <div className="protag">
+                    <Icon name={claimedPlayer.playing_position==="left"?"court-l":claimedPlayer.playing_position==="right"?"court-r":"court-any"} size={13} color="#9090a4"/>
+                    {claimedPlayer.playing_position==="left"?"Left Side":claimedPlayer.playing_position==="right"?"Right Side":"Any Side"}
+                  </div>
+                )}
+                {claimedPlayer.nickname && (
+                  <div className="protag">"{claimedPlayer.nickname}"</div>
+                )}
               </div>
             )}
-            {claimedPlayer.country && (
-              <div className="protag"><span className="flag">{flagEmoji(claimedPlayer.country)}</span>{claimedPlayer.country}</div>
-            )}
-            {/* S067: age tag — uses date_of_birth column added in Phase 11 */}
-            {getAge(claimedPlayer.date_of_birth) != null && (
-              <div className="protag">
-                <Icon name="calendar" size={12} color="#9090a4"/>{getAge(claimedPlayer.date_of_birth)} yrs
-              </div>
-            )}
-            {/* S070 Issue #83: handedness tag — rendered before court position
-                per spec ("Handedness should be read before the player position"). */}
-            {claimedPlayer.handedness && (
-              <div className="protag">
-                <Icon name={claimedPlayer.handedness==="left"?"hand-left":"hand-right"} size={13} color="#9090a4"/>
-                {claimedPlayer.handedness==="left"?"Left Hand":"Right Hand"}
-              </div>
-            )}
-            {claimedPlayer.playing_position && (
-              <div className="protag">
-                <Icon name={claimedPlayer.playing_position==="left"?"court-l":claimedPlayer.playing_position==="right"?"court-r":"court-any"} size={13} color="#9090a4"/>
-                {claimedPlayer.playing_position==="left"?"Left Side":claimedPlayer.playing_position==="right"?"Right Side":"Any Side"}
-              </div>
-            )}
-            {claimedPlayer.nickname && (
-              <div className="protag">"{claimedPlayer.nickname}"</div>
-            )}
-          </div>
+          </>
         )}
         {claimedPlayer && (
           <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}>

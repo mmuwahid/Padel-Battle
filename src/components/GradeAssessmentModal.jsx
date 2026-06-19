@@ -25,10 +25,8 @@ export function GradeAssessmentModal({ player, onClose, onSaved }) {
   const [step, setStep] = useState(0);       // 0..7 question, 8 = result
   const [saving, setSaving] = useState(false);
 
-  const total = answers.reduce((s, a, i) => s + (a == null ? 0 : a * GRADE_RUBRIC[i].weight), 0);
   const answeredCount = answers.filter(a => a != null).length;
   const allAnswered = answeredCount === GRADE_RUBRIC.length;
-  const live = computeGrade(answers.map(a => a == null ? 0 : a));
   const result = allAnswered ? computeGrade(answers) : null;
 
   const pick = (raw) => {
@@ -91,7 +89,6 @@ export function GradeAssessmentModal({ player, onClose, onSaved }) {
           <>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
               <span style={{ fontFamily: "var(--mono)", fontSize: 11, color: "#9090a4", letterSpacing: ".08em" }}>{step + 1} / {GRADE_RUBRIC.length}</span>
-              <span style={{ fontFamily: "var(--mono)", fontSize: 11, fontWeight: 700, color: dim.weight === 3 ? "var(--gold)" : "#9090a4" }}>×{dim.weight}</span>
             </div>
             <div style={{ fontSize: 18, fontWeight: 800, color: "var(--text)", margin: "0 0 4px" }}>{dim.name}</div>
             {dim.sub && <div style={{ fontFamily: "var(--mono)", fontSize: 10.5, color: "#9090a4", marginBottom: 14, lineHeight: 1.4 }}>{dim.sub}</div>}
@@ -142,17 +139,6 @@ export function GradeAssessmentModal({ player, onClose, onSaved }) {
                 {saving ? "Saving…" : "Save grade"}
               </button>
             </div>
-          </div>
-        )}
-
-        {/* Running-total sticky bar (hidden on the result screen) */}
-        {!onResult && (
-          <div style={{ position: "sticky", bottom: 0, marginTop: 16, marginLeft: -18, marginRight: -18, padding: "12px 18px calc(2px + env(safe-area-inset-bottom, 0px))", background: "rgba(10,10,15,.95)", backdropFilter: "blur(8px)", borderTop: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span style={{ color: "#9090a4", fontSize: 12 }}>Running total</span>
-            <span style={{ fontFamily: "var(--mono)", fontSize: 13, fontWeight: 700, color: "var(--text)" }}>
-              {total} / {GRADE_MAX}
-              {answeredCount > 0 && <> → <span style={{ color: gradeColor(live.grade) }}>{live.grade}</span></>}
-            </span>
           </div>
         )}
       </div>

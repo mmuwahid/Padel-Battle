@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, PU } from '../theme';
 import { BracketSVG } from './BracketSVG';
 import { ScoreStepper } from './ScoreStepper';
+import { rankBadge, TeamPlayers } from './tournamentResults';
 import Icon from './Icon';
 
 const TEAM_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -9,6 +10,9 @@ const getTeamLabel = (idx) => TEAM_LETTERS[idx] ? `Team ${TEAM_LETTERS[idx]}` : 
 
 export function SingleElimination({ players, getName, supabase, leagueId, tournament, setTournament, sel, endTournament, resetTournament, deleteTournament, setScreen, showToast }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  // Lets the user open the bracket from the completed-results screen (was a no-op
+  // because the `complete` early-return ignored screen state).
+  const [viewBracket, setViewBracket] = useState(false);
   // Controlled score-entry drafts keyed by `${ri}-${mi}` (S084: replaced getElementById inputs).
   const [draftScores, setDraftScores] = useState({});
   const setDraft = (key, side, n) => setDraftScores(s => ({ ...s, [key]: { ...(s[key] || { a: 0, b: 0 }), [side]: n } }));
@@ -236,7 +240,7 @@ export function SingleElimination({ players, getName, supabase, leagueId, tourna
   const standings = getSEStandings();
   const complete = isSEComplete();
 
-  if (complete) {
+  if (complete && !viewBracket) {
     const champion = standings[0];
     const runnerUp = standings[1];
 
@@ -244,16 +248,16 @@ export function SingleElimination({ players, getName, supabase, leagueId, tourna
       <div style={{ padding: "20px 16px", maxWidth: "600px", margin: "0 auto" }}>
         <div style={{ margin: "0 0 16px", padding: 24, background: `linear-gradient(135deg, ${GD}14 0%, ${GD}05 100%)`, border: `2px solid ${GD}`, borderRadius: 18, textAlign: "center" }}>
           <div style={{ fontSize: 48, marginBottom: 8 }}>{"\uD83C\uDFC6"}</div>
-          <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.5, color: GD, marginBottom: 4 }}>Champion</div>
-          <div style={{ fontSize: 22, fontWeight: 800, color: TX, marginBottom: 4 }}>{champion?.name || "TBD"}</div>
-          <div style={{ fontSize: 12, color: MT }}>{champion?.players?.map(pid => getName(pid)).join(" x ") || ""}</div>
+          <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.5, color: GD, marginBottom: 8 }}>Champion</div>
+          <div style={{ fontSize: 22, fontWeight: 800, color: TX, marginBottom: 10 }}>{champion?.name || "TBD"}</div>
+          <TeamPlayers playerIds={champion?.players} players={players} getName={getName} size={28} fontSize={13} color={TX} weight={700} justify="center" />
         </div>
 
         {runnerUp && (
           <div style={{ margin: "0 0 20px", padding: 16, background: `${SV}0a`, border: `1px solid ${SV}40`, borderRadius: 14, textAlign: "center" }}>
-            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: SV, marginBottom: 4 }}>{"\uD83E\uDD48"} Runner-Up</div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: TX }}>{runnerUp.name}</div>
-            <div style={{ fontSize: 11, color: MT, marginTop: 2 }}>{runnerUp.players?.map(pid => getName(pid)).join(" x ") || ""}</div>
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: SV, marginBottom: 6 }}>{"\uD83E\uDD48"} Runner-Up</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: TX, marginBottom: 8 }}>{runnerUp.name}</div>
+            <TeamPlayers playerIds={runnerUp.players} players={players} getName={getName} size={22} fontSize={12} color={MT} justify="center" />
           </div>
         )}
 
@@ -261,28 +265,29 @@ export function SingleElimination({ players, getName, supabase, leagueId, tourna
           <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 10 }}>Final Standings</h3>
           <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: "0 4px" }}>
             <thead><tr>
-              <th style={{ fontSize: 10, fontWeight: 600, color: MT, textTransform: "uppercase", letterSpacing: 0.5, textAlign: "left", padding: "6px 10px" }}>#</th>
-              <th style={{ fontSize: 10, fontWeight: 600, color: MT, textTransform: "uppercase", letterSpacing: 0.5, textAlign: "left", padding: "6px 10px" }}>Team</th>
+              <th style={{ fontSize: 10, fontWeight: 600, color: MT, textTransform: "uppercase", letterSpacing: 0.5, textAlign: "center", padding: "6px 10px", width: 40 }}>#</th>
+              <th style={{ fontSize: 10, fontWeight: 600, color: MT, textTransform: "uppercase", letterSpacing: 0.5, textAlign: "left", padding: "6px 10px" }}>Players</th>
               <th style={{ fontSize: 10, fontWeight: 600, color: MT, textTransform: "uppercase", letterSpacing: 0.5, textAlign: "right", padding: "6px 10px" }}>Record</th>
             </tr></thead>
             <tbody>
-              {standings.map((t, i) => {
-                const rankColor = i === 0 ? GD : i === 1 ? SV : i === 2 ? BZ : MT;
-                return (
-                  <tr key={t.name}>
-                    <td style={{ background: CD, padding: 10, fontSize: 13, fontWeight: 700, fontFamily: "'JetBrains Mono'", color: rankColor, borderRadius: "8px 0 0 8px" }}>{i + 1}</td>
-                    <td style={{ background: CD, padding: 10, fontSize: 12, fontWeight: i === 0 ? 700 : i === 1 ? 600 : 500, color: i === 0 ? GD : i < 3 ? TX : MT }}>{t.name}</td>
-                    <td style={{ background: CD, padding: 10, fontSize: 11, fontFamily: "'JetBrains Mono'", color: MT, textAlign: "right", borderRadius: "0 8px 8px 0" }}>{t.wins}W {t.losses}L</td>
-                  </tr>
-                );
-              })}
+              {standings.map((t, i) => (
+                <tr key={t.name}>
+                  <td style={{ background: CD, padding: 10, fontSize: i < 3 ? 16 : 13, fontWeight: 700, fontFamily: "'JetBrains Mono'", color: i === 0 ? GD : i === 1 ? SV : i === 2 ? BZ : MT, borderRadius: "8px 0 0 8px", textAlign: "center" }}>{rankBadge(i)}</td>
+                  <td style={{ background: CD, padding: 10 }}>
+                    <TeamPlayers playerIds={t.players} players={players} getName={getName} size={20} fontSize={12} color={i < 3 ? TX : MT} weight={i === 0 ? 700 : 600} />
+                  </td>
+                  <td style={{ background: CD, padding: 10, fontSize: 11, fontFamily: "'JetBrains Mono'", textAlign: "right", borderRadius: "0 8px 8px 0", whiteSpace: "nowrap" }}>
+                    <span style={{ color: A }}>{t.wins}W</span> <span style={{ color: t.losses > 0 ? DG : A }}>{t.losses}L</span>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
 
         <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
-          <button onClick={() => { setScreen("se-active"); }} style={{ flex: 1, padding: 12, borderRadius: 12, border: `1px solid ${BD}`, background: "transparent", color: TX, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>View Bracket</button>
-          <button onClick={() => { endTournament(); resetTournament(); }} style={{ flex: 1, padding: 12, borderRadius: 12, border: "none", background: A, color: BG, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>New Tournament</button>
+          <button onClick={() => setViewBracket(true)} style={{ flex: 1, padding: 12, borderRadius: 12, border: `1px solid ${BD}`, background: "transparent", color: TX, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>View Bracket</button>
+          <button onClick={async () => { await endTournament(); resetTournament(); }} style={{ flex: 1, padding: 12, borderRadius: 12, border: "none", background: A, color: BG, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>New Tournament</button>
         </div>
       </div>
     );
@@ -354,10 +359,14 @@ export function SingleElimination({ players, getName, supabase, leagueId, tourna
         ))}
       </div>
 
-      <div style={{ display: "flex", gap: 8 }}>
-        <button onClick={() => { if (confirm("End tournament?")) endTournament(); }} style={{ flex: 1, padding: 12, borderRadius: 12, border: `1px solid ${DG}40`, background: "transparent", color: DG, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>End Tournament</button>
-        {confirmDelete ? <div style={{ display: "flex", gap: 4, flex: 1 }}><button onClick={() => { deleteTournament(); setConfirmDelete(false); }} style={{ flex: 1, padding: 12, borderRadius: 12, background: DG, border: "none", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Confirm Delete</button><button onClick={() => setConfirmDelete(false)} style={{ flex: 1, padding: 12, borderRadius: 12, border: `1px solid ${BD}`, background: "transparent", color: MT, fontSize: 13, cursor: "pointer" }}>Cancel</button></div> : <button onClick={() => setConfirmDelete(true)} style={{ flex: 1, padding: 12, borderRadius: 12, border: `1px solid ${DG}20`, background: "transparent", color: MT, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Delete</button>}
-      </div>
+      {complete ? (
+        <button onClick={() => setViewBracket(false)} style={{ width: "100%", padding: 12, borderRadius: 12, border: "none", background: A, color: BG, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Back to Results</button>
+      ) : (
+        <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={() => { if (confirm("End tournament?")) endTournament(); }} style={{ flex: 1, padding: 12, borderRadius: 12, border: `1px solid ${DG}40`, background: "transparent", color: DG, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>End Tournament</button>
+          {confirmDelete ? <div style={{ display: "flex", gap: 4, flex: 1 }}><button onClick={() => { deleteTournament(); setConfirmDelete(false); }} style={{ flex: 1, padding: 12, borderRadius: 12, background: DG, border: "none", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Confirm Delete</button><button onClick={() => setConfirmDelete(false)} style={{ flex: 1, padding: 12, borderRadius: 12, border: `1px solid ${BD}`, background: "transparent", color: MT, fontSize: 13, cursor: "pointer" }}>Cancel</button></div> : <button onClick={() => setConfirmDelete(true)} style={{ flex: 1, padding: 12, borderRadius: 12, border: `1px solid ${DG}20`, background: "transparent", color: MT, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Delete</button>}
+        </div>
+      )}
     </div>
   );
 }

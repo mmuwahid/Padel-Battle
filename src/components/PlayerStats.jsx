@@ -234,12 +234,8 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
               {roleLabel}
             </div>
           )}
-          {(player.grade || player.country || positionLabel || player.handedness || getAge(player.date_of_birth) != null) && (
+          {(player.country || getAge(player.date_of_birth) != null || player.grade) && (
             <div className="dpro-tags">
-              {/* FT-17: read-only grade pill (letter, coloured by tier) */}
-              {player.grade && (
-                <div className="dpro-tag" style={{color:gradeColor(player.grade),borderColor:gradeColor(player.grade),background:`${gradeColor(player.grade)}1a`,fontWeight:800}}>{player.grade}</div>
-              )}
               {player.country && flagEmoji(player.country) && (
                 <div className="dpro-tag"><span className="flag">{flagEmoji(player.country)}</span>{player.country.toUpperCase()}</div>
               )}
@@ -249,6 +245,14 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                   <Icon name="calendar" size={12} color="#9090a4"/>{getAge(player.date_of_birth)} yrs
                 </div>
               )}
+              {/* FT-17: read-only grade pill (coloured by tier, "Grade:" prefixed) */}
+              {player.grade && (
+                <div className="dpro-tag" style={{color:gradeColor(player.grade),borderColor:gradeColor(player.grade),background:`${gradeColor(player.grade)}1a`,fontWeight:800}}>Grade: {player.grade}</div>
+              )}
+            </div>
+          )}
+          {(player.handedness || positionLabel) && (
+            <div className="dpro-tags">
               {/* S070 Issue #83: handedness tag — rendered before court position. */}
               {player.handedness && (
                 <div className="dpro-tag">
