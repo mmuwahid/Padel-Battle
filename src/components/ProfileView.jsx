@@ -83,7 +83,7 @@ export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, re
                 per spec ("Handedness should be read before the player position"). */}
             {claimedPlayer.handedness && (
               <div className="protag">
-                <Icon name="user" size={13} color="#9090a4"/>
+                <Icon name={claimedPlayer.handedness==="left"?"hand-left":"hand-right"} size={13} color="#9090a4"/>
                 {claimedPlayer.handedness==="left"?"Left Hand":"Right Hand"}
               </div>
             )}

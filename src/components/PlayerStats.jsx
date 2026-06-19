@@ -247,7 +247,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
               {/* S070 Issue #83: handedness tag — rendered before court position. */}
               {player.handedness && (
                 <div className="dpro-tag">
-                  <Icon name="user" size={12} color="#9090a4"/>
+                  <Icon name={player.handedness === 'left' ? 'hand-left' : 'hand-right'} size={12} color="#9090a4"/>
                   {player.handedness === 'left' ? 'Left Hand' : 'Right Hand'}
                 </div>
               )}

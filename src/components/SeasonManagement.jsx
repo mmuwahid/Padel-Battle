@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import Icon from "./Icon";
 import { useLeague } from "../LeagueContext";
 
@@ -16,7 +16,17 @@ export function SeasonManagement({ setSidebarView, goBack, autoCreate, clearAuto
   const { supabase, leagueId, players, seasons, pairs, seasonRosters, showToast, loadLeagueData, isOwner, isAdmin, setSelectedSeason } = useLeague();
 
   // S077 r9: read seasonRosters from context (no separate round-trip).
-  const rosters = seasonRosters || {};
+  // S083 smoke: mirror into local state so roster chips flip instantly
+  // (optimistic) instead of waiting for the RPC + loadLeagueData round-trip.
+  const [localRosters, setLocalRosters] = useState(seasonRosters || {});
+  const rostersRef = useRef(localRosters);
+  useEffect(() => {
+    const next = seasonRosters || {};
+    rostersRef.current = next;
+    setLocalRosters(next);
+  }, [seasonRosters]);
+  const rosters = localRosters;
+  const rosterWriteChain = useRef(Promise.resolve());
   const loading = false;
   const [openSeasonId, setOpenSeasonId] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
@@ -37,7 +47,6 @@ export function SeasonManagement({ setSidebarView, goBack, autoCreate, clearAuto
   const [editEnd, setEditEnd] = useState("");
   const [editLocation, setEditLocation] = useState("");
   const [savingMeta, setSavingMeta] = useState(false);
-  const [savingRoster, setSavingRoster] = useState(false);
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleteSeasonTyped, setDeleteSeasonTyped] = useState("");
@@ -143,22 +152,27 @@ export function SeasonManagement({ setSidebarView, goBack, autoCreate, clearAuto
     setSavingMeta(false);
   };
 
-  const togglePlayer = async (seasonId, playerId) => {
-    const current = rosters[seasonId] ? new Set(rosters[seasonId]) : new Set();
+  // S083 smoke: optimistic toggle — flip the chip instantly, then persist.
+  // Writes are serialized via rosterWriteChain so rapid taps (full-replace RPC)
+  // can't race and clobber each other; on error we resync from the server.
+  const togglePlayer = (seasonId, playerId) => {
+    const prev = rostersRef.current;
+    const current = prev[seasonId] ? new Set(prev[seasonId]) : new Set();
     if (current.has(playerId)) current.delete(playerId); else current.add(playerId);
-    setSavingRoster(true);
-    try {
+    const next = { ...prev, [seasonId]: current };
+    rostersRef.current = next;
+    setLocalRosters(next);
+    const ids = Array.from(current);
+    rosterWriteChain.current = rosterWriteChain.current.then(async () => {
       const { error } = await supabase.rpc("set_season_roster", {
         p_season_id: seasonId,
-        p_player_ids: Array.from(current),
+        p_player_ids: ids,
       });
-      if (error) throw error;
-      // S077 r9: seasonRosters refreshes via loadLeagueData on next load.
-      loadLeagueData(); // C1: background refresh, UI unblocks immediately
-    } catch (err) {
-      showToast(err.message || "Failed to update roster", "error");
-    }
-    setSavingRoster(false);
+      if (error) {
+        showToast(error.message || "Failed to update roster", "error");
+        loadLeagueData(); // resync optimistic state with server truth
+      }
+    });
   };
 
   const endSeason = async (seasonId) => {
@@ -338,7 +352,7 @@ export function SeasonManagement({ setSidebarView, goBack, autoCreate, clearAuto
               {(players || []).map(p => {
                 const inRoster = openRoster.has(p.id);
                 return (
-                  <button key={p.id} className={`sm-rost${inRoster ? " on" : ""}`} onClick={() => togglePlayer(openSeasonId, p.id)} disabled={savingRoster}>
+                  <button key={p.id} className={`sm-rost${inRoster ? " on" : ""}`} onClick={() => togglePlayer(openSeasonId, p.id)}>
                     <span className="sm-rost-n">{p.name}{p.nickname ? ` (${p.nickname})` : ""}</span>
                     <span className="sm-rost-s">{inRoster ? <><Icon name="check" size={12} strokeWidth={2.5} />In</> : <>+ Add</>}</span>
                   </button>
