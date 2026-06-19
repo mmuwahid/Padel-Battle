@@ -58,11 +58,18 @@ Root cause: **two join paths bypassed the approval workflow.** Invite **link** (
 
 ---
 
+## Continued (same session) — doc reconcile + Issue #94
+
+### Git meta-doc reconciliation (`b2905cf`)
+Fixed the cross-PC doc drift found at cold start: committed the current OneDrive docs into the repo — +91 files (back-filled session logs S017–S087, planning specs) and ~36 updated (`tasks/todo.md`, `tasks/lessons.md`, `sessions/INDEX.md`, project `CLAUDE.md`). Code was already in sync; this commit is docs-only. Git history is now complete; going forward, commit doc updates each session.
+
+### Issue #94 — responsive leaderboard for small screens (`5ddec3e`, SW v194→v195)
+Root cause: the Ranking leaderboard used a fixed 8-column grid (`36px 1fr 28px 28px 28px 28px 30px 38px`, gap 4, padding 10) — Rank / Player(1fr) / Flag / MP / MW / ML / CW / Eff%. The fixed columns + gaps + padding (~264px) starved the `1fr` player column on a 390px iPhone 13, so `.lbn` (nowrap + ellipsis) truncated names to "ABDULR…". Fix: a mobile-first `@media (max-width:400px)` block in `index.css` tightening the rank/flag/stat columns (28→22, 30→26, 38→32), gap (4→3), row padding (10→8) and avatar (30→26), plus `.lbn` 11→10.5px / no letter-spacing. Player column gains ~50px (~8 → ~16 chars at 390px). **Gated: screens ≥401px (larger iPhones, Pro Max, tablets, desktop) are byte-for-byte unchanged — no regression on normal screens.** Verified by computation (full clone has no node_modules + Vite OOMs in this VM); device smoke-test on iPhone 13 pending. Issue left OPEN until user confirms.
+
 ## Commits & Deploy
-- **Commit:** `f1a08bb` — `fix: route league invites through approval queue + data carry-over (#108)`
-- **Migration:** `s108_approve_join_request_carry_over` (Supabase project nkvqbwdsoxylkqhubhig)
-- **Deploy:** `dpl_3VJurEmFjqvrhBFqUEkAVc9tEP7Z` — READY (SW v194 live)
-- **GitHub:** Issue #108 closed with summary.
+- **`f1a08bb`** — `fix: route league invites through approval queue + data carry-over (#108)` + migration `s108_approve_join_request_carry_over` (Supabase nkvqbwdsoxylkqhubhig). Deploy `dpl_3VJurEmFjqvrhBFqUEkAVc9tEP7Z` READY (SW v194). **Issue #108 closed.**
+- **`b2905cf`** — `docs: reconcile session logs, tasks, planning + project CLAUDE.md with OneDrive` (docs-only, +91/~36 files).
+- **`5ddec3e`** — `fix: responsive leaderboard for small screens (iPhone 13) — issue #94` (SW v194→v195). **Production live on SW v195.** Issue #94 still OPEN pending iPhone 13 smoke-test.
 - **Live:** padel-battle.vercel.app
 
 ---
