@@ -234,11 +234,17 @@ export function MatchHistory({onEdit,shareMatch,sel,onMatchDeleted,scrollToMatch
     <div>
       <div className="mtbar">
         <div className="mtmeta">{s.length} match{s.length===1?'':'es'}{seasons && seasons.length>0 && selectedSeason ? ` \u00B7 ${seasons.find(ss=>ss.id===selectedSeason)?.name||''}`:''}</div>
-        {seasons && seasons.length > 0 && (
-          <select className="spill" value={selectedSeason||""} onChange={e=>setSelectedSeason(e.target.value)}>
-            {seasons.map(sn=><option key={sn.id} value={sn.id}>{sn.name}{sn.active?" (active)":""}</option>)}
-          </select>
-        )}
+        {seasons && seasons.length > 0 && (()=>{ const _sa=seasons.find(sn=>sn.id===selectedSeason)?.active; return (
+          <div style={{position:"relative",display:"inline-flex",alignItems:"center"}}>
+            <select className="spill" value={selectedSeason||""} onChange={e=>setSelectedSeason(e.target.value)}
+              style={{appearance:"none",WebkitAppearance:"none",paddingRight:26,backgroundImage:"none",color:_sa?"var(--accent)":"var(--text)",fontWeight:_sa?700:400}}>
+              {seasons.map(sn=><option key={sn.id} value={sn.id} style={{color:"#fff"}}>{sn.name}{sn.active?" (active)":""}</option>)}
+            </select>
+            <span style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%) rotate(90deg)",pointerEvents:"none",display:"flex"}}>
+              <Icon name="chevron" size={12} color={_sa?"var(--accent)":"#9090a4"}/>
+            </span>
+          </div>
+        );})()}
       </div>
 
       <MatchApprovalsQueue />

@@ -1175,11 +1175,17 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
             {seasons.find(s=>s.id===selectedSeason)?.format==="pairs" && (
               <span className="fmtpill fmtpill-pairs">PAIRS</span>
             )}
-            {seasons.length>0 && (
-              <select className="spill" value={selectedSeason||""} onChange={e=>setSelectedSeason(e.target.value)}>
-                {seasons.map(s=><option key={s.id} value={s.id}>{s.name}{s.active?" (active)":""}</option>)}
-              </select>
-            )}
+            {seasons.length>0 && (()=>{ const _sa=seasons.find(s=>s.id===selectedSeason)?.active; return (
+              <div style={{position:"relative",display:"inline-flex",alignItems:"center"}}>
+                <select className="spill" value={selectedSeason||""} onChange={e=>setSelectedSeason(e.target.value)}
+                  style={{appearance:"none",WebkitAppearance:"none",paddingRight:26,backgroundImage:"none",color:_sa?"var(--accent)":"var(--text)",fontWeight:_sa?700:400}}>
+                  {seasons.map(s=><option key={s.id} value={s.id} style={{color:"#fff"}}>{s.name}{s.active?" (active)":""}</option>)}
+                </select>
+                <span style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%) rotate(90deg)",pointerEvents:"none",display:"flex"}}>
+                  <Icon name="chevron" size={12} color={_sa?"var(--accent)":"#9090a4"}/>
+                </span>
+              </div>
+            );})()}
           </div>
 
           {/* S076 FT-15 C4: branch to PairsRanking for pairs-format seasons */}
@@ -1564,6 +1570,8 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
           claimedPlayer={claimedPlayer}
           leagueMembers={leagueMembers}
           league={league}
+          seasons={seasons}
+          seasonRosters={seasonRosters}
         /></Suspense></ErrorBoundary>
       )}
 
