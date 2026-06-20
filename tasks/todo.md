@@ -1,6 +1,20 @@
 # Active Work
 
-## NEXT SESSION (S089) — START HERE
+## NEXT SESSION (S090) — START HERE
+**Last session:** S089 (2026-06-20, deep) — **20 commits (`af0ce82`…`57a9a51`), SW v200→v201. 13 GitHub issues closed** (#112, #113, #114, #115, #116, #117, #118, #119, #120, #123, #125, #126 + #122-nav). Full issue sweep with live-preview verification (`clone-dev`, vite port 5182). Highlights: single-source static splash (#115); logo **aura/glow removed entirely** to kill the flashing box (#112 interim — final on logo delivery); handedness icon contrast #000 + 45° tilt baked into Icon.jsx → everywhere (#114); in-app End-tournament `ConfirmModal` across 4 modes + avatars in standings & round cards (#119); round flashcard rebuilt to approved mockup (#125/#120); season pill unified name-only accent/muted (#126); app-wide **18px gutter** standardization; new `ConfirmModal.jsx`, ScoreStepper `size` prop. Mockups: rr-round (built), profile-redesign 3 options (**user picked Option C**). See `planning/S089-issue-tracker.md`. Live SW v201, main `57a9a51`.
+
+### 🎯 S090 PRIORITY
+1. **Build #122 profile top-section — Option C** (centered photo / name / attribute badges). **KEEP the existing ELO / Effectiveness / Win-rate / Match-Won / Match-Lost block exactly as-is** — do NOT use the mockup's centered ELO/EFF. Target: `ProfileView.jsx` ("My Profile"). Mockup: `/profile-redesign-mockup.html`.
+2. **Enable Apple provider in Supabase** (Auth → Providers → Apple) — the shipped "Sign in with Apple" button (#121) is inert until configured. Then decide: keep or remove the "Resend confirmation" button.
+3. **Device smoke-test** — #112 logo box (aura removed; confirm no flashing box), #118 touch press feedback, and S088's #109/#110/#111 → close after PASS.
+4. Optional: #120 RR final-results table polish (trophy→icon, dash between teammates, NP/MW/ML headers).
+5. Capacitor wrap (`planning/capacitor-wrap.md`): native iOS launch screen (final logo-box fix), Face ID (#124), App Store build.
+
+_Working clone `C:\Users\User\dev\Padel-Battle`. Preview: `.claude/launch.json` → `clone-dev` (vite port 5182). Apple Developer fully active (Team `9M6M6A8B6V`)._
+
+---
+
+## NEXT SESSION (S089) — DONE (archived)
 **Last session:** S088 (2026-06-20, ~4h) — **8 commits (`cb19fcf`…`275bda3`), SW v198→v200, 2 DB migrations (`s109` + `s109b`).** Two halves. **Half 1 — bug batch:** #110 global profile (`sync_player_identity` SECURITY DEFINER RPC → identity fields propagate to all a user's claimed players; self-grade syncs but admin overrides stay local; COALESCE-guarded so NULLs never wipe; wired into 3 edit forms; forward-only); #109 notif-close `closeNotifications` (no longer reopens drawer); #111 empty-leaderboard `marginTop:32`; color sweep (123× `#9090a4`→`var(--muted)`, **S069 Note A CLOSED**); **clone relocated** off `/tmp` → `C:\Users\User\dev\Padel-Battle`. **Half 2 — App Store launch prep:** Apple account confirmed FULLY ACTIVE (DSA pending = non-blocking); user picked **logo Option A (Refined Orb)** as placeholder; **one-shot logo sweep (`275bda3`, SW v200)** — new mark in icons.jsx + index.html splash + favicon.svg (was STALE racket) + icon.svg + regenerated icon-192/512/og-image PNGs (sharp), unified static+React splash (bg #0d0d14, Syne loaded → **no flash**); wrote `planning/capacitor-wrap.md` + `planning/logo-sweep.md`. **Production live on SW v200, main `275bda3`, deploy READY.**
 
 ### 🎯 PENDING USER SMOKE-TEST (S088 ship — SW v200)
