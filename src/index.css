@@ -389,10 +389,8 @@ body {
 .llogobox {
   width: auto; height: auto;
   display: flex; align-items: center; justify-content: center;
-  /* S073: green drop-shadow halo (Issue #90 — brand color is green not gold).
-     Same 3D orb + satellite design as S072 but with the app accent color. */
-  filter: drop-shadow(0 0 18px rgba(74, 222, 128, 0.32));
-  animation: pg 3s ease-in-out infinite;
+  /* S089: dropped the green drop-shadow halo + pulse-glow animation — the "green
+     flashing box" the user flagged. Clean orb until the final logo is delivered. */
   margin-bottom: 22px;
   overflow: visible;
   background: none;

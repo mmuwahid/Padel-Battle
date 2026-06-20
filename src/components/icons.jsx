@@ -49,8 +49,9 @@ export const PadelHubMark = ({ size = 96 }) => (
         <stop offset="100%" stopColor="#4ade80" stopOpacity="0"/>
       </radialGradient>
     </defs>
-    {/* Option A — Refined Orb: one sphere, one tilted orbit ring, one satellite. */}
-    <circle className="lhmark-aura" cx="50" cy="50" r="46" fill="url(#ph-aura)"/>
+    {/* Option A — Refined Orb: one sphere, one tilted orbit ring, one satellite.
+        S089: green aura layer removed (it clipped to the square viewBox and read as
+        a flashing "box" behind the orb). Interim until the final logo is delivered. */}
     <ellipse cx="50" cy="50" rx="40" ry="17" fill="none" stroke="#4ade80" strokeWidth="1.8" opacity="0.5" transform="rotate(-28 50 50)"/>
     <circle className="lhmark-pulse" cx="50" cy="50" r="20" fill="url(#ph-orb)"/>
     <ellipse cx="43" cy="43" rx="6.5" ry="4.4" fill="#eafff3" opacity="0.5"/>
