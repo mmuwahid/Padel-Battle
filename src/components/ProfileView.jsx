@@ -19,7 +19,18 @@ export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, re
   const [editingMyProfile, setEditingMyProfile] = useState(false);
   const [showGrade, setShowGrade] = useState(false);
   const [showLightbox, setShowLightbox] = useState(false);
+  // #122 Option C: single ⋯ overflow menu (Edit / Change photo / Delete photo / Assessment)
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = React.useRef(null);
   const fileInputRef = React.useRef(null);
+
+  // Close the ⋯ menu on outside click (mirrors MatchHistory rxpop pattern)
+  React.useEffect(() => {
+    if (!menuOpen) return;
+    const onDoc = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false); };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [menuOpen]);
 
   const userName = claimedPlayer?.name || user.user_metadata?.display_name || user.email?.split("@")[0] || "User";
   const userInitial = (userName || "U")[0].toUpperCase();
@@ -42,8 +53,48 @@ export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, re
         </button>
       </div>
 
-      {/* Spec header — .prohero */}
+      {/* #122 Option C — centered hero. Photo + name + grouped attribute badges.
+          All actions (Edit / Change photo / Delete photo / Assessment) collapse
+          into one ⋯ menu top-right so nothing competes with the name. The stats
+          strip + win rate + highlights + achievements below stay untouched. */}
       <div className="prohero">
+        {/* ⋯ overflow menu — photo actions always available; edit/assessment gated on a claimed player */}
+        {(claimedPlayer || avatarUrl) && (
+          <div className="promenu" ref={menuRef}>
+            <button
+              className="promenu-btn"
+              aria-label="Profile actions"
+              aria-haspopup="true"
+              aria-expanded={menuOpen}
+              onClick={()=>setMenuOpen(o=>!o)}
+            >
+              <Icon name="more-vertical" size={18} color="currentColor"/>
+            </button>
+            {menuOpen && (
+              <div className="promenu-pop" role="menu">
+                {claimedPlayer && (
+                  <button className="promenu-item" role="menuitem" onClick={()=>{setMenuOpen(false);setEditingMyProfile(true);}}>
+                    <Icon name="edit" size={15} color="currentColor"/>Edit Profile
+                  </button>
+                )}
+                <button className="promenu-item" role="menuitem" onClick={()=>{setMenuOpen(false);fileInputRef.current?.click();}}>
+                  <Icon name="camera" size={15} color="currentColor"/>{avatarUrl?"Change Photo":"Add Photo"}
+                </button>
+                {avatarUrl && (
+                  <button className="promenu-item danger" role="menuitem" onClick={()=>{setMenuOpen(false);removeAvatar();}}>
+                    <Icon name="trash" size={15} color="currentColor"/>Delete Photo
+                  </button>
+                )}
+                {claimedPlayer && (
+                  <button className="promenu-item" role="menuitem" onClick={()=>{setMenuOpen(false);setShowGrade(true);}}>
+                    <Icon name="star" size={15} color="var(--gold)"/>{claimedPlayer.grade?"Retake Assessment":"Self-Assessment"}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="prowrap">
           <div
             className={`propic${avatarUrl ? " tappable" : ""}`}
@@ -53,37 +104,18 @@ export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, re
           >
             {avatarUrl ? <img src={avatarUrl} alt=""/> : userInitial}
           </div>
-          <button className="procb" aria-label="Change photo" onClick={()=>fileInputRef.current?.click()}>
-            <Icon name="camera" size={13} color="#000" strokeWidth={2.2}/>
-          </button>
           <input ref={fileInputRef} type="file" accept="image/*" onChange={(e)=>uploadAvatar(e.target.files?.[0])} style={{display:"none"}}/>
         </div>
         {avatarUploading && <div style={{fontSize:11,color:"var(--accent)",marginTop:6,fontFamily:"var(--mono)"}}>Uploading…</div>}
-        {avatarUrl && (
-          <button className="prorm" onClick={removeAvatar}>
-            <Icon name="trash" size={12} color="currentColor"/>Delete Photo
-          </button>
-        )}
         <div className="proname">{userName}</div>
         <div className="proemail">{user.email}</div>
         {claimedPlayer && (
-          <div className="prorole">
-            <Icon name="admin" size={12} color="var(--accent)"/>{isAdmin?"Admin":"Member"}
-          </div>
-        )}
-        {claimedPlayer && (
           <>
-            {/* Row 1: Country · Age · Grade */}
+            {/* Row 1: Role · Grade (the two identity badges) */}
             <div className="protags">
-              {claimedPlayer.country && (
-                <div className="protag"><span className="flag">{flagEmoji(claimedPlayer.country)}</span>{claimedPlayer.country}</div>
-              )}
-              {/* S067: age tag — uses date_of_birth column added in Phase 11 */}
-              {getAge(claimedPlayer.date_of_birth) != null && (
-                <div className="protag">
-                  <Icon name="calendar" size={12} color="#9090a4"/>{getAge(claimedPlayer.date_of_birth)} yrs
-                </div>
-              )}
+              <div className="protag" style={{color:"var(--accent)",borderColor:"var(--accent-glow)",background:"var(--accent-dim)",fontWeight:800,letterSpacing:".06em",textTransform:"uppercase"}}>
+                <Icon name="admin" size={12} color="var(--accent)"/>{isAdmin?"Admin":"Member"}
+              </div>
               {/* FT-17: player grade pill (coloured by tier, "Grade:" prefixed) */}
               {claimedPlayer.grade && (
                 <div className="protag" style={{color:gradeColor(claimedPlayer.grade),borderColor:gradeColor(claimedPlayer.grade),background:`${gradeColor(claimedPlayer.grade)}1a`,fontWeight:800}}>
@@ -91,11 +123,19 @@ export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, re
                 </div>
               )}
             </div>
-            {/* Row 2: Handedness · Court position (+ nickname) */}
-            {(claimedPlayer.handedness || claimedPlayer.playing_position || claimedPlayer.nickname) && (
+            {/* Row 2: Country · Age · Handedness · Court position (+ nickname) */}
+            {(claimedPlayer.country || getAge(claimedPlayer.date_of_birth)!=null || claimedPlayer.handedness || claimedPlayer.playing_position || claimedPlayer.nickname) && (
               <div className="protags">
-                {/* S070 Issue #83: handedness tag — rendered before court position
-                    per spec ("Handedness should be read before the player position"). */}
+                {claimedPlayer.country && (
+                  <div className="protag"><span className="flag">{flagEmoji(claimedPlayer.country)}</span>{claimedPlayer.country}</div>
+                )}
+                {/* S067: age tag — uses date_of_birth column added in Phase 11 */}
+                {getAge(claimedPlayer.date_of_birth) != null && (
+                  <div className="protag">
+                    <Icon name="calendar" size={12} color="#9090a4"/>{getAge(claimedPlayer.date_of_birth)} yrs
+                  </div>
+                )}
+                {/* S070 Issue #83: handedness before court position per spec */}
                 {claimedPlayer.handedness && (
                   <div className="protag">
                     <Icon name={claimedPlayer.handedness==="left"?"hand-left":"hand-right"} size={13} color="#9090a4"/>
@@ -115,20 +155,10 @@ export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, re
             )}
           </>
         )}
-        {claimedPlayer && (
-          <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}>
-            <button className="proedit" onClick={()=>setEditingMyProfile(true)}>
-              <Icon name="edit" size={14} color="#9090a4"/>Edit Profile
-            </button>
-            <button className="proedit" onClick={()=>setShowGrade(true)}>
-              <Icon name="star" size={14} color="var(--gold)"/>{claimedPlayer.grade?"Retake Assessment":"Self-Assessment"}
-            </button>
-          </div>
-        )}
         {/* FT-17: grade callout when not yet rated */}
         {claimedPlayer && !claimedPlayer.grade && (
           <div style={{fontFamily:"var(--mono)",fontSize:10,color:"#9090a4",marginTop:8,textAlign:"center"}}>
-            Take the self-assessment to set your skill grade.
+            Take the self-assessment (in the ⋯ menu) to set your skill grade.
           </div>
         )}
       </div>
