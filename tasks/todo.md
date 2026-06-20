@@ -1,14 +1,29 @@
 # Active Work
 
-## NEXT SESSION (S090) — START HERE
-**Last session:** S089 (2026-06-20, deep) — **20 commits (`af0ce82`…`57a9a51`), SW v200→v201. 13 GitHub issues closed** (#112, #113, #114, #115, #116, #117, #118, #119, #120, #123, #125, #126 + #122-nav). Full issue sweep with live-preview verification (`clone-dev`, vite port 5182). Highlights: single-source static splash (#115); logo **aura/glow removed entirely** to kill the flashing box (#112 interim — final on logo delivery); handedness icon contrast #000 + 45° tilt baked into Icon.jsx → everywhere (#114); in-app End-tournament `ConfirmModal` across 4 modes + avatars in standings & round cards (#119); round flashcard rebuilt to approved mockup (#125/#120); season pill unified name-only accent/muted (#126); app-wide **18px gutter** standardization; new `ConfirmModal.jsx`, ScoreStepper `size` prop. Mockups: rr-round (built), profile-redesign 3 options (**user picked Option C**). See `planning/S089-issue-tracker.md`. Live SW v201, main `57a9a51`.
+## NEXT SESSION (S091) — START HERE
+**Last session:** S090 (2026-06-21, deep) — **4 commits (`2f5d5ce`, `314d605`, `e3393cb`, `9f4bc26`), SW v201→v205, 0 DB migrations.** **#122 profile Option C** — centered photo+name, attribute badge rows; killed the big Delete-Photo pill + competing buttons. After user feedback: dropped the ⋯ kebab for a pencil **edit badge on the avatar** (Edit/Add + Delete Photo menu) + an **Edit Profile pill beside the role badge**; removed the email line (already in side nav) + self-assessment helper text. Existing ELO/Win-rate/Match-W-L/achievements block untouched (mockup's centered ELO/EFF NOT used). **Settings declutter** — removed redundant Display Name row + its state/handler. **#120 RR final-results** — 🏆 emoji → trophy Icon; Final Table headers P/W/L → MP/MW/ML. **Matches grid alignment (root-caused S089's miss)** — the tab wrapper already gives 18px but `.mtbar`(18)+`.mlist`(14) re-padded → cards at 32px; dropped the redundant horizontal padding so toggle/header/cards align to 18px. Verified live via `clone-dev` (getBoundingClientRect). Live SW v205, main `9f4bc26`.
 
-### 🎯 S090 PRIORITY
-1. **Build #122 profile top-section — Option C** (centered photo / name / attribute badges). **KEEP the existing ELO / Effectiveness / Win-rate / Match-Won / Match-Lost block exactly as-is** — do NOT use the mockup's centered ELO/EFF. Target: `ProfileView.jsx` ("My Profile"). Mockup: `/profile-redesign-mockup.html`.
-2. **Enable Apple provider in Supabase** (Auth → Providers → Apple) — the shipped "Sign in with Apple" button (#121) is inert until configured. Then decide: keep or remove the "Resend confirmation" button.
-3. **Device smoke-test** — #112 logo box (aura removed; confirm no flashing box), #118 touch press feedback, and S088's #109/#110/#111 → close after PASS.
-4. Optional: #120 RR final-results table polish (trophy→icon, dash between teammates, NP/MW/ML headers).
-5. Capacitor wrap (`planning/capacitor-wrap.md`): native iOS launch screen (final logo-box fix), Face ID (#124), App Store build.
+### 🎯 PENDING USER SMOKE-TEST (S090 ship — SW v205)
+- **Matches grid:** toggle + "N matches" row + match cards all align to the same left/right edges (cards full-width, not indented).
+- **#122 profile:** no email under name; no ⋯ kebab; pencil badge on photo bottom-right → Edit/Delete Photo (test the **avatar-present** case — not verified in preview); Edit Profile pill next to ADMIN opens the edit sheet; back from profile → previous tab not side nav.
+- **Settings → Account:** no Display Name row (Email / Linked Accounts / Delete Account only).
+- **#120 RR final-results:** champion trophy icon (not emoji); table headers MP / MW / ML.
+- **Carry-overs:** #112 logo box (no flashing edge), #118 player press (no stuck highlight), #109 bell→close returns to screen, #110 global profile across leagues, #111 empty-leaderboard card below header.
+
+### 🎯 S091 PRIORITY
+1. **Review smoke-test results** → close #109/#110/#111/#112/#118 (and confirm #120/#122) via `gh issue close` after PASS.
+2. **Enable Apple provider in Supabase** (Auth → Providers → Apple) — the shipped "Sign in with Apple" button (#121) is inert until configured. Mohammed running the Apple Dev multi-step setup; do after the wrap.
+3. **Capacitor wrap** (`planning/capacitor-wrap.md`): needs build-env / bundle-ID / seller-name decisions; native iOS launch screen (final logo-box fix), Face ID (#124), Universal Links (#6), App Store build.
+4. (When ready) replace logo Option A placeholder with the designer's final mark — one-file swap in `icons.jsx` + re-run 3 PNGs (sharp).
+
+### S090 outcomes (this session — archived)
+- [x] #122 profile Option C centered hero — `2f5d5ce` (SW v202)
+- [x] #122 polish (user feedback): drop email/kebab; photo edit badge + menu; Edit Profile pill; drop self-assessment text — `9f4bc26` (SW v205)
+- [x] Settings: remove redundant Display Name row + state/handler — `9f4bc26`
+- [x] #120 RR final-results: trophy icon + MP/MW/ML headers — `314d605` (SW v203)
+- [x] Matches grid alignment double-padding fix (.mtbar/.mlist) — `e3393cb` (SW v204)
+- [x] All 4 commits pushed, Vercel live SW v205, OneDrive mirror synced
+- [SKIPPED] #121 Apple provider — user doing Apple Dev multi-step after wrap
 
 _Working clone `C:\Users\User\dev\Padel-Battle`. Preview: `.claude/launch.json` → `clone-dev` (vite port 5182). Apple Developer fully active (Team `9M6M6A8B6V`)._
 
