@@ -355,7 +355,7 @@ body {
   inset: 0;
   background:
     radial-gradient(ellipse 80% 50% at 50% 0%, rgba(74, 222, 128, 0.10), transparent 60%),
-    var(--bg);
+    #0d0d14;
   pointer-events: none;
 }
 .lhero {

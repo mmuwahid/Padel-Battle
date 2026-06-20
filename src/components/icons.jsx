@@ -38,56 +38,23 @@ export const PadelLogo = () => (<svg width="48" height="48" viewBox="0 0 80 80" 
 export const PadelHubMark = ({ size = 96 }) => (
   <svg width={size} height={size} viewBox="0 0 100 100" fill="none" className="lhmark">
     <defs>
-      <radialGradient id="hub-orb-grad" cx="35%" cy="28%" r="70%">
-        <stop offset="0%"   stopColor="#d1fae5"/>
-        <stop offset="40%"  stopColor="#4ade80"/>
-        <stop offset="100%" stopColor="#14532d"/>
+      <radialGradient id="ph-orb" cx="36%" cy="30%" r="70%">
+        <stop offset="0%"   stopColor="#eafff3"/>
+        <stop offset="42%"  stopColor="#4ade80"/>
+        <stop offset="100%" stopColor="#0f3d22"/>
       </radialGradient>
-      <radialGradient id="hub-sat-grad" cx="32%" cy="28%" r="72%">
-        <stop offset="0%"   stopColor="#ecfdf5"/>
-        <stop offset="45%"  stopColor="#4ade80"/>
-        <stop offset="100%" stopColor="#166534"/>
-      </radialGradient>
-      <radialGradient id="hub-aura-grad" cx="50%" cy="50%" r="50%">
-        <stop offset="0%"   stopColor="#4ade80" stopOpacity="0.55"/>
-        <stop offset="55%"  stopColor="#4ade80" stopOpacity="0.18"/>
+      <radialGradient id="ph-aura" cx="50%" cy="50%" r="50%">
+        <stop offset="0%"   stopColor="#4ade80" stopOpacity="0.42"/>
+        <stop offset="55%"  stopColor="#4ade80" stopOpacity="0.13"/>
         <stop offset="100%" stopColor="#4ade80" stopOpacity="0"/>
       </radialGradient>
     </defs>
-
-    {/* Outer aura — pulsates softly */}
-    <circle className="lhmark-aura" cx="50" cy="50" r="48" fill="url(#hub-aura-grad)"/>
-
-    {/* Satellite group — slow orbit rotation around center */}
-    <g className="lhmark-orbit" style={{transformOrigin:"50px 50px"}}>
-      <line x1="50" y1="50" x2="50" y2="20" stroke="#4ade80" strokeWidth="0.7" opacity="0.32"/>
-      <circle className="lhmark-sat" style={{animationDelay:"0ms",   transformOrigin:"50px 20px"}} cx="50" cy="20" r="6.2" fill="url(#hub-sat-grad)"/>
-      <ellipse cx="48.5" cy="18.5" rx="1.8" ry="1.3" fill="#ecfdf5" opacity="0.75"/>
-
-      <line x1="50" y1="50" x2="76" y2="35" stroke="#4ade80" strokeWidth="0.7" opacity="0.32"/>
-      <circle className="lhmark-sat" style={{animationDelay:"180ms", transformOrigin:"76px 35px"}} cx="76" cy="35" r="6.2" fill="url(#hub-sat-grad)"/>
-      <ellipse cx="74.5" cy="33.5" rx="1.8" ry="1.3" fill="#ecfdf5" opacity="0.75"/>
-
-      <line x1="50" y1="50" x2="76" y2="65" stroke="#4ade80" strokeWidth="0.7" opacity="0.32"/>
-      <circle className="lhmark-sat" style={{animationDelay:"360ms", transformOrigin:"76px 65px"}} cx="76" cy="65" r="6.2" fill="url(#hub-sat-grad)"/>
-      <ellipse cx="74.5" cy="63.5" rx="1.8" ry="1.3" fill="#ecfdf5" opacity="0.75"/>
-
-      <line x1="50" y1="50" x2="50" y2="80" stroke="#4ade80" strokeWidth="0.7" opacity="0.32"/>
-      <circle className="lhmark-sat" style={{animationDelay:"540ms", transformOrigin:"50px 80px"}} cx="50" cy="80" r="6.2" fill="url(#hub-sat-grad)"/>
-      <ellipse cx="48.5" cy="78.5" rx="1.8" ry="1.3" fill="#ecfdf5" opacity="0.75"/>
-
-      <line x1="50" y1="50" x2="24" y2="65" stroke="#4ade80" strokeWidth="0.7" opacity="0.32"/>
-      <circle className="lhmark-sat" style={{animationDelay:"720ms", transformOrigin:"24px 65px"}} cx="24" cy="65" r="6.2" fill="url(#hub-sat-grad)"/>
-      <ellipse cx="22.5" cy="63.5" rx="1.8" ry="1.3" fill="#ecfdf5" opacity="0.75"/>
-
-      <line x1="50" y1="50" x2="24" y2="35" stroke="#4ade80" strokeWidth="0.7" opacity="0.32"/>
-      <circle className="lhmark-sat" style={{animationDelay:"900ms", transformOrigin:"24px 35px"}} cx="24" cy="35" r="6.2" fill="url(#hub-sat-grad)"/>
-      <ellipse cx="22.5" cy="33.5" rx="1.8" ry="1.3" fill="#ecfdf5" opacity="0.75"/>
-    </g>
-
-    {/* Central 3D pulsing orb */}
-    <circle className="lhmark-pulse" cx="50" cy="50" r="13" fill="url(#hub-orb-grad)"/>
-    <ellipse cx="46" cy="45.5" rx="4.2" ry="3" fill="#ecfdf5" opacity="0.55"/>
+    {/* Option A — Refined Orb: one sphere, one tilted orbit ring, one satellite. */}
+    <circle className="lhmark-aura" cx="50" cy="50" r="46" fill="url(#ph-aura)"/>
+    <ellipse cx="50" cy="50" rx="40" ry="17" fill="none" stroke="#4ade80" strokeWidth="1.8" opacity="0.5" transform="rotate(-28 50 50)"/>
+    <circle className="lhmark-pulse" cx="50" cy="50" r="20" fill="url(#ph-orb)"/>
+    <ellipse cx="43" cy="43" rx="6.5" ry="4.4" fill="#eafff3" opacity="0.5"/>
+    <circle className="lhmark-sat" cx="82" cy="36" r="4.4" fill="#4ade80"/>
   </svg>
 );
 
@@ -96,27 +63,15 @@ export const PadelHubMark = ({ size = 96 }) => (
 export const PadelHubMarkHeader = ({ size = 26 }) => (
   <svg width={size} height={size} viewBox="0 0 100 100" fill="none" className="lhmark lhmark-sm">
     <defs>
-      <radialGradient id="hub-orb-grad-sm" cx="35%" cy="28%" r="70%">
-        <stop offset="0%"   stopColor="#d1fae5"/>
-        <stop offset="40%"  stopColor="#4ade80"/>
-        <stop offset="100%" stopColor="#14532d"/>
-      </radialGradient>
-      <radialGradient id="hub-sat-grad-sm" cx="32%" cy="28%" r="72%">
-        <stop offset="0%"   stopColor="#ecfdf5"/>
-        <stop offset="50%"  stopColor="#4ade80"/>
-        <stop offset="100%" stopColor="#166534"/>
+      <radialGradient id="ph-orb-sm" cx="36%" cy="30%" r="70%">
+        <stop offset="0%"   stopColor="#eafff3"/>
+        <stop offset="42%"  stopColor="#4ade80"/>
+        <stop offset="100%" stopColor="#0f3d22"/>
       </radialGradient>
     </defs>
-    <g className="lhmark-orbit" style={{transformOrigin:"50px 50px"}}>
-      <circle cx="50" cy="20" r="7" fill="url(#hub-sat-grad-sm)"/>
-      <circle cx="76" cy="35" r="7" fill="url(#hub-sat-grad-sm)"/>
-      <circle cx="76" cy="65" r="7" fill="url(#hub-sat-grad-sm)"/>
-      <circle cx="50" cy="80" r="7" fill="url(#hub-sat-grad-sm)"/>
-      <circle cx="24" cy="65" r="7" fill="url(#hub-sat-grad-sm)"/>
-      <circle cx="24" cy="35" r="7" fill="url(#hub-sat-grad-sm)"/>
-    </g>
-    <circle className="lhmark-pulse" cx="50" cy="50" r="14" fill="url(#hub-orb-grad-sm)"/>
-    <ellipse cx="46" cy="45.5" rx="4.5" ry="3.2" fill="#ecfdf5" opacity="0.55"/>
+    <ellipse cx="50" cy="50" rx="40" ry="16" fill="none" stroke="#4ade80" strokeWidth="3" opacity="0.55" transform="rotate(-28 50 50)"/>
+    <circle className="lhmark-pulse" cx="50" cy="50" r="22" fill="url(#ph-orb-sm)"/>
+    <circle cx="82" cy="36" r="5" fill="#4ade80"/>
   </svg>
 );
 

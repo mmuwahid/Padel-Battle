@@ -1023,6 +1023,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
       <div className="lbg"/>
       <div className="lhero">
         <div className="llogobox"><PadelHubMark size={140}/></div>
+        <h1 className="lbrand"><span>Padel</span><span className="accent">Hub</span></h1>
         <div className="ltag">Loading…</div>
       </div>
     </div>
