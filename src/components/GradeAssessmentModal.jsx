@@ -16,12 +16,10 @@ const ROMAN = ["i", "ii", "iii", "iv", "v"];
 export function GradeAssessmentModal({ player, onClose, onSaved }) {
   const { supabase, showToast, loadLeagueData } = useLeague();
 
-  // Pre-fill from an existing self-assessment if the player is retaking.
-  const prior = (player.self_assessment && Array.isArray(player.self_assessment.answers)
-    && player.self_assessment.answers.length === GRADE_RUBRIC.length)
-    ? player.self_assessment.answers : null;
-
-  const [answers, setAnswers] = useState(prior ? [...prior] : Array(GRADE_RUBRIC.length).fill(null));
+  // S089 #123: a retake must be a FRESH assessment — always start with a blank
+  // form rather than pre-filling the previous answers, since the player is
+  // re-rating from scratch.
+  const [answers, setAnswers] = useState(Array(GRADE_RUBRIC.length).fill(null));
   const [step, setStep] = useState(0);       // 0..7 question, 8 = result
   const [saving, setSaving] = useState(false);
 

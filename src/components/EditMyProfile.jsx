@@ -124,11 +124,14 @@ export function EditMyProfile({ player, onClose, onRetake }) {
         <div className="fgrp">
           <div className="fl2"><Icon name="user" size={12}/>Handedness<span className="req">*</span></div>
           <div className="gtog">
+            {/* S089 #114: when selected the pill bg is accent-green, so the icon
+                must be #000 (not var(--accent)) or it vanished into the bg. Tilt
+                each hand 45° toward its side so the handedness reads at a glance. */}
             <button className={`gbtn2${handedness==="left"?" on":""}`} onClick={()=>setHandedness("left")}>
-              <Icon name="hand-left" size={16} color={handedness==="left"?"var(--accent)":"#9090a4"}/>Left Hand
+              <span style={{display:"inline-flex",transform:"rotate(-45deg)"}}><Icon name="hand-left" size={16} color={handedness==="left"?"#000":"#9090a4"}/></span>Left Hand
             </button>
             <button className={`gbtn2${handedness==="right"?" on":""}`} onClick={()=>setHandedness("right")}>
-              <Icon name="hand-right" size={16} color={handedness==="right"?"var(--accent)":"#9090a4"}/>Right Hand
+              <span style={{display:"inline-flex",transform:"rotate(45deg)"}}><Icon name="hand-right" size={16} color={handedness==="right"?"#000":"#9090a4"}/></span>Right Hand
             </button>
           </div>
           {attempted && !handednessOk && <div className="ferr">Handedness is required</div>}
