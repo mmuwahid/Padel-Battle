@@ -1,6 +1,23 @@
 # Active Work
 
-## NEXT SESSION (S088) — START HERE
+## NEXT SESSION (S089) — START HERE
+**Last session:** S088 (2026-06-20) — **1 code commit (`cb19fcf`), SW v198→v199, 1 DB migration (`s109_sync_player_identity`), 6 files. Plus a docs commit.** Fixed/deployed the 3 issues filed during S087 + ran the approved color sweep + relocated the working clone. **#110 global profile across leagues:** new `sync_player_identity` SECURITY DEFINER RPC propagates identity fields (country/DOB/gender/handedness/court/avatar) to all of a user's claimed `players` rows; self-grade propagates but skips rows with an admin override (admin grade stays local); wired into EditMyProfile/EditPlayerModal/GradeAssessmentModal saves; forward-only (applies on next edit, no backfill). **#109 notification close:** new `closeNotifications` helper returns to the underlying tab/sub-view instead of reopening the side drawer. **#111:** empty-leaderboard flashcard `marginTop:32` (empty-state only). **Color sweep (S069 Note A CLOSED):** 123× `#9090a4` → `var(--muted)` (already equal from S084; `:root` def preserved; zero visual change). **Clone relocated** off OS-purgeable `/tmp` → persistent `C:\Users\User\dev\Padel-Battle`; orchestration + project CLAUDE.md + multi-pc-sync memory updated; old `/tmp` clone deleted. **Production live on SW v199, main `cb19fcf`, deploy READY.**
+
+### 🎯 PENDING USER SMOKE-TEST (S088 ship — SW v199)
+- **#111:** open a brand-new/empty season → "No rankings yet" card sits comfortably below the header (not flush).
+- **#109:** from any screen tap the bell → tap X (or bell again) → land back on the screen you were on, NOT the side menu.
+- **#110:** edit a profile detail (country/handedness/etc.) in one league → open another of your leagues → change is already there. Confirm a grade an admin set for you in one league is NOT overwritten by your self-assessment.
+
+### 🎯 S089 PRIORITY
+1. Smoke-test SW v199 (above); then close #109/#110/#111 via `gh issue close` after user PASS.
+2. Resume App Store + Google Play launch prep (Capacitor wrap) — carries deferred #108 #6 invite-link Universal Links; G1 Apple login pending Apple Developer account.
+3. Address any new issues filed since.
+
+_Working clone is now at `C:\Users\User\dev\Padel-Battle` (relocated off `/tmp` in S088). Keep committing doc updates each session._
+
+---
+
+## NEXT SESSION (S088) — DONE (archived)
 **Last session:** S087 (2026-06-19) — **Issues #108 + #94 fixed, closed + user-confirmed. 0 open GitHub issues.** 11 commits (`f1a08bb`…`f8ec030`), 2 DB migrations (`s108`, `s108b`), SW v193→v198. **#108 league invite (6 pts):** both invite paths (`tryAutoJoin` + `joinLeague`) now create PENDING join_requests → admin Approval Queue (was empty because they inserted membership directly); `approve_join_request` carries existing-user profile/avatar into the new player; copy button copies raw code; league isolation verified; pending users keep access to other leagues; #6 (invite link → Safari not PWA) deferred to the Capacitor wrap (iOS limitation). **#94:** mobile-first `@media(max-width:400px)` leaderboard so names don't truncate on iPhone 13, ≥401px unchanged. **Reconciled stale git meta-docs** (`b2905cf`, back-filled S017–S087). **5 live-testing fixes:** avatar/country carry-over on league CREATE (`s108b` + data-fix); notification→Approval-Queue routing (no drawer over it); "EXISTING USER" vs "NEW PLAYER" tag; web push to approved user; **league-switch staleness** (debouncedReload stale-closure ref + season re-pick — was showing old league until restart). **Production live on SW v198, main `f8ec030`.**
 
 ### ✅ SMOKE-TEST PASSED (S087) — all confirmed by user
