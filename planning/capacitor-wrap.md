@@ -19,9 +19,11 @@
 ## 1. Prerequisites checklist
 
 - [x] Apple Developer Program — ACTIVE (Individual, Team `9M6M6A8B6V`)
-- [x] Free Apps Agreement — Active (sufficient for a free app)
-- [~] Paid Apps Agreement — "Pending User Info" (only needed IF charging / IAP; ENBD bank account is "Processing" → will activate). Skip for a free launch.
+- [x] Free Apps Agreement — Active
+- [x] Paid Apps Agreement — Active (so paid apps / IAP are an option later if wanted)
+- [x] Bank account — Active
 - [x] Tax forms (W-8BEN) — Active
+- [~] DSA (EU Digital Services Act) trader status — Pending / In Review. NON-BLOCKING for submission; only gates EU availability. Can launch in UAE / non-EU regions now and enable EU once it clears. (Status confirmed by user, S088.)
 - [ ] **App Store Connect app record** — create at appstoreconnect.apple.com → My Apps → + (needs final bundle ID + app name)
 - [ ] **Final logo** (this session's mockup) → 1024×1024 source for icon + splash
 - [ ] **Privacy policy URL** (Apple + Google both require one; can host at padel-battle.vercel.app/privacy)
