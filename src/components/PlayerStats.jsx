@@ -7,6 +7,16 @@ import { AvatarLightbox } from './AvatarLightbox';
 import { formatTeam, win, formatDate, setTotals, flagEmoji, getAge } from '../utils/helpers';
 import { gradeColor } from '../utils/grade';
 
+// S089 #113g: in the tight Partnership Ranking pair cell a full two-word name
+// ("Hani Taha") overflowed and truncated mid-letter ("Hani T_"). Collapse names
+// with a surname to "First L." so the pair reads cleanly.
+const shortName = (full) => {
+  if (!full) return full;
+  const parts = String(full).trim().split(/\s+/);
+  if (parts.length < 2) return full;
+  return `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.`;
+};
+
 export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matches,supabase,leagueId,isAdmin,getName,sel,onPlayersChange,showToast,claimedPlayer,leagueMembers,league,seasonId,seasons,seasonRosters}){
   const player=sp?pm[sp]:null;
   const stats=sp?ps[sp]:null;
@@ -541,7 +551,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                             style={{background:"transparent",border:"none",padding:0,cursor:"pointer",color:"inherit",textAlign:"left",display:"block",width:"100%"}}
                             title={`Open ${getName(p.a)}'s profile`}
                           >
-                            {getName(p.a)} <span style={{color:"#9090a4",fontWeight:400}}>/</span> {getName(p.b)}
+                            {shortName(getName(p.a))} <span style={{color:"#9090a4",fontWeight:400}}>/</span> {shortName(getName(p.b))}
                           </button>
                           {last5.length>0 && (
                             <div className="form-dots" style={{justifyContent:"flex-start"}}>

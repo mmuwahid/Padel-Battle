@@ -800,6 +800,14 @@ body {
 .prow:hover{background:var(--surface-2);border-color:var(--accent-glow);transform:translateX(2px);}
 .prow:hover::before{transform:scaleY(1);}
 .prow:active{transform:scale(.98);}
+/* S089 #118: on touch devices :hover sticks after a tap, so the accent bar +
+   bg shift lingered until another card was tapped. Disable hover-driven styling
+   on non-hover (touch) devices — press feedback is the :active scale + LiquidPress.
+   The "me" card's accent bar is a separate box-shadow and is unaffected. */
+@media (hover: none) {
+  .prow:hover{background:var(--surface);border-color:var(--border);transform:none;}
+  .prow:hover::before{transform:scaleY(0);}
+}
 .prow.editing{grid-column:1 / -1;border-color:rgba(255, 215, 0,.4);background:rgba(255, 215, 0,.04);cursor:default;}
 .prow.editing:hover{transform:none;background:rgba(255, 215, 0,.04);}
 .prow.editing::before{display:none;}
@@ -1019,7 +1027,10 @@ body {
 
 /* Best/Worst pair cards (preserve S053 dual-avatar layout, swap visual frame to surface card). */
 .pair-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.pair-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;}
+/* S089 #113d: min-width:0 lets the 2-col grid items shrink below their content
+   min-width so both Best/Worst Pairs cards fit on screen (was overflowing the
+   right card off-screen); .pair-names already ellipsizes. */
+.pair-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;min-width:0;}
 .pair-title{font-size:12px;font-weight:800;color:var(--text);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px;}
 .pair-row{display:flex;align-items:center;gap:6px;}
 .pair-avi{width:32px;height:32px;border-radius:50%;background:var(--accent-dim);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--accent);flex-shrink:0;overflow:hidden;}
@@ -1717,7 +1728,7 @@ body {
 .ad-screen,.lm-screen,.sm-screen,.plm-screen,.pa-screen{padding:0 0 calc(96px + env(safe-area-inset-bottom,0px));font-family: var(--font);}
 .ad-h{padding:8px 18px 0;display:flex;flex-direction:column;gap:2px;}
 .adey{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);}
-.adh1{font-size:26px;font-weight:800;letter-spacing:-.02em;color:var(--text);}
+.adh1{font-size:clamp(20px,5.4vw,26px);font-weight:800;letter-spacing:-.02em;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;}
 /* S068: count subtitle pattern — single-line N players / N matches under page title */
 .adsub{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.04em;margin-top:2px;}
 .adh1-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
@@ -2143,7 +2154,7 @@ body {
 .ach-card .ach-ico{width:34px;height:34px;border-radius:8px;background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.4);display:flex;align-items:center;justify-content:center;margin-bottom:4px;}
 .ach-card.locked{opacity:.6;}
 .ach-card.locked .ach-ico{background:transparent;border-color:rgba(90,90,106,.45);}
-.ach-name{font-size:14px;font-weight:800;color:var(--text);letter-spacing:-.01em;}
+.ach-name{font-size:13px;font-weight:800;color:var(--text);letter-spacing:-.02em;line-height:1.2;}
 .ach-card.locked .ach-name{color:#7a7a8e;}
 .ach-desc{font-family:var(--mono);font-size:10px;color:var(--muted);line-height:1.4;}
 .ach-card.locked .ach-desc{color:#5a5a6a;}

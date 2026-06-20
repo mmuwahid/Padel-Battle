@@ -64,9 +64,19 @@ export function PairsRanking({ pairs, matches, players, getName, onPairDrillIn }
     const p = playerOf(pid);
     return (p?.name || "?").charAt(0).toUpperCase();
   };
+  // S089 #113g: in the tight pair cells a full two-word name ("Hani Taha")
+  // overflowed and truncated mid-letter ("Hani T_"). Collapse names with a
+  // surname to "First L." so they read cleanly. Nicknames are already short, so
+  // they're kept as-is.
+  const shortName = (full) => {
+    if (!full) return full;
+    const parts = full.trim().split(/\s+/);
+    if (parts.length < 2) return full;
+    return `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.`;
+  };
   const pName = (pid) => {
     const p = playerOf(pid);
-    return p?.nickname || p?.name || "?";
+    return p?.nickname || shortName(p?.name) || "?";
   };
   const pAvatar = (pid) => {
     const p = playerOf(pid);
