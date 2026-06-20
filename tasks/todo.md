@@ -1,19 +1,21 @@
 # Active Work
 
 ## NEXT SESSION (S089) — START HERE
-**Last session:** S088 (2026-06-20) — **1 code commit (`cb19fcf`), SW v198→v199, 1 DB migration (`s109_sync_player_identity`), 6 files. Plus a docs commit.** Fixed/deployed the 3 issues filed during S087 + ran the approved color sweep + relocated the working clone. **#110 global profile across leagues:** new `sync_player_identity` SECURITY DEFINER RPC propagates identity fields (country/DOB/gender/handedness/court/avatar) to all of a user's claimed `players` rows; self-grade propagates but skips rows with an admin override (admin grade stays local); wired into EditMyProfile/EditPlayerModal/GradeAssessmentModal saves; forward-only (applies on next edit, no backfill). **#109 notification close:** new `closeNotifications` helper returns to the underlying tab/sub-view instead of reopening the side drawer. **#111:** empty-leaderboard flashcard `marginTop:32` (empty-state only). **Color sweep (S069 Note A CLOSED):** 123× `#9090a4` → `var(--muted)` (already equal from S084; `:root` def preserved; zero visual change). **Clone relocated** off OS-purgeable `/tmp` → persistent `C:\Users\User\dev\Padel-Battle`; orchestration + project CLAUDE.md + multi-pc-sync memory updated; old `/tmp` clone deleted. **Production live on SW v199, main `cb19fcf`, deploy READY.**
+**Last session:** S088 (2026-06-20, ~4h) — **8 commits (`cb19fcf`…`275bda3`), SW v198→v200, 2 DB migrations (`s109` + `s109b`).** Two halves. **Half 1 — bug batch:** #110 global profile (`sync_player_identity` SECURITY DEFINER RPC → identity fields propagate to all a user's claimed players; self-grade syncs but admin overrides stay local; COALESCE-guarded so NULLs never wipe; wired into 3 edit forms; forward-only); #109 notif-close `closeNotifications` (no longer reopens drawer); #111 empty-leaderboard `marginTop:32`; color sweep (123× `#9090a4`→`var(--muted)`, **S069 Note A CLOSED**); **clone relocated** off `/tmp` → `C:\Users\User\dev\Padel-Battle`. **Half 2 — App Store launch prep:** Apple account confirmed FULLY ACTIVE (DSA pending = non-blocking); user picked **logo Option A (Refined Orb)** as placeholder; **one-shot logo sweep (`275bda3`, SW v200)** — new mark in icons.jsx + index.html splash + favicon.svg (was STALE racket) + icon.svg + regenerated icon-192/512/og-image PNGs (sharp), unified static+React splash (bg #0d0d14, Syne loaded → **no flash**); wrote `planning/capacitor-wrap.md` + `planning/logo-sweep.md`. **Production live on SW v200, main `275bda3`, deploy READY.**
 
-### 🎯 PENDING USER SMOKE-TEST (S088 ship — SW v199)
-- **#111:** open a brand-new/empty season → "No rankings yet" card sits comfortably below the header (not flush).
-- **#109:** from any screen tap the bell → tap X (or bell again) → land back on the screen you were on, NOT the side menu.
-- **#110:** edit a profile detail (country/handedness/etc.) in one league → open another of your leagues → change is already there. Confirm a grade an admin set for you in one league is NOT overwritten by your self-assessment.
+### 🎯 PENDING USER SMOKE-TEST (S088 ship — SW v200)
+- **#111:** new/empty season → "No rankings yet" card sits below the header (not flush).
+- **#109:** tap bell → X (or bell again) → return to the screen you were on, NOT the side menu.
+- **#110:** edit a profile detail in one league → appears in your other leagues; an admin-set grade is NOT overwritten by your self-assessment.
+- **Logo/splash:** cold-open splash has NO flash (one smooth screen); favicon = green orb (not racket); share an invite link on WhatsApp → preview shows new orb + wordmark card. (Home-screen icon updates only after remove + re-add of the PWA.)
 
 ### 🎯 S089 PRIORITY
-1. Smoke-test SW v199 (above); then close #109/#110/#111 via `gh issue close` after user PASS.
-2. Resume App Store + Google Play launch prep (Capacitor wrap) — carries deferred #108 #6 invite-link Universal Links; G1 Apple login pending Apple Developer account.
-3. Address any new issues filed since.
+1. Smoke-test SW v200 (above); close #109/#110/#111 via `gh issue close` after user PASS.
+2. **Capacitor wrap** (per `planning/capacitor-wrap.md`): decide iOS build env (Mac / cloud-Mac / **Android-first** recommended), bundle ID, seller name; **add Sign in with Apple** (likely Apple guideline-4.8 requirement — app has Google OAuth); create App Store Connect app record; add privacy-policy page.
+3. Check Supabase Auth → Email Templates for old logo/branding.
+4. (When ready) replace Option A with designer's final mark — one-file swap in `icons.jsx` + re-run 3 PNGs (sharp).
 
-_Working clone is now at `C:\Users\User\dev\Padel-Battle` (relocated off `/tmp` in S088). Keep committing doc updates each session._
+_Working clone at `C:\Users\User\dev\Padel-Battle` (off `/tmp`). Commit doc updates to git each session. Apple Developer fully active (Team `9M6M6A8B6V`, Individual)._
 
 ---
 

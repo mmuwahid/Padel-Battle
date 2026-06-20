@@ -1,10 +1,10 @@
 # Session Log — 2026-06-20 — Session088 — Global Profile Sync + Notif & Leaderboard Fixes + Color Sweep + Clone Relocation
 
 **Project:** PadelHub
-**Type:** Build/Fix
+**Type:** Build/Fix + Plan (App Store launch prep)
 **Phase:** Pre-store-launch
-**Duration:** ~1.5 hours
-**Commits:** `cb19fcf` (code + DB), plus a docs commit at close
+**Duration:** ~4 hours (two halves: bug-fix batch, then launch prep + logo sweep)
+**Commits:** `cb19fcf` (code+DB), `81e7f54` (docs), `8440f22` (#110 COALESCE fix), `66aded6` (splash mockup), `2dcbce1` (wrap plan), `ae1c90e` (Apple status), `1087514` (logo sweep map), `275bda3` (logo sweep + unified splash). SW v198 → v200. DB migrations `s109` + `s109b`.
 
 ---
 
@@ -62,19 +62,44 @@
 ### Validated Patterns
 - Color-sweep self-reference trap — when swapping `#hex` → `var(--token)`, the `:root` definition line must be excluded or the token resolves to itself; verify with a post-sweep grep expecting exactly 1 remaining hit (the definition). **Why:** a blind `replace_all` silently breaks every consumer of that token.
 - For "global identity" requests, propagate via a SECURITY DEFINER RPC (not client UPDATEs) because admin edits can't reach other leagues' rows under RLS; the RPC also centralizes the grade-override exception. **Why:** one authorized place to reason about cross-league writes.
+- A propagation/fan-out UPDATE must COALESCE (`field = COALESCE(src, target)`), never flat-assign — a sparse source row erases set values in the targets (advisor caught: a grade self-assessment in a league with NULL avatar would wipe the avatar elsewhere). **Why:** the triggering edit rarely touches every field; flat-assign treats "unset here" as "clear everywhere".
+- "Two loading screens flash" on launch = a static (index.html) splash and a framework splash that differ in bg/size/font. Fix by making them byte-identical (same bg, logo size, font — and actually LOAD the font in index.html; ours declared Syne but never loaded it). **Why:** the flash is the handoff between two near-but-not-identical screens.
+- A brand mark duplicated across React components + standalone SVG files + raster PNGs is N sources, not one. Map every surface first (incl. favicon + og-image, which drift silently because nothing in-app renders them), keep the canonical mark in ONE component, and rasterize PNGs from the SVG with `sharp` in a scratch dir (repo deps untouched). View the generated PNGs to verify before shipping.
+
+## App Store Launch Prep (second half of session)
+
+### Apple Developer status
+- User confirmed account FULLY ACTIVE: membership (Team `9M6M6A8B6V`, Individual), App Store Connect, Free + Paid Apps Agreements, bank, tax forms all active. Only DSA (EU Digital Services Act) trader status Pending/In Review — non-blocking, gates EU availability only.
+
+### Logo / loading-screen polish (Issue: user-reported "boxed logo + double flash")
+- Diagnosed the cold-open flash: static `index.html` splash vs React `.lscreen` splash differed in bg shade (#080808 vs #0d0d14), logo size (160 vs 140), and font (index.html declared Syne but never loaded it → system fallback). Found two STALE assets: `favicon.svg` and `og-image.png` were still the OLD grey racket.
+- Built `public/mockup-splash.html` (deployed for iPhone review) with 3 refreshed mark options; user chose **A (Refined Orb)** as a placeholder until a designer delivers a final mark.
+- **One-shot logo sweep (commit `275bda3`, SW v200):** rewrote `PadelHubMark` + `PadelHubMarkHeader` to Option A; mirrored in `index.html` static splash (bg→#0d0d14, size 160→140, loaded Syne); rewrote `favicon.svg` + `icons/icon.svg` to Option A tiles; regenerated `icon-192.png` / `icon-512.png` / `og-image.png` from the new mark via **sharp** (installed in scratch, repo deps untouched); `.lbg` base bg → #0d0d14; added the wordmark to the App.jsx cold-load splash so static + React splashes are identical (no flash); bumped og `?v=199`, fixed "racket" alt text. New mark isolated to the two `icons.jsx` components → designer swap later is one file + a PNG re-run.
+
+### Planning docs written (committed)
+- `planning/capacitor-wrap.md` — full launch roadmap (build-env blocker = Mac/Xcode; Capacitor config; native-splash-matched-to-web-splash; icon pipeline; iOS/Android build+submit; store assets; pre-submission code tasks incl. **Sign in with Apple** for guideline 4.8 since the app has Google OAuth).
+- `planning/logo-sweep.md` — the exhaustive logo-surface map used to drive the sweep.
 
 ## Next Actions
-- [ ] User smoke-test SW v199 on iPhone: #111 spacing, #109 bell→X returns to tab (not drawer), #110 edit-in-one-league-appears-in-another + admin grade override preserved.
+- [ ] User smoke-test SW v200 on iPhone: (#111/#109/#110 from first half) + cold-open splash has NO flash, favicon = orb not racket, invite-link WhatsApp preview shows new og card.
 - [ ] Close #109/#110/#111 via `gh issue close` after PASS.
-- [ ] Resume App Store + Google Play prep (Capacitor wrap) — G1 Apple login pending Apple Developer account.
+- [ ] Decide iOS build environment (Mac / cloud-Mac like MacinCloud / Android-first) — recommended Android-first + rent cloud Mac for iOS.
+- [ ] Decide bundle ID (reverse-DNS, permanent) + seller name (Individual vs Org).
+- [ ] Check Supabase Auth → Email Templates for any old logo/branding.
+- [ ] Add Sign in with Apple (likely Apple requirement) before iOS submission.
+- [ ] (Later) replace Option A with the designer's final mark — one-file swap in `icons.jsx` + re-run the 3 PNGs.
 
 ---
 
 ## Commits and Deploy
-- **Commit:** `cb19fcf` — global profile sync (#110) + notif-close (#109) + leaderboard spacing (#111) + color sweep; SW v199
-- **DB migrations:** `s109_sync_player_identity` + `s109b_sync_player_identity_coalesce` (NULL-clobber hardening)
-- **Deploy:** `dpl_H8LmxCbvufYkrrdKSYNoe1uFRuTv` — READY (production)
-- **Live:** padel-battle.vercel.app (SW v199)
+- `cb19fcf` — #110 global profile sync + #109 notif-close + #111 spacing + color sweep (SW v199)
+- `8440f22` — #110 COALESCE hardening (migration `s109b`)
+- `81e7f54` — S088 close docs (first half)
+- `66aded6` — splash/logo review mockup
+- `2dcbce1` — Capacitor wrap plan; `ae1c90e` — Apple status update; `1087514` — logo sweep map
+- `275bda3` — **logo sweep to Option A + unified splash (SW v200)** — deploy `dpl_FytvuiTPGvqxaQupFVcR8ktGSbns` READY
+- **DB migrations:** `s109_sync_player_identity` + `s109b_sync_player_identity_coalesce`
+- **Live:** padel-battle.vercel.app (SW v200, main `275bda3`)
 
 ---
 _Session logged: 2026-06-20 | Logged by: Claude (session-log skill) | Session088_
