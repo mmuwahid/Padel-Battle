@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<meta name="theme-color" content="#0d0d14"/>
+<title>PadelHub — Splash & Logo Review</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root{
+    --bg:#0d0d14; --panel:#111119; --line:rgba(255,255,255,.08);
+    --txt:#f0f0f0; --mut:#9090a4; --acc:#4ade80;
+    --font:'Syne',system-ui,sans-serif; --mono:'DM Mono',monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#08080c;color:var(--txt);font-family:var(--font);line-height:1.5;
+    padding:28px 18px 80px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:880px;margin:0 auto}
+  h1{font-size:26px;font-weight:800;letter-spacing:-.02em}
+  .sub{color:var(--mut);font-family:var(--mono);font-size:12px;letter-spacing:.04em;margin-top:6px}
+  h2{font-size:15px;font-weight:800;letter-spacing:.02em;margin:0 0 4px;text-transform:uppercase}
+  .eyebrow{color:var(--acc);font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase}
+  section{margin-top:34px;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:22px}
+  p.note{color:var(--mut);font-size:13px;margin-top:8px}
+  .grid{display:grid;gap:16px;margin-top:18px}
+  @media(min-width:640px){.three{grid-template-columns:repeat(3,1fr)}}
+
+  /* phone frame */
+  .phone{margin:18px auto 0;width:270px;height:560px;border-radius:42px;
+    background:var(--bg);border:9px solid #1d1d27;box-shadow:0 30px 70px rgba(0,0,0,.6);
+    position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center}
+  .phone .notch{position:absolute;top:10px;left:50%;transform:translateX(-50%);
+    width:96px;height:24px;background:#000;border-radius:14px;z-index:5}
+  .splash{flex:1;width:100%;display:flex;flex-direction:column;align-items:center;
+    justify-content:flex-start;padding-top:34%;background:var(--bg)}
+  .wordmark{display:flex;gap:5px;margin-top:24px;font-size:25px;font-weight:800;letter-spacing:.5px}
+  .wordmark .g{color:var(--acc)}
+  .dots{display:flex;gap:7px;margin-top:26px}
+  .dots i{width:7px;height:7px;border-radius:50%;background:var(--acc);opacity:.35;
+    animation:bd 1.2s ease-in-out infinite}
+  .dots i:nth-child(2){animation-delay:.2s}.dots i:nth-child(3){animation-delay:.4s}
+  @keyframes bd{0%,100%{opacity:.25;transform:translateY(0)}50%{opacity:1;transform:translateY(-4px)}}
+
+  /* option cards */
+  .opt{background:#0d0d14;border:1px solid var(--line);border-radius:16px;padding:18px;text-align:center}
+  .opt.pick{border-color:rgba(74,222,128,.5);box-shadow:0 0 0 1px rgba(74,222,128,.25)}
+  .opt h3{font-size:14px;font-weight:800;margin-bottom:2px}
+  .opt .desc{color:var(--mut);font-size:12px;min-height:48px;margin-top:6px}
+  .opt .big{display:flex;justify-content:center;align-items:center;height:128px}
+  .row{display:flex;align-items:center;justify-content:center;gap:22px;margin-top:14px;
+    padding-top:14px;border-top:1px dashed var(--line)}
+  .row .lbl{font-family:var(--mono);font-size:10px;color:var(--mut);letter-spacing:.08em}
+  .tile{width:60px;height:60px;border-radius:14px;overflow:hidden;display:flex;
+    align-items:center;justify-content:center;box-shadow:0 6px 14px rgba(0,0,0,.5)}
+  .tile.sm{width:40px;height:40px;border-radius:9px}
+  .badge{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.1em;
+    color:var(--acc);border:1px solid rgba(74,222,128,.4);border-radius:20px;padding:3px 9px;margin-top:10px}
+  ul{margin:10px 0 0 18px;color:var(--mut);font-size:13px}li{margin:4px 0}
+  .ok{color:var(--acc)}.bad{color:#f87171}
+  table{width:100%;border-collapse:collapse;margin-top:14px;font-size:12.5px}
+  td,th{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--mut);font-family:var(--mono);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">PadelHub · Pre-launch polish</div>
+  <h1>Splash &amp; Logo Review</h1>
+  <div class="sub">Open on your iPhone. Pick a logo direction + confirm the splash, then I port it to the real app.</div>
+
+  <!-- THE PROBLEM -->
+  <section>
+    <div class="eyebrow">The problem today</div>
+    <h2 style="margin-top:6px">Two splash screens that don't match</h2>
+    <table>
+      <tr><th>&nbsp;</th><th>Static splash (shows first)</th><th>App splash (shows second)</th></tr>
+      <tr><td>Background</td><td>#080808</td><td class="bad">#0d0d14 — different shade</td></tr>
+      <tr><td>Logo size</td><td>160px</td><td class="bad">140px — logo jumps</td></tr>
+      <tr><td>Wordmark font</td><td class="bad">Syne declared but never loaded → system font</td><td>real Syne</td></tr>
+    </table>
+    <p class="note">Result on cold open: a quick flash where the background shade, logo size and font all change. The fix is to make both splashes <b>pixel-identical</b> — one background, one logo, one font — so there's no visible handoff.</p>
+  </section>
+
+  <!-- UNIFIED SPLASH -->
+  <section>
+    <div class="eyebrow">The fix — one clean splash</div>
+    <h2 style="margin-top:6px">Unified launch screen</h2>
+    <p class="note">Same screen from the instant you tap the icon until the app is ready. (Showing logo option A — your chosen mark drops straight in.)</p>
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="splash">
+        <!-- MARK A -->
+        <svg width="116" height="116" viewBox="0 0 100 100" style="filter:drop-shadow(0 0 26px rgba(74,222,128,.35))">
+          <defs>
+            <radialGradient id="aOrb" cx="36%" cy="30%" r="70%">
+              <stop offset="0%" stop-color="#eafff3"/><stop offset="42%" stop-color="#4ade80"/><stop offset="100%" stop-color="#0f3d22"/>
+            </radialGradient>
+          </defs>
+          <ellipse cx="50" cy="50" rx="40" ry="17" fill="none" stroke="#4ade80" stroke-width="1.6" opacity=".5" transform="rotate(-28 50 50)"/>
+          <circle cx="50" cy="50" r="20" fill="url(#aOrb)"/>
+          <ellipse cx="43" cy="43" rx="6.5" ry="4.4" fill="#eafff3" opacity=".5"/>
+          <circle cx="82" cy="36" r="4.4" fill="#4ade80"/>
+        </svg>
+        <div class="wordmark"><span>Padel</span><span class="g">Hub</span></div>
+        <div class="dots"><i></i><i></i><i></i></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MARK OPTIONS -->
+  <section>
+    <div class="eyebrow">Pick a logo direction</div>
+    <h2 style="margin-top:6px">Refreshed mark — 3 options</h2>
+    <p class="note">Each shown large, then at real app-icon size (60px) and home-screen size (40px) — because this same mark becomes your App Store icon, and the current orb-with-6-satellites is too busy to read when small.</p>
+
+    <div class="grid three">
+      <!-- A -->
+      <div class="opt pick">
+        <h3>A · Refined Orb</h3>
+        <span class="badge">recommended</span>
+        <div class="desc">Your current orb, simplified: one sphere, one clean orbit ring + a single satellite. Keeps the "hub" idea; reads great small.</div>
+        <div class="big">
+          <svg width="104" height="104" viewBox="0 0 100 100">
+            <defs><radialGradient id="a2" cx="36%" cy="30%" r="70%"><stop offset="0%" stop-color="#eafff3"/><stop offset="42%" stop-color="#4ade80"/><stop offset="100%" stop-color="#0f3d22"/></radialGradient></defs>
+            <ellipse cx="50" cy="50" rx="40" ry="17" fill="none" stroke="#4ade80" stroke-width="1.8" opacity=".5" transform="rotate(-28 50 50)"/>
+            <circle cx="50" cy="50" r="20" fill="url(#a2)"/><ellipse cx="43" cy="43" rx="6.5" ry="4.4" fill="#eafff3" opacity=".5"/>
+            <circle cx="82" cy="36" r="4.4" fill="#4ade80"/>
+          </svg>
+        </div>
+        <div class="row">
+          <div><div class="tile" style="background:#0d0d14"><svg width="42" height="42" viewBox="0 0 100 100"><defs><radialGradient id="a3" cx="36%" cy="30%" r="70%"><stop offset="0%" stop-color="#eafff3"/><stop offset="42%" stop-color="#4ade80"/><stop offset="100%" stop-color="#0f3d22"/></radialGradient></defs><ellipse cx="50" cy="50" rx="40" ry="17" fill="none" stroke="#4ade80" stroke-width="2.4" opacity=".55" transform="rotate(-28 50 50)"/><circle cx="50" cy="50" r="21" fill="url(#a3)"/><circle cx="82" cy="36" r="5" fill="#4ade80"/></svg></div><div class="lbl">60px</div></div>
+          <div><div class="tile sm" style="background:#0d0d14"><svg width="28" height="28" viewBox="0 0 100 100"><defs><radialGradient id="a4" cx="36%" cy="30%" r="70%"><stop offset="0%" stop-color="#eafff3"/><stop offset="42%" stop-color="#4ade80"/><stop offset="100%" stop-color="#0f3d22"/></radialGradient></defs><circle cx="50" cy="50" r="24" fill="url(#a4)"/><ellipse cx="50" cy="50" rx="42" ry="18" fill="none" stroke="#4ade80" stroke-width="3" opacity=".55" transform="rotate(-28 50 50)"/></svg></div><div class="lbl">40px</div></div>
+        </div>
+      </div>
+
+      <!-- B -->
+      <div class="opt">
+        <h3>B · Padel "P"</h3>
+        <span class="badge" style="color:var(--mut);border-color:var(--line)">icon-first</span>
+        <div class="desc">A bold rounded tile: green gradient with a white "P" whose bowl is a padel ball. Maximum punch as an app icon.</div>
+        <div class="big">
+          <div style="width:104px;height:104px;border-radius:24px;background:linear-gradient(150deg,#4ade80,#15803d);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px rgba(74,222,128,.25)">
+            <svg width="64" height="64" viewBox="0 0 100 100">
+              <path d="M30 84 V22 H58 a18 18 0 0 1 0 36 H30" fill="none" stroke="#fff" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="52" cy="40" r="7" fill="#15803d"/>
+            </svg>
+          </div>
+        </div>
+        <div class="row">
+          <div><div class="tile" style="background:linear-gradient(150deg,#4ade80,#15803d)"><svg width="40" height="40" viewBox="0 0 100 100"><path d="M30 84 V22 H58 a18 18 0 0 1 0 36 H30" fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/><circle cx="52" cy="40" r="7" fill="#15803d"/></svg></div><div class="lbl">60px</div></div>
+          <div><div class="tile sm" style="background:linear-gradient(150deg,#4ade80,#15803d)"><svg width="26" height="26" viewBox="0 0 100 100"><path d="M32 82 V24 H57 a17 17 0 0 1 0 34 H32" fill="none" stroke="#fff" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="lbl">40px</div></div>
+        </div>
+      </div>
+
+      <!-- C -->
+      <div class="opt">
+        <h3>C · Ball + Motion</h3>
+        <span class="badge" style="color:var(--mut);border-color:var(--line)">energetic</span>
+        <div class="desc">A padel ball with a sweeping motion arc — dynamic and sporty. Slightly busier small than A.</div>
+        <div class="big">
+          <svg width="104" height="104" viewBox="0 0 100 100">
+            <defs><radialGradient id="cBall" cx="36%" cy="30%" r="72%"><stop offset="0%" stop-color="#eafff3"/><stop offset="45%" stop-color="#4ade80"/><stop offset="100%" stop-color="#15803d"/></radialGradient></defs>
+            <path d="M16 70 A44 44 0 0 1 84 30" fill="none" stroke="#4ade80" stroke-width="3.5" stroke-linecap="round" opacity=".55"/>
+            <circle cx="50" cy="52" r="22" fill="url(#cBall)"/>
+            <path d="M34 44 Q50 56 66 44" fill="none" stroke="#0f3d22" stroke-width="2.4" opacity=".5"/>
+            <ellipse cx="43" cy="45" rx="6" ry="4" fill="#eafff3" opacity=".5"/>
+          </svg>
+        </div>
+        <div class="row">
+          <div><div class="tile" style="background:#0d0d14"><svg width="42" height="42" viewBox="0 0 100 100"><defs><radialGradient id="cB2" cx="36%" cy="30%" r="72%"><stop offset="0%" stop-color="#eafff3"/><stop offset="45%" stop-color="#4ade80"/><stop offset="100%" stop-color="#15803d"/></radialGradient></defs><path d="M16 70 A44 44 0 0 1 84 30" fill="none" stroke="#4ade80" stroke-width="5" stroke-linecap="round" opacity=".6"/><circle cx="50" cy="52" r="24" fill="url(#cB2)"/></svg></div><div class="lbl">60px</div></div>
+          <div><div class="tile sm" style="background:#0d0d14"><svg width="28" height="28" viewBox="0 0 100 100"><defs><radialGradient id="cB3" cx="36%" cy="30%" r="72%"><stop offset="0%" stop-color="#eafff3"/><stop offset="45%" stop-color="#4ade80"/><stop offset="100%" stop-color="#15803d"/></radialGradient></defs><circle cx="50" cy="50" r="28" fill="url(#cB3)"/></svg></div><div class="lbl">40px</div></div>
+        </div>
+      </div>
+    </div>
+    <p class="note" style="margin-top:18px">The mark you pick is used in 3 places: the splash above, the in-app header, and the App Store / home-screen icon. A &amp; C sit on the dark background (transparent); B is a self-contained tile.</p>
+  </section>
+
+  <!-- WHAT CHANGES -->
+  <section>
+    <div class="eyebrow">What I'll change in code</div>
+    <h2 style="margin-top:6px">Once you approve</h2>
+    <ul>
+      <li><span class="ok">Unify</span> the static (index.html) and app splash to identical background, logo size, font and animation — kills the flash.</li>
+      <li><span class="ok">Load Syne</span> in index.html so the wordmark matches from the first frame.</li>
+      <li><span class="ok">Swap</span> the busy 6-satellite orb for your chosen refreshed mark across splash + header.</li>
+      <li><span class="ok">Generate</span> the App Store icon (1024px) + iOS/Android launch images from the same mark — these feed straight into the Capacitor wrap.</li>
+    </ul>
+  </section>
+</div>
+</body>
+</html>
