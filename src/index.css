@@ -402,7 +402,10 @@ body {
 
 /* S072 brand-mark internal animations — center pulse + outer aura breathing
    + slow satellite-group orbit rotation + per-satellite scale staggers. */
-.lhmark { display: block; }
+/* S089 #112 final: overflow:visible so the pulsing aura (a radial-gradient circle
+   that scales to ~1.18) is NOT clipped to the square SVG viewBox — that clip was
+   the faint green "box" edge flashing behind the orb on the login/splash. */
+.lhmark { display: block; overflow: visible; }
 .lhmark-pulse {
   transform-origin: 50% 50%;
   transform-box: fill-box;
@@ -2534,7 +2537,9 @@ input.linput[type="date"]::-webkit-calendar-picker-indicator {
 .gm-stand-pts.g{color:var(--gold);}
 
 /* Round cards */
-.gm-rndcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;display:flex;flex-direction:column;gap:10px;}
+/* S089 #120: the round is a plain container — "Round X" is a text header and each
+   match is the single bordered card (was a box-in-a-box). */
+.gm-rndcard{display:flex;flex-direction:column;gap:8px;margin-bottom:18px;}
 .gm-rnd-h{display:flex;align-items:center;justify-content:space-between;}
 .gm-rnd-h-t{font-size:14px;font-weight:800;color:var(--text);letter-spacing:-.01em;}
 .gm-sit{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);background:var(--surface-2);padding:3px 8px;border-radius:var(--r-sm);border:1px solid var(--border);}

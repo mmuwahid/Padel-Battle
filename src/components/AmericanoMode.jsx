@@ -170,9 +170,8 @@ export function AmericanoMode({ players, getName, supabase, leagueId, tournament
                             </div>); })}
                         </div>
                         <div className="gm-mtch-sc">
-                          <ScoreStepper value={sc?.a || 0} max={ptsPerRound} aColor={A} size={30} ariaLabel="Team A points" onChange={(n) => recordScore(ri, mi, n, ptsPerRound - n)} />
-                          <span className="gm-mtch-vs">-</span>
-                          <ScoreStepper value={sc?.b || 0} max={ptsPerRound} aColor={DG} size={30} ariaLabel="Team B points" onChange={(n) => recordScore(ri, mi, ptsPerRound - n, n)} />
+                          <ScoreStepper value={sc?.a || 0} max={ptsPerRound} aColor={A} size={28} ariaLabel="Team A points" onChange={(n) => recordScore(ri, mi, n, ptsPerRound - n)} />
+                          <ScoreStepper value={sc?.b || 0} max={ptsPerRound} aColor={DG} size={28} ariaLabel="Team B points" onChange={(n) => recordScore(ri, mi, ptsPerRound - n, n)} />
                         </div>
                         <div className={`gm-team r ${sc && sc.b > sc.a ? "win" : ""}`}>
                           {tB.map(p => { const pl=(players||[]).find(x=>x.id===p); return (
