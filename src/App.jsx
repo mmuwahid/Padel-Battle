@@ -1219,7 +1219,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
         </div>
       )}
       {!sidebarView && tab==="board" && leagueId && (
-        <div style={{padding:"0 16px 20px"}}>
+        <div style={{padding:"0 18px 20px"}}>
 
           {/* Title + season selector */}
           <div className="lbbar">
@@ -1512,7 +1512,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
 
       {/* MATCHES TAB — with History | Schedule sub-tabs */}
       {!sidebarView && tab==="history"&&(
-        <div style={{padding:"20px 16px",maxWidth:"600px",margin:"0 auto"}}>
+        <div style={{padding:"20px 18px",maxWidth:"600px",margin:"0 auto"}}>
           {/* S068: per user direction, the join-request banner was removed from the
               Matches tab. The AdminDashboard's "Approval Queue" card is the single
               entry point for pending join requests. */}

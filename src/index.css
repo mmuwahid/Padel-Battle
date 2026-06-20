@@ -675,7 +675,9 @@ body {
 
 
 /* ─── Phase 4 — Ranking ──────────────────────────────────────────────── */
-.lbbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:20px 18px 0;}
+/* S089 alignment: the board wrapper already provides the 16px gutter, so .lbbar
+   adds no horizontal padding — keeps the title flush with the podium/table/rows. */
+.lbbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:20px 0 0;}
 /* S069: dropped text-transform:uppercase to match spec — Syne 800 mixed-case
    reads as the prominent stylized "Leaderboard" header in JSX. Same change
    applied to .adh1, .lv-title, .sched-title for cross-app consistency. */
@@ -686,7 +688,7 @@ body {
 .lbtitle{font-size:clamp(18px,4.9vw,24px);font-weight:800;letter-spacing:-.02em;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .spill{appearance:none;-webkit-appearance:none;display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:7px 12px;font-family:var(--mono);font-size:11px;color:var(--text);cursor:pointer;outline:none;transition:all 150ms;}
 .spill:focus{border-color:var(--accent-glow);}
-.pod-wrap{display:flex;align-items:flex-end;justify-content:center;gap:6px;padding:16px 14px 14px;}
+.pod-wrap{display:flex;align-items:flex-end;justify-content:center;gap:6px;padding:16px 0 14px;}
 .pod{display:flex;flex-direction:column;align-items:center;gap:5px;border-radius:var(--r-lg);padding:16px 10px 14px;border:1px solid var(--border);background:var(--surface);flex:1;position:relative;overflow:hidden;transition:transform 200ms;cursor:pointer;}
 .pod:hover{transform:translateY(-2px);}
 .pod::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
