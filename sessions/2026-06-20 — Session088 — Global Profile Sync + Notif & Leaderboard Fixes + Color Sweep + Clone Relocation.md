@@ -14,6 +14,7 @@
 - Schema check: `profiles` holds only `id/email/display_name/avatar_url`; all identity fields (country, DOB, gender, handedness, playing_position, grade) live ONLY on per-league `players` rows. So "global profile" = propagating across a user's claimed `players` rows (extends the Lesson #49 write-through pattern; new-league joins already carry over via S087's `approve_join_request`).
 - New migration `s109_sync_player_identity` — `sync_player_identity(p_player_id)` SECURITY DEFINER RPC. Authorizes the linked user OR an admin/owner of the source league, then copies country/DOB/gender/playing_position/handedness/avatar_url to all OTHER claimed rows for that `user_id`. Grade is special: propagates ONLY when `grade_source='self'`, and skips any row with an admin override (`grade_source='admin'`) so admin values stay local.
 - Wired `await supabase.rpc("sync_player_identity", {p_player_id: player.id})` after the successful save in `EditMyProfile.jsx`, `EditPlayerModal.jsx`, and `GradeAssessmentModal.jsx` (each `.catch`-guarded so a propagation hiccup never fails the primary edit).
+- **Hardening (migration `s109b`, from advisor review):** the identity UPDATE now COALESCEs every field (`country = COALESCE(v_src.country, p.country)`, etc.). The first version flat-assigned, which would wipe a set avatar/country in other leagues when the triggering edit came from a row with that field NULL (e.g. a grade self-assessment in a league whose avatar is unset — per-league avatar drift is real, S087). COALESCE: a real value propagates, NULL never erases. DB-only, no redeploy.
 - User decisions captured: grade = "self global, admin override stays local"; trigger = "any edit to your linked record (self or admin) propagates". No retroactive backfill — applies from the next edit forward (avoids overwriting intentional current differences).
 
 ### Issue #109 — Notification close reopened the side drawer
@@ -71,7 +72,7 @@
 
 ## Commits and Deploy
 - **Commit:** `cb19fcf` — global profile sync (#110) + notif-close (#109) + leaderboard spacing (#111) + color sweep; SW v199
-- **DB migration:** `s109_sync_player_identity`
+- **DB migrations:** `s109_sync_player_identity` + `s109b_sync_player_identity_coalesce` (NULL-clobber hardening)
 - **Deploy:** `dpl_H8LmxCbvufYkrrdKSYNoe1uFRuTv` — READY (production)
 - **Live:** padel-battle.vercel.app (SW v199)
 
