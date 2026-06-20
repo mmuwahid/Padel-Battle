@@ -612,7 +612,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
               const pL=partM.length-pW;
               if(h2hM.length===0 && partM.length===0) return (
                 <div className="h2h-empty">
-                  <div className="h2h-empty-icon"><Icon name="swords" size={34} color="var(--muted)"/></div>
+                  <div className="h2h-empty-icon"><Icon name="swords" size={46} color="var(--muted)"/></div>
                   <div className="h2h-empty-title">No matches found between these two players yet</div>
                   <div>Play a match together or against each other to see your rivalry stats</div>
                 </div>

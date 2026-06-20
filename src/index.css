@@ -1026,7 +1026,10 @@ body {
 .elobar-val{font-family:var(--mono);font-size:10px;color:var(--accent);font-weight:700;}
 
 /* Best/Worst pair cards (preserve S053 dual-avatar layout, swap visual frame to surface card). */
-.pair-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+/* S089 #113d: single column so each Best/Worst Pairs card is full width and the
+   player names are fully visible (the 2-col layout squeezed names between the two
+   avatars and truncated them). */
+.pair-grid{display:grid;grid-template-columns:1fr;gap:10px;}
 /* S089 #113d: min-width:0 lets the 2-col grid items shrink below their content
    min-width so both Best/Worst Pairs cards fit on screen (was overflowing the
    right card off-screen); .pair-names already ellipsizes. */
@@ -1095,7 +1098,9 @@ body {
 
 /* H2H empty state. */
 .h2h-empty{text-align:center;padding:32px 16px;color:var(--muted);font-size:12px;}
-.h2h-empty-icon{font-size:48px;margin-bottom:12px;line-height:1;}
+/* S089 #116: now holds an <Icon> SVG (not an emoji) — center it horizontally
+   and keep it muted; size is set on the Icon itself. */
+.h2h-empty-icon{display:flex;justify-content:center;margin-bottom:12px;line-height:1;color:var(--muted);}
 .h2h-empty-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px;}
 
 /* Insights Longest Win/Loss Streak row (variant of .lrow). */
