@@ -135,6 +135,19 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
       return prev.slice(0, -1);
     });
   }, []);
+  // S088 Issue #109: closing the notification center must return to the
+  // underlying tab/sub-view it was opened over — NEVER force the drawer open.
+  // goBackSidebar reopens the drawer when it pops a null history entry (its
+  // intended behavior for in-drawer back-nav), which wrongly surfaced the
+  // menu after the bell was opened from a normal screen.
+  const closeNotifications = useCallback(() => {
+    setSidebarHistory(prev => {
+      const top = prev.length ? prev[prev.length - 1] : null;
+      setSidebarView(top ?? null);
+      return prev.length ? prev.slice(0, -1) : prev;
+    });
+    setSidebarOpen(false);
+  }, []);
   // Avatar click should reset the chain — opening the drawer fresh.
   const openSidebar = useCallback(() => {
     setSidebarOpen(true);
@@ -1117,7 +1130,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
         <div className="hr">
           {/* S067: refresh button removed — pull-to-refresh covers manual reload now. */}
           <button className={"ibtn"+(sidebarView==="notifications"?" on":"")} onClick={()=>{
-            if (sidebarView==="notifications") { goBackSidebar(); }
+            if (sidebarView==="notifications") { closeNotifications(); }
             else { navigateSidebar("notifications"); }
           }} aria-label="Notifications">
             <Icon name="bell" size={16}/>
@@ -1164,7 +1177,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
           )}
           {sidebarView==="notifications" && (
             <NotificationCenter
-              onClose={()=>{goBackSidebar();loadLeagueData();}}
+              onClose={()=>{closeNotifications();loadLeagueData();}}
               onNavigate={handleNotifNavigate}
             />
           )}
@@ -1346,7 +1359,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
 
           {/* Empty state */}
           {seasonLb.length===0&&(
-            <div style={{textAlign:"center",padding:"40px 20px",background:CD,borderRadius:12,border:`1px solid ${BD}`}}>
+            <div style={{textAlign:"center",padding:"40px 20px",marginTop:32,background:CD,borderRadius:12,border:`1px solid ${BD}`}}>
               <div style={{marginBottom:12,display:"flex",justifyContent:"center"}}>
                 <Icon name="trophy" size={56} color="var(--muted)" strokeWidth={1.5}/>
               </div>

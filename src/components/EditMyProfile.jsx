@@ -58,6 +58,8 @@ export function EditMyProfile({ player, onClose, onRetake }) {
         console.error("[EditMyProfile] update error:", error);
         throw error;
       }
+      // Issue #110: propagate identity fields to all my other leagues.
+      await supabase.rpc("sync_player_identity",{p_player_id:player.id}).catch(e=>console.warn("[EditMyProfile] profile sync:",e));
       showToast("Profile updated");
       onClose();
       // Refresh in the background — don't block UX or surface refresh errors
