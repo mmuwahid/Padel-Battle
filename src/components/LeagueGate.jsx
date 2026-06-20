@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from '../supabase';
-import { PadelLogoSmall, PadelHubMark } from './icons';
+import { PadelLogoSmall } from './icons';
 import { OnboardingScreen } from './OnboardingScreen';
 import { PendingApprovalScreen } from './PendingApprovalScreen';
 import { RejectedScreen } from './RejectedScreen';
@@ -341,19 +341,20 @@ export function LeagueGate({ user, children }) {
     }
   }, [selectedLeagueId, loadUserLeagues, setSelectedLeagueId]);
 
-  // Slim loading screen (re-uses Phase 3 .lscreen styling, but only shows
-  // briefly during cold launch — usually <500ms).
-  if (loading) {
-    return (
-      <div className="lscreen splash">
-        <div className="lbg" />
-        <div className="lhero">
-          <div className="llogobox"><PadelHubMark size={140} /></div>
-          <div className="ltag">Loading…</div>
-        </div>
-      </div>
-    );
-  }
+  // S089 Issue #115: single-source splash — dismiss the static #splash only when
+  // LeagueGate shows its OWN screen (onboarding / pending / rejected; i.e. the
+  // user has no league yet). When it renders <AppContent> instead, that component
+  // keeps the static splash up until match data loads. One continuous boot splash.
+  useEffect(() => {
+    if (!loading && leagues.length === 0) {
+      const s = document.getElementById('splash');
+      if (s) s.style.display = 'none';
+    }
+  }, [loading, leagues.length]);
+
+  // While loading, keep the static index.html #splash visible (return null)
+  // instead of rendering a duplicate React splash that flashed on handoff.
+  if (loading) return null;
 
   const handlers = {
     switchLeague: setSelectedLeagueId,

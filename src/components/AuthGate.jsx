@@ -202,11 +202,16 @@ export function AuthGate({children}){
   };
 
   useEffect(() => {
-    if (!loading) {
+    // S089 Issue #115: single-source splash. AuthGate dismisses the static
+    // #splash ONLY when it renders its OWN screen (login / recovery). When the
+    // user is authenticated it hands off to <LeagueGate>/<AppContent>, which keep
+    // the static splash up until real content is ready — one continuous splash.
+    const showsOwnScreen = !loading && (!user || authMode === "recovery" || recoveryUser);
+    if (showsOwnScreen) {
       const splash = document.getElementById('splash');
       if (splash) splash.style.display = 'none';
     }
-  }, [loading]);
+  }, [loading, user, authMode, recoveryUser]);
 
   if (loading) return null;
 

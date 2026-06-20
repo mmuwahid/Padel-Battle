@@ -17,7 +17,9 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192.png" />
     <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png" />
     <link rel="apple-touch-icon-precomposed" href="/icons/icon-192.png" />
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Outfit:wght@700&display=swap" as="style" />
+    <!-- S089 #115: preload Syne (the splash wordmark font, = var(--font)) so the
+         single static splash renders its wordmark without a FOUT flash. -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&display=swap" as="style" />
     <link rel="preconnect" href="https://fonts.googleapis.com"/>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600;700;800;900&family=Outfit:wght@400;600;700;800;900&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
@@ -52,7 +54,7 @@
          #90 — brand color is green, not gold). Mirrors <PadelHubMark> in
          src/components/icons.jsx so static + React splashes render identical
          artwork (Lesson #98). -->
-    <div id="splash" style="position:fixed;inset:0;z-index:9999;background:#0d0d14;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:30vh 32px 0;font-family:'Syne',system-ui,sans-serif">
+    <div id="splash" style="position:fixed;inset:0;z-index:9999;background:radial-gradient(ellipse 80% 50% at 50% 0%, rgba(74,222,128,0.10), transparent 60%), #0d0d14;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:30vh 32px 0;font-family:'Syne',system-ui,sans-serif">
       <svg width="140" height="140" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter:drop-shadow(0 0 24px rgba(74,222,128,0.34))">
         <defs>
           <radialGradient id="s-orb" cx="36%" cy="30%" r="70%">

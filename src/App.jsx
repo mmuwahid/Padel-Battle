@@ -1014,20 +1014,18 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ptrRefreshing]);
 
-  // S068 Issue #54: unified loading screen — matches AuthGate + LeagueGate
-  // .lscreen design so the user sees ONE continuous splash from app cold-start
-  // through login → leagues fetch → match data fetch, instead of three flashes
-  // (auth lscreen → leagues lscreen → full-screen shimmer skeleton).
-  if (loading) return (
-    <div className="lscreen splash">
-      <div className="lbg"/>
-      <div className="lhero">
-        <div className="llogobox"><PadelHubMark size={140}/></div>
-        <h1 className="lbrand"><span>Padel</span><span className="accent">Hub</span></h1>
-        <div className="ltag">Loading…</div>
-      </div>
-    </div>
-  );
+  // S089 Issue #115: single-source splash. Keep the static #splash (index.html)
+  // visible through league + match load, then dismiss it exactly once. The old
+  // React .lscreen.splash here caused a static→React handoff flash (rebuilt 6×
+  // across S068–S088). AuthGate + LeagueGate now also defer to the static splash,
+  // so the user sees ONE continuous boot splash from cold-start to loaded app.
+  useEffect(() => {
+    if (!loading) {
+      const s = document.getElementById('splash');
+      if (s) s.style.display = 'none';
+    }
+  }, [loading]);
+  if (loading) return null;
 
   // S068 follow-up: orphaned league_member without a claimed player → show
   // a locked "pending review" screen instead of the legacy inline claim form.
