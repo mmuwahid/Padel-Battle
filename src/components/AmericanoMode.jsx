@@ -131,6 +131,7 @@ export function AmericanoMode({ players, getName, supabase, leagueId, tournament
               return (
                 <div key={p.pid} className="gm-stand-row">
                   <span className={`gm-stand-rank ${rankCls}`}>{i + 1}</span>
+                  <span className="gm-stand-avi">{(()=>{const pl=(players||[]).find(x=>x.id===p.pid);return pl?.avatar_url?<img src={pl.avatar_url} alt=""/>:(getName(p.pid)||"?")[0].toUpperCase();})()}</span>
                   <span className="gm-stand-name">{getName(p.pid)}</span>
                   <span className={`gm-stand-pts ${i === 0 ? "g" : ""}`}>{p.points}</span>
                 </div>
@@ -214,6 +215,7 @@ export function AmericanoMode({ players, getName, supabase, leagueId, tournament
               return (
                 <div key={p.pid} className="gm-stand-row">
                   <span className={`gm-stand-rank ${rankCls}`}>{i + 1}</span>
+                  <span className="gm-stand-avi">{(()=>{const pl=(players||[]).find(x=>x.id===p.pid);return pl?.avatar_url?<img src={pl.avatar_url} alt=""/>:(getName(p.pid)||"?")[0].toUpperCase();})()}</span>
                   <span className="gm-stand-name">{getName(p.pid)}</span>
                   <span className={`gm-stand-pts ${i === 0 ? "g" : ""}`}>{p.points} pts</span>
                 </div>
