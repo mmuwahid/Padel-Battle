@@ -160,17 +160,28 @@ export function AmericanoMode({ players, getName, supabase, leagueId, tournament
                   const tB = match.teamB || [];
                   return (
                     <div key={mi} className="gm-mtch">
-                      <div className="gm-mtch-row">
-                        <span className={`gm-mtch-team l ${sc && sc.a > sc.b ? "win" : ""}`}>{tA.map(p => getName(p)).join(" / ")}</span>
-                        <span className="gm-mtch-vs">vs</span>
-                        <span className={`gm-mtch-team r ${sc && sc.b > sc.a ? "win" : ""}`}>{tB.map(p => getName(p)).join(" / ")}</span>
+                      <div className="gm-mtch-grid">
+                        <div className={`gm-team l ${sc && sc.a > sc.b ? "win" : ""}`}>
+                          {tA.map(p => { const pl=(players||[]).find(x=>x.id===p); return (
+                            <div key={p} className="gm-tp">
+                              <span className="gm-tp-avi">{pl?.avatar_url ? <img src={pl.avatar_url} alt=""/> : (getName(p)||"?")[0].toUpperCase()}</span>
+                              <span className="gm-tp-n">{getName(p)}</span>
+                            </div>); })}
+                        </div>
+                        <div className="gm-mtch-sc">
+                          <ScoreStepper value={sc?.a || 0} max={ptsPerRound} aColor={A} size={30} ariaLabel="Team A points" onChange={(n) => recordScore(ri, mi, n, ptsPerRound - n)} />
+                          <span className="gm-mtch-vs">-</span>
+                          <ScoreStepper value={sc?.b || 0} max={ptsPerRound} aColor={DG} size={30} ariaLabel="Team B points" onChange={(n) => recordScore(ri, mi, ptsPerRound - n, n)} />
+                        </div>
+                        <div className={`gm-team r ${sc && sc.b > sc.a ? "win" : ""}`}>
+                          {tB.map(p => { const pl=(players||[]).find(x=>x.id===p); return (
+                            <div key={p} className="gm-tp">
+                              <span className="gm-tp-avi">{pl?.avatar_url ? <img src={pl.avatar_url} alt=""/> : (getName(p)||"?")[0].toUpperCase()}</span>
+                              <span className="gm-tp-n">{getName(p)}</span>
+                            </div>); })}
+                        </div>
                       </div>
-                      <div className="gm-mtch-sc">
-                        <ScoreStepper value={sc?.a || 0} max={ptsPerRound} aColor={A} ariaLabel="Team A points" onChange={(n) => recordScore(ri, mi, n, ptsPerRound - n)} />
-                        <span className="gm-mtch-vs">-</span>
-                        <ScoreStepper value={sc?.b || 0} max={ptsPerRound} aColor={DG} ariaLabel="Team B points" onChange={(n) => recordScore(ri, mi, ptsPerRound - n, n)} />
-                        {match.court && <span className="gm-mtch-court">Court {match.court}</span>}
-                      </div>
+                      {match.court && <span className="gm-mtch-court"><svg width="12" height="10" viewBox="0 0 30 24" fill="none" stroke="currentColor" strokeWidth="2.4"><rect x="2" y="2" width="26" height="20" rx="1.5"/><line x1="15" y1="2" x2="15" y2="22"/><line x1="2" y1="12" x2="28" y2="12"/></svg>Court {match.court}</span>}
                     </div>
                   );
                 })}

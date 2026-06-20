@@ -18,7 +18,7 @@ import { A, CD2, BD, TX, MT, DG } from "../theme";
  * - invalid?: boolean — when true, swaps border colour to DG (danger red) to
  *                       indicate a FIP-invalid set shape (S045 / FT-09b).
  */
-export function ScoreStepper({ value, max, onChange, aColor = A, ariaLabel, invalid = false }) {
+export function ScoreStepper({ value, max, onChange, aColor = A, ariaLabel, invalid = false, size = 40 }) {
   const v = Number.isFinite(value) ? value : 0;
   const atMin = v <= 0;
   const atMax = typeof max === "number" && v >= max;
@@ -36,12 +36,12 @@ export function ScoreStepper({ value, max, onChange, aColor = A, ariaLabel, inva
   const stop = (e) => e.stopPropagation();
 
   const btnBase = {
-    width: 40,
-    height: 40,
+    width: size,
+    height: size,
     border: 0,
     background: "transparent",
     color: aColor,
-    fontSize: 22,
+    fontSize: Math.round(size * 0.55),
     fontWeight: 700,
     fontFamily: "'JetBrains Mono', monospace",
     cursor: "pointer",
@@ -66,7 +66,7 @@ export function ScoreStepper({ value, max, onChange, aColor = A, ariaLabel, inva
         borderRadius: 10,
         overflow: "hidden",
         background: CD2,
-        height: 40,
+        height: size,
       }}
     >
       <button
@@ -86,13 +86,13 @@ export function ScoreStepper({ value, max, onChange, aColor = A, ariaLabel, inva
         onClick={stop}
         aria-label={ariaLabel || "Score"}
         style={{
-          width: 48,
+          width: Math.round(size * 1.15),
           border: 0,
           borderLeft: `1px solid ${BD}`,
           borderRight: `1px solid ${BD}`,
           background: "transparent",
           color: TX,
-          fontSize: 18,
+          fontSize: Math.round(size * 0.45),
           fontWeight: 700,
           fontFamily: "'JetBrains Mono', monospace",
           textAlign: "center",
