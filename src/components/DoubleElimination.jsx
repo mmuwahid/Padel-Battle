@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, PU } from '../theme';
 import { BracketSVG } from './BracketSVG';
 import { ScoreStepper } from './ScoreStepper';
+import { ConfirmButton } from './ConfirmModal';
 import { rankBadge, TeamPlayers } from './tournamentResults';
 import Icon from './Icon';
 
@@ -425,7 +426,7 @@ export function DoubleElimination({ players, getName, supabase, leagueId, tourna
       </div>
 
       <div style={{ display: "flex", gap: 8 }}>
-        <button onClick={()=>{if(confirm("End tournament?"))endTournament();}} style={{ flex:1, padding:12, borderRadius:12, border:"1px solid "+DG+"40", background:"transparent", color:DG, fontSize:13, fontWeight:600, cursor:"pointer" }}>End Tournament</button>
+        <ConfirmButton title="End tournament?" message="This finalizes the standings and closes the tournament." confirmLabel="End" cancelLabel="Cancel" danger onConfirm={endTournament} style={{ flex:1, padding:12, borderRadius:12, border:"1px solid "+DG+"40", background:"transparent", color:DG, fontSize:13, fontWeight:600, cursor:"pointer" }}>End Tournament</ConfirmButton>
         {confirmDelete ? <div style={{ display:"flex", gap:4, flex:1 }}><button onClick={()=>{deleteTournament();setConfirmDelete(false);}} style={{ flex:1, padding:12, borderRadius:12, background:DG, border:"none", color:"#fff", fontSize:13, fontWeight:600, cursor:"pointer" }}>Confirm Delete</button><button onClick={()=>setConfirmDelete(false)} style={{ flex:1, padding:12, borderRadius:12, border:"1px solid "+BD, background:"transparent", color:MT, fontSize:13, cursor:"pointer" }}>Cancel</button></div> : <button onClick={()=>setConfirmDelete(true)} style={{ flex:1, padding:12, borderRadius:12, border:"1px solid "+DG+"20", background:"transparent", color:MT, fontSize:13, fontWeight:600, cursor:"pointer" }}>Delete</button>}
       </div>
     </div>

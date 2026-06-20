@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, PU } from '../theme';
 import { generateAmericanoSchedule, generateMexicanoRound } from '../utils/tournaments';
+import { ConfirmButton } from './ConfirmModal';
 import { ScoreStepper } from './ScoreStepper';
 import Icon from './Icon';
 
@@ -110,7 +111,7 @@ export function AmericanoMode({ players, getName, supabase, leagueId, tournament
             <p className="gm-actsub">{scored}/{totalMatches} scored &middot; Round {allRounds.length}</p>
           </div>
           <div className="gm-actr">
-            <button className="gm-actbtn dng" onClick={() => { if (confirm("End tournament?")) endTournament(); }}>End</button>
+            <ConfirmButton className="gm-actbtn dng" title="End tournament?" message="This finalizes the standings and closes the tournament." confirmLabel="End" cancelLabel="Cancel" danger onConfirm={endTournament}>End</ConfirmButton>
             {confirmDelete ? (
               <>
                 <button className="gm-actbtn dng solid" onClick={() => { deleteTournament(); setConfirmDelete(false); }}>Confirm</button>
