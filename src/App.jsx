@@ -1513,10 +1513,13 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
           {/* S068: per user direction, the join-request banner was removed from the
               Matches tab. The AdminDashboard's "Approval Queue" card is the single
               entry point for pending join requests. */}
-          {/* FT-05: Sub-tab toggle */}
-          <div style={{display:"flex",gap:4,marginBottom:16,background:CD,borderRadius:10,padding:3}}>
+          {/* FT-05 / #117 / #113: use the standard .seg/.sb segmented control so
+              the History|Schedule pills match the game-mode + analytics pills in
+              height + styling. .sb is text-transform:uppercase, so the labels read
+              HISTORY / SCHEDULE in caps like the rest of the app (was capitalize). */}
+          <div className="seg" style={{margin:"0 0 16px"}}>
             {["history","schedule"].map(t=>(
-              <button key={t} onClick={()=>setMatchSubTab(t)} style={{flex:1,padding:"8px 12px",borderRadius:8,border:"none",background:matchSubTab===t?A:"transparent",color:matchSubTab===t?"#000":MT,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily: "var(--font)",textTransform:"capitalize"}}>{t}</button>
+              <button key={t} className={`sb${matchSubTab===t?" on":""}`} onClick={()=>setMatchSubTab(t)}>{t}</button>
             ))}
           </div>
 
