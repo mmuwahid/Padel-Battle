@@ -1624,12 +1624,14 @@ body {
 
 /* Profile screen */
 .prohero{padding:24px 18px 14px;display:flex;flex-direction:column;align-items:center;text-align:center;position:relative;}
-/* #122 Option C: single ⋯ overflow menu replaces the inline camera / delete-pill / edit / assessment buttons */
-.promenu{position:absolute;top:14px;right:14px;z-index:20;}
-.promenu-btn{width:36px;height:36px;border-radius:10px;background:var(--surface);border:1px solid var(--border);color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 150ms;}
-.promenu-btn:hover{border-color:var(--accent-glow);color:var(--text);}
-.promenu-btn:active{transform:scale(.94);}
+/* #122: small Edit/Delete-photo menu anchored under the avatar's edit badge,
+   plus the Edit-Profile pill that sits beside the role badge. */
 .promenu-pop{position:absolute;top:42px;right:0;min-width:190px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:6px;display:flex;flex-direction:column;gap:2px;box-shadow:0 14px 34px rgba(0,0,0,.5);z-index:30;text-align:left;}
+/* photo menu: anchor just below the photo (within .prowrap), right-aligned to the edit badge */
+.phpop{top:100%;right:0;margin-top:6px;min-width:150px;}
+.proeditpill{cursor:pointer;color:var(--accent);border-color:var(--accent-glow)!important;background:transparent;transition:all 150ms;}
+.proeditpill:hover{background:var(--accent-dim);}
+.proeditpill:active{transform:scale(.96);}
 .promenu-item{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;background:transparent;border:none;border-radius:8px;color:var(--text);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;transition:background 120ms;}
 .promenu-item:hover{background:var(--surface-2);}
 .promenu-item:active{background:var(--accent-dim);}

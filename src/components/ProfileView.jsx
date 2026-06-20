@@ -19,18 +19,18 @@ export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, re
   const [editingMyProfile, setEditingMyProfile] = useState(false);
   const [showGrade, setShowGrade] = useState(false);
   const [showLightbox, setShowLightbox] = useState(false);
-  // #122 Option C: single ⋯ overflow menu (Edit / Change photo / Delete photo / Assessment)
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = React.useRef(null);
+  // #122: small photo menu anchored to the avatar's edit button (Edit/Delete photo)
+  const [photoMenuOpen, setPhotoMenuOpen] = useState(false);
+  const photoMenuRef = React.useRef(null);
   const fileInputRef = React.useRef(null);
 
-  // Close the ⋯ menu on outside click (mirrors MatchHistory rxpop pattern)
+  // Close the photo menu on outside click (mirrors MatchHistory rxpop pattern)
   React.useEffect(() => {
-    if (!menuOpen) return;
-    const onDoc = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false); };
+    if (!photoMenuOpen) return;
+    const onDoc = (e) => { if (photoMenuRef.current && !photoMenuRef.current.contains(e.target)) setPhotoMenuOpen(false); };
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
-  }, [menuOpen]);
+  }, [photoMenuOpen]);
 
   const userName = claimedPlayer?.name || user.user_metadata?.display_name || user.email?.split("@")[0] || "User";
   const userInitial = (userName || "U")[0].toUpperCase();
@@ -53,49 +53,12 @@ export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, re
         </button>
       </div>
 
-      {/* #122 Option C — centered hero. Photo + name + grouped attribute badges.
-          All actions (Edit / Change photo / Delete photo / Assessment) collapse
-          into one ⋯ menu top-right so nothing competes with the name. The stats
-          strip + win rate + highlights + achievements below stay untouched. */}
+      {/* #122 — centered hero. Photo (with an edit badge that opens a small
+          Edit/Delete-photo menu) + name + grouped attribute badges. Edit Profile
+          sits beside the role pill. Email is omitted (already in the side nav).
+          The stats strip + win rate + highlights + achievements stay untouched. */}
       <div className="prohero">
-        {/* ⋯ overflow menu — photo actions always available; edit/assessment gated on a claimed player */}
-        {(claimedPlayer || avatarUrl) && (
-          <div className="promenu" ref={menuRef}>
-            <button
-              className="promenu-btn"
-              aria-label="Profile actions"
-              aria-haspopup="true"
-              aria-expanded={menuOpen}
-              onClick={()=>setMenuOpen(o=>!o)}
-            >
-              <Icon name="more-vertical" size={18} color="currentColor"/>
-            </button>
-            {menuOpen && (
-              <div className="promenu-pop" role="menu">
-                {claimedPlayer && (
-                  <button className="promenu-item" role="menuitem" onClick={()=>{setMenuOpen(false);setEditingMyProfile(true);}}>
-                    <Icon name="edit" size={15} color="currentColor"/>Edit Profile
-                  </button>
-                )}
-                <button className="promenu-item" role="menuitem" onClick={()=>{setMenuOpen(false);fileInputRef.current?.click();}}>
-                  <Icon name="camera" size={15} color="currentColor"/>{avatarUrl?"Change Photo":"Add Photo"}
-                </button>
-                {avatarUrl && (
-                  <button className="promenu-item danger" role="menuitem" onClick={()=>{setMenuOpen(false);removeAvatar();}}>
-                    <Icon name="trash" size={15} color="currentColor"/>Delete Photo
-                  </button>
-                )}
-                {claimedPlayer && (
-                  <button className="promenu-item" role="menuitem" onClick={()=>{setMenuOpen(false);setShowGrade(true);}}>
-                    <Icon name="star" size={15} color="var(--gold)"/>{claimedPlayer.grade?"Retake Assessment":"Self-Assessment"}
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        <div className="prowrap">
+        <div className="prowrap" ref={photoMenuRef}>
           <div
             className={`propic${avatarUrl ? " tappable" : ""}`}
             onClick={avatarUrl ? () => setShowLightbox(true) : undefined}
@@ -104,18 +67,42 @@ export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, re
           >
             {avatarUrl ? <img src={avatarUrl} alt=""/> : userInitial}
           </div>
+          {/* Edit badge on the photo's bottom-right → Edit/Delete photo menu */}
+          <button
+            className="procb"
+            aria-label="Edit photo"
+            aria-haspopup="true"
+            aria-expanded={photoMenuOpen}
+            onClick={()=>setPhotoMenuOpen(o=>!o)}
+          >
+            <Icon name="edit" size={13} color="#000" strokeWidth={2.2}/>
+          </button>
+          {photoMenuOpen && (
+            <div className="promenu-pop phpop" role="menu">
+              <button className="promenu-item" role="menuitem" onClick={()=>{setPhotoMenuOpen(false);fileInputRef.current?.click();}}>
+                <Icon name="camera" size={15} color="currentColor"/>{avatarUrl?"Edit Photo":"Add Photo"}
+              </button>
+              {avatarUrl && (
+                <button className="promenu-item danger" role="menuitem" onClick={()=>{setPhotoMenuOpen(false);removeAvatar();}}>
+                  <Icon name="trash" size={15} color="currentColor"/>Delete Photo
+                </button>
+              )}
+            </div>
+          )}
           <input ref={fileInputRef} type="file" accept="image/*" onChange={(e)=>uploadAvatar(e.target.files?.[0])} style={{display:"none"}}/>
         </div>
         {avatarUploading && <div style={{fontSize:11,color:"var(--accent)",marginTop:6,fontFamily:"var(--mono)"}}>Uploading…</div>}
         <div className="proname">{userName}</div>
-        <div className="proemail">{user.email}</div>
         {claimedPlayer && (
           <>
-            {/* Row 1: Role · Grade (the two identity badges) */}
+            {/* Row 1: Role · Edit Profile · Grade */}
             <div className="protags">
               <div className="protag" style={{color:"var(--accent)",borderColor:"var(--accent-glow)",background:"var(--accent-dim)",fontWeight:800,letterSpacing:".06em",textTransform:"uppercase"}}>
                 <Icon name="admin" size={12} color="var(--accent)"/>{isAdmin?"Admin":"Member"}
               </div>
+              <button className="protag proeditpill" onClick={()=>setEditingMyProfile(true)}>
+                <Icon name="edit" size={12} color="var(--accent)"/>Edit Profile
+              </button>
               {/* FT-17: player grade pill (coloured by tier, "Grade:" prefixed) */}
               {claimedPlayer.grade && (
                 <div className="protag" style={{color:gradeColor(claimedPlayer.grade),borderColor:gradeColor(claimedPlayer.grade),background:`${gradeColor(claimedPlayer.grade)}1a`,fontWeight:800}}>
@@ -154,12 +141,6 @@ export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, re
               </div>
             )}
           </>
-        )}
-        {/* FT-17: grade callout when not yet rated */}
-        {claimedPlayer && !claimedPlayer.grade && (
-          <div style={{fontFamily:"var(--mono)",fontSize:10,color:"#9090a4",marginTop:8,textAlign:"center"}}>
-            Take the self-assessment (in the ⋯ menu) to set your skill grade.
-          </div>
         )}
       </div>
 

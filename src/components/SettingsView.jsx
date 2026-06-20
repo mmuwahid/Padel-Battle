@@ -16,36 +16,14 @@ function Toggle({ on, onChange, label }) {
 
 export function SettingsView({ user, claimedPlayer, isAdmin, pushSubscribed, subscribeToPush, unsubscribeFromPush, notifNewMatch, notifRankingChange, notifNewMembers, notifChallenges, toggleNotification, onSwitchLeague, setSidebarView, navigateSidebar, goBack, showToast, loadLeagueData, testPushNotification }) {
   const navTo = navigateSidebar || setSidebarView;
-  const [editDisplayName, setEditDisplayName] = useState(user.user_metadata?.display_name || user.email?.split("@")[0] || "");
-  const [profileSaving, setProfileSaving] = useState(false);
-  const [profileMsg, setProfileMsg] = useState("");
+  // S090: Display Name is edited from the profile Edit screen — the duplicate
+  // row here was removed as redundant clutter (state + handler dropped with it).
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   const togglePush = () => pushSubscribed
     ? unsubscribeFromPush()
     : subscribeToPush().then(ok => { if (ok && showToast) showToast("Notifications enabled!"); });
-
-  const saveDisplayName = async () => {
-    const v = editDisplayName.trim();
-    if (!v) return;
-    setProfileSaving(true);
-    setProfileMsg("");
-    try {
-      const { error: err } = await supabase.auth.updateUser({ data: { display_name: v } });
-      if (err) throw err;
-      await supabase.from("profiles").update({ display_name: v }).eq("id", user.id);
-      if (claimedPlayer) {
-        await supabase.from("players").update({ name: v }).eq("id", claimedPlayer.id);
-        await loadLeagueData();
-      }
-      setProfileMsg("Saved!");
-      setTimeout(() => setProfileMsg(""), 2000);
-    } catch (err) {
-      setProfileMsg(err.message || "Failed to update");
-    }
-    setProfileSaving(false);
-  };
 
   const deleteAccount = async () => {
     setDeleting(true);
@@ -142,14 +120,6 @@ export function SettingsView({ user, claimedPlayer, isAdmin, pushSubscribed, sub
       <div>
         <div className="slbl">Account</div>
         <div className="stcard">
-          <div className="staf">
-            <div className="stafL">Display Name</div>
-            <div className="stafR">
-              <input className="stafI" type="text" value={editDisplayName} onChange={e=>setEditDisplayName(e.target.value)} placeholder="Your name"/>
-              <button onClick={saveDisplayName} disabled={profileSaving} style={{padding:"10px 16px",borderRadius:"var(--r-sm)",background:"var(--accent)",border:"none",fontFamily:"var(--font)",fontSize:12,fontWeight:700,color:"#000",cursor:"pointer",flexShrink:0,opacity:profileSaving?.6:1}}>{profileSaving?"…":"Save"}</button>
-            </div>
-            {profileMsg && <div style={{fontSize:11,color:profileMsg==="Saved!"?"var(--accent)":"var(--danger)",fontFamily:"var(--mono)"}}>{profileMsg}</div>}
-          </div>
           <div className="staf">
             <div className="stafL">Email</div>
             <input className="stafI" value={user.email} readOnly style={{opacity:.6}}/>
