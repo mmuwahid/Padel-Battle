@@ -1124,11 +1124,18 @@ body {
 /* ─── Issue #46 Phase 7 — Match Cards (MatchHistory / MatchApprovalsQueue / ScheduleView) ─ */
 
 /* Top bar above match list (.mtbar / .mtmeta / .spill / .mlist) */
-.mtbar{display:flex;align-items:center;justify-content:space-between;padding:12px 18px 2px;}
+/* S090: horizontal gutter removed — the Matches tab wrapper (App.jsx) already
+   supplies the app-standard 18px gutter; the old 18px here double-padded the
+   "N matches · season" row to 36px, out of line with the toggle + every other
+   screen. Vertical padding kept. */
+.mtbar{display:flex;align-items:center;justify-content:space-between;padding:12px 0 2px;}
 .mtmeta{font-family:var(--mono);font-size:11px;color:var(--muted);}
 .spill{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-full);padding:7px 12px;font-family:var(--mono);font-size:11px;cursor:pointer;color:var(--text);outline:none;transition:all 150ms;}
 .spill:hover{border-color:var(--accent-glow);}
-.mlist{padding:10px 14px;display:flex;flex-direction:column;gap:10px;}
+/* S090: drop the 14px horizontal inset so match/schedule/approval cards sit on
+   the same 18px gutter as the toggle, leaderboard rows, and the rest of the app
+   (all .mlist consumers render inside an 18px-gutter wrapper). Vertical kept. */
+.mlist{padding:10px 0;display:flex;flex-direction:column;gap:10px;}
 
 /* Card wrapper */
 /* S066: overflow:visible so reaction popover can extend past card edge */
