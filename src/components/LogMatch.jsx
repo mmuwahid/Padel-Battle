@@ -314,7 +314,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
               style={{appearance:"none",WebkitAppearance:"none",cursor:"pointer",paddingRight:26,backgroundImage:"none",color:currentSeason?.active?"var(--accent)":"#9090a4",fontWeight:currentSeason?.active?700:400}}
             >
               {seasons.filter(s=>s.active||s.id===seasonId).map(s=>(
-                <option key={s.id} value={s.id} style={{color:"#fff"}}>{s.name}{s.active?" • active":""}</option>
+                <option key={s.id} value={s.id} style={{color:s.active?"#fff":"#9090a4"}}>{s.name}</option>
               ))}
             </select>
             <span style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%) rotate(90deg)",pointerEvents:"none",display:"flex"}}>

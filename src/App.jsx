@@ -1230,8 +1230,11 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
             {seasons.length>0 && (()=>{ const _sa=seasons.find(s=>s.id===selectedSeason)?.active; return (
               <div style={{position:"relative",display:"inline-flex",alignItems:"center",flexShrink:0}}>
                 <select className="spill" value={selectedSeason||""} onChange={e=>setSelectedSeason(e.target.value)}
-                  style={{appearance:"none",WebkitAppearance:"none",paddingRight:26,backgroundImage:"none",color:_sa?"var(--accent)":"var(--text)",fontWeight:_sa?700:400}}>
-                  {seasons.map(s=><option key={s.id} value={s.id} style={{color:"#fff"}}>{s.name}{s.active?" ·":""}</option>)}
+                  style={{appearance:"none",WebkitAppearance:"none",paddingRight:26,backgroundImage:"none",color:_sa?"var(--accent)":"var(--muted)",fontWeight:_sa?700:400}}>
+                  {/* S089 #126: label is just the season name (no '(active)'/dot) —
+                      active is conveyed by accent color; inactive seasons render
+                      muted gray. Consistent across every season dropdown. */}
+                  {seasons.map(s=><option key={s.id} value={s.id} style={{color:s.active?"#fff":"#9090a4"}}>{s.name}</option>)}
                 </select>
                 <span style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%) rotate(90deg)",pointerEvents:"none",display:"flex"}}>
                   <Icon name="chevron" size={12} color={_sa?"var(--accent)":"#9090a4"}/>

@@ -237,8 +237,9 @@ export function MatchHistory({onEdit,shareMatch,sel,onMatchDeleted,scrollToMatch
         {seasons && seasons.length > 0 && (()=>{ const _sa=seasons.find(sn=>sn.id===selectedSeason)?.active; return (
           <div style={{position:"relative",display:"inline-flex",alignItems:"center"}}>
             <select className="spill" value={selectedSeason||""} onChange={e=>setSelectedSeason(e.target.value)}
-              style={{appearance:"none",WebkitAppearance:"none",paddingRight:26,backgroundImage:"none",color:_sa?"var(--accent)":"var(--text)",fontWeight:_sa?700:400}}>
-              {seasons.map(sn=><option key={sn.id} value={sn.id} style={{color:"#fff"}}>{sn.name}{sn.active?" (active)":""}</option>)}
+              style={{appearance:"none",WebkitAppearance:"none",paddingRight:26,backgroundImage:"none",color:_sa?"var(--accent)":"var(--muted)",fontWeight:_sa?700:400}}>
+              {/* S089 #126: consistent season-pill treatment — name only, accent when active, muted gray when inactive. */}
+              {seasons.map(sn=><option key={sn.id} value={sn.id} style={{color:sn.active?"#fff":"#9090a4"}}>{sn.name}</option>)}
             </select>
             <span style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%) rotate(90deg)",pointerEvents:"none",display:"flex"}}>
               <Icon name="chevron" size={12} color={_sa?"var(--accent)":"#9090a4"}/>

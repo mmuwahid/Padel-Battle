@@ -804,7 +804,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                   style={{appearance:"none",WebkitAppearance:"none",cursor:"pointer",paddingRight:26,backgroundImage:"none",color:rosterSeasonObj?.active?"var(--accent)":"#9090a4",fontWeight:rosterSeasonObj?.active?700:400}}
                 >
                   {seasons.map(s=>(
-                    <option key={s.id} value={s.id} style={{color:"#fff"}}>{s.name}{s.active?" • active":" • ended"}</option>
+                    <option key={s.id} value={s.id} style={{color:s.active?"#fff":"#9090a4"}}>{s.name}</option>
                   ))}
                   <option value="all" style={{color:"#fff"}}>All league players</option>
                 </select>
