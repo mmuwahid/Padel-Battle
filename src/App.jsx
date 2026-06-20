@@ -123,15 +123,21 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
   }, [sidebarView]);
 
   const goBackSidebar = useCallback(() => {
+    // S089 Issue #122: backing out of a sidebar view (profile, settings, admin,
+    // etc.) returns to the underlying CONTENT tab the user was on — it must NEVER
+    // re-pop the drawer. Same principle as #109's closeNotifications, and matches
+    // what the hardware/swipe back button already does. Within a multi-level drill
+    // chain (settings → admin → playerMgmt) each back still steps up one level;
+    // only reaching the root (a null history entry) closes the overlay to content.
     setSidebarHistory(prev => {
       if (prev.length === 0) {
         setSidebarView(null);
-        setSidebarOpen(true);
+        setSidebarOpen(false);
         return prev;
       }
       const top = prev[prev.length - 1];
       setSidebarView(top);
-      if (top === null) setSidebarOpen(true);
+      if (top === null) setSidebarOpen(false);
       return prev.slice(0, -1);
     });
   }, []);
