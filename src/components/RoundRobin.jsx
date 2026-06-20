@@ -192,7 +192,7 @@ export function RoundRobin({ players, getName, supabase, leagueId, tournament, s
     return (
       <div style={{ padding: "20px 16px", maxWidth: "600px", margin: "0 auto" }}>
         <div style={{ margin: "0 0 16px", padding: 24, background: "linear-gradient(135deg, " + GD + "14 0%, " + GD + "05 100%)", border: "2px solid " + GD, borderRadius: 18, textAlign: "center" }}>
-          <div style={{ fontSize: 48, marginBottom: 8 }}>{"\uD83C\uDFC6"}</div>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}><Icon name="trophy" size={44} color={GD} strokeWidth={1.5} /></div>
           <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.5, color: GD, marginBottom: 8 }}>Round Robin Champion</div>
           <div style={{ fontSize: 22, fontWeight: 800, color: TX, marginBottom: 10 }}>{champion?.name || "TBD"}</div>
           <TeamPlayers playerIds={champion?.players} players={players} getName={getName} size={28} fontSize={13} color={TX} weight={700} justify="center" />
@@ -209,7 +209,7 @@ export function RoundRobin({ players, getName, supabase, leagueId, tournament, s
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: "0 4px" }}>
               <thead><tr>
-                {["#","Players","P","W","L","PTS","GD"].map(h=><th key={h} style={{ fontSize:10, fontWeight:600, color:MT, textTransform:"uppercase", padding:"6px 6px", textAlign: h==="Players"?"left":"center" }}>{h}</th>)}
+                {["#","Players","MP","MW","ML","PTS","GD"].map(h=><th key={h} style={{ fontSize:10, fontWeight:600, color:MT, textTransform:"uppercase", padding:"6px 6px", textAlign: h==="Players"?"left":"center" }}>{h}</th>)}
               </tr></thead>
               <tbody>{standings.map((t,i) => (
                 <tr key={t.name}>
