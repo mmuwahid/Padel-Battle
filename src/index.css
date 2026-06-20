@@ -672,11 +672,15 @@ body {
 
 
 /* ─── Phase 4 — Ranking ──────────────────────────────────────────────── */
-.lbbar{display:flex;align-items:center;justify-content:space-between;padding:20px 18px 0;}
+.lbbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:20px 18px 0;}
 /* S069: dropped text-transform:uppercase to match spec — Syne 800 mixed-case
    reads as the prominent stylized "Leaderboard" header in JSX. Same change
    applied to .adh1, .lv-title, .sched-title for cross-app consistency. */
-.lbtitle{font-size:26px;font-weight:800;letter-spacing:-.02em;}
+/* S089 #113: Syne 800 is a wide display face — at 26px on a 375px screen the
+   "Leaderboard" title overran the season selector and pushed it off-screen.
+   clamp() scales it down on narrow screens, and min-width:0 + ellipsis lets it
+   shrink within the flex row instead of shoving the selector off the edge. */
+.lbtitle{font-size:clamp(18px,4.9vw,24px);font-weight:800;letter-spacing:-.02em;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .spill{appearance:none;-webkit-appearance:none;display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:7px 12px;font-family:var(--mono);font-size:11px;color:var(--text);cursor:pointer;outline:none;transition:all 150ms;}
 .spill:focus{border-color:var(--accent-glow);}
 .pod-wrap{display:flex;align-items:flex-end;justify-content:center;gap:6px;padding:16px 14px 14px;}
