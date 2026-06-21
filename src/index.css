@@ -1158,6 +1158,8 @@ body {
 
 /* Header band */
 .mhd2{display:flex;align-items:center;padding:10px 13px;border-bottom:1px solid var(--border);background:var(--surface-2);position:relative;min-height:42px;border-radius:var(--r-lg) var(--r-lg) 0 0;}
+/* S091 (#127.5): weekday badge beside the Log Match native date picker. */
+.ctx-dow{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--accent);flex-shrink:0;}
 /* S091 (#127): weekday stacked above the date in the match-history flashcard. */
 .mdate2{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.06em;display:flex;flex-direction:column;line-height:1.35;}
 .mdate2-dow{font-weight:700;color:var(--accent);}

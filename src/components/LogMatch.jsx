@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { TeamShuffler } from './TeamShuffler';
 import { createInitialLiveState, scorePoint, undoPoint, getLiveDisplay, liveToSets, validateMatch } from '../utils/scoringEngine';
-import { formatTeam } from '../utils/helpers';
+import { formatTeam, formatDateParts } from '../utils/helpers';
 import Icon from './Icon';
 
 // S066 Phase 9: spec-faithful restyle of LogMatch.
@@ -308,14 +308,19 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
       {/* Date + Season context bar */}
       {/* S091 (#127.4): season pill on the right (date left) for app-wide consistency. */}
       <div className="ctxbar" style={{padding:"8px 0",borderBottom:"none",justifyContent:"space-between"}}>
-        <input
-          type="date"
-          value={date}
-          max={new Date().toISOString().split("T")[0]}
-          onChange={e=>setDate(e.target.value)}
-          className="ctxchip"
-          style={{colorScheme:"dark",cursor:"pointer",appearance:"none",WebkitAppearance:"none"}}
-        />
+        {/* S091 (#127.5): native date inputs can't show a weekday, so a weekday
+            badge sits beside the picker, derived from the selected date. */}
+        <div style={{display:"flex",alignItems:"center",gap:8,minWidth:0}}>
+          {date && <span className="ctx-dow">{formatDateParts(date).dow}</span>}
+          <input
+            type="date"
+            value={date}
+            max={new Date().toISOString().split("T")[0]}
+            onChange={e=>setDate(e.target.value)}
+            className="ctxchip"
+            style={{colorScheme:"dark",cursor:"pointer",appearance:"none",WebkitAppearance:"none"}}
+          />
+        </div>
         {!isE && seasons && seasons.length > 0 && (
           <div style={{position:"relative",display:"inline-flex",alignItems:"center",flexShrink:0}}>
             <select
