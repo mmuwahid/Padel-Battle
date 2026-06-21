@@ -5,6 +5,9 @@ export function win(sets){let a=0,b=0;sets.forEach(([x,y])=>{if(x>y)a++;else b++
 // S091 (#127.5): prefix the weekday abbreviation (e.g. "SUN") so the day of week
 // is visible everywhere dates render. Single source for ~8 render sites.
 export function formatDate(d){const dt=new Date(d);const dow=dt.toLocaleString("en-GB",{weekday:"short"}).toUpperCase();const dd=String(dt.getDate()).padStart(2,"0");const mmm=dt.toLocaleString("en-GB",{month:"short"});const yyyy=dt.getFullYear();return `${dow} ${dd} ${mmm} ${yyyy}`;}
+// S091 (#127): weekday + date split so callers can stack the day-of-week above
+// the date (e.g. the match-history flashcard).
+export function formatDateParts(d){const dt=new Date(d);const dow=dt.toLocaleString("en-GB",{weekday:"short"}).toUpperCase();const dd=String(dt.getDate()).padStart(2,"0");const mmm=dt.toLocaleString("en-GB",{month:"short"});const yyyy=dt.getFullYear();return {dow,date:`${dd} ${mmm} ${yyyy}`};}
 export function setTotals(sets){return sets.reduce(([a,b],[x,y])=>[a+x,b+y],[0,0]);}
 
 // S067: compute integer age in years from a YYYY-MM-DD date_of_birth string.

@@ -317,11 +317,11 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
           style={{colorScheme:"dark",cursor:"pointer",appearance:"none",WebkitAppearance:"none"}}
         />
         {!isE && seasons && seasons.length > 0 && (
-          <div style={{position:"relative",display:"inline-flex",alignItems:"center"}}>
+          <div style={{position:"relative",display:"inline-flex",alignItems:"center",flexShrink:0}}>
             <select
               value={seasonId||""}
               onChange={e=>setCurSeason(e.target.value)}
-              className="ctxchip"
+              className="spill"
               style={{appearance:"none",WebkitAppearance:"none",cursor:"pointer",paddingRight:26,backgroundImage:"none",color:currentSeason?.active?"var(--accent)":"#9090a4",fontWeight:currentSeason?.active?700:400}}
             >
               {seasons.filter(s=>s.active||s.id===seasonId).map(s=>(

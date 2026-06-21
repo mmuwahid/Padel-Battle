@@ -368,6 +368,9 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
 
   return (
     <div style={{maxWidth:"600px",margin:"0 auto"}}>
+      {/* S091 (#127): screen title sits ABOVE the Players/Analytics toggle, matching
+          the Leaderboard/Game Mode header pattern. */}
+      <div className="pscreen-h"><h2 className="scrn-title">Players</h2></div>
       {/* Phase 5: segmented control replacing italic-uppercase pills (S047 styling). */}
       <div className="seg">
         {[["roster","Players"],["analytics","Analytics"]].map(([k,l])=>(
@@ -784,13 +787,12 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
           female: searchFiltered.filter(p => p.gender === "female").length,
         };
         return (<>
-          {/* S091 (#127.2): screen header — "Players" title with a footer count
-              line (was the inline "Players (11)" parenthetical). */}
+          {/* S091 (#127): title now lives above the toggle — keep the roster count
+              line here as the footer for the player list. */}
           <div className="pscreen-h">
-            <h2 className="scrn-title">Players</h2>
             <div className="pscreen-count">
               {filtered.length} {filtered.length===1?"player":"players"}
-              {rosterSeasonObj ? ` · ${rosterSeasonObj.name}` : " · all league players"}
+              {rosterSeasonObj ? ` · ${rosterSeasonObj.name}` : " · all players"}
             </div>
           </div>
 
@@ -815,17 +817,18 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                 "All league players" escape hatch. Green when an active season is
                 selected, muted otherwise (mirrors the LogMatch season pill). */}
             {(seasons||[]).length>0 && (
-              <div style={{position:"relative",display:"inline-flex",alignItems:"center"}}>
+              /* S091 (#127): season pill matches the Leaderboard .spill standard. */
+              <div style={{position:"relative",display:"inline-flex",alignItems:"center",flexShrink:0}}>
                 <select
                   value={rosterSeason}
                   onChange={e=>setRosterSeason(e.target.value)}
-                  className="ctxchip"
+                  className="spill"
                   style={{appearance:"none",WebkitAppearance:"none",cursor:"pointer",paddingRight:26,backgroundImage:"none",color:rosterSeasonObj?.active?"var(--accent)":"#9090a4",fontWeight:rosterSeasonObj?.active?700:400}}
                 >
                   {seasons.map(s=>(
                     <option key={s.id} value={s.id} style={{color:s.active?"#fff":"#9090a4"}}>{s.name}</option>
                   ))}
-                  <option value="all" style={{color:"#fff"}}>All league players</option>
+                  <option value="all" style={{color:"#fff"}}>All players</option>
                 </select>
                 <span style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%) rotate(90deg)",pointerEvents:"none",display:"flex"}}>
                   <Icon name="chevron" size={12} color={rosterSeasonObj?.active?"var(--accent)":"#9090a4"}/>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { win, formatDate, flagEmoji } from '../utils/helpers';
+import { win, formatDate, formatDateParts, flagEmoji } from '../utils/helpers';
 import { useLeague } from '../LeagueContext';
 import { MatchApprovalsQueue } from './MatchApprovalsQueue';
 import Icon from './Icon';
@@ -266,7 +266,7 @@ export function MatchHistory({onEdit,shareMatch,sel,onMatchDeleted,scrollToMatch
                 {myPendingMatches.map(m=>(
                   <div key={m.id} className="mcard pending" data-match-id={m.id}>
                     <div className="mhd2">
-                      <div className="mdate2">{formatDate(m.date)}</div>
+                      <div className="mdate2"><span className="mdate2-dow">{formatDateParts(m.date).dow}</span><span>{formatDateParts(m.date).date}</span></div>
                       <span className="pending-tag">{"\u23F3"} Awaiting approval</span>
                     </div>
                     {renderBody(m, 'pending')}
@@ -305,7 +305,7 @@ export function MatchHistory({onEdit,shareMatch,sel,onMatchDeleted,scrollToMatch
             return (
               <div key={m.id} className={`mcard${isIncomplete?' inc':''}`} data-match-id={m.id}>
                 <div className="mhd2">
-                  <div className="mdate2">{formatDate(m.date)}</div>
+                  <div className="mdate2"><span className="mdate2-dow">{formatDateParts(m.date).dow}</span><span>{formatDateParts(m.date).date}</span></div>
                   {isIncomplete
                     ? <div className="motm-pill muted">Incomplete</div>
                     : (m.motm && <div className="motm-pill"><Icon name="star" size={12}/>{getName(m.motm)}</div>)
