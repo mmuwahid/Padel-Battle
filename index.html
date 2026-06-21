@@ -92,16 +92,13 @@
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js').then((reg) => {
-            // Check for updates periodically (every 30 minutes)
+            // Check for updates periodically (every 30 minutes). The new worker
+            // installs in the background and activates on the next full app open.
             setInterval(() => reg.update(), 30 * 60 * 1000);
           }).catch(() => {});
         });
-        // Listen for SW_UPDATED message — auto-reload to get new version
-        navigator.serviceWorker.addEventListener('message', (event) => {
-          if (event.data?.type === 'SW_UPDATED') {
-            window.location.reload();
-          }
-        });
+        // S091 (#127): the SW_UPDATED auto-reload was removed — a new version no
+        // longer force-reloads the page mid-session; it applies on the next open.
       }
       // Offline detection — update splash status
       window.addEventListener('offline', () => {

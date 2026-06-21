@@ -1,30 +1,29 @@
-const CACHE_NAME = 'padelhub-v206';
+const CACHE_NAME = 'padelhub-v207';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
 ];
 
-// Install — cache static assets, skip waiting to activate immediately
+// Install — cache static assets.
+// S091 (#127): skipWaiting() REMOVED. A new SW now waits until all app windows are
+// closed before activating, so users never get a forced mid-session reload. The new
+// version applies cleanly on the next full open. (First-ever installs still activate
+// immediately — there is no old worker to wait for.)
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
   );
-  self.skipWaiting();
 });
 
-// Activate — clean old caches + notify clients about update
+// Activate — clean old caches and take control of any uncontrolled windows.
+// S091 (#127): the SW_UPDATED postMessage (which triggered window.location.reload)
+// was REMOVED — the new version is served on the next open, no reload needed.
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    ).then(() => {
-      // Tell all open tabs a new version is active — they should reload
-      self.clients.matchAll({ type: 'window' }).then((clients) => {
-        clients.forEach((client) => client.postMessage({ type: 'SW_UPDATED' }));
-      });
-    })
+    ).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
 // Fetch — smart caching strategy

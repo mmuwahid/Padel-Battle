@@ -63,6 +63,18 @@ export function AuthGate({children}){
   const isRecoveryRef = useRef(false);
 
   useEffect(()=>{
+    // S091 (#127 auth-flicker fix): the old code raced getSession() against a 5s
+    // timeout and flipped loading=false with user=null when it was slow — which
+    // flashed the LOGIN screen on a cold PWA start before the session restored
+    // (then onAuthStateChange fired the real session, looking like an auto-login).
+    // Fix: let onAuthStateChange's INITIAL_SESSION (always fired once by
+    // supabase-js v2 with the fully-resolved session) be the authoritative signal
+    // that flips loading=false. The splash stays up until we truly know the auth
+    // state, so logged-in users never see the login screen. Handler stays
+    // SYNCHRONOUS (no getSession inside — it can deadlock on the auth lock).
+    let resolved = false;
+    const resolve = () => { resolved = true; setLoading(false); };
+
     const {data:{subscription}} = supabase.auth.onAuthStateChange((evt,session)=>{
       if (evt === "PASSWORD_RECOVERY") {
         isRecoveryRef.current = true;
@@ -70,47 +82,47 @@ export function AuthGate({children}){
         setAuthMode("recovery");
         setError("");
         setSuccessMsg("Set your new password below.");
-        setLoading(false);
         window.history.replaceState(null, "", window.location.pathname + window.location.search);
+        resolve();
         return;
       }
       if (evt === "SIGNED_OUT") {
         isRecoveryRef.current = false;
         setUser(null);
         setRecoveryUser(null);
-      } else {
-        if (!isRecoveryRef.current) {
+        resolve();
+        return;
+      }
+      // INITIAL_SESSION / SIGNED_IN / TOKEN_REFRESHED / USER_UPDATED — authoritative
+      if (!isRecoveryRef.current) {
+        const hash = window.location.hash;
+        if (!(hash && hash.includes("type=recovery"))) {
           setUser(session?.user || null);
         }
       }
+      resolve();
     });
 
-    const handleAuthCallback = async () => {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get("code")) {
-        const cleanUrl = window.location.pathname + (params.get("invite") ? `?invite=${params.get("invite")}` : "");
-        window.history.replaceState(null, "", cleanUrl);
-      }
-    };
-    handleAuthCallback();
+    // Clean the OAuth ?code= param from the URL after a redirect sign-in.
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("code")) {
+      const cleanUrl = window.location.pathname + (params.get("invite") ? `?invite=${params.get("invite")}` : "");
+      window.history.replaceState(null, "", cleanUrl);
+    }
 
-    const checkAuth = async () => {
+    // Safety fallback: if the auth event somehow never fires, resolve from storage
+    // after a generous delay so we can never hang on the splash forever.
+    const fallback = setTimeout(async () => {
+      if (resolved) return;
       try {
-        const result = await Promise.race([
-          supabase.auth.getSession(),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
-        ]);
+        const {data} = await supabase.auth.getSession();
         const hash = window.location.hash;
-        if (hash && hash.includes("type=recovery")) return;
-        setUser(result.data?.session?.user || null);
-      } catch {
-        setUser(null);
-      }
+        if (!(hash && hash.includes("type=recovery"))) setUser(data?.session?.user || null);
+      } catch { setUser(null); }
       setLoading(false);
-    };
-    checkAuth();
+    }, 8000);
 
-    return ()=>subscription?.unsubscribe();
+    return ()=>{ subscription?.unsubscribe(); clearTimeout(fallback); };
   },[]);
 
   const clearForm = () => { setError(""); setSuccessMsg(""); };
