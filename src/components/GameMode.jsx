@@ -131,18 +131,26 @@ export function GameMode({ tournament, setTournament, sel }) {
     return <RoundRobin {...sharedProps} />;
   }
 
+  // S091 (#127): once drilled into the Americano/Mexicano player setup, hide the
+  // "Game Mode" header + Casual/Competitive toggle for a clean full-screen setup.
+  const casualSetup = topTab === "casual" && casualStep === "setup";
+
   return (
     <div>
-      <div className="gm-h">
-        <span className="gm-h-eyebrow">Tournaments</span>
-        <h1 className="gm-h-title">Game Mode</h1>
-        <p className="gm-h-sub">Choose your format</p>
-      </div>
+      {!casualSetup && (
+        <>
+          <div className="gm-h">
+            <span className="gm-h-eyebrow">Tournaments</span>
+            <h1 className="gm-h-title">Game Mode</h1>
+            <p className="gm-h-sub">Choose your format</p>
+          </div>
 
-      <div className="seg gm-seg">
-        <button className={`sb ${topTab === "casual" ? "on" : ""}`} onClick={() => setTopTab("casual")}>Casual</button>
-        <button className={`sb ${topTab === "competitive" ? "on" : ""}`} onClick={() => setTopTab("competitive")}>Competitive</button>
-      </div>
+          <div className="seg gm-seg">
+            <button className={`sb ${topTab === "casual" ? "on" : ""}`} onClick={() => setTopTab("casual")}>Casual</button>
+            <button className={`sb ${topTab === "competitive" ? "on" : ""}`} onClick={() => setTopTab("competitive")}>Competitive</button>
+          </div>
+        </>
+      )}
 
       {topTab === "casual" && (
         <>
