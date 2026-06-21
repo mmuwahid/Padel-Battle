@@ -178,3 +178,17 @@ season-scoped, **"Season admins"**) showing avatar + name + role badge. Pulls fr
 Once these are answered, the build is: (a) permissions storage, (b) RPC re-gating,
 (c) the Permissions screen + admins footer, (d) UI gate alignment, (e) close the
 §5 gaps.
+
+---
+
+## v1 SHIPPED — S092 (2026-06-21) · commit ab7b8c0 · SW v219
+
+Decisions taken: combined screen · 4 key toggles · admins-only · fix the 3 gaps.
+
+**Built (all non-breaking, defaults all-true):**
+- DB: `leagues.admin_permissions` jsonb; `admin_has_permission(league,user,key)`; owner-only `set_league_permissions()`. Migrations `s092_league_permissions_part1` (schema/helper/setter/RLS) + `part2` (re-gate RPCs).
+- Re-gated: `approve_match`/`reject_match`/`update_pending_match` → approve_matches; `approve_join_request`/`reject_join_request` → invite_players; `set_season_roster` → edit_roster; `players_update_admin` RLS → edit_profiles.
+- Gaps fixed: `seasons_insert` → admin-only; `league_members_insert` → blocked (RPC-only joins, all membership RPCs are SECURITY DEFINER); match Edit button hidden from members on approved matches (gap b).
+- UI: `PermissionsScreen.jsx` (4 toggles + League Admins footer), owner edits / admins read-only; League Management → Permissions row; context `adminPermissions` + `canDo()`; gated MatchApprovalsQueue + ApprovalQueueScreen.
+
+**Deferred to v2:** full ~10-capability matrix (edit names/dates/format, delete history), per-season overrides, member-grantable permissions, and UI-gating the player-edit controls in Player Management (DB already enforces edit_profiles; admin without it gets an error toast as a stopgap).
