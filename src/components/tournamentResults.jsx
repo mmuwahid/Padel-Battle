@@ -6,7 +6,7 @@ import { CD2, MT } from "../theme";
 // TeamPlayers: avatar + name chips for a team's players (matches the avatar
 // treatment used across the rest of the app — players[].avatar_url).
 export const rankBadge = (i) =>
-  i === 0 ? "\uD83C\uDFC6" : i === 1 ? "\uD83E\uDD48" : i === 2 ? "\uD83E\uDD49" : String(i + 1);
+  i === 0 ? "\uD83E\uDD47" : i === 1 ? "\uD83E\uDD48" : i === 2 ? "\uD83E\uDD49" : String(i + 1);
 
 export function TeamPlayers({ playerIds, players, getName, size = 22, fontSize = 12, color = MT, weight = 600, justify = "flex-start" }) {
   const ids = (playerIds || []).filter(Boolean);
