@@ -8,7 +8,7 @@ import { useLeague } from "../LeagueContext";
 // or Reject (with optional free-text reason, max 120 chars). Approved/rejected items collapse
 // to a single-line summary. Reachable from AdminDashboard nav card and Matches-tab inline banner.
 export function ApprovalQueueScreen({ setSidebarView, goBack }) {
-  const { supabase, leagueId, league, showToast, loadLeagueData, isAdmin, sendPushNotification } = useLeague();
+  const { supabase, leagueId, league, showToast, loadLeagueData, isAdmin, canDo, sendPushNotification } = useLeague();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState(null);
@@ -112,7 +112,8 @@ export function ApprovalQueueScreen({ setSidebarView, goBack }) {
   const visibleRequests = requests; // doneRows render inline; we filter on timeout
   const pendingCount = visibleRequests.filter(r => !doneRows[r.id]).length;
 
-  if (!isAdmin) {
+  // S092 #129: gated on the invite_players capability (was isAdmin).
+  if (!canDo('invite_players')) {
     return (
       <div className="ad-screen">
         <div className="back-btn-row">

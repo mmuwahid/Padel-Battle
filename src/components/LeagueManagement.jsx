@@ -255,6 +255,20 @@ export function LeagueManagement({
             </div>
           )}
 
+          {isAdmin && (
+            <div>
+              <div className="slbl">Permissions</div>
+              <button className="crow" onClick={() => goTo("leaguePermissions")}>
+                <div className="cricon"><Icon name="shield" size={16} color="var(--accent)" /></div>
+                <div className="crbody">
+                  <div className="crtitle">League Permissions</div>
+                  <div className="crsub">{isOwner ? "Choose what admins can do · invite, approve, roster, profiles" : "What admins can do in this league (owner sets these)"}</div>
+                </div>
+                <div className="crchev"><Icon name="chevron" size={16} color="var(--muted-2)" /></div>
+              </button>
+            </div>
+          )}
+
           <div>
             <div className="slbl">League Name</div>
             <div className="lmnamerow">

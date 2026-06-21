@@ -31,7 +31,7 @@ function pointsCount(sets){
 }
 
 export function MatchHistory({onEdit,shareMatch,sel,onMatchDeleted,scrollToMatchId,onScrolled}){
-  const { supabase, user, players, approvedMatches, pendingMatches, incompleteMatches, isAdmin, getName, showToast, seasons, selectedSeason, setSelectedSeason } = useLeague();
+  const { supabase, user, players, approvedMatches, pendingMatches, incompleteMatches, isAdmin, canDo, getName, showToast, seasons, selectedSeason, setSelectedSeason } = useLeague();
   const seasonFilter = (m) => !selectedSeason || m.season_id === selectedSeason;
   const matches = approvedMatches.filter(seasonFilter);
   const myPendingMatches = (pendingMatches || []).filter(m => m.logged_by === user?.id).filter(seasonFilter);
@@ -334,7 +334,11 @@ export function MatchHistory({onEdit,shareMatch,sel,onMatchDeleted,scrollToMatch
                   }
                   <div className="macts">
                     <button className="mact" onClick={()=>shareMatch(m)} aria-label="Share"><Icon name="share" size={14}/></button>
-                    <button className="mact" onClick={()=>onEdit(m)} aria-label="Edit"><Icon name="edit" size={14}/></button>
+                    {/* S092 #129 gap-b: edit only for admins with the approve_matches
+                        capability — members no longer see an Edit button that errors. */}
+                    {canDo('approve_matches') && (
+                      <button className="mact" onClick={()=>onEdit(m)} aria-label="Edit"><Icon name="edit" size={14}/></button>
+                    )}
                     {isAdmin && (cd===m.id ? (
                       <>
                         <button onClick={()=>deleteMatch(m.id)} disabled={deleting} style={{background:'var(--danger)',border:'none',color:'#fff',fontSize:9,fontWeight:700,padding:'4px 7px',borderRadius:6,cursor:'pointer',opacity:deleting?.6:1}}>{deleting?'\u2026':'Yes'}</button>

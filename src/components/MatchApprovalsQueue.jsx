@@ -19,7 +19,7 @@ function pointsCount(sets){
 // FT-09 / S044: Admin-facing approval queue.
 // Phase 7 v2 (S066): refactored to .mgrid3 score grid + flags + per-team row.
 export function MatchApprovalsQueue() {
-  const { supabase, pendingMatches, players, getName, showToast, loadLeagueData, isAdmin } = useLeague();
+  const { supabase, pendingMatches, players, getName, showToast, loadLeagueData, canDo } = useLeague();
   const [confirmReject, setConfirmReject] = useState(null);
   const [editingMatch, setEditingMatch] = useState(null);
   const [actionBusy, setActionBusy] = useState(null);
@@ -27,7 +27,9 @@ export function MatchApprovalsQueue() {
   const getAvatar = (pid) => players.find(pp=>pp.id===pid)?.avatar_url;
   const getCountry = (pid) => players.find(pp=>pp.id===pid)?.country;
 
-  if (!isAdmin || !pendingMatches || pendingMatches.length === 0) return null;
+  // S092 #129: gated on the approve_matches capability (was isAdmin) so an admin
+  // whose owner turned this off no longer sees the approvals queue.
+  if (!canDo('approve_matches') || !pendingMatches || pendingMatches.length === 0) return null;
 
   const approveMatch = async (matchId) => {
     setActionBusy(matchId + "-approve");

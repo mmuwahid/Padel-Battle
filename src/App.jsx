@@ -17,6 +17,7 @@ import { ApprovalQueueScreen } from './components/ApprovalQueueScreen';
 import { SeasonManagement } from './components/SeasonManagement';
 import { PairsRanking } from './components/PairsRanking';
 import { LeagueManagement } from './components/LeagueManagement';
+import { PermissionsScreen } from './components/PermissionsScreen';
 import { PlatformAdmin } from './components/PlatformAdmin';
 import { SettingsView } from './components/SettingsView';
 import { RulesView } from './components/RulesView';
@@ -437,7 +438,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
         {data:pairsData},
         {data:seasonPlayersData}
       ] = await Promise.all([
-        supabase.from("leagues").select("id,name,invite_code,created_by").eq("id",leagueId).single(),
+        supabase.from("leagues").select("id,name,invite_code,created_by,admin_permissions").eq("id",leagueId).single(),
         supabase.from("league_members").select("id,role").eq("league_id",leagueId).eq("user_id",user.id).single(),
         supabase.from("league_members").select("id,user_id,role,profiles(id,email,display_name,avatar_url)").eq("league_id",leagueId),
         supabase.from("players").select("id,name,nickname,user_id,created_by,created_at,avatar_url,country,playing_position,gender,date_of_birth,handedness,grade,grade_source,self_assessment").eq("league_id",leagueId).order("name"),
@@ -1079,12 +1080,19 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
 
   // A-04: React Context — shared data available to all children without prop drilling
   // S022/S026: Plain object — NOT useMemo. Early returns above this line make useMemo violate Rules of Hooks.
+  // S092 #129: admin capability permissions. Owner (and platform admin via isOwner)
+  // can always do everything; a plain admin can do a capability only when its toggle
+  // is on. Defaults all-true so behavior is unchanged until an owner restricts.
+  const DEFAULT_PERMS = { invite_players:true, approve_matches:true, edit_roster:true, edit_profiles:true };
+  const adminPermissions = { ...DEFAULT_PERMS, ...(league?.admin_permissions || {}) };
+  const canDo = (key) => isOwner || (isAdmin && adminPermissions[key] !== false);
+
   const leagueCtx = {
     supabase, user, leagueId, league, players, matches, approvedMatches, pendingMatches, incompleteMatches,
     user, elo, seasons, selectedSeason, setSelectedSeason, isAdmin, isOwner, myMemberId, leagueMembers, memberProfiles,
     getName, showToast, sendPushNotification, loadLeagueData,
     openMatches, openMatchPlayers, pairs, seasonRosters, claimedPlayer,
-    updateMemberRole,
+    updateMemberRole, adminPermissions, canDo,
   };
 
   return (
@@ -1173,6 +1181,9 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
           )}
           {sidebarView==="leagueManagement" && (
             <LeagueManagement setSidebarView={setSidebarView} navigateSidebar={navigateSidebar} goBack={goBackSidebar} leagues={leagues||[]} leagueHandlers={leagueHandlers} leagueStats={leagueStats} detailLeagueId={lmDetailLeagueId} setDetailLeagueId={setLmDetailLeagueId} detailFromPlatform={lmDetailFromPlatform} setDetailFromPlatform={setLmDetailFromPlatform}/>
+          )}
+          {sidebarView==="leaguePermissions" && (
+            <PermissionsScreen setSidebarView={setSidebarView} goBack={goBackSidebar}/>
           )}
           {sidebarView==="settings" && (
             <SettingsView user={user} claimedPlayer={claimedPlayer} isAdmin={isAdmin} pushSubscribed={pushSubscribed} subscribeToPush={subscribeToPush} unsubscribeFromPush={unsubscribeFromPush} notifNewMatch={notifNewMatch} notifRankingChange={notifRankingChange} notifNewMembers={notifNewMembers} notifChallenges={notifChallenges} toggleNotification={toggleNotification} onSwitchLeague={onSwitchLeague} setSidebarView={setSidebarView} navigateSidebar={navigateSidebar} goBack={goBackSidebar} showToast={showToast} loadLeagueData={loadLeagueData} testPushNotification={testPushNotification}/>
