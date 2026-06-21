@@ -196,8 +196,8 @@ body {
   left: 14px;
   right: 14px;
   /* S092 #130: nav pill bg matched to the main content wrapper (#0a0a0f, measured
-     live) so it blends with the page behind it; the green border + shadow still
-     define the floating pill, but it no longer reads as a lighter "shadow grey" card. */
+     live) so it blends with the page behind it; the green border alone defines the
+     pill (drop-shadow removed below — see note). */
   background: #0a0a0f;
   border: 1px solid rgba(74, 222, 128, 0.25);
   border-radius: 28px;
@@ -206,7 +206,10 @@ body {
   align-items: center;
   padding: 6px;
   z-index: 100;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+  /* S092 #130: drop-shadow removed per owner — the soft rgba(0,0,0,0.45) halo read
+     as a darker band around/below the pill, breaking the unified #0a0a0f surface.
+     The green border alone now defines the pill; no shadow. */
+  box-shadow: none;
   /* S069 Issue #81: allow press-state halo + lifted icon to overflow above the
      pill bar without being clipped by the rounded card. */
   overflow: visible;
