@@ -684,6 +684,9 @@ body {
    clamp() scales it down on narrow screens, and min-width:0 + ellipsis lets it
    shrink within the flex row instead of shoving the selector off the edge. */
 .lbtitle{font-size:clamp(18px,4.9vw,24px);font-weight:800;letter-spacing:-.02em;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* S091 (#127.5): reusable screen-title for surfaces that previously had no header
+   (Matches, Log Match). Mirrors .lbtitle sizing for cross-app consistency. */
+.scrn-title{font-size:clamp(18px,4.9vw,24px);font-weight:800;letter-spacing:-.02em;color:var(--text);}
 .spill{appearance:none;-webkit-appearance:none;display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:7px 12px;font-family:var(--mono);font-size:11px;color:var(--text);cursor:pointer;outline:none;transition:all 150ms;}
 .spill:focus{border-color:var(--accent-glow);}
 .pod-wrap{display:flex;align-items:flex-end;justify-content:center;gap:6px;padding:16px 0 14px;}
@@ -760,7 +763,11 @@ body {
 .sb.on{background:var(--accent);color:#000;}
 
 /* Roster header bar */
-.rbar{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px;gap:10px;}
+/* S091 (#127.2): Players screen title + footer count. .rbar is now the controls
+   row (filter/edit/add left, season pill right). */
+.pscreen-h{padding:14px 18px 0;}
+.pscreen-count{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.04em;margin-top:4px;}
+.rbar{display:flex;align-items:center;justify-content:space-between;padding:12px 18px 10px;gap:10px;}
 .rbar-t{font-size:15px;font-weight:700;}
 .rbar-t .rbar-count{font-family:var(--mono);font-size:12px;color:var(--muted);font-weight:400;margin-left:4px;}
 
@@ -773,7 +780,10 @@ body {
 .gbtn.on{background:rgba(74,222,128,.09);border-color:var(--accent-glow);color:var(--accent);}
 
 /* Search input */
-.srchw{padding:0 18px 10px;position:relative;}
+/* S091 (#127.2): the 10px bottom padding was inside the positioned box, so the
+   icon's top:50% centered on the padded wrapper (sitting low vs the input).
+   Move that spacing to margin so the icon centers on the field itself. */
+.srchw{padding:0 18px;margin-bottom:10px;position:relative;}
 .srchi{position:absolute;left:30px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;display:flex;}
 .srch{width:100%;padding:11px 16px 11px 42px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);color:var(--text);font-family:var(--font);font-size:14px;outline:none;transition:border-color 200ms;}
 .srch::placeholder{color:var(--muted);}
@@ -1228,7 +1238,9 @@ body {
 .mreject-confirm{grid-column:1 / -1;display:flex;align-items:center;justify-content:center;gap:8px;font-size:11px;color:var(--danger);}
 
 /* ─── Schedule (Upcoming-only, Q9: dropped Past tab) ─── */
-.sched-bar{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 8px;}
+/* S091 (#127.1): parent Matches wrapper already gives 18px gutters — drop the
+   redundant horizontal padding so the bar/form align with the toggle + cards. */
+.sched-bar{display:flex;align-items:center;justify-content:space-between;padding:14px 0 8px;}
 .sched-title{font-family:var(--font);font-size:18px;font-weight:800;letter-spacing:-.02em;color:var(--text);}
 .sched-add{padding:8px 14px;border-radius:var(--r-md);border:1px solid var(--accent);background:var(--accent-dim);color:var(--accent);font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all 150ms;}
 .sched-add:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(74,222,128,.2);}
@@ -1429,7 +1441,8 @@ body {
 .livectrls{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px;}
 .resetbtn{display:flex;align-items:center;padding:6px 14px;border-radius:var(--r-full);border:1px solid rgba(248,113,113,.35);background:none;font-family:var(--mono);font-size:10px;color:#f87171;cursor:pointer;transition:all 150ms;}
 .resetbtn:hover{background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.55);}
-.acceptbtn{width:100%;padding:12px;border-radius:var(--r-md);border:none;background:var(--accent);color:#000;font-family:var(--font);font-size:13px;font-weight:800;letter-spacing:.04em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 200ms var(--ease-spring);}
+/* S091 (#127.2): compact pill sized to text, centered by its wrapper (was width:100%). */
+.acceptbtn{display:inline-flex;width:auto;padding:11px 32px;border-radius:var(--r-full);border:none;background:var(--accent);color:#000;font-family:var(--font);font-size:13px;font-weight:800;letter-spacing:.04em;cursor:pointer;align-items:center;justify-content:center;gap:8px;transition:all 200ms var(--ease-spring);}
 .acceptbtn:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(74,222,128,.3);}
 .acceptbtn:active{transform:scale(.98);}
 .tlock{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;padding:4px 14px 16px;align-items:start;}
@@ -1445,7 +1458,8 @@ body {
 .tlock-ph{display:flex;align-items:center;justify-content:center;background:var(--surface-2);font-family:var(--mono);font-size:13px;font-weight:700;color:var(--muted);}
 .tlock-nm{font-family:var(--font);font-size:13px;font-weight:600;color:var(--text);}
 .tlock-team.b .tlock-nm{text-align:right;}
-.tlock-vs{display:flex;align-items:center;justify-content:center;padding-top:24px;font-family:var(--mono);font-size:11px;font-weight:700;color:#3a3a3a;}
+/* S091 (#127.3): center VS in the grid row (was nudged down by padding-top:24px). */
+.tlock-vs{display:flex;align-items:center;justify-content:center;align-self:center;font-family:var(--mono);font-size:11px;font-weight:700;color:#3a3a3a;}
 
 /* MOTM picker card */
 .mvpcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:12px 14px;display:flex;align-items:center;gap:12px;}

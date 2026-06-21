@@ -276,6 +276,8 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
 
   return (
     <div className="logbody">
+      {/* S091 (#127.5): screen header (hidden in edit mode, which shows its own bar). */}
+      {!isE && <h2 className="scrn-title">Log Match</h2>}
       {isE && (
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <div style={{display:"flex",alignItems:"center",gap:8,fontSize:12,fontWeight:700,color:"var(--gold)",fontFamily:"var(--mono)",letterSpacing:".08em",textTransform:"uppercase"}}>
@@ -304,7 +306,16 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
       )}
 
       {/* Date + Season context bar */}
-      <div className="ctxbar" style={{padding:"8px 0",borderBottom:"none"}}>
+      {/* S091 (#127.4): season pill on the right (date left) for app-wide consistency. */}
+      <div className="ctxbar" style={{padding:"8px 0",borderBottom:"none",justifyContent:"space-between"}}>
+        <input
+          type="date"
+          value={date}
+          max={new Date().toISOString().split("T")[0]}
+          onChange={e=>setDate(e.target.value)}
+          className="ctxchip"
+          style={{colorScheme:"dark",cursor:"pointer",appearance:"none",WebkitAppearance:"none"}}
+        />
         {!isE && seasons && seasons.length > 0 && (
           <div style={{position:"relative",display:"inline-flex",alignItems:"center"}}>
             <select
@@ -322,14 +333,6 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
             </span>
           </div>
         )}
-        <input
-          type="date"
-          value={date}
-          max={new Date().toISOString().split("T")[0]}
-          onChange={e=>setDate(e.target.value)}
-          className="ctxchip"
-          style={{colorScheme:"dark",cursor:"pointer",appearance:"none",WebkitAppearance:"none"}}
-        />
       </div>
 
       {!isE && showShuffler && (
@@ -478,9 +481,10 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
           </div>
         )}
         {!teamsLocked && allFilled && !isFromOpenMatch && (
-          <div style={{padding:"0 14px 14px"}}>
+          <div style={{padding:"0 14px 14px",display:"flex",justifyContent:"center"}}>
+            {/* S091 (#127.2): tick removed + button sized to its text (was full-width/stretched). */}
             <button className="acceptbtn" onClick={()=>setTeamsLocked(true)}>
-              <Icon name="check" size={15} color="#000" strokeWidth={2.5}/>Accept & use
+              Accept &amp; use
             </button>
           </div>
         )}

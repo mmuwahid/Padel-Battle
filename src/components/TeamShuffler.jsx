@@ -79,7 +79,7 @@ export function TeamShuffler({players, onAccept, onCancel, getName, singleMatchM
 
         <div className="shuf-actions">
           <button onClick={accept} className="savebtn on" style={{flex:2,padding:"12px 0",fontSize:13}}>
-            <Icon name="check" size={14} color="#000" strokeWidth={2.5}/>Accept &amp; Use
+            Accept &amp; Use
           </button>
           <button onClick={back} className="shcancel" style={{flex:1,padding:"12px 0",fontSize:13}}>Back</button>
           <button onClick={onCancel} className="shcancel" style={{flex:1,padding:"12px 0",fontSize:13,color:"#9090a4"}}>Cancel</button>

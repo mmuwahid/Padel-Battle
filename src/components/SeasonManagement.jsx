@@ -290,9 +290,10 @@ export function SeasonManagement({ setSidebarView, goBack, autoCreate, clearAuto
     if (!d) return "—";
     const dt = new Date(d);
     if (isNaN(dt.getTime())) return d;
+    const dow = dt.toLocaleString("en-GB", { weekday: "short" }).toUpperCase();
     const dd = String(dt.getDate()).padStart(2, "0");
     const mmm = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][dt.getMonth()];
-    return `${dd} ${mmm} ${dt.getFullYear()}`;
+    return `${dow} ${dd} ${mmm} ${dt.getFullYear()}`;
   };
 
   const openSeason = openSeasonId ? sortedSeasons.find(s => s.id === openSeasonId) : null;

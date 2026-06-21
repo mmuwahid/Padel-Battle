@@ -1516,6 +1516,9 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
           {/* S068: per user direction, the join-request banner was removed from the
               Matches tab. The AdminDashboard's "Approval Queue" card is the single
               entry point for pending join requests. */}
+          {/* S091 (#127.5): screen header so Matches matches Leaderboard/Game Mode
+              (title on top, segmented toggle below). */}
+          <h2 className="scrn-title" style={{margin:"0 0 14px"}}>Matches</h2>
           {/* FT-05 / #117 / #113: use the standard .seg/.sb segmented control so
               the History|Schedule pills match the game-mode + analytics pills in
               height + styling. .sb is text-transform:uppercase, so the labels read

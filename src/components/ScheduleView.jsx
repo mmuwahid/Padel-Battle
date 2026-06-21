@@ -6,7 +6,7 @@ import { ScoreStepper } from './ScoreStepper';
 import { validateMatch } from '../utils/scoringEngine';
 import Icon from './Icon';
 
-export function ScheduleView({challenges,players,matches,supabase,leagueId,user,getName,isAdmin,onUpdate,showToast,sendPushNotification,sel,elo,seasonId,openMatches,openMatchPlayers,claimedPlayer,scrollToOpenMatchId,onOpenMatchScrolled,onLogOpenMatch}){
+export function ScheduleView({challenges,players,matches,supabase,leagueId,user,getName,isAdmin,onUpdate,showToast,sendPushNotification,sel,elo,seasonId,seasonRosters,openMatches,openMatchPlayers,claimedPlayer,scrollToOpenMatchId,onOpenMatchScrolled,onLogOpenMatch}){
   const [showForm,setShowForm]=useState(false);
   const [step,setStep]=useState(1); // 1=teams, 2=date/venue
   const [showShuffler,setShowShuffler]=useState(false); // FT-08
@@ -96,13 +96,23 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
         p_season_id:seasonId||null
       });
       if(error)throw error;
-      showToast("Match opened to league — waiting for 3 more players");
+      showToast("Match opened — waiting for 3 more players");
       // S074 FT-16: in-app bell rows inserted by create_open_match RPC server-side
       // (single source of truth — Lesson #54). S075 FT-16: web push fires here with
       // skip_in_app=true so the Edge Function does not duplicate bell rows.
+      // S091 (#127.1): scope the push to the active season's roster so it matches the
+      // roster-scoped bell rows. null target (no season) => Edge Function broadcasts
+      // to the whole league, mirroring the RPC's NULL-season fallback.
       if(sendPushNotification){
         const dateStr=formatDate(date);
-        sendPushNotification("open_match","New open match",`${getName(claimedPlayer)} opened a match on ${dateStr} — claim a spot.`,null,null,{skip_in_app:true});
+        let targetUids=null;
+        if(seasonId){
+          const roster=seasonRosters?.[seasonId];
+          targetUids=(roster&&roster.size>0)
+            ?[...roster].map(pid=>players.find(p=>p.id===pid)?.user_id).filter(Boolean)
+            :[]; // season set but empty roster => notify nobody (matches the RPC)
+        }
+        sendPushNotification("open_match","New open match",`${getName(claimedPlayer)} opened a match on ${dateStr} — claim a spot.`,targetUids,null,{skip_in_app:true});
       }
       setShowForm(false);setStep(1);setMatchType("private");
       setNotes("");setLocation("");
@@ -297,8 +307,10 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
     <div>
       {/* Phase 7: sched-bar replaces Upcoming/Past tab toggle (Q9 dropped Past) */}
       <div className="sched-bar">
-        <div className="sched-title">Scheduled</div>
-        <button className="sched-add" onClick={()=>setShowForm(!showForm)}>{showForm?"Cancel":"+ Schedule"}</button>
+        {/* S091 (#127.1): single cancel — the form's own bottom Cancel/Back is the
+            only exit, so the top button is hidden while the form is open. */}
+        <div className="sched-title">{showForm?"New Match":"Scheduled"}</div>
+        {!showForm && <button className="sched-add" onClick={()=>setShowForm(true)}>+ Schedule</button>}
       </div>
 
       {/* S073 FT-16: Open Matches section — renders above the regular schedule
@@ -392,15 +404,8 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
 
       {/* ── Step 1: Select Players ── */}
       {showForm && step===1 && (
-        <div style={{padding:"10px 18px 0"}}>
-          {/* Progress stepper */}
-          <div className="sch-progress">
-            <div className="sch-step-circle active">1</div>
-            <div className="sch-connector"><div className="sch-connector-fill" style={{width:"0%"}}/></div>
-            <div className="sch-step-circle idle">2</div>
-            <div className="sch-step-label">{matchType==="open"?"Open":"Players"} {"\u2192"} Details</div>
-          </div>
-
+        <div style={{padding:"10px 0 0"}}>
+          {/* S091 (#127.1): step indicator removed \u2014 flow is obvious click-through. */}
           {/* S073 FT-16: Match type toggle \u2014 Private vs Open to League */}
           <div className="sform-tcard">
             <div className="sform-tcardh"><span className="sform-tcardh-lbl">Match Type</span></div>
@@ -518,15 +523,8 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
 
       {/* ── Step 2: Match Details ── */}
       {showForm && step===2 && (
-        <div style={{padding:"10px 18px 0"}}>
-          {/* Progress stepper (1 done, 2 active) */}
-          <div className="sch-progress">
-            <div className="sch-step-circle done"><Icon name="check" size={14} color="#000" strokeWidth={2.5}/></div>
-            <div className="sch-connector"><div className="sch-connector-fill" style={{width:"100%"}}/></div>
-            <div className="sch-step-circle active">2</div>
-            <div className="sch-step-label">Players {"\u2192"} Details</div>
-          </div>
-
+        <div style={{padding:"10px 0 0"}}>
+          {/* S091 (#127.1): step indicator removed. */}
           {/* Team summary chip — Premier Padel "/" format via formatTeam helper */}
           <div className="svsum" style={{marginTop:10}}>
             <span className="svsum-a">{formatTeam(getName(tA[0]), getName(tA[1]))}</span>
@@ -577,7 +575,7 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
           {/* Actions: 3fr / 2fr (Schedule Match / Back) */}
           <div style={{display:"grid",gridTemplateColumns:"3fr 2fr",gap:8,marginTop:10}}>
             <button className={`savebtn lp ${saving?"off":"on"}`} disabled={saving} onClick={matchType==="open"?createOpenMatch:createChallenge}>
-              {!saving && <Icon name="check" size={16} color="#000" strokeWidth={2.5}/>}{saving?(matchType==="open"?"Opening...":"Scheduling..."):(matchType==="open"?"Open to League":"Schedule Match")}
+              {saving?(matchType==="open"?"Opening...":"Scheduling..."):(matchType==="open"?"Open to League":"Schedule Match")}
             </button>
             <button className="shcancel" onClick={()=>setStep(1)}>Back</button>
           </div>

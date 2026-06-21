@@ -784,9 +784,19 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
           female: searchFiltered.filter(p => p.gender === "female").length,
         };
         return (<>
-          {/* Phase 5: roster header bar with edit/add controls (admin only) */}
+          {/* S091 (#127.2): screen header — "Players" title with a footer count
+              line (was the inline "Players (11)" parenthetical). */}
+          <div className="pscreen-h">
+            <h2 className="scrn-title">Players</h2>
+            <div className="pscreen-count">
+              {filtered.length} {filtered.length===1?"player":"players"}
+              {rosterSeasonObj ? ` · ${rosterSeasonObj.name}` : " · all league players"}
+            </div>
+          </div>
+
+          {/* S091 (#127.2/.4): single controls row — filter / edit / add on the
+              left, season pill on the right (rbar is justify-content:space-between). */}
           <div className="rbar">
-            <div className="rbar-t">Players<span className="rbar-count">({filtered.length})</span></div>
             <div style={{display:"flex",gap:6,alignItems:"center"}}>
               {/* S066 Phase 8: sliders icon — toggles gender filter bar (visible to everyone) */}
               <button className={`fbtn${filterOpen?" on":""}`} onClick={()=>setFilterOpen(v=>!v)} aria-label="Filter by gender" title="Filter by gender">
@@ -801,13 +811,10 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                 </button>}
               </>}
             </div>
-          </div>
-
-          {/* B2: season roster filter — defaults to the active season, with an
-              "All league players" escape hatch. Green when an active season is
-              selected, muted otherwise (mirrors the LogMatch season pill). */}
-          {(seasons||[]).length>0 && (
-            <div style={{padding:"0 18px 10px"}}>
+            {/* B2: season roster filter — defaults to the active season, with an
+                "All league players" escape hatch. Green when an active season is
+                selected, muted otherwise (mirrors the LogMatch season pill). */}
+            {(seasons||[]).length>0 && (
               <div style={{position:"relative",display:"inline-flex",alignItems:"center"}}>
                 <select
                   value={rosterSeason}
@@ -824,8 +831,8 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                   <Icon name="chevron" size={12} color={rosterSeasonObj?.active?"var(--accent)":"#9090a4"}/>
                 </span>
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Phase 5: search input */}
           <div className="srchw">
