@@ -1,23 +1,24 @@
 # Active Work
 
 ## NEXT SESSION (S093) — START HERE
-**Last session:** S092 (2026-06-21) — **2 commits (`9592382` code, `b4bbc56` docs), SW v213→v214, 0 DB migrations.** Executed 6 newly-filed GitHub issues. **Shipped+verified:** #128 match-history footer (approved-only count [7 not 9], dropped season suffix, added `· N months · since Mon Year` stats); #130 unified `.hdr`/`.bnav` bg → `--bg` (seamless header/nav, left OPEN for user's live look); #131 avatar load — SW was blanket-bypassing `supabase.co` so Storage avatars never cached → added cache-first `/storage/v1/object/public/` branch in persistent `padelhub-img-v1` cache. **#121** verified done in code (Apple logo, no box, no tagline — all S089); answered the Resend-confirmation question (keep). **#129** delivered read-only current-state permissions analysis + WhatsApp-style target + 4 decisions → `planning/129-roles-and-permissions.md` (no DB changes; 3 gaps logged). **#124**+Apple-OAuth documented as native/dashboard blockers in `capacitor-wrap.md §7`. Closed **#128/#131**; left OPEN **#130/#129/#124/#121**. Live SW v214, main `b4bbc56`.
+**Last session:** S092 (2026-06-21, deep ~5h) — **11 commits (`9592382`→`e841f2e`), SW v213→v219, 2 DB migrations.** Executed 6 new issues + Apple App-Store setup + built #129 v1. **CLOSED #128** (footer approved-only count, drop season suffix, +duration/start stats); **#131** avatar load (SW was bypassing `supabase.co` → Storage avatars never cached; added cache-first `/storage/v1/object/public/` in persistent `padelhub-img-v1`); **#130** surface unify — 5 iterations + live `elementFromPoint` measurement found real content bg = **#0a0a0f** (not `--bg`/body), set hdr+nav+body+chrome to it AND **removed the nav pill `box-shadow`** (the actual "different color" the user saw); **#121** login + **Sign in with Apple wired end-to-end & verified** (resend button kept). **Apple setup (guided):** App ID `com.mohammedmuwahid.padelhub`, Services ID `.signin`, Key `NTSQJCBXXH`, secret JWT via `scripts/gen-apple-secret.cjs` (**EXPIRES 2026-12-18**), Supabase provider enabled+verified; user has a Mac. **#129 League Permissions v1 BUILT** (combined screen·4 toggles·admins-only·gaps fixed): `leagues.admin_permissions` jsonb (all-true default = non-breaking), `admin_has_permission()`, owner-only `set_league_permissions()`, re-gated 6 RPCs + player-edit RLS, 3 gaps fixed, new `PermissionsScreen.jsx`. **OPEN:** #129 (v2 tracker), #124 (native). Live SW v219, main `e841f2e`.
 
-### 🎯 S093 PRIORITY
-1. **#129 build decisions** — get answers from Mohammed (combined vs split Permissions screen; full toggle matrix vs 3-4 v1; member-grantable perms; fix the 3 logged RLS/UI gaps) then scope the build. See `planning/129-roles-and-permissions.md` §6-§7.
-2. **Device-confirm S092 fixes** on a real cold PWA open (SW v214): #131 avatars instant-from-cache; #130 unified header/nav (revert if disliked — one-line per surface).
-3. **#121** — enable Apple provider in Supabase dashboard (Auth → Providers → Apple) + user decision on the Resend-confirmation button.
-4. **Capacitor wrap** (`planning/capacitor-wrap.md`): build-env / bundle-ID / seller-name; native launch screen, Face ID (#124, biometric plugin + Keychain), Universal Links (#6), App Store build.
+### 🎯 S093 PRIORITY — user wants to finish all app-polish features before store launch
+1. **Owner smoke-test #129 toggles** from `m.muwahid@gmail.com` (admins see read-only). Then decide **#129 v2**: full ~10-capability matrix, per-season overrides, member-grantable perms, UI-gate player-edit controls (DB already enforces).
+2. **Device-confirm S092 fixes** on a real cold PWA open (SW v219): #130 fully-uniform #0a0a0f + no nav shadow; #131 instant avatars.
+3. **Lead with whatever polish item the user raises** (their stated priority before launch).
+4. **Apple/Capacitor wrap** — App ID + Sign in with Apple DONE/verified; user has a Mac. Next: Capacitor scaffold, App Store Connect record, native push, Face ID (#124), Universal Links (#6). **⚠️ regenerate Apple secret before 2026-12-18.**
 5. (When ready) replace logo Option A placeholder with the designer's final mark — one-file swap in `icons.jsx` + re-run 3 PNGs (sharp).
 
 ### S092 outcomes (this session — archived)
-- [x] #128 match-history footer stats + approved-only count (`9592382`, SW v214) — verified
-- [x] #130 header/nav bg unification (`9592382`) — verified on dev, OPEN for user look
-- [x] #131 avatar SW image-cache fix (`9592382`, SW v214) — needs device confirm
-- [x] #121 login verified done in code + answered Resend-button question — OPEN pending decisions
-- [x] #129 permissions current-state analysis + target proposal (`b4bbc56`) — OPEN for decisions
-- [x] #124 + Apple-OAuth native/dashboard blockers documented (`b4bbc56`)
-- [x] Closed #128/#131 on GitHub
+- [x] #128 footer stats + approved-only count — CLOSED
+- [x] #131 avatar SW image-cache fix — CLOSED (needs device confirm)
+- [x] #130 full surface unify to #0a0a0f + nav drop-shadow removed (5 iterations, v214→v218) — CLOSED
+- [x] #121 login + Sign in with Apple end-to-end + verified; resend kept — CLOSED
+- [x] Apple App Store: App ID + Services ID + key + secret JWT + Supabase provider — DONE/verified
+- [x] #129 League Permissions v1 (2 migrations + PermissionsScreen + gating + 3 gap fixes, v219) — shipped, issue OPEN for v2
+- [x] #124 + Apple/Face ID native blockers documented — OPEN (native)
+- [x] Closed #128/#130/#131/#121 on GitHub
 
 ### S091 outcomes (archived)
 - [x] #127 full UI batch (8 deploys, SW v206→v213) — all smoke-tested PASS
