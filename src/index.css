@@ -98,7 +98,9 @@ body {
   justify-content: space-between;
   padding: 4px 16px;
   padding-top: calc(env(safe-area-inset-top, 0px) + 0px);
-  background: linear-gradient(180deg, #0d0d14 0%, #12121a 100%);
+  /* S092 #130: header bg unified with the page bg (--bg) so the top bar, content,
+     and bottom nav read as one continuous surface instead of a lighter band. */
+  background: var(--bg);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -191,7 +193,9 @@ body {
   bottom: calc(6px + env(safe-area-inset-bottom, 0px));
   left: 14px;
   right: 14px;
-  background: #12121a;
+  /* S092 #130: nav pill bg unified with page bg (--bg); the green border + shadow
+     still define the floating pill, but it no longer reads as a lighter card. */
+  background: var(--bg);
   border: 1px solid rgba(74, 222, 128, 0.25);
   border-radius: 28px;
   display: grid;

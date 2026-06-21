@@ -1,4 +1,8 @@
-const CACHE_NAME = 'padelhub-v213';
+const CACHE_NAME = 'padelhub-v214';
+// Separate, long-lived cache for avatar/storage images so a CACHE_NAME bump
+// (which wipes the app-shell cache on every deploy) does NOT evict already-
+// downloaded avatars. This is what keeps avatars instant across deploys (#131).
+const IMG_CACHE_NAME = 'padelhub-img-v1';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -21,7 +25,7 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+      Promise.all(keys.filter((k) => k !== CACHE_NAME && k !== IMG_CACHE_NAME).map((k) => caches.delete(k)))
     ).then(() => self.clients.claim())
   );
 });
@@ -29,6 +33,31 @@ self.addEventListener('activate', (event) => {
 // Fetch — smart caching strategy
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+
+  // S092 (#131): Supabase Storage public images (avatars) — cache-first with
+  // background revalidation. These are public, stable URLs; before this, the
+  // blanket supabase.co bypass below meant every avatar re-downloaded over the
+  // network on each cold open, leaving them blank for 4-5s. Now a cached avatar
+  // renders instantly while a fresh copy updates the cache in the background, so
+  // a later avatar change still appears on the next open. Stored in IMG_CACHE so
+  // it survives app-shell cache bumps.
+  if (event.request.url.includes('/storage/v1/object/public/')) {
+    event.respondWith(
+      caches.open(IMG_CACHE_NAME).then((cache) =>
+        cache.match(event.request).then((cached) => {
+          const network = fetch(event.request)
+            .then((response) => {
+              if (response.ok) cache.put(event.request, response.clone());
+              return response;
+            })
+            .catch(() => cached);
+          return cached || network;
+        })
+      )
+    );
+    return;
+  }
+
   if (event.request.url.includes('supabase.co')) return;
   if (event.request.url.includes('googleapis.com')) return;
 

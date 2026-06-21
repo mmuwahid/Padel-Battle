@@ -124,6 +124,24 @@ export function MatchHistory({onEdit,shareMatch,sel,onMatchDeleted,scrollToMatch
   const timeline = [...matches, ...incompleteList];
   const s = [...timeline].sort((a,b)=>new Date(b.date)-new Date(a.date));
 
+  // S092 #128: footer summary stats. Count ONLY officially-recorded (approved)
+  // matches — incomplete matches are shown in the list but must not inflate the
+  // total. Duration + start month are derived from the season's start/end dates
+  // (falling back to the earliest/latest match date when a season has none).
+  const matchCount = matches.length;
+  const selSeasonObj = seasons?.find(ss => ss.id === selectedSeason);
+  const matchDates = matches.map(m => new Date(m.date)).filter(d => !isNaN(d));
+  const earliest = matchDates.length ? new Date(Math.min(...matchDates)) : null;
+  const latest = matchDates.length ? new Date(Math.max(...matchDates)) : null;
+  const startD = selSeasonObj?.start_date ? new Date(selSeasonObj.start_date) : earliest;
+  const endD = selSeasonObj?.end_date ? new Date(selSeasonObj.end_date) : (latest || new Date());
+  const monthsSpan = (startD && endD && endD >= startD)
+    ? Math.max(1, Math.round((endD - startD) / (1000 * 60 * 60 * 24 * 30.44)))
+    : null;
+  const startLabel = startD && !isNaN(startD)
+    ? startD.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })
+    : null;
+
   async function deleteMatch(matchId){
     if(!isAdmin)return;
     setDeleting(true);
@@ -233,7 +251,11 @@ export function MatchHistory({onEdit,shareMatch,sel,onMatchDeleted,scrollToMatch
   return (
     <div>
       <div className="mtbar">
-        <div className="mtmeta">{s.length} match{s.length===1?'':'es'}{seasons && seasons.length>0 && selectedSeason ? ` \u00B7 ${seasons.find(ss=>ss.id===selectedSeason)?.name||''}`:''}</div>
+        <div className="mtmeta">
+          {matchCount} match{matchCount===1?'':'es'}
+          {monthsSpan ? ` \u00B7 ${monthsSpan} month${monthsSpan===1?'':'s'}` : ''}
+          {startLabel ? ` \u00B7 since ${startLabel}` : ''}
+        </div>
         {seasons && seasons.length > 0 && (()=>{ const _sa=seasons.find(sn=>sn.id===selectedSeason)?.active; return (
           <div style={{position:"relative",display:"inline-flex",alignItems:"center"}}>
             <select className="spill" value={selectedSeason||""} onChange={e=>setSelectedSeason(e.target.value)}
