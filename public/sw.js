@@ -1,4 +1,4 @@
-const CACHE_NAME = 'padelhub-v215';
+const CACHE_NAME = 'padelhub-v216';
 // Separate, long-lived cache for avatar/storage images so a CACHE_NAME bump
 // (which wipes the app-shell cache on every deploy) does NOT evict already-
 // downloaded avatars. This is what keeps avatars instant across deploys (#131).
