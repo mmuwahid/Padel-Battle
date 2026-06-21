@@ -1,20 +1,30 @@
 # Active Work
 
-## NEXT SESSION (S091) — START HERE
-**Last session:** S090 (2026-06-21, deep) — **4 commits (`2f5d5ce`, `314d605`, `e3393cb`, `9f4bc26`), SW v201→v205, 0 DB migrations.** **#122 profile Option C** — centered photo+name, attribute badge rows; killed the big Delete-Photo pill + competing buttons. After user feedback: dropped the ⋯ kebab for a pencil **edit badge on the avatar** (Edit/Add + Delete Photo menu) + an **Edit Profile pill beside the role badge**; removed the email line (already in side nav) + self-assessment helper text. Existing ELO/Win-rate/Match-W-L/achievements block untouched (mockup's centered ELO/EFF NOT used). **Settings declutter** — removed redundant Display Name row + its state/handler. **#120 RR final-results** — 🏆 emoji → trophy Icon; Final Table headers P/W/L → MP/MW/ML. **Matches grid alignment (root-caused S089's miss)** — the tab wrapper already gives 18px but `.mtbar`(18)+`.mlist`(14) re-padded → cards at 32px; dropped the redundant horizontal padding so toggle/header/cards align to 18px. Verified live via `clone-dev` (getBoundingClientRect). Live SW v205, main `9f4bc26`.
+## NEXT SESSION (S093) — START HERE
+**Last session:** S092 (2026-06-21) — **2 commits (`9592382` code, `b4bbc56` docs), SW v213→v214, 0 DB migrations.** Executed 6 newly-filed GitHub issues. **Shipped+verified:** #128 match-history footer (approved-only count [7 not 9], dropped season suffix, added `· N months · since Mon Year` stats); #130 unified `.hdr`/`.bnav` bg → `--bg` (seamless header/nav, left OPEN for user's live look); #131 avatar load — SW was blanket-bypassing `supabase.co` so Storage avatars never cached → added cache-first `/storage/v1/object/public/` branch in persistent `padelhub-img-v1` cache. **#121** verified done in code (Apple logo, no box, no tagline — all S089); answered the Resend-confirmation question (keep). **#129** delivered read-only current-state permissions analysis + WhatsApp-style target + 4 decisions → `planning/129-roles-and-permissions.md` (no DB changes; 3 gaps logged). **#124**+Apple-OAuth documented as native/dashboard blockers in `capacitor-wrap.md §7`. Closed **#128/#131**; left OPEN **#130/#129/#124/#121**. Live SW v214, main `b4bbc56`.
 
-### 🎯 PENDING USER SMOKE-TEST (S090 ship — SW v205)
-- **Matches grid:** toggle + "N matches" row + match cards all align to the same left/right edges (cards full-width, not indented).
-- **#122 profile:** no email under name; no ⋯ kebab; pencil badge on photo bottom-right → Edit/Delete Photo (test the **avatar-present** case — not verified in preview); Edit Profile pill next to ADMIN opens the edit sheet; back from profile → previous tab not side nav.
-- **Settings → Account:** no Display Name row (Email / Linked Accounts / Delete Account only).
-- **#120 RR final-results:** champion trophy icon (not emoji); table headers MP / MW / ML.
-- **Carry-overs:** #112 logo box (no flashing edge), #118 player press (no stuck highlight), #109 bell→close returns to screen, #110 global profile across leagues, #111 empty-leaderboard card below header.
+### 🎯 S093 PRIORITY
+1. **#129 build decisions** — get answers from Mohammed (combined vs split Permissions screen; full toggle matrix vs 3-4 v1; member-grantable perms; fix the 3 logged RLS/UI gaps) then scope the build. See `planning/129-roles-and-permissions.md` §6-§7.
+2. **Device-confirm S092 fixes** on a real cold PWA open (SW v214): #131 avatars instant-from-cache; #130 unified header/nav (revert if disliked — one-line per surface).
+3. **#121** — enable Apple provider in Supabase dashboard (Auth → Providers → Apple) + user decision on the Resend-confirmation button.
+4. **Capacitor wrap** (`planning/capacitor-wrap.md`): build-env / bundle-ID / seller-name; native launch screen, Face ID (#124, biometric plugin + Keychain), Universal Links (#6), App Store build.
+5. (When ready) replace logo Option A placeholder with the designer's final mark — one-file swap in `icons.jsx` + re-run 3 PNGs (sharp).
 
-### 🎯 S091 PRIORITY
-1. **Review smoke-test results** → close #109/#110/#111/#112/#118 (and confirm #120/#122) via `gh issue close` after PASS.
-2. **Enable Apple provider in Supabase** (Auth → Providers → Apple) — the shipped "Sign in with Apple" button (#121) is inert until configured. Mohammed running the Apple Dev multi-step setup; do after the wrap.
-3. **Capacitor wrap** (`planning/capacitor-wrap.md`): needs build-env / bundle-ID / seller-name decisions; native iOS launch screen (final logo-box fix), Face ID (#124), Universal Links (#6), App Store build.
-4. (When ready) replace logo Option A placeholder with the designer's final mark — one-file swap in `icons.jsx` + re-run 3 PNGs (sharp).
+### S092 outcomes (this session — archived)
+- [x] #128 match-history footer stats + approved-only count (`9592382`, SW v214) — verified
+- [x] #130 header/nav bg unification (`9592382`) — verified on dev, OPEN for user look
+- [x] #131 avatar SW image-cache fix (`9592382`, SW v214) — needs device confirm
+- [x] #121 login verified done in code + answered Resend-button question — OPEN pending decisions
+- [x] #129 permissions current-state analysis + target proposal (`b4bbc56`) — OPEN for decisions
+- [x] #124 + Apple-OAuth native/dashboard blockers documented (`b4bbc56`)
+- [x] Closed #128/#131 on GitHub
+
+### S091 outcomes (archived)
+- [x] #127 full UI batch (8 deploys, SW v206→v213) — all smoke-tested PASS
+- [x] PWA cold-open login-flash + forced-reload fix (`ff26023`, v207)
+- [x] Open-match notifications scoped to season roster (DB migration + client push)
+- [x] Round Robin overhaul (auto-end fix, Americano-format cards, standings columns/colors, 🥇)
+- [x] Closed #127/#122/#111/#110/#109; #112/#118/#120 already closed
 
 ### S090 outcomes (this session — archived)
 - [x] #122 profile Option C centered hero — `2f5d5ce` (SW v202)
