@@ -12,6 +12,10 @@ export function AmericanoMode({ players, getName, supabase, leagueId, tournament
   const [courts, setCourts] = useState(2);
   const [ptsPerRound, setPPR] = useState(24);
   const [casualMode, setCasualMode] = useState("americano");
+  // S091 (#127): casual setup is now two steps — pick the format (Americano/
+  // Mexicano), THEN select players on a follow-up screen (keeps the format
+  // selector uncluttered even with many players).
+  const [casualStep, setCasualStep] = useState("mode"); // "mode" | "setup"
 
   // ── Existing Americano / Mexicano logic ──
   async function startCasualTournament() {
@@ -231,30 +235,49 @@ export function AmericanoMode({ players, getName, supabase, leagueId, tournament
   // RENDER: Casual Selector UI (default — no active tournament)
   // ════════════════════════════════════
   const enough = selPlayers.length >= 4;
+
+  // ── Step 1: pick the format (cards only — no player grid yet) ──
+  if (casualStep === "mode") {
+    return (
+      <div className="gm-body">
+        <div className="gm-card" onClick={() => { setCasualMode("americano"); setCasualStep("setup"); }} role="button" tabIndex={0}>
+          <div className="gm-card-hd">
+            <div className="gm-card-ico"><Icon name="target" size={20} /></div>
+            <div className="gm-card-tw">
+              <div className="gm-card-title">Americano</div>
+              <span className="gm-card-tag">Quick session</span>
+            </div>
+            <span className="gm-card-chev"><Icon name="chevron" size={16} /></span>
+          </div>
+          <p className="gm-card-sub">Rotating partners — play with everyone. Points accumulate individually across rounds.</p>
+        </div>
+
+        <div className="gm-card" onClick={() => { setCasualMode("mexicano"); setCasualStep("setup"); }} role="button" tabIndex={0}>
+          <div className="gm-card-hd">
+            <div className="gm-card-ico"><Icon name="trending-up" size={20} /></div>
+            <div className="gm-card-tw">
+              <div className="gm-card-title">Mexicano</div>
+              <span className="gm-card-tag">Adaptive</span>
+            </div>
+            <span className="gm-card-chev"><Icon name="chevron" size={16} /></span>
+          </div>
+          <p className="gm-card-sub">Dynamic matchmaking based on standings. Balanced matches every round.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Step 2: select players + settings for the chosen format ──
   return (
     <div className="gm-body">
-      {/* Mode picker — Americano */}
-      <div className={`gm-card ${casualMode === "americano" ? "on" : ""}`} onClick={() => setCasualMode("americano")} role="button" tabIndex={0}>
-        <div className="gm-card-hd">
-          <div className="gm-card-ico"><Icon name="target" size={20} /></div>
-          <div className="gm-card-tw">
-            <div className="gm-card-title">Americano</div>
-            <span className="gm-card-tag">Quick session</span>
-          </div>
-        </div>
-        <p className="gm-card-sub">Rotating partners — play with everyone. Points accumulate individually across rounds.</p>
+      <div className="back-btn-row">
+        <button className="back-btn" onClick={() => setCasualStep("mode")} aria-label="Back to formats">
+          <Icon name="back" size={18} />
+        </button>
       </div>
-
-      {/* Mode picker — Mexicano */}
-      <div className={`gm-card ${casualMode === "mexicano" ? "on gold" : ""}`} onClick={() => setCasualMode("mexicano")} role="button" tabIndex={0}>
-        <div className="gm-card-hd">
-          <div className="gm-card-ico"><Icon name="trending-up" size={20} /></div>
-          <div className="gm-card-tw">
-            <div className="gm-card-title">Mexicano</div>
-            <span className="gm-card-tag">Adaptive</span>
-          </div>
-        </div>
-        <p className="gm-card-sub">Dynamic matchmaking based on standings. Balanced matches every round.</p>
+      <div className="gm-h" style={{ padding: "0 0 6px" }}>
+        <span className="gm-h-eyebrow">{casualMode === "americano" ? "Quick session" : "Adaptive"}</span>
+        <h1 className="gm-h-title">{casualMode === "americano" ? "Americano" : "Mexicano"}</h1>
       </div>
 
       {/* Player selection */}

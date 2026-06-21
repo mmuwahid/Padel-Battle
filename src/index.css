@@ -1049,7 +1049,8 @@ body {
    min-width so both Best/Worst Pairs cards fit on screen (was overflowing the
    right card off-screen); .pair-names already ellipsizes. */
 .pair-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;min-width:0;}
-.pair-title{font-size:12px;font-weight:800;color:var(--text);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px;}
+/* S091 (#127): Best/Worst Pairs title centered in its card. */
+.pair-title{font-size:12px;font-weight:800;color:var(--text);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px;text-align:center;}
 /* S089 #113d: full-width pair card — [avatar name] · score · [name avatar],
    avatars on the outer edges, each name beside its avatar, score centered. */
 .pair-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;}

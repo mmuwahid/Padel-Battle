@@ -488,7 +488,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                     <div className="pair-pname">{getName(analyticsData.bestPartnership.a)}</div>
                   </div>
                   <div className="pair-rec">
-                    <span className="pair-wl">{analyticsData.bestPartnership.w}W-{analyticsData.bestPartnership.l}L</span>
+                    <span className="pair-wl"><span style={{color:analyticsData.bestPartnership.w>0?A:MT}}>{analyticsData.bestPartnership.w}W</span><span style={{color:MT}}>-</span><span style={{color:analyticsData.bestPartnership.l>0?DG:MT}}>{analyticsData.bestPartnership.l}L</span></span>
                     <span className="pair-pct">{Math.round(analyticsData.bestPartnership.w/(analyticsData.bestPartnership.w+analyticsData.bestPartnership.l)*100)}%</span>
                   </div>
                   <div className="pair-side rt">
@@ -506,7 +506,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                       <div className="pair-pname">{getName(analyticsData.worstPartnership.a)}</div>
                     </div>
                     <div className="pair-rec dg">
-                      <span className="pair-wl">{analyticsData.worstPartnership.w}W-{analyticsData.worstPartnership.l}L</span>
+                      <span className="pair-wl"><span style={{color:analyticsData.worstPartnership.w>0?A:MT}}>{analyticsData.worstPartnership.w}W</span><span style={{color:MT}}>-</span><span style={{color:analyticsData.worstPartnership.l>0?DG:MT}}>{analyticsData.worstPartnership.l}L</span></span>
                       <span className="pair-pct">{Math.round(analyticsData.worstPartnership.w/(analyticsData.worstPartnership.w+analyticsData.worstPartnership.l)*100)}%</span>
                     </div>
                     <div className="pair-side rt">
