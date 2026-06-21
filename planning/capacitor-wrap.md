@@ -128,7 +128,7 @@ npx @capacitor/assets generate   # emits all iOS + Android icon/splash sizes
 ## 8. Decisions needed before scaffolding
 
 1. **Build environment** — Mac / cloud-Mac / Android-first? (Section 0 — blocks iOS.)
-2. **Bundle ID / App ID** — permanent reverse-DNS string, e.g. `app.padelhub` or `ae.unec.padelhub`.
+2. **Bundle ID / App ID** — ✅ DECIDED (S092): **`com.mohammedmuwahid.padelhub`** (Explicit). Personal namespace under the Individual account; bundle ID is technical/not public-facing (not shown on the App Store page), so the name is fine. App ID capabilities to enable on registration: **Push Notifications**, **Sign In with Apple**, **Associated Domains** (all three; everything else off). NOTE: Sign in with Apple via Supabase also needs a separate **Services ID** + **.p8 key** (next step after App ID).
 3. **Seller name** — Individual ("Mohammed Muwahid" shown publicly) vs Organization (needs D-U-N-S). Affects store listing.
 4. **Free vs paid** — free → current agreements suffice; paid/IAP → finish Paid Apps Agreement + bank.
 5. **Logo direction** — from `mockup-splash.html` (A/B/C).
