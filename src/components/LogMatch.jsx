@@ -278,12 +278,11 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
     <div className="logbody">
       {/* S091 (#127.5): screen header (hidden in edit mode, which shows its own bar). */}
       {!isE && <h2 className="scrn-title">Log Match</h2>}
+      {/* S091 (#127): top Cancel removed (it overflowed) — Cancel now sits beside
+          the Update Match button at the bottom. */}
       {isE && (
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <div style={{display:"flex",alignItems:"center",gap:8,fontSize:12,fontWeight:700,color:"var(--gold)",fontFamily:"var(--mono)",letterSpacing:".08em",textTransform:"uppercase"}}>
-            <Icon name="edit" size={14}/> Editing
-          </div>
-          <button onClick={cancel} className="shcancel" style={{width:"auto",padding:"6px 14px"}}>Cancel</button>
+        <div style={{display:"flex",alignItems:"center",gap:8,fontSize:12,fontWeight:700,color:"var(--gold)",fontFamily:"var(--mono)",letterSpacing:".08em",textTransform:"uppercase"}}>
+          <Icon name="edit" size={14}/> Editing
         </div>
       )}
       {saved && (
@@ -654,10 +653,19 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
       {/* Save */}
       {teamsLocked && (
       <div>
-        <button onClick={submit} disabled={saving||!canSave} className={`savebtn lp${canSave&&!saving?' on':' off'}`}>
-          {canSave && !saving && <Icon name="check" size={18} color="#000" strokeWidth={2.5}/>}
-          {saving?"Saving…":isE?"Update Match":"Save Match"}
-        </button>
+        {/* S091 (#127): tick removed; in edit mode Cancel sits next to Update Match. */}
+        {isE ? (
+          <div style={{display:"grid",gridTemplateColumns:"3fr 2fr",gap:8}}>
+            <button onClick={submit} disabled={saving||!canSave} className={`savebtn lp${canSave&&!saving?' on':' off'}`}>
+              {saving?"Saving…":"Update Match"}
+            </button>
+            <button onClick={cancel} className="shcancel">Cancel</button>
+          </div>
+        ) : (
+          <button onClick={submit} disabled={saving||!canSave} className={`savebtn lp${canSave&&!saving?' on':' off'}`}>
+            {saving?"Saving…":"Save Match"}
+          </button>
+        )}
         {!canSave && saveHint && <div className="savehint">{saveHint}</div>}
       </div>
       )}

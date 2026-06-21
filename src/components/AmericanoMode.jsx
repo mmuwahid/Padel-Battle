@@ -5,17 +5,16 @@ import { ConfirmButton } from './ConfirmModal';
 import { ScoreStepper } from './ScoreStepper';
 import Icon from './Icon';
 
-export function AmericanoMode({ players, getName, supabase, leagueId, tournament, setTournament, sel, endTournament, resetTournament, deleteTournament, showToast }) {
+export function AmericanoMode({ players, getName, supabase, leagueId, tournament, setTournament, sel, endTournament, resetTournament, deleteTournament, showToast, casualStep = "mode", setCasualStep = () => {} }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   // ── State ──
   const [selPlayers, setSelP] = useState([]);
   const [courts, setCourts] = useState(2);
   const [ptsPerRound, setPPR] = useState(24);
   const [casualMode, setCasualMode] = useState("americano");
-  // S091 (#127): casual setup is now two steps — pick the format (Americano/
-  // Mexicano), THEN select players on a follow-up screen (keeps the format
-  // selector uncluttered even with many players).
-  const [casualStep, setCasualStep] = useState("mode"); // "mode" | "setup"
+  // S091 (#127): casual setup is two steps — pick the format (Americano/Mexicano),
+  // THEN select players on a follow-up screen. casualStep is lifted to GameMode so
+  // it can hide the Format Rules on the setup step.
 
   // ── Existing Americano / Mexicano logic ──
   async function startCasualTournament() {

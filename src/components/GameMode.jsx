@@ -89,6 +89,9 @@ export function GameMode({ tournament, setTournament, sel }) {
   const { supabase, players, getName, leagueId, showToast } = useLeague();
   const [topTab, setTopTab] = useState("casual");
   const [screen, setScreen] = useState("selector");
+  // S091 (#127): casual setup step lifted here so the Format Rules can be hidden
+  // on the player-setup follow-up screen (they already show on the format picker).
+  const [casualStep, setCasualStep] = useState("mode"); // "mode" | "setup"
 
   async function endTournament() {
     try {
@@ -113,7 +116,7 @@ export function GameMode({ tournament, setTournament, sel }) {
     } catch (err) { if (showToast) showToast(err.message || "Failed to delete tournament", "error"); }
   }
 
-  const sharedProps = { players, getName, supabase, leagueId, tournament, setTournament, sel, endTournament, resetTournament, deleteTournament, setScreen, showToast };
+  const sharedProps = { players, getName, supabase, leagueId, tournament, setTournament, sel, endTournament, resetTournament, deleteTournament, setScreen, showToast, casualStep, setCasualStep };
 
   if (tournament && (tournament.mode === "americano" || tournament.mode === "mexicano")) {
     return <AmericanoMode {...sharedProps} />;
@@ -144,15 +147,18 @@ export function GameMode({ tournament, setTournament, sel }) {
       {topTab === "casual" && (
         <>
           <AmericanoMode {...sharedProps} />
-          <div className="gm-rules-sec">
-            <div className="gm-rules-sec-h">
-              <Icon name="book" size={14} />
-              <span>Format Rules</span>
+          {/* S091 (#127): Format Rules only on the format picker, not the player-setup step. */}
+          {casualStep === "mode" && (
+            <div className="gm-rules-sec">
+              <div className="gm-rules-sec-h">
+                <Icon name="book" size={14} />
+                <span>Format Rules</span>
+              </div>
+              <div className="gm-rules-list">
+                {CASUAL_FORMAT_RULES.map(rule => <FormatRuleCard key={rule.id} rule={rule} />)}
+              </div>
             </div>
-            <div className="gm-rules-list">
-              {CASUAL_FORMAT_RULES.map(rule => <FormatRuleCard key={rule.id} rule={rule} />)}
-            </div>
-          </div>
+          )}
         </>
       )}
 
