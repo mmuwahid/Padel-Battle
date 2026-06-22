@@ -2,6 +2,36 @@ import React, { useMemo } from "react";
 import Icon from "./Icon";
 import { flagEmoji } from "../utils/helpers";
 
+// Podium card extracted outside PairsRanking to satisfy react-hooks/static-components.
+function PodCard({ pr, rank, podClass, pAvatar, pInit, pName, pFlag, onPairDrillIn }) {
+  return (
+    <div className={`prk-pod pod ${podClass}`} onClick={() => onPairDrillIn && onPairDrillIn(pr)}>
+      <div className="prk-podh">{rank}</div>
+      <div className="prk-podstack">
+        <div className="prk-podrow">
+          {pAvatar(pr.player_a_id) ? (<img className="prk-avi prk-avi-img" src={pAvatar(pr.player_a_id)} alt=""/>) : (<div className="prk-avi">{pInit(pr.player_a_id)}</div>)}
+          <div className="prk-podpname">
+            <span className="prk-podpnamea">{pName(pr.player_a_id)}</span>
+            {pFlag(pr.player_a_id) && <span className="prk-podflag">{pFlag(pr.player_a_id)}</span>}
+          </div>
+        </div>
+        <div className="prk-podrow">
+          {pAvatar(pr.player_b_id) ? (<img className="prk-avi prk-avi-img" src={pAvatar(pr.player_b_id)} alt=""/>) : (<div className="prk-avi">{pInit(pr.player_b_id)}</div>)}
+          <div className="prk-podpname">
+            <span className="prk-podpnamea">{pName(pr.player_b_id)}</span>
+            {pFlag(pr.player_b_id) && <span className="prk-podflag">{pFlag(pr.player_b_id)}</span>}
+          </div>
+        </div>
+      </div>
+      <div className="prk-podwl">
+        <span style={{color: pr.mw > 0 ? "var(--win)" : "var(--muted)"}}>{pr.mw}W</span>
+        <span style={{color: pr.ml > 0 ? "var(--loss)" : "var(--muted)"}}>{pr.ml}L</span>
+      </div>
+      <div className="prk-podpct">{pr.eff}%</div>
+    </div>
+  );
+}
+
 // S076 FT-15 C4 / S077 polish: Pairs Leaderboard for pairs-format seasons.
 // Spec from padelhub/planning/FT-15-pairs-leaderboard.md (v2 locked S072) +
 // user-approved mockup public/mockup-ft15-pairs.html + S077 smoke-test
@@ -106,41 +136,13 @@ export function PairsRanking({ pairs, matches, players, getName: _getName, onPai
   const podium = pairStats.slice(0, 3);
   const showPodium = podium.length >= 1;
 
-  // Render a single podium card with stacked players (avatar + name + flag).
-  const PodCard = ({ pr, rank, podClass }) => (
-    <div className={`prk-pod pod ${podClass}`} onClick={() => onPairDrillIn && onPairDrillIn(pr)}>
-      <div className="prk-podh">{rank}</div>
-      <div className="prk-podstack">
-        <div className="prk-podrow">
-          {pAvatar(pr.player_a_id) ? (<img className="prk-avi prk-avi-img" src={pAvatar(pr.player_a_id)} alt=""/>) : (<div className="prk-avi">{pInit(pr.player_a_id)}</div>)}
-          <div className="prk-podpname">
-            <span className="prk-podpnamea">{pName(pr.player_a_id)}</span>
-            {pFlag(pr.player_a_id) && <span className="prk-podflag">{pFlag(pr.player_a_id)}</span>}
-          </div>
-        </div>
-        <div className="prk-podrow">
-          {pAvatar(pr.player_b_id) ? (<img className="prk-avi prk-avi-img" src={pAvatar(pr.player_b_id)} alt=""/>) : (<div className="prk-avi">{pInit(pr.player_b_id)}</div>)}
-          <div className="prk-podpname">
-            <span className="prk-podpnamea">{pName(pr.player_b_id)}</span>
-            {pFlag(pr.player_b_id) && <span className="prk-podflag">{pFlag(pr.player_b_id)}</span>}
-          </div>
-        </div>
-      </div>
-      <div className="prk-podwl">
-        <span style={{color: pr.mw > 0 ? "var(--win)" : "var(--muted)"}}>{pr.mw}W</span>
-        <span style={{color: pr.ml > 0 ? "var(--loss)" : "var(--muted)"}}>{pr.ml}L</span>
-      </div>
-      <div className="prk-podpct">{pr.eff}%</div>
-    </div>
-  );
-
   return (
     <div className="prk">
       {showPodium && (
         <div className={`prk-podium prk-podium-${podium.length}`}>
-          {podium.length >= 2 && <PodCard pr={podium[1]} rank={2} podClass="p2" />}
-          <PodCard pr={podium[0]} rank={1} podClass="p1" />
-          {podium.length >= 3 && <PodCard pr={podium[2]} rank={3} podClass="p3" />}
+          {podium.length >= 2 && <PodCard pr={podium[1]} rank={2} podClass="p2" pAvatar={pAvatar} pInit={pInit} pName={pName} pFlag={pFlag} onPairDrillIn={onPairDrillIn} />}
+          <PodCard pr={podium[0]} rank={1} podClass="p1" pAvatar={pAvatar} pInit={pInit} pName={pName} pFlag={pFlag} onPairDrillIn={onPairDrillIn} />
+          {podium.length >= 3 && <PodCard pr={podium[2]} rank={3} podClass="p3" pAvatar={pAvatar} pInit={pInit} pName={pName} pFlag={pFlag} onPairDrillIn={onPairDrillIn} />}
         </div>
       )}
 

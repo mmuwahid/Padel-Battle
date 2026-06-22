@@ -165,6 +165,7 @@ export function LeagueGate({ user, children }) {
         setLoading(false);
       }
     })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- tryAutoJoin is an inline async fn (unstable identity); effect is guarded by initRef and runs once on mount
   }, [loadUserLeagues, loadJoinRequest, resolveSelectedLeague]);
 
   // S068: poll join_request every 8s while on the Pending screen so the user sees

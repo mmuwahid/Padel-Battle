@@ -85,6 +85,7 @@ export function SeasonManagement({ setSidebarView, goBack, autoCreate, clearAuto
   // A1: auto-open the create sheet when arriving from the Ranking empty-state CTA.
   useEffect(() => {
     if (autoCreate) { openCreate(); if (clearAutoCreate) clearAutoCreate(); }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally fires only when autoCreate prop toggles; openCreate/clearAutoCreate are stable callbacks
   }, [autoCreate]);
 
   const handleCreate = async () => {

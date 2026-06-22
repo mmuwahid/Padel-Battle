@@ -87,6 +87,7 @@ export function MatchHistory({onEdit,shareMatch,sel:_sel,onMatchDeleted,scrollTo
       setReactions(grouped);setMyReactions(mine);
     });
     return ()=>{ cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- user?.id is sufficient; the full user object is only used for an identity check (user.id) inside .then()
   },[matchIdsKey,supabase,user?.id]);
 
   // S066: outside-click closes the picker popover

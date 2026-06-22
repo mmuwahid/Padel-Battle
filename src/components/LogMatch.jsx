@@ -50,6 +50,7 @@ export function LogMatch({players,matches:_matches,supabase,leagueId,user,pm,em,
     } else {
       setTA(["",""]);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- seasonPairs is derived from context and only used for lookup; adding it would cause infinite re-sync loops
   }, [selectedPairA, isPairsFormat]);
   useEffect(() => {
     if (!isPairsFormat) return;
@@ -59,6 +60,7 @@ export function LogMatch({players,matches:_matches,supabase,leagueId,user,pm,em,
     } else {
       setTB(["",""]);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- seasonPairs is derived from context and only used for lookup; adding it would cause infinite re-sync loops
   }, [selectedPairB, isPairsFormat]);
   // When editing an existing match in a pairs season, pre-select the pairs
   useEffect(() => {
@@ -71,6 +73,7 @@ export function LogMatch({players,matches:_matches,supabase,leagueId,user,pm,em,
     const pB = findPair(em.team_b || []);
     if (pA) setSelectedPairA(pA.id);
     if (pB) setSelectedPairB(pB.id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- seasonPairs is derived from context and only used for lookup; adding it would cause infinite re-sync loops
   }, [em, isPairsFormat]);
   // S075 FT-16: hold the open_match id so we can attach it to the insert payload.
   const [openMatchId,setOpenMatchId]=useState(null);

@@ -286,6 +286,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
       window.history.pushState({tab,sidebarView,sidebarOpen},"");
       prevTab.current=tab;prevView.current=sidebarView;
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- sidebarOpen is read for pushState snapshot only; adding it would reset scroll on sidebar toggle
   },[tab,sidebarView]);
   useEffect(()=>{
     const onPop=(e)=>{
@@ -335,6 +336,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
       .subscribe();
 
     return () => { if(reloadTimerRef.current) clearTimeout(reloadTimerRef.current); supabase.removeChannel(channel); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- S087: debouncedReload is memoized (stable) and loadLeagueData is accessed via loadLeagueDataRef to avoid stale closure; deps are intentionally [leagueId, user.id] only
   },[leagueId,user.id]);
 
   const loadLeagueData = async () => {

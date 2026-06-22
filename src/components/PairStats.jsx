@@ -104,6 +104,7 @@ export function PairStats({ pair, pairs, matches, players, getName, season, onBa
     const bestOpp = sortedByOurWinRate[0] || null;
     const worstOpp = sortedByOurLossRate[0] || null;
     return { mp, mw, ml, eff, setDiff, motm, bestStreak, comebacks, perfectSet, bestOpp, worstOpp };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- resolveOppPair is defined inline above and would change identity every render; pairs (which it closes over) is already in deps
   }, [pair, pairMatches, pairs]);
 
   if (!pair) return null;
