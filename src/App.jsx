@@ -21,6 +21,7 @@ import { PermissionsScreen } from './components/PermissionsScreen';
 import { PlatformAdmin } from './components/PlatformAdmin';
 import { SettingsView } from './components/SettingsView';
 import { RulesView } from './components/RulesView';
+import { PrivacyView, TermsView } from './components/LegalView';
 import { NotificationCenter } from './components/NotificationCenter';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { LeagueContext } from './LeagueContext';
@@ -1208,6 +1209,8 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
             />
           )}
           {sidebarView==="rules" && <RulesView setSidebarView={setSidebarView} goBack={goBackSidebar}/>}
+          {sidebarView==="privacy" && <PrivacyView goBack={goBackSidebar}/>}
+          {sidebarView==="terms" && <TermsView goBack={goBackSidebar}/>}
         </div>
       )}
 
