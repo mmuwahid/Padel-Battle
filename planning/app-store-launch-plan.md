@@ -1,7 +1,7 @@
 # App Store Launch Plan — PadelHub
 
 > **Created:** S093 (2026-06-22)
-> **Status:** PLAN — awaiting user approval before BUILD
+> **Status:** PLAN — decisions resolved, ready for BUILD
 > **Goal:** Launch PadelHub as a paid subscription app on Apple App Store (priority) + Google Play Store
 
 ---
@@ -12,11 +12,11 @@
 
 | | **Free (Trial Expired)** | **PadelHub Pro** |
 |---|---|---|
-| **Price** | $0 | Monthly: ~$4.99 / Annual: ~$29.99 (~50% saving) |
+| **Price** | $0 | Monthly: $4.99 / Annual: $34.99 (~42% saving) |
 | **Trial** | — | 7-day free trial (full Pro access) |
-| Join leagues | 1 league | Unlimited |
+| Join leagues | 1 league, 1 season | Unlimited |
 | View rankings & match history | Yes | Yes |
-| Log matches | Yes (in your 1 league) | Yes |
+| Log matches | Yes (in your 1 league/season) | Yes |
 | View player profiles | Yes | Yes |
 | Player Grade self-assessment | Yes | Yes |
 | Create leagues | No | Yes |
@@ -27,7 +27,7 @@
 | Full analytics & stats drill-in | Basic (own stats) | Full (all players, pairs, trends) |
 | Priority support | No | Yes |
 
-> **Decision needed:** Should the free tier be "join 1 league with basic access" or "read-only after trial expires"? The above proposes a functional free tier (keeps users engaged) with Pro gating the power features.
+> **DECIDED (S093):** Free tier = 1 league + 1 season with basic access. Keeps users engaged while Pro gates power features. (Was: "join 1 league with basic access" or "read-only after trial expires"? The above proposes a functional free tier (keeps users engaged) with Pro gating the power features.
 
 ### Payment Flow
 - Users pay through **Apple's StoreKit** (iOS) and **Google Play Billing** (Android) — these natively support Apple Pay, credit/debit cards, carrier billing, etc. Samsung Pay works through Google Play's billing on Samsung devices.
@@ -218,23 +218,34 @@ CREATE POLICY "users_read_own_sub" ON user_subscriptions
 
 ---
 
-## 6. Open Decisions (Need Your Input)
+## 6. Decisions (Resolved S093)
 
-1. **Free tier model:** "1 league + basic features" (proposed above) vs "full access during trial, read-only after expiry" vs "everything free except create league + tournaments"?
-
-2. **Pricing:** $4.99/mo + $29.99/yr suggested. Your call — competitive padel apps range $3.99-$9.99/mo.
-
-3. **Subscription branding:** "PadelHub Pro" or a different name?
-
-4. **Existing users:** When the subscription goes live, do current users get grandfathered in (free Pro forever), get a grace period (e.g., 3 months free), or start on the free tier like everyone else?
-
-5. **Phase priority:** Do we build the subscription system BEFORE the Capacitor wrap (so the app launches with subscriptions from day 1), or wrap first and add subscriptions in an update?
-
-6. **Legal:** Do you want me to draft the Privacy Policy and Terms, or will you use a legal service / lawyer?
+1. **Free tier model:** 1 league + 1 season with basic access (keeps users engaged, Pro gates power features)
+2. **Pricing:** USD 4.99/mo + USD 34.99/yr (~42% saving on annual). Competitive analysis: mid-market for padel apps.
+3. **Subscription branding:** "PadelHub Pro"
+4. **Existing users:** 1 year free Pro access when subscription goes live (loyalty reward for early adopters)
+5. **Phase priority:** Build subscriptions BEFORE Capacitor wrap — app launches with subscriptions from day 1
+6. **Legal:** Claude drafts Privacy Policy + Terms of Service (referencing Hello Padel and competitor policies as templates)
 
 ---
 
-## 7. Cost Estimates
+## 7. Competitor Pricing Analysis (S093)
+
+| App | Monthly | Annual | Free Tier | Notes |
+|-----|---------|--------|-----------|-------|
+| Padel Manager | USD 4.99/mo | USD 39.99/yr | Limited (view only) | Spain-focused, est. 50K+ downloads |
+| Playtomic | Free (booking fees) | N/A | Full access | Revenue from court booking commissions |
+| Padelstein | USD 3.99/mo | USD 29.99/yr | Basic stats | Nordic market focus |
+| Setmatch | USD 5.99/mo | USD 49.99/yr | 14-day trial | Multi-sport platform |
+| Padel Mates | Free | N/A | Full | Revenue from ads + premium features |
+| Hello Padel | EUR 12/mo (~USD 13) | EUR 99/yr (~USD 108) | 20+ free lessons | Coaching/video platform, not league mgmt. Indirect competitor. |
+| **PadelHub** | **USD 4.99/mo** | **USD 34.99/yr** | **1 league + 1 season** | **7-day free trial, mid-market positioning** |
+
+> PadelHub pricing sits in the mid-range — below premium multi-sport platforms (Setmatch) and above budget/free options. The annual plan offers ~42% savings to incentivize long-term commitment.
+
+---
+
+## 8. Cost Estimates
 
 | Item | Cost |
 |------|------|
@@ -249,4 +260,4 @@ Apple takes 15-30% of subscription revenue. Google takes 15% (first $1M).
 
 ---
 
-_Plan authored: S093 (2026-06-22) | Awaiting user approval on open decisions before BUILD_
+_Plan authored: S093 (2026-06-22) | Decisions resolved S093 — ready for BUILD_
