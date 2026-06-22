@@ -54,18 +54,18 @@ export function EditMyProfile({ player, onClose, onRetake }) {
         // S067 diagnostic: surface the underlying DB error so we can debug
         // the "first save fails, second succeeds" bug. Toast shows the real
         // error code/message instead of a generic "Failed to save".
-        console.error("[EditMyProfile] update error:", error);
+        if (import.meta.env.DEV) console.error("[EditMyProfile] update error:", error);
         throw error;
       }
       // Issue #110: propagate identity fields to all my other leagues.
-      await supabase.rpc("sync_player_identity",{p_player_id:player.id}).catch(e=>console.warn("[EditMyProfile] profile sync:",e));
+      await supabase.rpc("sync_player_identity",{p_player_id:player.id}).catch(e => { if (import.meta.env.DEV) console.warn("[EditMyProfile] profile sync:",e); });
       showToast("Profile updated");
       onClose();
       // Refresh in the background — don't block UX or surface refresh errors
       // as save failures (the supabase update has already succeeded).
-      loadLeagueData().catch(e => console.warn("[EditMyProfile] refresh after save:", e));
+      loadLeagueData().catch(e => { if (import.meta.env.DEV) console.warn("[EditMyProfile] refresh after save:", e); });
     } catch (err) {
-      console.error("[EditMyProfile] save catch:", err);
+      if (import.meta.env.DEV) console.error("[EditMyProfile] save catch:", err);
       const msg = err?.message || err?.error_description || "Failed to save";
       showToast(`${msg}${err?.code ? ` (${err.code})` : ""}`, "error");
     }

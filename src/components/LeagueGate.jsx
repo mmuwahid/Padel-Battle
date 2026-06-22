@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, Suspense, lazy } from "react";
 import { supabase } from '../supabase';
 import { PadelLogoSmall } from './icons';
-import { OnboardingScreen } from './OnboardingScreen';
+const OnboardingScreen = lazy(() => import('./OnboardingScreen').then(m => ({default: m.OnboardingScreen})));
 import { PendingApprovalScreen } from './PendingApprovalScreen';
 import { RejectedScreen } from './RejectedScreen';
 
@@ -114,7 +114,7 @@ export function LeagueGate({ user, children }) {
       setJoinRequest(shaped);
       return shaped;
     } catch (err) {
-      console.warn("[LeagueGate] loadJoinRequest failed (non-fatal):", err);
+      if (import.meta.env.DEV) console.warn("[LeagueGate] loadJoinRequest failed (non-fatal):", err);
       setJoinRequest(null);
       return null;
     }
@@ -160,7 +160,7 @@ export function LeagueGate({ user, children }) {
         // and never throws, but the cover here is defense-in-depth.
         if (userLeagues.length === 0) await loadJoinRequest();
       } catch (err) {
-        console.error("[LeagueGate] cold-start failed:", err);
+        if (import.meta.env.DEV) console.error("[LeagueGate] cold-start failed:", err);
       } finally {
         setLoading(false);
       }
@@ -370,7 +370,7 @@ export function LeagueGate({ user, children }) {
   if (leagues.length === 0) {
     const showToast = (msg, kind) => {
       if (kind === "error") {
-        console.error(msg);
+        if (import.meta.env.DEV) console.error(msg);
         try { window.alert(msg); } catch { /* noop */ }
       } else {
         if (import.meta.env.DEV) console.log("[onboarding]", msg);
@@ -401,12 +401,12 @@ export function LeagueGate({ user, children }) {
     }
     // Default / Try Again: run Onboarding.
     return (
-      <OnboardingScreen
+      <Suspense fallback={<div style={{minHeight:80}}/>}><OnboardingScreen
         user={user}
         handlers={handlers}
         showToast={showToast}
         onComplete={async () => { await refreshLeagues(); setRetrying(false); }}
-      />
+      /></Suspense>
     );
   }
 

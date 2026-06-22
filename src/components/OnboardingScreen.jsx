@@ -79,7 +79,7 @@ export function OnboardingScreen({ user, handlers, onComplete, showToast }) {
       // and route to PendingApprovalScreen.
       if (onComplete) onComplete();
     } catch (err) {
-      console.error("[OnboardingScreen] join request failed:", err);
+      if (import.meta.env.DEV) console.error("[OnboardingScreen] join request failed:", err);
       if (showToast) showToast(err.message || "Failed to submit request", "error");
     }
     setBusy(false); setBusyAction(null);
@@ -110,7 +110,7 @@ export function OnboardingScreen({ user, handlers, onComplete, showToast }) {
         });
       if (playerErr) {
         // Non-fatal — league exists, user can edit profile later. Log only.
-        console.warn("Player auto-create failed:", playerErr.message);
+        if (import.meta.env.DEV) console.warn("Player auto-create failed:", playerErr.message);
       }
       if (showToast) showToast(`League "${lgName.trim()}" created!`);
       if (onComplete) onComplete();

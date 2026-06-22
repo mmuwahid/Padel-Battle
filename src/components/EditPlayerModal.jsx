@@ -53,7 +53,7 @@ export function EditPlayerModal({ player, onClose, onSaved }) {
         const { error } = await supabase.storage.from("avatars").upload(path, blob, { upsert: true, contentType: "image/jpeg" });
         if (!error) { upErr = null; break; }
         upErr = error;
-        console.warn(`[EditPlayerModal] upload attempt ${attempt + 1} failed:`, error?.message || error);
+        if (import.meta.env.DEV) console.warn(`[EditPlayerModal] upload attempt ${attempt + 1} failed:`, error?.message || error);
         if (attempt === 0) await new Promise(r => setTimeout(r, 250));
       }
       if (upErr) throw upErr;
@@ -103,7 +103,7 @@ export function EditPlayerModal({ player, onClose, onSaved }) {
         .eq("id", player.id);
       if (error) throw error;
       // Issue #110: propagate identity to the player's other leagues (grade override stays local).
-      await supabase.rpc("sync_player_identity",{p_player_id:player.id}).catch(e=>console.warn("[EditPlayerModal] identity sync:",e));
+      await supabase.rpc("sync_player_identity",{p_player_id:player.id}).catch(e => { if (import.meta.env.DEV) console.warn("[EditPlayerModal] identity sync:",e); });
       showToast("Player updated");
       loadLeagueData(); // C1: background refresh, UI unblocks immediately
       if (onSaved) onSaved();
