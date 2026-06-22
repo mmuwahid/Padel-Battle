@@ -22,7 +22,7 @@
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&display=swap" as="style" />
     <link rel="preconnect" href="https://fonts.googleapis.com"/>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600;700;800;900&family=Outfit:wght@400;600;700;800;900&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
     <title>PadelHub</title>
     <meta name="description" content="Track padel matches, ELO rankings, partnerships and tournaments with your friends" />
     <!-- OG tags for link previews (GN-18 + S070 Issue #69 hygiene pass).
@@ -82,6 +82,9 @@
         .splash-orb   { transform-origin: 50% 50%; transform-box: fill-box; animation: splash-orb-pulse 1.8s ease-in-out infinite; }
         .splash-aura  { transform-origin: 50% 50%; transform-box: fill-box; animation: splash-aura-breath 2.4s ease-in-out infinite; }
         .splash-orbit { animation: splash-orbit 22s linear infinite; }
+        @media (prefers-reduced-motion: reduce) {
+          #splash-status, .splash-orb, .splash-aura, .splash-orbit { animation: none !important; }
+        }
       </style>
     </div>
 

@@ -111,13 +111,13 @@ export function BracketSVG({ bracket, getName, scores, onSaveScore }) {
       );
       if (hasScore) {
         elements.push(
-          <text key={`sa-${ri}-${mi}`} x={x + matchW - 12} y={y + 15} fill={aWins ? A : DG} fontFamily="JetBrains Mono" fontSize={10} fontWeight={700} textAnchor="end" opacity={bWins ? 0.6 : 1}>
+          <text key={`sa-${ri}-${mi}`} x={x + matchW - 12} y={y + 15} fill={aWins ? A : DG} fontFamily="DM Mono" fontSize={10} fontWeight={700} textAnchor="end" opacity={bWins ? 0.6 : 1}>
             {sc.a}
           </text>
         );
       } else if (!isBye) {
         elements.push(
-          <text key={`sa-${ri}-${mi}`} x={x + matchW - 12} y={y + 15} fill={MT} fontFamily="JetBrains Mono" fontSize={10} fontWeight={600} textAnchor="end">{"\u2014"}</text>
+          <text key={`sa-${ri}-${mi}`} x={x + matchW - 12} y={y + 15} fill={MT} fontFamily="DM Mono" fontSize={10} fontWeight={600} textAnchor="end">{"\u2014"}</text>
         );
       }
 
@@ -133,13 +133,13 @@ export function BracketSVG({ bracket, getName, scores, onSaveScore }) {
       );
       if (hasScore) {
         elements.push(
-          <text key={`sb-${ri}-${mi}`} x={x + matchW - 12} y={y + slotH + 17} fill={bWins ? A : DG} fontFamily="JetBrains Mono" fontSize={10} fontWeight={700} textAnchor="end" opacity={aWins ? 0.6 : 1}>
+          <text key={`sb-${ri}-${mi}`} x={x + matchW - 12} y={y + slotH + 17} fill={bWins ? A : DG} fontFamily="DM Mono" fontSize={10} fontWeight={700} textAnchor="end" opacity={aWins ? 0.6 : 1}>
             {sc.b}
           </text>
         );
       } else if (!isBye) {
         elements.push(
-          <text key={`sb-${ri}-${mi}`} x={x + matchW - 12} y={y + slotH + 17} fill={MT} fontFamily="JetBrains Mono" fontSize={10} fontWeight={600} textAnchor="end">{"\u2014"}</text>
+          <text key={`sb-${ri}-${mi}`} x={x + matchW - 12} y={y + slotH + 17} fill={MT} fontFamily="DM Mono" fontSize={10} fontWeight={600} textAnchor="end">{"\u2014"}</text>
         );
       }
 

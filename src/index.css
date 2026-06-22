@@ -22,7 +22,6 @@ body {
    (Lessons #40 / #44). Defer to Phase 2+.
    ─────────────────────────────────────────────────────────── */
 
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap');
 
 :root {
   /* Surfaces */
@@ -2964,3 +2963,14 @@ input.linput[type="date"]::-webkit-calendar-picker-indicator {
 }
 /* Ensure children sit above the radial + tint pseudo-elements */
 .lp > * { position: relative; z-index: 2; }
+
+/* A11y: honor OS "reduce motion" setting — neutralize animations/transitions
+   for users with vestibular sensitivity (also an App Store goodwill item). */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

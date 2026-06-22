@@ -273,11 +273,11 @@ export function SingleElimination({ players, getName, supabase, leagueId, tourna
             <tbody>
               {standings.map((t, i) => (
                 <tr key={t.name}>
-                  <td style={{ background: CD, padding: 10, fontSize: i < 3 ? 16 : 13, fontWeight: 700, fontFamily: "'JetBrains Mono'", color: i === 0 ? GD : i === 1 ? SV : i === 2 ? BZ : MT, borderRadius: "8px 0 0 8px", textAlign: "center" }}>{rankBadge(i)}</td>
+                  <td style={{ background: CD, padding: 10, fontSize: i < 3 ? 16 : 13, fontWeight: 700, fontFamily: "'DM Mono'", color: i === 0 ? GD : i === 1 ? SV : i === 2 ? BZ : MT, borderRadius: "8px 0 0 8px", textAlign: "center" }}>{rankBadge(i)}</td>
                   <td style={{ background: CD, padding: 10 }}>
                     <TeamPlayers playerIds={t.players} players={players} getName={getName} size={20} fontSize={12} color={i < 3 ? TX : MT} weight={i === 0 ? 700 : 600} />
                   </td>
-                  <td style={{ background: CD, padding: 10, fontSize: 11, fontFamily: "'JetBrains Mono'", textAlign: "right", borderRadius: "0 8px 8px 0", whiteSpace: "nowrap" }}>
+                  <td style={{ background: CD, padding: 10, fontSize: 11, fontFamily: "'DM Mono'", textAlign: "right", borderRadius: "0 8px 8px 0", whiteSpace: "nowrap" }}>
                     <span style={{ color: A }}>{t.wins}W</span> <span style={{ color: t.losses > 0 ? DG : A }}>{t.losses}L</span>
                   </td>
                 </tr>
@@ -353,9 +353,9 @@ export function SingleElimination({ players, getName, supabase, leagueId, tourna
         <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 10 }}>Live Standings</h3>
         {standings.map((t, i) => (
           <div key={t.name} style={{ display: "flex", alignItems: "center", padding: "10px 14px", background: CD, border: `1px solid ${BD}`, borderRadius: 10, marginBottom: 6, gap: 12 }}>
-            <span style={{ fontFamily: "'JetBrains Mono'", fontSize: 14, fontWeight: 700, width: 24, textAlign: "center", color: i === 0 ? GD : i === 1 ? SV : i === 2 ? BZ : MT }}>{i + 1}</span>
+            <span style={{ fontFamily: "'DM Mono'", fontSize: 14, fontWeight: 700, width: 24, textAlign: "center", color: i === 0 ? GD : i === 1 ? SV : i === 2 ? BZ : MT }}>{i + 1}</span>
             <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: t.eliminated ? MT : TX }}>{t.name}</span>
-            <span style={{ fontFamily: "'JetBrains Mono'", fontSize: 11, color: MT }}>W{t.wins} L{t.losses}</span>
+            <span style={{ fontFamily: "'DM Mono'", fontSize: 11, color: MT }}>W{t.wins} L{t.losses}</span>
           </div>
         ))}
       </div>

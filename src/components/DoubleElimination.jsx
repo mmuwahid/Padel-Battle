@@ -279,11 +279,11 @@ export function DoubleElimination({ players, getName, supabase, leagueId, tourna
             </tr></thead>
             <tbody>{standings.map((t, i) => (
               <tr key={t.name}>
-                <td style={{ background: CD, padding: 10, fontSize: i < 3 ? 16 : 13, fontWeight: 700, fontFamily: "JetBrains Mono", color: i===0 ? GD : i===1 ? SV : i===2 ? BZ : MT, borderRadius: "8px 0 0 8px", textAlign: "center" }}>{rankBadge(i)}</td>
+                <td style={{ background: CD, padding: 10, fontSize: i < 3 ? 16 : 13, fontWeight: 700, fontFamily: "DM Mono", color: i===0 ? GD : i===1 ? SV : i===2 ? BZ : MT, borderRadius: "8px 0 0 8px", textAlign: "center" }}>{rankBadge(i)}</td>
                 <td style={{ background: CD, padding: 10 }}>
                   <TeamPlayers playerIds={t.players} players={players} getName={getName} size={20} fontSize={12} color={i < 3 ? TX : MT} weight={i === 0 ? 700 : 600} />
                 </td>
-                <td style={{ background: CD, padding: 10, fontSize: 11, fontFamily: "JetBrains Mono", textAlign: "right", borderRadius: "0 8px 8px 0", whiteSpace: "nowrap" }}>
+                <td style={{ background: CD, padding: 10, fontSize: 11, fontFamily: "DM Mono", textAlign: "right", borderRadius: "0 8px 8px 0", whiteSpace: "nowrap" }}>
                   <span style={{ color: A }}>{t.wins}W</span> <span style={{ color: t.losses > 0 ? DG : A }}>{t.losses}L</span>
                 </td>
               </tr>
@@ -380,7 +380,7 @@ export function DoubleElimination({ players, getName, supabase, leagueId, tourna
                       <button onClick={()=>{const d=draftScores[`l-${ri}-${mi}`]||{a:0,b:0};if(d.a===d.b){if(showToast)showToast("Scores can't be equal","error");return;}recordDEScore("losers",ri,mi,d.a,d.b);}} style={{ padding:"6px 12px", borderRadius:8, border:"none", background:A, color:BG, fontSize:11, fontWeight:700, cursor:"pointer", fontFamily:"var(--font)" }}>Save</button>
                     </div>
                   )}
-                  {sc && <div style={{ textAlign:"center", fontSize:13, fontWeight:700, fontFamily:"JetBrains Mono", color:MT }}>{sc.a} - {sc.b}</div>}
+                  {sc && <div style={{ textAlign:"center", fontSize:13, fontWeight:700, fontFamily:"DM Mono", color:MT }}>{sc.a} - {sc.b}</div>}
                 </div>
               );
             })}
@@ -409,7 +409,7 @@ export function DoubleElimination({ players, getName, supabase, leagueId, tourna
               <button onClick={()=>{const d=draftScores["gf"]||{a:0,b:0};if(d.a===d.b){if(showToast)showToast("Scores can't be equal","error");return;}recordDEScore("grand_final",0,0,d.a,d.b);}} style={{ padding:"6px 16px", borderRadius:8, border:"none", background:GD, color:BG, fontSize:11, fontWeight:700, cursor:"pointer", fontFamily:"var(--font)" }}>Save</button>
             </div>
           )}
-          {gfScore && <div style={{ textAlign:"center", fontSize:18, fontWeight:800, fontFamily:"JetBrains Mono", color:GD }}>{gfScore.a} - {gfScore.b}</div>}
+          {gfScore && <div style={{ textAlign:"center", fontSize:18, fontWeight:800, fontFamily:"DM Mono", color:GD }}>{gfScore.a} - {gfScore.b}</div>}
         </div>
       )}
 
@@ -417,10 +417,10 @@ export function DoubleElimination({ players, getName, supabase, leagueId, tourna
         <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 10 }}>Live Standings</h3>
         {standings.map((t, i) => (
           <div key={t.name} style={{ display:"flex", alignItems:"center", padding:"10px 14px", background:CD, border:"1px solid "+BD, borderRadius:10, marginBottom:6, gap:12 }}>
-            <span style={{ fontFamily:"JetBrains Mono", fontSize:14, fontWeight:700, width:24, textAlign:"center", color: i===0?GD:i===1?SV:i===2?BZ:MT }}>{i+1}</span>
+            <span style={{ fontFamily:"DM Mono", fontSize:14, fontWeight:700, width:24, textAlign:"center", color: i===0?GD:i===1?SV:i===2?BZ:MT }}>{i+1}</span>
             <span style={{ flex:1, fontSize:13, fontWeight:600, color: t.bracket==="eliminated"?MT:TX }}>{t.name}</span>
             <span style={{ fontSize:10, fontWeight:600, padding:"2px 8px", borderRadius:10, background: t.bracket==="winners"?GD+"1a":t.bracket==="losers"?DG+"1a":MT+"1a", color: t.bracket==="winners"?GD:t.bracket==="losers"?DG:MT }}>{t.bracket==="winners"?"W":t.bracket==="losers"?"L":"Out"}</span>
-            <span style={{ fontFamily:"JetBrains Mono", fontSize:11, color:MT }}>W{t.wins} L{t.losses}</span>
+            <span style={{ fontFamily:"DM Mono", fontSize:11, color:MT }}>W{t.wins} L{t.losses}</span>
           </div>
         ))}
       </div>

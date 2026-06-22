@@ -1104,7 +1104,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
 
   const leagueCtx = {
     supabase, user, leagueId, league, players, matches, approvedMatches, pendingMatches, incompleteMatches,
-    user, elo, seasons, selectedSeason, setSelectedSeason, isAdmin, isOwner, myMemberId, leagueMembers, memberProfiles,
+    elo, seasons, selectedSeason, setSelectedSeason, isAdmin, isOwner, myMemberId, leagueMembers, memberProfiles,
     getName, showToast, sendPushNotification, loadLeagueData,
     openMatches, openMatchPlayers, pairs, seasonRosters, claimedPlayer,
     updateMemberRole, adminPermissions, canDo,
