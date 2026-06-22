@@ -1,11 +1,12 @@
 import React, { useMemo } from "react";
 import Icon from "./Icon";
 import { flagEmoji } from "../utils/helpers";
+import { pressable } from "../utils/a11y";
 
 // Podium card extracted outside PairsRanking to satisfy react-hooks/static-components.
 function PodCard({ pr, rank, podClass, pAvatar, pInit, pName, pFlag, onPairDrillIn }) {
   return (
-    <div className={`prk-pod pod ${podClass}`} onClick={() => onPairDrillIn && onPairDrillIn(pr)}>
+    <div className={`prk-pod pod ${podClass}`} {...pressable(() => onPairDrillIn && onPairDrillIn(pr))}>
       <div className="prk-podh">{rank}</div>
       <div className="prk-podstack">
         <div className="prk-podrow">
@@ -161,7 +162,7 @@ export function PairsRanking({ pairs, matches, players, getName: _getName, onPai
           <div
             key={pr.id}
             className={`prk-trow${i === 0 ? " prk-r1" : i === 1 ? " prk-r2" : i === 2 ? " prk-r3" : ""}`}
-            onClick={() => onPairDrillIn && onPairDrillIn(pr)}
+            {...pressable(() => onPairDrillIn && onPairDrillIn(pr))}
           >
             <div className="prk-cell prk-c-num">{i + 1}</div>
             {/* S077: stacked players \u2014 avatar + name + flag, one per row. */}

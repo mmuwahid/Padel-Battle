@@ -170,15 +170,15 @@ export function EditMatchModal({ match, onClose, onSaved }) {
                       )}
                     </div>
                     <div className={`cstep a${inv?' invalid':''}`}>
-                      <button className="csbtn" onClick={()=>setSetValue(i,0,Math.max(0,s[0]-1))}><Icon name="minus" size={14} strokeWidth={2.5} color="var(--accent)"/></button>
+                      <button className="csbtn" aria-label={`Decrease team A score, set ${i+1}`} onClick={()=>setSetValue(i,0,Math.max(0,s[0]-1))}><Icon name="minus" size={14} strokeWidth={2.5} color="var(--accent)"/></button>
                       <div className="csval">{s[0]}</div>
-                      <button className="csbtn" onClick={()=>setSetValue(i,0,Math.min(9,s[0]+1))}><Icon name="plus" size={14} strokeWidth={2.5} color="var(--accent)"/></button>
+                      <button className="csbtn" aria-label={`Increase team A score, set ${i+1}`} onClick={()=>setSetValue(i,0,Math.min(9,s[0]+1))}><Icon name="plus" size={14} strokeWidth={2.5} color="var(--accent)"/></button>
                     </div>
                     <div className="scrows">—</div>
                     <div className={`cstep b${inv?' invalid':''}`}>
-                      <button className="csbtn" onClick={()=>setSetValue(i,1,Math.max(0,s[1]-1))}><Icon name="minus" size={14} strokeWidth={2.5} color="var(--gold)"/></button>
+                      <button className="csbtn" aria-label={`Decrease team B score, set ${i+1}`} onClick={()=>setSetValue(i,1,Math.max(0,s[1]-1))}><Icon name="minus" size={14} strokeWidth={2.5} color="var(--gold)"/></button>
                       <div className="csval">{s[1]}</div>
-                      <button className="csbtn" onClick={()=>setSetValue(i,1,Math.min(9,s[1]+1))}><Icon name="plus" size={14} strokeWidth={2.5} color="var(--gold)"/></button>
+                      <button className="csbtn" aria-label={`Increase team B score, set ${i+1}`} onClick={()=>setSetValue(i,1,Math.min(9,s[1]+1))}><Icon name="plus" size={14} strokeWidth={2.5} color="var(--gold)"/></button>
                     </div>
                   </div>
                 );

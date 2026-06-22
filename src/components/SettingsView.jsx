@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { supabase } from '../supabase';
 import { ErrorBoundary } from './ErrorBoundary';
 import Icon from './Icon';
+import { pressable } from '../utils/a11y';
 
 // S066 Phase 12: spec-faithful restyle.
 // Uses .stbody/.slbl/.stcard/.strow/.stico/.stbod/.sttitle/.stsub/.saar/.staf
@@ -46,7 +47,7 @@ export function SettingsView({ user, isAdmin, pushSubscribed, subscribeToPush, u
     <div style={{paddingBottom:"calc(80px + env(safe-area-inset-bottom, 0px))"}}>
       {/* S068: chevron-only back button to match all other drill-in screens */}
       <div className="back-btn-row">
-        <button className="back-btn" onClick={()=>goBack ? goBack() : setSidebarView(null)}>
+        <button className="back-btn" aria-label="Back" onClick={()=>goBack ? goBack() : setSidebarView(null)}>
           <Icon name="chevron-left" size={18} color="currentColor"/>
         </button>
       </div>
@@ -101,13 +102,13 @@ export function SettingsView({ user, isAdmin, pushSubscribed, subscribeToPush, u
       <div>
         <div className="slbl">League</div>
         <div className="stcard">
-          <div className="saar" onClick={onSwitchLeague}>
+          <div className="saar" {...pressable(onSwitchLeague)}>
             <div className="stico"><Icon name="switch" size={16}/></div>
             <div className="stbod"><div className="sttitle">Switch League</div><div className="stsub">Join a different league</div></div>
             <Icon name="chevron" size={16} color="#5a5a6a"/>
           </div>
           {isAdmin && (
-            <div className="saar pr" onClick={()=>navTo("admin")}>
+            <div className="saar pr" {...pressable(()=>navTo("admin"))}>
               <div className="stico"><Icon name="admin" size={16}/></div>
               <div className="stbod"><div className="sttitle">Admin Dashboard</div><div className="stsub">Manage players and matches</div></div>
               <Icon name="chevron" size={16} color="var(--accent)"/>

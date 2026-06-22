@@ -48,7 +48,7 @@ export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, re
     <div style={{paddingBottom:"calc(80px + env(safe-area-inset-bottom, 0px))"}}>
       {/* S068: chevron-only back button to match all other drill-in screens */}
       <div className="back-btn-row">
-        <button className="back-btn" onClick={()=>goBack ? goBack() : setSidebarView(null)}>
+        <button className="back-btn" aria-label="Back" onClick={()=>goBack ? goBack() : setSidebarView(null)}>
           <Icon name="chevron-left" size={18} color="currentColor"/>
         </button>
       </div>

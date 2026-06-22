@@ -129,7 +129,7 @@ export function PlayerManagement({ memberProfiles, setSidebarView, goBack }) {
   return (
     <div className="plm-screen">
       <div className="back-btn-row">
-        <button className="back-btn" onClick={() => goBack ? goBack() : setSidebarView("admin")}>
+        <button className="back-btn" aria-label="Back" onClick={() => goBack ? goBack() : setSidebarView("admin")}>
           <Icon name="chevron-left" size={18} color="currentColor" />
         </button>
       </div>

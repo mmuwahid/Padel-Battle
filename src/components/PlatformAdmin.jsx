@@ -117,7 +117,7 @@ export function PlatformAdmin({ onClose, showToast, onOpenLeague }) {
   return (
     <div className="pa-screen">
       <div className="back-btn-row">
-        <button className="back-btn" onClick={onClose}>
+        <button className="back-btn" aria-label="Back" onClick={onClose}>
           <Icon name="chevron-left" size={18} color="currentColor" />
         </button>
       </div>

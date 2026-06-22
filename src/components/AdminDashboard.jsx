@@ -70,7 +70,7 @@ export function AdminDashboard({ setSidebarView, navigateSidebar, goBack, setTab
   return (
     <div className="ad-screen">
       <div className="back-btn-row">
-        <button className="back-btn" onClick={() => goBack ? goBack() : setSidebarView(null)}>
+        <button className="back-btn" aria-label="Back" onClick={() => goBack ? goBack() : setSidebarView(null)}>
           <Icon name="chevron-left" size={18} color="currentColor" />
         </button>
       </div>

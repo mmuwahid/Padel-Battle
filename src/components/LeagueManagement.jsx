@@ -206,7 +206,7 @@ export function LeagueManagement({
     return (
       <div className="lm-screen">
         <div className="back-btn-row">
-          <button className="back-btn" onClick={closeDetail}>
+          <button className="back-btn" aria-label="Back" onClick={closeDetail}>
             <Icon name="chevron-left" size={18} color="currentColor" />
           </button>
         </div>
@@ -381,7 +381,7 @@ export function LeagueManagement({
   return (
     <div className="lm-screen">
       <div className="back-btn-row">
-        <button className="back-btn" onClick={() => goBack ? goBack() : setSidebarView("admin")}>
+        <button className="back-btn" aria-label="Back" onClick={() => goBack ? goBack() : setSidebarView("admin")}>
           <Icon name="chevron-left" size={18} color="currentColor" />
         </button>
       </div>

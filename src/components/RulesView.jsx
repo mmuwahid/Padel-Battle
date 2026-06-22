@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import Icon from "./Icon";
 import { SECTIONS } from "../data/rules";
+import { pressable } from "../utils/a11y";
 
 // S067 Phase 12 PR 3: Rules screen restructured per user iPhone-mockup.
 // Each rule is its own collapsible card under a section header. Sections:
@@ -14,7 +15,7 @@ function RuleCard({ rule, sectionAccent }) {
   const [open, setOpen] = useState(false);
   const isArgued = !!rule.isArgued || sectionAccent === "argued";
   return (
-    <div className={`rcard${isArgued ? " q" : ""}${open ? " open" : ""}`} onClick={() => setOpen(v => !v)}>
+    <div className={`rcard${isArgued ? " q" : ""}${open ? " open" : ""}`} aria-expanded={open} {...pressable(() => setOpen(v => !v))}>
       <div className="rchd">
         <div className="rcico">
           <Icon name={rule.icon || (isArgued ? "help" : "info")} size={16} color={isArgued ? "var(--gold)" : "var(--accent)"} />
@@ -78,7 +79,7 @@ export function RulesView({ setSidebarView, goBack }) {
     <div className="rules-screen rtb">
       {setSidebarView && (
         <div className="back-btn-row">
-          <button className="back-btn" onClick={() => goBack ? goBack() : setSidebarView(null)}>
+          <button className="back-btn" aria-label="Back" onClick={() => goBack ? goBack() : setSidebarView(null)}>
             <Icon name="chevron-left" size={18} color="currentColor" />
           </button>
         </div>
