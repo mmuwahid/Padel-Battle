@@ -704,20 +704,6 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
   // ELO ratings — based on approved matches only (pending don't count)
   const elo = useMemo(()=>calcElo(players,individualMatches),[players,individualMatches]);
 
-  // Leaderboard — Ranked by Total Wins > Win Rate > ELO > Games Played
-  const _lb = useMemo(()=>{
-    return [...ps].filter(p=>p.games>0).sort((a,b)=>{
-      if(b.wins!==a.wins)return b.wins-a.wins;
-      const wrA=Math.round(a.winRate*1000), wrB=Math.round(b.winRate*1000);
-      if(wrB!==wrA)return wrB-wrA;
-      const eloA=elo[a.id]||1500, eloB=elo[b.id]||1500;
-      if(eloB!==eloA)return eloB-eloA;
-      if(b.games!==a.games)return b.games-a.games;
-      return a.name.localeCompare(b.name);
-    });
-  },[ps,elo]);
-
-  // Season-filtered matches (ranking tab uses selectedSeason; falls back to all-time when no season set)
   const selectedSeasonMatches = useMemo(
     () => selectedSeason ? approvedMatches.filter(m => m.season_id === selectedSeason) : approvedMatches,
     [approvedMatches, selectedSeason]

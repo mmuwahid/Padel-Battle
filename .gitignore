@@ -11,3 +11,8 @@ android/app/src/main/assets/public/
 android/build/
 android/capacitor-cordova-android-plugins/build/
 *.keystore
+
+# Environment
+.env
+.env.local
+.env.production
