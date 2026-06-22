@@ -24,6 +24,22 @@ export async function configureStatusBar() {
   }
 }
 
+let _haptics = null;
+/**
+ * Fire a short impact haptic (no-op on web; best-effort on native).
+ * The @capacitor/haptics module is dynamically imported once and cached so
+ * rapid taps don't re-import. Failures (unsupported device) are swallowed.
+ */
+export async function triggerHaptic(style = 'light') {
+  if (!isNative) return;
+  try {
+    if (!_haptics) _haptics = await import('@capacitor/haptics');
+    const { Haptics, ImpactStyle } = _haptics;
+    const map = { light: ImpactStyle.Light, medium: ImpactStyle.Medium, heavy: ImpactStyle.Heavy };
+    await Haptics.impact({ style: map[style] || ImpactStyle.Light });
+  } catch { /* haptics unavailable — ignore */ }
+}
+
 /** Register native back button handler (Android). */
 export async function registerBackButton(handler) {
   if (!isNative) return () => {};
