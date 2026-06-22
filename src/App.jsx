@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback, Suspense, lazy } from "react";
 import { supabase } from './supabase';
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, BL, PU, TL, TR } from './theme';
-import { formatTeam, win, formatDate, setTotals, flagEmoji, decodeImageFile } from './utils/helpers';
+import { formatTeam, win, formatDate, setTotals, flagEmoji } from './utils/helpers';
 import { calcElo } from './utils/elo';
 import { RULES, ARGUED } from './data/rules';
 import { CourtIcon, PadelLogo, PadelLogoSmall, PadelHubMark, PadelHubMarkHeader } from './components/icons';
@@ -26,7 +26,7 @@ import { NotificationCenter } from './components/NotificationCenter';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { LeagueContext } from './LeagueContext';
 import { PLATFORM_ADMIN_ID } from './components/PlatformAdmin';
-import { hideNativeSplash, configureStatusBar, registerBackButton, isNative } from './capacitor';
+import { hideNativeSplash, configureStatusBar, registerBackButton } from './capacitor';
 import { usePushNotifications } from './hooks/usePushNotifications';
 import { usePwaInstall } from './hooks/usePwaInstall';
 import { useAvatar } from './hooks/useAvatar';
@@ -95,7 +95,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
   // can incrementally back-out one level at a time. Each navigateSidebar push the
   // CURRENT view onto the stack; goBackSidebar pops it. Empty stack + back == reopen
   // the drawer (since the user originally entered from the drawer).
-  const [sidebarHistory,setSidebarHistory]=useState([]);
+  const [_sidebarHistory,setSidebarHistory]=useState([]);
   // S077 r13: lifted from LeagueManagement so the detail-mode survives unmount
   // when navigating to PlayerManagement / SeasonManagement (back button returns
   // to the same league detail instead of falling back to the leagues list).
@@ -114,7 +114,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
   // (League Management, Platform Admin, Season Management, etc.) always open at
   // the top of the page instead of inheriting the previous screen's scroll.
   useEffect(() => {
-    try { window.scrollTo({ top: 0, left: 0, behavior: "auto" }); } catch {}
+    try { window.scrollTo({ top: 0, left: 0, behavior: "auto" }); } catch { /* scroll-to-top non-critical */ }
   }, [sidebarView]);
 
   const goBackSidebar = useCallback(() => {
@@ -143,7 +143,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
   // ReferenceError and crashes AppContent before mount.
   useEffect(() => {
     configureStatusBar();
-    const cleanup = registerBackButton(({ canGoBack }) => {
+    const cleanup = registerBackButton(({ canGoBack: _canGoBack }) => {
       if (sidebarView) goBackSidebar();
       else if (selectedPlayer) setSelectedPlayer(null);
       else if (selectedPair) setSelectedPair(null);
@@ -219,7 +219,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
 
   const [unreadNotifCount,setUnreadNotifCount]=useState(0);
   // S068 Issue #46: pending join-request count for Matches-tab banner + AdminDashboard card
-  const [pendingJoinCount,setPendingJoinCount]=useState(0);
+  const [_pendingJoinCount,setPendingJoinCount]=useState(0);
   // Admin Management state
   const [leagueMembers,setLeagueMembers]=useState([]);
   const [memberProfiles,setMemberProfiles]=useState({});
@@ -502,7 +502,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
     () => approvedMatches.filter(m => !m.season_id || !pairFormatSeasonIds.has(m.season_id)),
     [approvedMatches, pairFormatSeasonIds]
   );
-  const pairsMatches = useMemo(
+  const _pairsMatches = useMemo(
     () => approvedMatches.filter(m => m.season_id && pairFormatSeasonIds.has(m.season_id)),
     [approvedMatches, pairFormatSeasonIds]
   );
@@ -533,7 +533,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
 
     // Champion + Runner-Up (most wins, min 1 match played)
     const ranked = Object.entries(pStats)
-      .filter(([_, s]) => s.games > 0)
+      .filter(([_id, s]) => s.games > 0)
       .sort((a, b) => b[1].wins - a[1].wins || b[1].games - a[1].games);
     if (ranked.length > 0) awards.champion = { playerId: ranked[0][0], wins: ranked[0][1].wins };
     if (ranked.length > 1) awards.runnerUp = { playerId: ranked[1][0], wins: ranked[1][1].wins };
@@ -553,7 +553,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
       if (win(m.sets) === 'A') pairs[keyA].wins++;
       else pairs[keyB].wins++;
     });
-    const validPairs = Object.entries(pairs).filter(([_, p]) => p.total >= 3);
+    const validPairs = Object.entries(pairs).filter(([_key, p]) => p.total >= 3);
     if (validPairs.length > 0) {
       const best = validPairs.reduce((a, b) => (b[1].wins / b[1].total) > (a[1].wins / a[1].total) ? b : a);
       const [p1, p2] = best[0].split('|');
@@ -702,7 +702,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
   const elo = useMemo(()=>calcElo(players,individualMatches),[players,individualMatches]);
 
   // Leaderboard — Ranked by Total Wins > Win Rate > ELO > Games Played
-  const lb = useMemo(()=>{
+  const _lb = useMemo(()=>{
     return [...ps].filter(p=>p.games>0).sort((a,b)=>{
       if(b.wins!==a.wins)return b.wins-a.wins;
       const wrA=Math.round(a.winRate*1000), wrB=Math.round(b.winRate*1000);
@@ -1234,7 +1234,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
               {seasonLb.map((p,idx)=>{
                 const player = players.find(pp=>pp.id===p.id);
                 const flag = player?.country ? flagEmoji(player.country) : "";
-                const ctry = player?.country || "";
+                const _ctry = player?.country || "";
                 const eff = (p.winRate*100).toFixed(0);
                 const cw = getSeasonStreak(p.id);
                 const form = getSeasonForm(p.id);

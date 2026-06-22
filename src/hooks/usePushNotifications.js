@@ -32,7 +32,7 @@ export function usePushNotifications({ supabase, user, leagueId, showToast }) {
         const reg=await navigator.serviceWorker.ready;
         const sub=await reg.pushManager.getSubscription();
         setPushSubscribed(!!sub);
-      }catch(e){/* push check — non-critical */}
+      }catch(_e){/* push check — non-critical */}
     })();
   },[]);
 

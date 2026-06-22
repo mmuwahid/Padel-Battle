@@ -37,7 +37,7 @@ export function LeagueManagement({
     supabase, league, leagueId,
     showToast, loadLeagueData,
     isOwner, isAdmin, players, approvedMatches, seasons,
-    user, leagueMembers, memberProfiles, updateMemberRole,
+    user,
   } = useLeague();
 
   // S077 r13: prefer lifted prop, fall back to local state.

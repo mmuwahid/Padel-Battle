@@ -114,7 +114,6 @@ export function LeagueGate({ user, children }) {
       setJoinRequest(shaped);
       return shaped;
     } catch (err) {
-      // eslint-disable-next-line no-console
       console.warn("[LeagueGate] loadJoinRequest failed (non-fatal):", err);
       setJoinRequest(null);
       return null;
@@ -161,7 +160,6 @@ export function LeagueGate({ user, children }) {
         // and never throws, but the cover here is defense-in-depth.
         if (userLeagues.length === 0) await loadJoinRequest();
       } catch (err) {
-        // eslint-disable-next-line no-console
         console.error("[LeagueGate] cold-start failed:", err);
       } finally {
         setLoading(false);

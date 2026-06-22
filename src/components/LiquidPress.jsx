@@ -28,7 +28,6 @@ export function LiquidPressDelegate() {
       // Native-only light haptic on press (no-op on web). Fire-and-forget.
       triggerHaptic("light");
       // Force reflow so the radial keyframe restarts cleanly on rapid taps.
-      // eslint-disable-next-line no-unused-expressions
       void el.offsetWidth;
       el.classList.add("pressing");
 

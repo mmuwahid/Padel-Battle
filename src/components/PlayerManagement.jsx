@@ -18,7 +18,7 @@ import { EditPlayerModal } from "./EditPlayerModal";
 export function PlayerManagement({ memberProfiles, setSidebarView, goBack }) {
   const {
     supabase, user, league, leagueId, players,
-    showToast, loadLeagueData, sendPushNotification,
+    showToast, loadLeagueData,
     leagueMembers, isOwner,
   } = useLeague();
 
@@ -105,7 +105,7 @@ export function PlayerManagement({ memberProfiles, setSidebarView, goBack }) {
     setBusyId(null);
   };
 
-  const setRole = async (memberId, newRole, targetUserId, targetName) => {
+  const setRole = async (memberId, newRole, _targetUserId, _targetName) => {
     setRoleBusy(memberId);
     try {
       const { error } = await supabase.rpc("set_member_role", { p_member_id: memberId, p_role: newRole });

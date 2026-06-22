@@ -1,9 +1,9 @@
 import Icon from "./Icon";
 import React, { useState, useMemo } from "react";
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, BL, PU } from '../theme';
-import { formatTeam, win, setTotals } from '../utils/helpers';
+import { win, setTotals } from '../utils/helpers';
 
-export function CombosView({combos,players,matches,pm,getName}){
+export function CombosView({combos,players,matches,pm:_pm,getName}){
   const [view,setView]=useState("duos");
   const [selPlayer,setSelP]=useState("");
 
@@ -164,7 +164,7 @@ export function CombosView({combos,players,matches,pm,getName}){
                   <div style={{fontSize:12,fontWeight:700,fontFamily:"'DM Mono'",marginTop:2,color:(worst.gamesDiff||0)>0?A:(worst.gamesDiff||0)<0?DG:MT}} title="Games differential">{(worst.gamesDiff||0)>0?"+":""}{worst.gamesDiff||0} GD</div>
                 </div>}
               </div>
-              {partners.map((p,i)=>{
+              {partners.map((p)=>{
                 const barW=Math.max(p.pct,5);
                 const gd=p.gamesDiff||0;
                 return (<div key={p.pid} style={{marginBottom:8}}>

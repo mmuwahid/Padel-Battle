@@ -4,7 +4,7 @@ import { ACHS } from '../data/achievements';
 import { FD } from './FormDots';
 import Icon from './Icon';
 import { AvatarLightbox } from './AvatarLightbox';
-import { formatTeam, win, formatDate, setTotals, flagEmoji, getAge } from '../utils/helpers';
+import { win, formatDate, setTotals, flagEmoji, getAge } from '../utils/helpers';
 import { gradeColor } from '../utils/grade';
 
 // S089 #113g: in the tight Partnership Ranking pair cell a full two-word name
@@ -17,7 +17,7 @@ const shortName = (full) => {
   return `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.`;
 };
 
-export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matches,supabase,leagueId,isAdmin,getName,sel,onPlayersChange,showToast,claimedPlayer,leagueMembers,league,seasonId,seasons,seasonRosters}){
+export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matches,supabase,leagueId,isAdmin,getName,sel:_sel,onPlayersChange,showToast,claimedPlayer,leagueMembers,league,seasonId,seasons,seasonRosters}){
   const player=sp?pm[sp]:null;
   const stats=sp?ps[sp]:null;
   const [subTab,setSubTab]=useState("roster"); // roster | analytics
@@ -781,7 +781,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
         // Counts (computed against search-filtered set so they reflect what
         // user is currently searching for) — keeps the pills meaningful when
         // search is also active.
-        const counts = {
+        const _counts = {
           all:    searchFiltered.length,
           male:   searchFiltered.filter(p => p.gender === "male").length,
           female: searchFiltered.filter(p => p.gender === "female").length,

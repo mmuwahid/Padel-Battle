@@ -14,7 +14,7 @@ function Toggle({ on, onChange, label }) {
   );
 }
 
-export function SettingsView({ user, claimedPlayer, isAdmin, pushSubscribed, subscribeToPush, unsubscribeFromPush, notifNewMatch, notifRankingChange, notifNewMembers, notifChallenges, toggleNotification, onSwitchLeague, setSidebarView, navigateSidebar, goBack, showToast, loadLeagueData, testPushNotification }) {
+export function SettingsView({ user, isAdmin, pushSubscribed, subscribeToPush, unsubscribeFromPush, notifNewMatch, notifRankingChange, notifNewMembers, notifChallenges, toggleNotification, onSwitchLeague, setSidebarView, navigateSidebar, goBack, showToast, testPushNotification }) {
   const navTo = navigateSidebar || setSidebarView;
   // S090: Display Name is edited from the profile Edit screen — the duplicate
   // row here was removed as redundant clutter (state + handler dropped with it).

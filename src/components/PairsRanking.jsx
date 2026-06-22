@@ -14,7 +14,7 @@ import { flagEmoji } from "../utils/helpers";
 //   players          \u2014 full league players array (for avatar/name/country lookup).
 //   getName(pid)     \u2014 shared helper for player display name.
 //   onPairDrillIn    \u2014 optional click handler.
-export function PairsRanking({ pairs, matches, players, getName, onPairDrillIn }) {
+export function PairsRanking({ pairs, matches, players, getName: _getName, onPairDrillIn }) {
   const pairStats = useMemo(() => {
     if (!pairs || pairs.length === 0) return [];
     const teamIsPair = (team, pr) => {

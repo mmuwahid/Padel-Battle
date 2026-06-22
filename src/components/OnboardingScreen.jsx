@@ -38,7 +38,7 @@ export function OnboardingScreen({ user, handlers, onComplete, showToast }) {
 
   // S082: the single profile step now gates on the full field set.
   const canStep1 = name.trim().length >= 2 && country && dob && gender && side && (handedness === "left" || handedness === "right");
-  const canStep2 = code.trim().length > 0 || lgName.trim().length > 0;
+  const _canStep2 = code.trim().length > 0 || lgName.trim().length > 0;
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -79,7 +79,6 @@ export function OnboardingScreen({ user, handlers, onComplete, showToast }) {
       // and route to PendingApprovalScreen.
       if (onComplete) onComplete();
     } catch (err) {
-      // eslint-disable-next-line no-console
       console.error("[OnboardingScreen] join request failed:", err);
       if (showToast) showToast(err.message || "Failed to submit request", "error");
     }

@@ -54,7 +54,6 @@ export function EditMyProfile({ player, onClose, onRetake }) {
         // S067 diagnostic: surface the underlying DB error so we can debug
         // the "first save fails, second succeeds" bug. Toast shows the real
         // error code/message instead of a generic "Failed to save".
-        // eslint-disable-next-line no-console
         console.error("[EditMyProfile] update error:", error);
         throw error;
       }
@@ -66,7 +65,6 @@ export function EditMyProfile({ player, onClose, onRetake }) {
       // as save failures (the supabase update has already succeeded).
       loadLeagueData().catch(e => console.warn("[EditMyProfile] refresh after save:", e));
     } catch (err) {
-      // eslint-disable-next-line no-console
       console.error("[EditMyProfile] save catch:", err);
       const msg = err?.message || err?.error_description || "Failed to save";
       showToast(`${msg}${err?.code ? ` (${err.code})` : ""}`, "error");

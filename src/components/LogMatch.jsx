@@ -9,7 +9,7 @@ import Icon from './Icon';
 // + Phase 9's new .modebar/.modebtn/.sccard/.cstep/.csbtn/.csval/.livebi/.acbtn/.mvpcard/.savebtn etc.
 // Behavior preserved: 2/3 set toggle, Manual entry, LIVE scoring engine, FT-09 approval flow,
 // FT-09b FIP validation, dead-rubber auto-truncate, post-save broadcast push.
-export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goBack,sel,lbl,getName,seasonId,seasons,setCurSeason,onSave,showToast,sendPushNotification,prefilledOpenMatch,onPrefilledHandled,pairs,roster}){
+export function LogMatch({players,matches:_matches,supabase,leagueId,user,pm,em,setEm,goBack,sel:_sel,lbl:_lbl,getName,seasonId,seasons,setCurSeason,onSave,showToast,sendPushNotification,prefilledOpenMatch,onPrefilledHandled,pairs,roster}){
   const isE=!!em;
   const [tA,setTA]=useState(["",""]);
   const [tB,setTB]=useState(["",""]);
@@ -108,7 +108,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
   },[em]);
 
   const {ptA,ptB,gA,gB,isDeuce,inTiebreak}=getLiveDisplay(liveState);
-  const {sA,sB,completedSets,matchOver,history:liveHistory}=liveState;
+  const {sA,sB,completedSets:_completedSets,matchOver,history:liveHistory}=liveState;
 
   const teamName=(ids)=>{
     const names=ids.filter(Boolean).map(id=>getName?getName(id):id);

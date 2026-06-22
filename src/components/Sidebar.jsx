@@ -5,7 +5,7 @@ import Icon from './Icon';
 // S066 Phase 12: spec-faithful restyle. Slide-in right drawer (.ssheet) with
 // .sbprof header (clickable to open My Profile), .sbsec sections containing
 // .sbitem rows, .sbdiv divider, .sbfoot with .signout. Spec lines 2174-2196.
-export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, navigateSidebar, user, avatarUrl, league, isAdmin, onSwitchLeague, showToast, installPrompt, handleInstall, playerCount, activeSeasonName }) {
+export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, navigateSidebar, user, avatarUrl, league, isAdmin, onSwitchLeague: _onSwitchLeague, showToast, installPrompt, handleInstall, playerCount, activeSeasonName }) {
   // S068: drawer entry clicks must push history so the drill-down can incrementally
   // back out to the drawer. navigateSidebar handles drawer-close + history push.
   const go = navigateSidebar || ((v)=>{ setSidebarView(v); setSidebarOpen(false); });

@@ -8,7 +8,7 @@ import { useLeague } from "../LeagueContext";
 // or Reject (with optional free-text reason, max 120 chars). Approved/rejected items collapse
 // to a single-line summary. Reachable from AdminDashboard nav card and Matches-tab inline banner.
 export function ApprovalQueueScreen({ setSidebarView, goBack }) {
-  const { supabase, leagueId, league, showToast, loadLeagueData, isAdmin, canDo, sendPushNotification } = useLeague();
+  const { supabase, leagueId, league, showToast, loadLeagueData, canDo, sendPushNotification } = useLeague();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState(null);

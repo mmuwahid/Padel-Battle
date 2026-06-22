@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Icon from "./Icon";
 import { useLeague } from "../LeagueContext";
 
@@ -13,7 +13,7 @@ import { useLeague } from "../LeagueContext";
 // User decision S067 Q6=A: keep S055 full-screen Season Detail pattern for
 // edit (rich roster toggle UX doesn't fit a sheet). List + Create restyled.
 export function SeasonManagement({ setSidebarView, goBack, autoCreate, clearAutoCreate }) {
-  const { supabase, leagueId, players, seasons, pairs, seasonRosters, showToast, loadLeagueData, isOwner, isAdmin, setSelectedSeason } = useLeague();
+  const { supabase, leagueId, players, seasons, pairs, seasonRosters, showToast, loadLeagueData, isAdmin, setSelectedSeason } = useLeague();
 
   // S077 r9: read seasonRosters from context (no separate round-trip).
   // S083 smoke: mirror into local state so roster chips flip instantly

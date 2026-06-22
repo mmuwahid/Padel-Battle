@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, BL, PU } from '../theme';
-import { formatDate, win, setTotals, formatTeam } from '../utils/helpers';
+import { formatDate, formatTeam } from '../utils/helpers';
 import { TeamShuffler } from './TeamShuffler';
 import { ScoreStepper } from './ScoreStepper';
 import { validateMatch } from '../utils/scoringEngine';
@@ -46,8 +46,8 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
   const [logInvalidIdx,setLogInvalidIdx]=useState([]);
   const [logValidationError,setLogValidationError]=useState("");
 
-  const inp={background:CD2,color:TX,border:`1px solid ${BD}`,borderRadius:8,padding:"10px 12px",fontSize:13,width:"100%",outline:"none",fontFamily: "var(--font)"};
-  const getEloBadge=(pid)=>{const gp=(matches||[]).filter(m=>(m.team_a||[]).includes(pid)||(m.team_b||[]).includes(pid)).length;if(gp<5)return null;const e=elo?.[pid]||1500;if(e>=1600)return{label:"Pro",color:DG};if(e>=1400)return{label:"Advanced",color:GD};if(e>=1200)return{label:"Intermediate",color:PU};return{label:"Beginner",color:BL};};
+  const _inp={background:CD2,color:TX,border:`1px solid ${BD}`,borderRadius:8,padding:"10px 12px",fontSize:13,width:"100%",outline:"none",fontFamily: "var(--font)"};
+  const _getEloBadge=(pid)=>{const gp=(matches||[]).filter(m=>(m.team_a||[]).includes(pid)||(m.team_b||[]).includes(pid)).length;if(gp<5)return null;const e=elo?.[pid]||1500;if(e>=1600)return{label:"Pro",color:DG};if(e>=1400)return{label:"Advanced",color:GD};if(e>=1200)return{label:"Intermediate",color:PU};return{label:"Beginner",color:BL};};
   const claimedP=players.find(p=>p.user_id===user.id);
   // Map player IDs to user IDs for targeted notifications
   const getPlayerUserIds=(playerIds)=>playerIds.map(pid=>{const p=players.find(x=>x.id===pid);return p?.user_id;}).filter(Boolean);
@@ -261,7 +261,7 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
     setLogValidationError("");
     const sd=v.completedSets;
     if(!sd.length){showToast("Enter at least one set score","error");return;}
-    const isIncomplete=v.status==='incomplete';
+    const _isIncomplete=v.status==='incomplete';
     const droppedSets=v.droppedSets;
     setLogSaving(true);
     try{
