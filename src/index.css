@@ -191,27 +191,22 @@ body {
    nav. Bumped to fully opaque #12121a (= var(--surface-2) / CD card bg) +
    dropped backdrop-filter. NavIcons.jsx (S057, frozen) renders inside .nicon. */
 .bnav {
+  /* S093 #130 definitive: nav anchored to screen bottom. The nav bg extends
+     through the safe-area zone so no body background ever peeks through.
+     Top corners rounded, bottom flat (modern bar style). */
   position: fixed;
-  bottom: calc(2px + env(safe-area-inset-bottom, 0px));
-  left: 14px;
-  right: 14px;
-  /* S092 #130: nav pill bg matched to the main content wrapper (#0a0a0f, measured
-     live) so it blends with the page behind it; the green border alone defines the
-     pill (drop-shadow removed below — see note). */
+  bottom: 0;
+  left: 0;
+  right: 0;
   background: #0a0a0f;
-  border: 1px solid rgba(74, 222, 128, 0.25);
-  border-radius: 28px;
+  border-top: 1px solid rgba(74, 222, 128, 0.25);
+  border-radius: 0;
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   align-items: center;
-  padding: 6px;
+  padding: 8px 14px calc(8px + env(safe-area-inset-bottom, 0px));
   z-index: 100;
-  /* S092 #130: drop-shadow removed per owner — the soft rgba(0,0,0,0.45) halo read
-     as a darker band around/below the pill, breaking the unified #0a0a0f surface.
-     The green border alone now defines the pill; no shadow. */
   box-shadow: none;
-  /* S069 Issue #81: allow press-state halo + lifted icon to overflow above the
-     pill bar without being clipped by the rounded card. */
   overflow: visible;
 }
 .ntab {
