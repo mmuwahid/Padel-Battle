@@ -472,7 +472,7 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
                     const others=allSel.filter(v=>v!==tA[i]);
                     return (
                       <div key={i} className="pslot">
-                        <select className={`psel af${tA[i]?" fi":""}`} value={tA[i]} onChange={e=>{const n=[...tA];n[i]=e.target.value;setTA(n);}}>
+                        <select aria-label={`Team A player ${i+1}`} className={`psel af${tA[i]?" fi":""}`} value={tA[i]} onChange={e=>{const n=[...tA];n[i]=e.target.value;setTA(n);}}>
                           <option value="">{"\u2014 Select \u2014"}</option>
                           {players.filter(p=>!others.includes(p.id)).map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}
                         </select>
@@ -490,7 +490,7 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
                     const others=allSel.filter(v=>v!==tB[i]);
                     return (
                       <div key={i} className="pslot">
-                        <select className={`psel bf${tB[i]?" fi":""}`} value={tB[i]} onChange={e=>{const n=[...tB];n[i]=e.target.value;setTB(n);}}>
+                        <select aria-label={`Team B player ${i+1}`} className={`psel bf${tB[i]?" fi":""}`} value={tB[i]} onChange={e=>{const n=[...tB];n[i]=e.target.value;setTB(n);}}>
                           <option value="">{"\u2014 Select \u2014"}</option>
                           {players.filter(p=>!others.includes(p.id)).map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}
                         </select>
@@ -539,8 +539,8 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
               {/* Match Date & Time */}
               <div className="shlbl" style={{marginBottom:6}}><Icon name="calendar" size={12}/>Match Date {"\u0026"} Time</div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}}>
-                <input type="date" className="shi" value={date} min={new Date().toISOString().split("T")[0]} onChange={e=>setDate(e.target.value)}/>
-                <input type="time" className="shi" value={time} onChange={e=>setTime(e.target.value)}/>
+                <input aria-label="Match date" type="date" className="shi" value={date} min={new Date().toISOString().split("T")[0]} onChange={e=>setDate(e.target.value)}/>
+                <input aria-label="Match time" type="time" className="shi" value={time} onChange={e=>setTime(e.target.value)}/>
               </div>
 
               {/* Duration — inline pillrow */}
@@ -556,11 +556,11 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
 
               {/* Court */}
               <div className="shlbl" style={{marginBottom:6}}><Icon name="court-l" size={12}/>Court</div>
-              <input className="shi" style={{marginBottom:10}} placeholder={"e.g. Harmony 3 \u2013 Padel Court 1"} value={location} onChange={e=>setLocation(e.target.value)}/>
+              <input aria-label="Court" className="shi" style={{marginBottom:10}} placeholder={"e.g. Harmony 3 \u2013 Padel Court 1"} value={location} onChange={e=>setLocation(e.target.value)}/>
 
               {/* Notes */}
               <div className="shlbl" style={{marginBottom:6}}><Icon name="edit" size={12}/>Notes (optional)</div>
-              <input className="shi" style={{marginBottom:14}} placeholder={"Any notes for the players\u2026"} value={notes} onChange={e=>setNotes(e.target.value)}/>
+              <input aria-label="Notes" className="shi" style={{marginBottom:14}} placeholder={"Any notes for the players\u2026"} value={notes} onChange={e=>setNotes(e.target.value)}/>
             </div>
 
             {/* Info note */}
@@ -634,7 +634,7 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
                   const indicator = isPending && r==='accepted' ? '\u2713' : isPending && r==='declined' ? '\u2717' : isPending && !r ? '\u23F3' : '';
                   return (
                     <div key={pid} className="scard-team-pl">
-                      <div className="scard-pavi">{av?<img src={av} alt=""/>:(getName(pid)[0]||'?').toUpperCase()}</div>
+                      <div className="scard-pavi">{av?<img src={av} alt={getName(pid)}/>:(getName(pid)[0]||'?').toUpperCase()}</div>
                       <span className="scard-pname">{getName(pid)}{indicator?` ${indicator}`:''}</span>
                     </div>
                   );
@@ -696,7 +696,7 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
                     )}
                     <div style={{marginTop:8,marginBottom:10}}>
                       <div style={{fontSize:10,color:'#9090a4',fontWeight:600,marginBottom:4}}>{"\u2B50"} Man of the Match</div>
-                      <select value={logMotm} onChange={e=>setLogMotm(e.target.value)} style={{...sel,fontSize:12}}>
+                      <select aria-label="Man of the Match" value={logMotm} onChange={e=>setLogMotm(e.target.value)} style={{...sel,fontSize:12}}>
                         <option value="">Select MVP</option>
                         {[...(ch.team_a||[]),...(ch.team_b||[])].map(pid=>(<option key={pid} value={pid}>{getName(pid)}</option>))}
                       </select>

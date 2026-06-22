@@ -160,6 +160,7 @@ export function LeaguesView({
                   {editId === l.id ? (
                     <div className="lv-card-row">
                       <input
+                        aria-label="League name"
                         className="lv-input"
                         value={editName}
                         onChange={e => setEditName(e.target.value)}
@@ -205,6 +206,7 @@ export function LeaguesView({
                           delConfirmId === l.id ? (
                             <div className="lv-del-confirm">
                               <input
+                                aria-label={`Type "${l.name}" to confirm deletion`}
                                 className="lv-input lv-input-sm"
                                 placeholder={`Type "${l.name}" to confirm`}
                                 value={delTyped}
@@ -245,6 +247,7 @@ export function LeaguesView({
 
           <label className="lv-label">League name</label>
           <input
+            aria-label="League name"
             className="lv-input"
             type="text"
             value={newName}
@@ -306,6 +309,7 @@ export function LeaguesView({
           <div className="lv-section-label">Join an existing league</div>
           <label className="lv-label">Invite code</label>
           <input
+            aria-label="Invite code"
             className="lv-input"
             type="text"
             value={inviteCode}

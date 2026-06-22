@@ -170,7 +170,7 @@ export function PlatformAdmin({ onClose, showToast, onOpenLeague }) {
 
             <div className="pasrw">
               <div className="pasri"><Icon name="search" size={16} color="var(--muted)" /></div>
-              <input className="pasr" placeholder={`Search ${filter}…`} value={search} onChange={e => setSearch(e.target.value)} />
+              <input aria-label={`Search ${filter}`} className="pasr" placeholder={`Search ${filter}…`} value={search} onChange={e => setSearch(e.target.value)} />
             </div>
 
             <div className="palist">
@@ -192,6 +192,7 @@ export function PlatformAdmin({ onClose, showToast, onOpenLeague }) {
                   {renameId === l.id && (
                     <div className="pa-confirm">
                       <input
+                        aria-label="New league name"
                         className="pa-confirm-input"
                         value={renameDraft}
                         onChange={e => setRenameDraft(e.target.value)}
@@ -206,6 +207,7 @@ export function PlatformAdmin({ onClose, showToast, onOpenLeague }) {
                   {deleteConfirm === l.id && (
                     <div className="pa-confirm danger">
                       <input
+                        aria-label="Type DELETE to confirm league deletion"
                         className="pa-confirm-input"
                         value={deleteTyped}
                         onChange={e => setDeleteTyped(e.target.value)}
@@ -223,7 +225,7 @@ export function PlatformAdmin({ onClose, showToast, onOpenLeague }) {
                 <div key={u.id} className="paitem-wrap">
                   <div className="paitem">
                     {u.avatar_url ? (
-                      <img className="paavi paavi-img" src={u.avatar_url} alt="" />
+                      <img className="paavi paavi-img" src={u.avatar_url} alt={u.display_name || u.email || ""} />
                     ) : (
                       <div className="paavi">{(u.display_name || u.email || "?")[0].toUpperCase()}</div>
                     )}
@@ -252,6 +254,7 @@ export function PlatformAdmin({ onClose, showToast, onOpenLeague }) {
                   {deleteUserConfirm === u.id && (
                     <div className="pa-confirm danger">
                       <input
+                        aria-label="Type DELETE to confirm user deletion"
                         className="pa-confirm-input"
                         value={deleteUserTyped}
                         onChange={e => setDeleteUserTyped(e.target.value)}

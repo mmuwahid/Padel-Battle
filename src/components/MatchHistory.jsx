@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { win, formatDateParts, flagEmoji } from '../utils/helpers';
+import { win, formatDateParts, flagEmoji, findAvatar, findCountry } from '../utils/helpers';
 import { useLeague } from '../LeagueContext';
 import { MatchApprovalsQueue } from './MatchApprovalsQueue';
 import Icon from './Icon';
@@ -45,8 +45,8 @@ export function MatchHistory({onEdit,shareMatch,sel:_sel,onMatchDeleted,scrollTo
   const [pickerOpen,setPickerOpen]=useState(null);
   const popoverRef = useRef(null);
 
-  const getAvatar = (pid) => players.find(pp=>pp.id===pid)?.avatar_url;
-  const getCountry = (pid) => players.find(pp=>pp.id===pid)?.country;
+  const getAvatar = (pid) => findAvatar(players, pid);
+  const getCountry = (pid) => findCountry(players, pid);
 
   // S070 Issue #79: scroll-to-match support for notification click-through.
   // When parent passes scrollToMatchId, find the .mcard with that data-match-id,
@@ -166,7 +166,7 @@ export function MatchHistory({onEdit,shareMatch,sel:_sel,onMatchDeleted,scrollTo
     const flag = country ? flagEmoji(country) : "";
     return (
       <div key={pid} className="mplyr2">
-        <div className={`mplavi2${isWinSide?'':' los'}`}>{av?<img src={av} alt=""/>:(name[0]||'?').toUpperCase()}</div>
+        <div className={`mplavi2${isWinSide?'':' los'}`}>{av?<img src={av} alt={name}/>:(name[0]||'?').toUpperCase()}</div>
         <div className={`mplnam2 ${isWinSide?'win-side':'los-side'}`}>{name}</div>
         {flag && <span className="mplflag2 flag">{flag}</span>}
       </div>
@@ -259,7 +259,7 @@ export function MatchHistory({onEdit,shareMatch,sel:_sel,onMatchDeleted,scrollTo
         </div>
         {seasons && seasons.length > 0 && (()=>{ const _sa=seasons.find(sn=>sn.id===selectedSeason)?.active; return (
           <div style={{position:"relative",display:"inline-flex",alignItems:"center"}}>
-            <select className="spill" value={selectedSeason||""} onChange={e=>setSelectedSeason(e.target.value)}
+            <select aria-label="Filter by season" className="spill" value={selectedSeason||""} onChange={e=>setSelectedSeason(e.target.value)}
               style={{appearance:"none",WebkitAppearance:"none",paddingRight:26,backgroundImage:"none",color:_sa?"var(--accent)":"var(--muted)",fontWeight:_sa?700:400}}>
               {/* S089 #126: consistent season-pill treatment — name only, accent when active, muted gray when inactive. */}
               {seasons.map(sn=><option key={sn.id} value={sn.id} style={{color:sn.active?"#fff":"#9090a4"}}>{sn.name}</option>)}

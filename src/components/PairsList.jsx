@@ -267,11 +267,11 @@ export function PairsList({ pairs, matches, players, getName, onPairClick }) {
             <div className="an-card-pair">
               <div className="an-card-h">Pair vs Pair</div>
               <div style={{ display: "flex", gap: 8 }}>
-                <select className="pair-sel" value={h2hA} onChange={e => setH2hA(e.target.value)}>
+                <select aria-label="Pair A" className="pair-sel" value={h2hA} onChange={e => setH2hA(e.target.value)}>
                   <option value="">— Pair A —</option>
                   {pairs.map(pr => <option key={pr.id} value={pr.id}>{labelFor(pr)}</option>)}
                 </select>
-                <select className="pair-sel" value={h2hB} onChange={e => setH2hB(e.target.value)}>
+                <select aria-label="Pair B" className="pair-sel" value={h2hB} onChange={e => setH2hB(e.target.value)}>
                   <option value="">— Pair B —</option>
                   {pairs.map(pr => <option key={pr.id} value={pr.id}>{labelFor(pr)}</option>)}
                 </select>
@@ -341,7 +341,7 @@ function PairAvatar({ player, fallbackLetter, className, small }) {
   if (player && player.avatar_url) {
     return (
       <div className={cls} style={{ ...(style || {}), overflow: "hidden", background: "var(--surface-2)" }}>
-        <img src={player.avatar_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
+        <img src={player.avatar_url} alt={player.name || ""} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
       </div>
     );
   }
@@ -359,5 +359,3 @@ function InsightCard({ label, title, value }) {
     </div>
   );
 }
-
-export default PairsList;

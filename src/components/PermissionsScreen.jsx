@@ -136,7 +136,7 @@ export function PermissionsScreen({ goBack, setSidebarView }) {
           {admins.map((a) => (
             <div key={a.userId} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 2px" }}>
               <div className="av" style={{ width: 36, height: 36 }}>
-                {a.avatar ? <img src={a.avatar} alt="" /> : (a.name[0] || "?").toUpperCase()}
+                {a.avatar ? <img src={a.avatar} alt={a.name} /> : (a.name[0] || "?").toUpperCase()}
               </div>
               <div style={{ flex: 1, minWidth: 0, fontSize: 14, fontWeight: 600, color: "var(--text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.name}</div>
               <div className={a.isOwner ? "badgea" : "badgee"}>{a.isOwner ? "OWNER" : "ADMIN"}</div>

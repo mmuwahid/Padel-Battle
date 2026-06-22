@@ -14,8 +14,14 @@
  * component. Phase 2+ progressively replaces emoji + ad-hoc SVGs.
  *
  * Ported verbatim from docs/PadelHub_Complete_v2.jsx lines 6–71.
+ *
+ * C9: wrapped in React.memo — props are all primitives (name/size/color/
+ * strokeWidth), so shallow comparison skips re-render when a parent re-renders
+ * with unchanged props. Icon renders in nearly every list row/button.
  */
-export default function Icon({ name, size = 20, color = "currentColor", strokeWidth = 1.75 }) {
+import { memo } from "react";
+
+function Icon({ name, size = 20, color = "currentColor", strokeWidth = 1.75 }) {
   const s = { width: size, height: size, display: "block", flexShrink: 0 };
   const p = { fill: "none", stroke: color, strokeWidth, strokeLinecap: "round", strokeLinejoin: "round" };
   switch (name) {
@@ -103,3 +109,5 @@ export default function Icon({ name, size = 20, color = "currentColor", strokeWi
     default:            return null;
   }
 }
+
+export default memo(Icon);

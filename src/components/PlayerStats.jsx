@@ -4,7 +4,7 @@ import { ACHS } from '../data/achievements';
 import { FD } from './FormDots';
 import Icon from './Icon';
 import { AvatarLightbox } from './AvatarLightbox';
-import { win, formatDate, setTotals, flagEmoji, getAge } from '../utils/helpers';
+import { win, formatDate, setTotals, flagEmoji, getAge, findAvatar } from '../utils/helpers';
 import { gradeColor } from '../utils/grade';
 
 // S089 #113g: in the tight Partnership Ranking pair cell a full two-word name
@@ -61,7 +61,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
 
   // S051 Issue #20: lookup helper — find player.avatar_url by id. Used in every
   // avatar slot in this component (drill-in profile, insights, pairs, H2H, grid).
-  const getAvatar=(pid)=>players.find(pp=>pp.id===pid)?.avatar_url;
+  const getAvatar=(pid)=>findAvatar(players,pid);
 
   async function addPlayer(){
     const nm=newName.trim();
@@ -235,7 +235,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
             onClick={player.avatar_url ? () => setShowLightbox(true) : undefined}
             role={player.avatar_url ? "button" : undefined}
             aria-label={player.avatar_url ? "View photo" : undefined}
-          >{player.avatar_url ? <img src={player.avatar_url} alt=""/> : player.name[0]}</div>
+          >{player.avatar_url ? <img src={player.avatar_url} alt={player.name}/> : player.name[0]}</div>
           <h2 className="dpro-name">{player.name}</h2>
           {player.nickname && <p className="dpro-nick">"{player.nickname}"</p>}
           {roleLabel && (
@@ -409,7 +409,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                 {analyticsData.mostActive.map(x=>(
                   <div key={x.pid} className="lrow" onClick={()=>setSp(x.pid)} style={{cursor:"pointer"}} role="button" tabIndex={0} aria-label={`Open ${getName(x.pid)}'s profile`}>
                     <div className="lrow-l">
-                      <div className="lrow-avi">{getAvatar(x.pid)?<img src={getAvatar(x.pid)} alt=""/>:getName(x.pid)[0]}</div>
+                      <div className="lrow-avi">{getAvatar(x.pid)?<img src={getAvatar(x.pid)} alt={getName(x.pid)}/>:getName(x.pid)[0]}</div>
                       <span className="lrow-name">{getName(x.pid)}</span>
                     </div>
                     <div className="lrow-r"><span className="lrow-mp">{x.games}</span><span className="lrow-mpu">MP</span></div>
@@ -425,7 +425,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                 {analyticsData.topWinRate.map(x=>(
                   <div key={x.pid} className="lrow" onClick={()=>setSp(x.pid)} style={{cursor:"pointer"}} role="button" tabIndex={0} aria-label={`Open ${getName(x.pid)}'s profile`}>
                     <div className="lrow-l">
-                      <div className="lrow-avi">{getAvatar(x.pid)?<img src={getAvatar(x.pid)} alt=""/>:getName(x.pid)[0]}</div>
+                      <div className="lrow-avi">{getAvatar(x.pid)?<img src={getAvatar(x.pid)} alt={getName(x.pid)}/>:getName(x.pid)[0]}</div>
                       <span className="lrow-name">{getName(x.pid)}</span>
                     </div>
                     <div className="lrow-r">
@@ -484,7 +484,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                 <div className="pair-title">Best Pairs</div>
                 <div className="pair-row">
                   <div className="pair-side">
-                    <div className="pair-avi">{getAvatar(analyticsData.bestPartnership.a)?<img src={getAvatar(analyticsData.bestPartnership.a)} alt=""/>:getName(analyticsData.bestPartnership.a)[0]}</div>
+                    <div className="pair-avi">{getAvatar(analyticsData.bestPartnership.a)?<img src={getAvatar(analyticsData.bestPartnership.a)} alt={getName(analyticsData.bestPartnership.a)}/>:getName(analyticsData.bestPartnership.a)[0]}</div>
                     <div className="pair-pname">{getName(analyticsData.bestPartnership.a)}</div>
                   </div>
                   <div className="pair-rec">
@@ -493,7 +493,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                   </div>
                   <div className="pair-side rt">
                     <div className="pair-pname tr">{getName(analyticsData.bestPartnership.b)}</div>
-                    <div className="pair-avi">{getAvatar(analyticsData.bestPartnership.b)?<img src={getAvatar(analyticsData.bestPartnership.b)} alt=""/>:getName(analyticsData.bestPartnership.b)[0]}</div>
+                    <div className="pair-avi">{getAvatar(analyticsData.bestPartnership.b)?<img src={getAvatar(analyticsData.bestPartnership.b)} alt={getName(analyticsData.bestPartnership.b)}/>:getName(analyticsData.bestPartnership.b)[0]}</div>
                   </div>
                 </div>
               </div>}
@@ -502,7 +502,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                 {analyticsData.worstPartnership ? (
                   <div className="pair-row">
                     <div className="pair-side">
-                      <div className="pair-avi dg">{getAvatar(analyticsData.worstPartnership.a)?<img src={getAvatar(analyticsData.worstPartnership.a)} alt=""/>:getName(analyticsData.worstPartnership.a)[0]}</div>
+                      <div className="pair-avi dg">{getAvatar(analyticsData.worstPartnership.a)?<img src={getAvatar(analyticsData.worstPartnership.a)} alt={getName(analyticsData.worstPartnership.a)}/>:getName(analyticsData.worstPartnership.a)[0]}</div>
                       <div className="pair-pname">{getName(analyticsData.worstPartnership.a)}</div>
                     </div>
                     <div className="pair-rec dg">
@@ -511,7 +511,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                     </div>
                     <div className="pair-side rt">
                       <div className="pair-pname tr">{getName(analyticsData.worstPartnership.b)}</div>
-                      <div className="pair-avi dg">{getAvatar(analyticsData.worstPartnership.b)?<img src={getAvatar(analyticsData.worstPartnership.b)} alt=""/>:getName(analyticsData.worstPartnership.b)[0]}</div>
+                      <div className="pair-avi dg">{getAvatar(analyticsData.worstPartnership.b)?<img src={getAvatar(analyticsData.worstPartnership.b)} alt={getName(analyticsData.worstPartnership.b)}/>:getName(analyticsData.worstPartnership.b)[0]}</div>
                     </div>
                   </div>
                 ) : (
@@ -556,7 +556,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                           title={`Open ${getName(p.a)}'s profile`}
                         >
                           {getAvatar(p.a)
-                            ? <img src={getAvatar(p.a)} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                            ? <img src={getAvatar(p.a)} alt={getName(p.a)} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
                             : (getName(p.a)[0]||"?").toUpperCase()}
                         </button>
                         <div className="lbpinfo" style={{alignItems:"flex-start",textAlign:"left",gap:4,minWidth:0,flex:1}}>
@@ -581,7 +581,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                           title={`Open ${getName(p.b)}'s profile`}
                         >
                           {getAvatar(p.b)
-                            ? <img src={getAvatar(p.b)} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                            ? <img src={getAvatar(p.b)} alt={getName(p.b)} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
                             : (getName(p.b)[0]||"?").toUpperCase()}
                         </button>
                       </div>
@@ -601,14 +601,14 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
             <div className="h2h-sel-grid">
               <div>
                 <label className="h2h-sel-l">Player 1</label>
-                <select className="h2h-sel" value={h2hP1||""} onChange={e=>setH2hP1(e.target.value||null)}>
+                <select aria-label="Player 1" className="h2h-sel" value={h2hP1||""} onChange={e=>setH2hP1(e.target.value||null)}>
                   <option value="">Select player</option>
                   {players.map(p=><option key={p.id} value={p.id}>{(p.nickname||p.name)+(elo?` (${Math.round(elo[p.id]||1500)})`:"")}</option>)}
                 </select>
               </div>
               <div>
                 <label className="h2h-sel-l">Player 2</label>
-                <select className="h2h-sel" value={h2hP2||""} onChange={e=>setH2hP2(e.target.value||null)}>
+                <select aria-label="Player 2" className="h2h-sel" value={h2hP2||""} onChange={e=>setH2hP2(e.target.value||null)}>
                   <option value="">Select player</option>
                   {players.filter(p=>p.id!==h2hP1).map(p=><option key={p.id} value={p.id}>{(p.nickname||p.name)+(elo?` (${Math.round(elo[p.id]||1500)})`:"")}</option>)}
                 </select>
@@ -635,9 +635,9 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
               return (<>
                 <div className="h2h-hero">
                   <div className="h2h-row">
-                    <div className="h2h-avi">{p1?.avatar_url?<img src={p1.avatar_url} alt=""/>:(p1?.name||"?")[0]}</div>
+                    <div className="h2h-avi">{p1?.avatar_url?<img src={p1.avatar_url} alt={p1?.name||""}/>:(p1?.name||"?")[0]}</div>
                     <div className="h2h-score">{p1W} - {p2W}</div>
-                    <div className="h2h-avi">{p2?.avatar_url?<img src={p2.avatar_url} alt=""/>:(p2?.name||"?")[0]}</div>
+                    <div className="h2h-avi">{p2?.avatar_url?<img src={p2.avatar_url} alt={p2?.name||""}/>:(p2?.name||"?")[0]}</div>
                   </div>
                   <div className="h2h-bar-bg"><div className="h2h-bar-f" style={{width:`${h2hM.length>0?(p1W/h2hM.length)*100:50}%`}}/></div>
                   <div className="h2h-meta">All-time record · {h2hM.length} matches</div>
@@ -710,7 +710,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                   <div key={x.pid} className="lrow" onClick={()=>setSp(x.pid)} style={{cursor:"pointer"}} role="button" tabIndex={0} aria-label={`Open ${getName(x.pid)}'s profile`}>
                     <div className="lrow-l">
                       <span className="lrow-rank">{i+1}.</span>
-                      <div className="lrow-avi gold">{getAvatar(x.pid)?<img src={getAvatar(x.pid)} alt=""/>:getName(x.pid)[0]}</div>
+                      <div className="lrow-avi gold">{getAvatar(x.pid)?<img src={getAvatar(x.pid)} alt={getName(x.pid)}/>:getName(x.pid)[0]}</div>
                       <span className="lrow-name">{getName(x.pid)}</span>
                     </div>
                     <span className="lrow-gold" style={{display:"inline-flex",alignItems:"center",gap:3}}>{x.count}× <Icon name="star" size={11} color="var(--gold)"/></span>
@@ -726,7 +726,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                   <div key={x.pid} className="lrow" onClick={()=>setSp(x.pid)} style={{cursor:"pointer"}} role="button" tabIndex={0} aria-label={`Open ${getName(x.pid)}'s profile`}>
                     <div className="lrow-l">
                       <span className="lrow-rank">{i+1}.</span>
-                      <div className="lrow-avi">{getAvatar(x.pid)?<img src={getAvatar(x.pid)} alt=""/>:getName(x.pid)[0]}</div>
+                      <div className="lrow-avi">{getAvatar(x.pid)?<img src={getAvatar(x.pid)} alt={getName(x.pid)}/>:getName(x.pid)[0]}</div>
                       <span className="lrow-name">{getName(x.pid)}</span>
                     </div>
                     <div className="streak-r"><span className="streak-v win">{x.n}</span><span className="streak-u">in a row</span></div>
@@ -742,7 +742,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                   <div key={x.pid} className="lrow" onClick={()=>setSp(x.pid)} style={{cursor:"pointer"}} role="button" tabIndex={0} aria-label={`Open ${getName(x.pid)}'s profile`}>
                     <div className="lrow-l">
                       <span className="lrow-rank">{i+1}.</span>
-                      <div className="lrow-avi">{getAvatar(x.pid)?<img src={getAvatar(x.pid)} alt=""/>:getName(x.pid)[0]}</div>
+                      <div className="lrow-avi">{getAvatar(x.pid)?<img src={getAvatar(x.pid)} alt={getName(x.pid)}/>:getName(x.pid)[0]}</div>
                       <span className="lrow-name">{getName(x.pid)}</span>
                     </div>
                     <div className="streak-r"><span className="streak-v loss">{x.n}</span><span className="streak-u">in a row</span></div>
@@ -820,6 +820,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
               /* S091 (#127): season pill matches the Leaderboard .spill standard. */
               <div style={{position:"relative",display:"inline-flex",alignItems:"center",flexShrink:0}}>
                 <select
+                  aria-label="Filter by season"
                   value={rosterSeason}
                   onChange={e=>setRosterSeason(e.target.value)}
                   className="spill"
@@ -840,7 +841,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
           {/* Phase 5: search input */}
           <div className="srchw">
             <div className="srchi"><Icon name="search" size={15}/></div>
-            <input className="srch" placeholder="Search players…" value={q} onChange={e=>setQ(e.target.value)}/>
+            <input aria-label="Search players" className="srch" placeholder="Search players…" value={q} onChange={e=>setQ(e.target.value)}/>
           </div>
 
           {/* S066 Phase 8: gender filter bar — small/subtle pills below search.
@@ -869,8 +870,8 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
 
           {/* Add Player form preserved verbatim (S046 admin path) */}
           {showAddPlayer&&!editMode&&<div style={{margin:"0 18px 12px",background:CD,borderRadius:12,border:`1px solid ${BD}`,padding:14}}>
-            <input placeholder="Name *" value={newName} onChange={e=>setNewName(e.target.value)} style={{...inp,marginBottom:8}}/>
-            <input placeholder="Nickname" value={newNick} onChange={e=>setNewNick(e.target.value)} style={{...inp,marginBottom:8}}/>
+            <input aria-label="Name" placeholder="Name *" value={newName} onChange={e=>setNewName(e.target.value)} style={{...inp,marginBottom:8}}/>
+            <input aria-label="Nickname" placeholder="Nickname" value={newNick} onChange={e=>setNewNick(e.target.value)} style={{...inp,marginBottom:8}}/>
             <button onClick={addPlayer} style={{width:"100%",padding:10,borderRadius:10,border:"none",background:A,color:BG,fontSize:13,fontWeight:700,cursor:"pointer"}}>Add Player</button>
           </div>}
 
@@ -890,8 +891,8 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
               if(editMode && editPid===p.id) return (
                 <div key={p.id} className="prow editing">
                   <div style={{flex:1}}>
-                    <input value={editName} onChange={e=>setEditName(e.target.value)} placeholder="Name *" style={{...inp,marginBottom:6,borderColor:`${GD}40`}}/>
-                    <input value={editNick} onChange={e=>setEditNick(e.target.value)} placeholder="Nickname" style={{...inp,marginBottom:8,borderColor:`${GD}40`}}/>
+                    <input aria-label="Name" value={editName} onChange={e=>setEditName(e.target.value)} placeholder="Name *" style={{...inp,marginBottom:6,borderColor:`${GD}40`}}/>
+                    <input aria-label="Nickname" value={editNick} onChange={e=>setEditNick(e.target.value)} placeholder="Nickname" style={{...inp,marginBottom:8,borderColor:`${GD}40`}}/>
                     <div style={{display:"flex",gap:6}}>
                       <button onClick={()=>updatePlayer(p.id,editName,editNick)} style={{flex:1,padding:8,borderRadius:8,border:"none",background:A,color:BG,fontSize:12,fontWeight:700,cursor:"pointer"}}>Save</button>
                       <button onClick={()=>setEditPid(null)} style={{flex:1,padding:8,borderRadius:8,border:`1px solid ${BD}`,background:"transparent",color:MT,fontSize:12,fontWeight:700,cursor:"pointer"}}>Cancel</button>
@@ -902,7 +903,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
               return (
                 <div key={p.id} className={"prow"+(isMe?" me":"")} onClick={()=>{if(!editMode)setSp(p.id);}} style={editMode?{cursor:"default"}:undefined}>
                   <div className={`ravi${isMe?" me":""}`}>
-                    {p.avatar_url ? <img src={p.avatar_url} alt=""/> : (p.name[0]||"?").toUpperCase()}
+                    {p.avatar_url ? <img src={p.avatar_url} alt={p.name||""}/> : (p.name[0]||"?").toUpperCase()}
                   </div>
                   <div className="pinfo">
                     <div className="pnam">{p.nickname||p.name}</div>

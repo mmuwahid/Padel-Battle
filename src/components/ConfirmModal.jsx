@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 // S089 #119: in-app confirmation dialog that replaces native window.confirm().
 // The native dialog rendered as an OS popup that looked foreign to the app
 // (especially on iOS — "feels like a different application"). This matches the
 // app's surfaces/typography and is theme-aware.
-export function ConfirmModal({
+function ConfirmModal({
   open,
   title,
   message,
@@ -14,6 +15,7 @@ export function ConfirmModal({
   onConfirm,
   onCancel,
 }) {
+  const trapRef = useFocusTrap(open, onCancel);
   if (!open) return null;
   return (
     <div
@@ -25,6 +27,11 @@ export function ConfirmModal({
       }}
     >
       <div
+        ref={trapRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title || "Confirm"}
+        tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
         style={{
           width: "100%", maxWidth: 340,
@@ -81,5 +88,3 @@ export function ConfirmButton({ className, style, children, title, message, conf
     </>
   );
 }
-
-export default ConfirmModal;

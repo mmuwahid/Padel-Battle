@@ -30,15 +30,6 @@ export const GRADE_META = {
 
 export const GRADE_ORDER = ["D-","D","D+","C-","C","C+","B-","B","B+","A"];
 
-// The shared answer scale (i–v). points = index 0..4.
-export const ANSWER_SPINE = [
-  { key: "i",   pts: 0, meaning: "Error-driven; slow pace only; shot avoided" },
-  { key: "ii",  pts: 1, meaning: "Structured but medium-pace only; loses shape when rushed" },
-  { key: "iii", pts: 2, meaning: "Reliable & consistent at a medium pace" },
-  { key: "iv",  pts: 3, meaning: "Reliable at medium-high pace, under pressure" },
-  { key: "v",   pts: 4, meaning: "Sustains high pace & intensity across a full match; weaponised" },
-];
-
 // 8 weighted dimensions × 5 options. Order is authoritative for the answers array.
 // opts[] are the per-dimension descriptors shown in the questionnaire.
 export const GRADE_RUBRIC = [
@@ -128,7 +119,7 @@ export const GRADE_RUBRIC = [
 export const GRADE_MAX = GRADE_RUBRIC.reduce((s, d) => s + d.weight * 4, 0);
 
 // Banding: weighted total (0–72) → tier. [min, max] inclusive.
-export const GRADE_BANDS = [
+const GRADE_BANDS = [
   { grade: "D-", min: 0,  max: 6  },
   { grade: "D",  min: 7,  max: 14 },
   { grade: "D+", min: 15, max: 21 },

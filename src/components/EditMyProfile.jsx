@@ -3,6 +3,7 @@ import { useLeague } from "../LeagueContext";
 import { CountrySelect } from "./CountrySelect";
 import { gradeColor, GRADE_META } from "../utils/grade";
 import Icon from "./Icon";
+import { useFocusTrap } from "../hooks/useFocusTrap";
 
 // S050: User self-edit modal for the player record they've claimed.
 // S066 Phase 12: full restyle to match Onboarding step 2 + DOB capture +
@@ -11,6 +12,7 @@ import Icon from "./Icon";
 // Backed by RLS policy `players_update_self` (user_id = auth.uid()).
 export function EditMyProfile({ player, onClose, onRetake }) {
   const { supabase, showToast, loadLeagueData } = useLeague();
+  const trapRef = useFocusTrap(true, onClose);
 
   const [name, setName] = useState(player.name || "");
   const [country, setCountry] = useState(player.country || "");
@@ -74,7 +76,7 @@ export function EditMyProfile({ player, onClose, onRetake }) {
 
   return (
     <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.65)",zIndex:200,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
-      <div onClick={(e)=>e.stopPropagation()} style={{width:"100%",maxWidth:480,maxHeight:"92vh",overflowY:"auto",background:"var(--bg)",borderTopLeftRadius:24,borderTopRightRadius:24,padding:"16px 18px calc(20px + env(safe-area-inset-bottom, 0px))",fontFamily:"var(--font)",border:"1px solid var(--border)",borderBottom:"none"}}>
+      <div ref={trapRef} role="dialog" aria-modal="true" aria-label="Edit My Profile" tabIndex={-1} onClick={(e)=>e.stopPropagation()} style={{width:"100%",maxWidth:480,maxHeight:"92vh",overflowY:"auto",background:"var(--bg)",borderTopLeftRadius:24,borderTopRightRadius:24,padding:"16px 18px calc(20px + env(safe-area-inset-bottom, 0px))",fontFamily:"var(--font)",border:"1px solid var(--border)",borderBottom:"none"}}>
         <div style={{width:40,height:4,background:"var(--border)",borderRadius:2,margin:"0 auto 16px"}}/>
         <h3 style={{fontSize:18,fontWeight:900,textTransform:"uppercase",letterSpacing:".04em",color:"var(--text)",margin:"0 0 6px",textAlign:"center"}}>Edit My Profile</h3>
         <div style={{fontFamily:"var(--mono)",fontSize:10,color:"#9090a4",marginBottom:14,display:"flex",alignItems:"center",gap:5,justifyContent:"center"}}>
@@ -84,14 +86,14 @@ export function EditMyProfile({ player, onClose, onRetake }) {
         {/* Display Name */}
         <div className="fgrp">
           <div className="fl2"><Icon name="user" size={12}/>Display Name<span className="req">*</span></div>
-          <input className="fi2" type="text" value={name} onChange={e=>setName(e.target.value)} placeholder="How you appear on the leaderboard" maxLength={40}/>
+          <input aria-label="Display name" className="fi2" type="text" value={name} onChange={e=>setName(e.target.value)} placeholder="How you appear on the leaderboard" maxLength={40}/>
           {attempted && !nameOk && <div className="ferr">Min 2 characters required</div>}
         </div>
 
         {/* Date of Birth */}
         <div className="fgrp">
           <div className="fl2"><Icon name="calendar" size={12}/>Date of Birth<span className="req">*</span></div>
-          <input className="fi2" type="date" value={dob} max={today} onChange={e=>setDob(e.target.value)} style={{colorScheme:"dark"}}/>
+          <input aria-label="Date of birth" className="fi2" type="date" value={dob} max={today} onChange={e=>setDob(e.target.value)} style={{colorScheme:"dark"}}/>
           {attempted && !dobOk && <div className="ferr">Date of birth is required</div>}
         </div>
 

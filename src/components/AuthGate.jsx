@@ -23,10 +23,11 @@ function friendlyAuthError(msg) {
 }
 
 // Phase 3 password input with .pwtog eye toggle, replaces inline-style PasswordField
-function PasswordField({ value, onChange, placeholder, autoFocus, show, setShow }) {
+function PasswordField({ value, onChange, placeholder, autoFocus, show, setShow, "aria-label": ariaLabel }) {
   return (
     <div className="fwrap">
       <input
+        aria-label={ariaLabel || placeholder}
         className="finput pw"
         type={show ? "text" : "password"}
         value={value}
@@ -291,7 +292,7 @@ export function AuthGate({children}){
             {successMsg && <div className="lok">{successMsg}</div>}
             <div>
               <label className="flbl">Email</label>
-              <input className="finput" type="email" value={email} onChange={(e)=>setEmail(e.target.value)} placeholder="your@email.com" autoComplete="email"/>
+              <input aria-label="Email" className="finput" type="email" value={email} onChange={(e)=>setEmail(e.target.value)} placeholder="your@email.com" autoComplete="email"/>
             </div>
             <div>
               <label className="flbl">Password</label>
@@ -324,11 +325,11 @@ export function AuthGate({children}){
             {successMsg && <div className="lok">{successMsg}</div>}
             <div>
               <label className="flbl">Display Name</label>
-              <input className="finput" type="text" value={displayName} onChange={(e)=>setDisplayName(e.target.value)} placeholder="Your name (e.g. Moody)" autoComplete="name"/>
+              <input aria-label="Display name" className="finput" type="text" value={displayName} onChange={(e)=>setDisplayName(e.target.value)} placeholder="Your name (e.g. Moody)" autoComplete="name"/>
             </div>
             <div>
               <label className="flbl">Email</label>
-              <input className="finput" type="email" value={email} onChange={(e)=>setEmail(e.target.value)} placeholder="your@email.com" autoComplete="email"/>
+              <input aria-label="Email" className="finput" type="email" value={email} onChange={(e)=>setEmail(e.target.value)} placeholder="your@email.com" autoComplete="email"/>
             </div>
             <div>
               <label className="flbl">Password</label>

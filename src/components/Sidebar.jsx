@@ -2,6 +2,7 @@ import React from "react";
 import { supabase } from '../supabase';
 import Icon from './Icon';
 import { pressable } from '../utils/a11y';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 // S066 Phase 12: spec-faithful restyle. Slide-in right drawer (.ssheet) with
 // .sbprof header (clickable to open My Profile), .sbsec sections containing
@@ -10,6 +11,7 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, navigateS
   // S068: drawer entry clicks must push history so the drill-down can incrementally
   // back out to the drawer. navigateSidebar handles drawer-close + history push.
   const go = navigateSidebar || ((v)=>{ setSidebarView(v); setSidebarOpen(false); });
+  const trapRef = useFocusTrap(sidebarOpen, ()=>setSidebarOpen(false));
   if (!sidebarOpen) return null;
 
   const userInitial = (user.user_metadata?.display_name || user.email || "U")[0].toUpperCase();
@@ -32,7 +34,7 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, navigateS
 
   return (
     <div className="overlay" onClick={()=>setSidebarOpen(false)}>
-      <div className="ssheet" onClick={e=>e.stopPropagation()}>
+      <div ref={trapRef} role="dialog" aria-modal="true" aria-label="Menu" tabIndex={-1} className="ssheet" onClick={e=>e.stopPropagation()}>
         <div className="shdl"/>
         <button onClick={()=>setSidebarOpen(false)} aria-label="Close" style={{position:"absolute",top:12,right:14,width:30,height:30,borderRadius:"var(--r-full)",background:"var(--surface-2)",border:"1px solid var(--border)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"#9090a4"}}>
           <Icon name="close" size={14}/>
@@ -42,7 +44,7 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, navigateS
         <div className="sbprof" {...pressable(()=>go("profile"))}>
           <div className="sbav">
             {avatarUrl
-              ? <img src={avatarUrl} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+              ? <img src={avatarUrl} alt={userName} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
               : <div className="sbavi">{userInitial}</div>}
           </div>
           <div style={{flex:1,minWidth:0}}>
@@ -149,7 +151,7 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, navigateS
         {/* Sign out footer */}
         <div className="sbfoot">
           {/* S067: dropped the close-X icon — red text alone is sufficient signal. */}
-          <button className="signout" onClick={async()=>{await supabase.auth.signOut();}}>
+          <button className="signout" onClick={async()=>{try{await supabase.auth.signOut();}catch(_e){/* best-effort: local session is cleared regardless */}}}>
             Sign Out
           </button>
         </div>

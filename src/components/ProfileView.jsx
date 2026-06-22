@@ -65,7 +65,7 @@ export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, re
             role={avatarUrl ? "button" : undefined}
             aria-label={avatarUrl ? "View photo" : undefined}
           >
-            {avatarUrl ? <img src={avatarUrl} alt=""/> : userInitial}
+            {avatarUrl ? <img src={avatarUrl} alt={userName}/> : userInitial}
           </div>
           {/* Edit badge on the photo's bottom-right → Edit/Delete photo menu */}
           <button
@@ -89,7 +89,7 @@ export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, re
               )}
             </div>
           )}
-          <input ref={fileInputRef} type="file" accept="image/*" onChange={(e)=>uploadAvatar(e.target.files?.[0])} style={{display:"none"}}/>
+          <input aria-label="Upload photo" ref={fileInputRef} type="file" accept="image/*" onChange={(e)=>uploadAvatar(e.target.files?.[0])} style={{display:"none"}}/>
         </div>
         {avatarUploading && <div style={{fontSize:11,color:"var(--accent)",marginTop:6,fontFamily:"var(--mono)"}}>Uploading…</div>}
         <div className="proname">{userName}</div>

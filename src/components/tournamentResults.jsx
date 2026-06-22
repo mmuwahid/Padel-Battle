@@ -21,7 +21,7 @@ export function TeamPlayers({ playerIds, players, getName, size = 22, fontSize =
         return (
           <div key={pid} style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
             {avatar
-              ? <img src={avatar} alt="" style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+              ? <img src={avatar} alt={nm || ""} style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
               : <div style={{ width: size, height: size, borderRadius: "50%", background: CD2, display: "flex", alignItems: "center", justifyContent: "center", fontSize: Math.round(size * 0.45), fontWeight: 700, color: MT, flexShrink: 0 }}>{(nm || "?").charAt(0).toUpperCase()}</div>}
             <span style={{ fontSize, fontWeight: weight, color, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{nm}</span>
           </div>

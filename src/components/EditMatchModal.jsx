@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { useLeague } from '../LeagueContext';
 import { validateMatch } from '../utils/scoringEngine';
 import Icon from './Icon';
+import { useFocusTrap } from "../hooks/useFocusTrap";
 
 // FT-09 / S044: Admin edits a pending match, then "Save & Approve" applies + flips status.
 // S066 Phase 9: restyled to use spec classes (.tcard / .sccard / .cstep / .savebtn / .mvpcard).
@@ -9,6 +10,7 @@ import Icon from './Icon';
 export function EditMatchModal({ match, onClose, onSaved }) {
   const { supabase, players, getName, showToast, seasons } = useLeague();
   const ruleset = (seasons || []).find(s => s.id === match.season_id)?.ruleset === 'casual' ? 'casual' : 'fip'; // S080
+  const trapRef = useFocusTrap(true, onClose);
 
   const [date, setDate] = useState(match.date);
   const [teamA, setTeamA] = useState(match.team_a || []);
@@ -90,7 +92,7 @@ export function EditMatchModal({ match, onClose, onSaved }) {
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 100, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "20px 12px", overflowY: "auto" }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "var(--r-lg)", width: "100%", maxWidth: 460, marginTop: "calc(env(safe-area-inset-top, 0px) + 8px)", marginBottom: 20, overflow: "hidden" }}>
+      <div ref={trapRef} role="dialog" aria-modal="true" aria-label="Edit & Approve Match" tabIndex={-1} onClick={e => e.stopPropagation()} style={{ background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "var(--r-lg)", width: "100%", maxWidth: 460, marginTop: "calc(env(safe-area-inset-top, 0px) + 8px)", marginBottom: 20, overflow: "hidden" }}>
         {/* Header */}
         <div className="mhd2" style={{borderRadius:0}}>
           <div className="mdate2" style={{fontSize:12,color:"var(--text)",fontWeight:700,letterSpacing:".06em",textTransform:"uppercase",fontFamily:"var(--font)"}}>Edit & Approve</div>
@@ -109,7 +111,7 @@ export function EditMatchModal({ match, onClose, onSaved }) {
 
           {/* Date */}
           <div className="ctxbar" style={{padding:0,borderBottom:"none",justifyContent:"flex-start"}}>
-            <input type="date" value={date} max={new Date().toISOString().split("T")[0]} onChange={e=>setDate(e.target.value)} className="ctxchip" style={{colorScheme:"dark",cursor:"pointer"}}/>
+            <input aria-label="Match date" type="date" value={date} max={new Date().toISOString().split("T")[0]} onChange={e=>setDate(e.target.value)} className="ctxchip" style={{colorScheme:"dark",cursor:"pointer"}}/>
           </div>
 
           {/* Players card */}
@@ -123,7 +125,7 @@ export function EditMatchModal({ match, onClose, onSaved }) {
                 </div>
                 {[0,1].map(idx=>(
                   <div key={idx} className="pslot">
-                    <select className={`psel af${teamA[idx]?' fi':''}`} value={teamA[idx]||""} onChange={e=>{const x=[...teamA];x[idx]=e.target.value;setTeamA(x);}}>
+                    <select aria-label={`Team A player ${idx+1}`} className={`psel af${teamA[idx]?' fi':''}`} value={teamA[idx]||""} onChange={e=>{const x=[...teamA];x[idx]=e.target.value;setTeamA(x);}}>
                       <option value="">— Select player —</option>
                       {playerOpts([teamA[1-idx],...teamB].filter(Boolean)).map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}
                     </select>
@@ -139,7 +141,7 @@ export function EditMatchModal({ match, onClose, onSaved }) {
                 </div>
                 {[0,1].map(idx=>(
                   <div key={idx} className="pslot">
-                    <select className={`psel bf${teamB[idx]?' fi':''}`} value={teamB[idx]||""} onChange={e=>{const x=[...teamB];x[idx]=e.target.value;setTeamB(x);}}>
+                    <select aria-label={`Team B player ${idx+1}`} className={`psel bf${teamB[idx]?' fi':''}`} value={teamB[idx]||""} onChange={e=>{const x=[...teamB];x[idx]=e.target.value;setTeamB(x);}}>
                       <option value="">— Select player —</option>
                       {playerOpts([teamB[1-idx],...teamA].filter(Boolean)).map(p=><option key={p.id} value={p.id}>{p.nickname||p.name}</option>)}
                     </select>
@@ -200,7 +202,7 @@ export function EditMatchModal({ match, onClose, onSaved }) {
             <div className="mvpiw"><Icon name="star" size={18} color="var(--gold)"/></div>
             <div className="mvpsw">
               <div className="mvplbl">Man of the Match (optional)</div>
-              <select className="mvpsel" value={motm||""} onChange={e=>setMotm(e.target.value||"")}>
+              <select aria-label="Man of the Match" className="mvpsel" value={motm||""} onChange={e=>setMotm(e.target.value||"")}>
                 <option value="">— None —</option>
                 {matchPlayerIds.map(pid=><option key={pid} value={pid}>{getName(pid)}</option>)}
               </select>

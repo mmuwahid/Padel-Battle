@@ -253,7 +253,7 @@ function PairAvatar({ player, fallbackLetter, className, size }) {
   if (player && player.avatar_url) {
     return (
       <div className={cls} style={{ ...style, overflow: "hidden", background: "var(--surface-2)" }}>
-        <img src={player.avatar_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
+        <img src={player.avatar_url} alt={player.name || ""} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
       </div>
     );
   }
@@ -292,5 +292,3 @@ function AchTile({ label, earned, color }) {
     </div>
   );
 }
-
-export default PairStats;

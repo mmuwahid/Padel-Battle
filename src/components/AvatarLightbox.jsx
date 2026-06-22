@@ -25,5 +25,3 @@ export function AvatarLightbox({ src, alt = "", onClose }) {
     </div>
   );
 }
-
-export default AvatarLightbox;

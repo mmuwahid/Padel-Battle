@@ -120,7 +120,7 @@ export function liveToSets(state) {
 
 // Single set shape check.
 // Valid: 6-0..6-4, 7-5, 7-6 and mirrors. Anything else (5-3, 6-5, 7-4, 7-7, 8-6) fails.
-export function isValidSet(s) {
+function isValidSet(s) {
   if (!Array.isArray(s) || s.length !== 2) return false;
   const [a, b] = s;
   if (!Number.isInteger(a) || !Number.isInteger(b)) return false;
@@ -197,7 +197,7 @@ export function validateMatch(rawSets, ruleset = "fip") {
 
 // --- S080: Casual ruleset validation ---
 // Casual sets: any two non-negative integers that are NOT equal (no FIP shape rule).
-export function isValidCasualSet(s) {
+function isValidCasualSet(s) {
   if (!Array.isArray(s) || s.length !== 2) return false;
   const [a, b] = s;
   if (!Number.isInteger(a) || !Number.isInteger(b)) return false;

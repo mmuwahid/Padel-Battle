@@ -9,7 +9,7 @@ const baseProps = {
   strokeLinejoin: "round",
 };
 
-export function TrophyIcon({ active = false, size = 22 }) {
+function TrophyIcon({ active = false, size = 22 }) {
   const stroke = active ? A : "currentColor";
   const sw = active ? 2.2 : 1.8;
   return (
@@ -25,7 +25,7 @@ export function TrophyIcon({ active = false, size = 22 }) {
   );
 }
 
-export function RacketIcon({ active = false, size = 22 }) {
+function RacketIcon({ active = false, size = 22 }) {
   const stroke = active ? A : "currentColor";
   const sw = active ? 2.2 : 1.8;
   const dot = active ? A : "currentColor";
@@ -45,7 +45,7 @@ export function RacketIcon({ active = false, size = 22 }) {
   );
 }
 
-export function PlayersIcon({ active = false, size = 22 }) {
+function PlayersIcon({ active = false, size = 22 }) {
   const stroke = active ? A : "currentColor";
   const sw = active ? 2.2 : 1.8;
   return (
@@ -60,7 +60,7 @@ export function PlayersIcon({ active = false, size = 22 }) {
   );
 }
 
-export function CrossedRacketsIcon({ active = false, size = 22 }) {
+function CrossedRacketsIcon({ active = false, size = 22 }) {
   const stroke = active ? A : "currentColor";
   const sw = active ? 2.4 : 2.2;
   return (
