@@ -105,6 +105,20 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, navigateS
             </div>
             <span className="sb-chev"><Icon name="chevron" size={16} color="currentColor"/></span>
           </div>
+          <div className="sbitem" onClick={()=>window.open("/privacy.html","_blank")}>
+            <div className="sbico"><Icon name="shield" size={16}/></div>
+            <div className="sbibd">
+              <div className="sbit">Privacy Policy</div>
+            </div>
+            <span className="sb-chev"><Icon name="chevron" size={16} color="currentColor"/></span>
+          </div>
+          <div className="sbitem" onClick={()=>window.open("/terms.html","_blank")}>
+            <div className="sbico"><Icon name="book" size={16}/></div>
+            <div className="sbibd">
+              <div className="sbit">Terms of Service</div>
+            </div>
+            <span className="sb-chev"><Icon name="chevron" size={16} color="currentColor"/></span>
+          </div>
           <div className="sbitem" onClick={()=>go("settings")}>
             <div className="sbico"><Icon name="settings" size={16}/></div>
             <div className="sbibd">
