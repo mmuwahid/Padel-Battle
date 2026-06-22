@@ -90,6 +90,7 @@ export function RulesView({ setSidebarView, goBack }) {
       <div className="rtsrchw">
         <div className="rtsrchi"><Icon name="search" size={16} color="var(--muted)" /></div>
         <input
+          aria-label="Search rules"
           className="rtsrch"
           placeholder="Search rules…"
           value={search}

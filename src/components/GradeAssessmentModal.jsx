@@ -5,6 +5,7 @@ import {
   GRADE_RUBRIC, GRADE_ORDER, GRADE_META, GRADE_MAX, GRADE_VERSION,
   computeGrade, gradeColor,
 } from "../utils/grade";
+import { useFocusTrap } from "../hooks/useFocusTrap";
 
 // FT-17 (S084) — self-assessment questionnaire bottom-sheet.
 // Step-through: 8 dimension cards (i–v options each) → live running total →
@@ -15,6 +16,7 @@ const ROMAN = ["i", "ii", "iii", "iv", "v"];
 
 export function GradeAssessmentModal({ player, onClose, onSaved }) {
   const { supabase, showToast, loadLeagueData } = useLeague();
+  const trapRef = useFocusTrap(true, onClose);
 
   // S089 #123: a retake must be a FRESH assessment — always start with a blank
   // form rather than pre-filling the previous answers, since the player is
@@ -67,7 +69,7 @@ export function GradeAssessmentModal({ player, onClose, onSaved }) {
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 210, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-      <div onClick={e => e.stopPropagation()} style={sheet}>
+      <div ref={trapRef} role="dialog" aria-modal="true" aria-label="Self-Assessment" tabIndex={-1} onClick={e => e.stopPropagation()} style={sheet}>
         <div style={{ width: 40, height: 4, background: "var(--border)", borderRadius: 2, margin: "0 auto 14px" }} />
 
         {/* Header */}

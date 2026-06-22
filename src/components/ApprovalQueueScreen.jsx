@@ -235,6 +235,7 @@ export function ApprovalQueueScreen({ setSidebarView, goBack }) {
                   <div className="aqrej-zone">
                     <div className="aqrej-lbl">Rejection reason (optional)</div>
                     <textarea
+                      aria-label="Rejection reason"
                       className="aqrej-input"
                       rows={3}
                       maxLength={120}

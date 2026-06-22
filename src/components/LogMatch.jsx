@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { TeamShuffler } from './TeamShuffler';
 import { createInitialLiveState, scorePoint, undoPoint, getLiveDisplay, liveToSets, validateMatch } from '../utils/scoringEngine';
-import { formatTeam, formatDateParts } from '../utils/helpers';
+import { formatTeam, formatDateParts, findAvatar } from '../utils/helpers';
 import Icon from './Icon';
 
 // S066 Phase 9: spec-faithful restyle of LogMatch.
@@ -139,7 +139,7 @@ export function LogMatch({players,matches:_matches,supabase,leagueId,user,pm,em,
   const all=[...tA,...tB].filter(Boolean);
   const avail=c=>players.filter(p=>(!all.includes(p.id)||p.id===c) && (roster&&roster.size>0?roster.has(p.id):true));
   const playerName=(pid)=>pm[pid]?.nickname||pm[pid]?.name||"";
-  const getAvatar=(pid)=>players.find(p=>p.id===pid)?.avatar_url;
+  const getAvatar=(pid)=>findAvatar(players,pid);
 
   async function submit(){
     if(tA.some(x=>!x)||tB.some(x=>!x))return;
@@ -315,6 +315,7 @@ export function LogMatch({players,matches:_matches,supabase,leagueId,user,pm,em,
         <div style={{display:"flex",alignItems:"center",gap:8,minWidth:0}}>
           {date && <span className="ctx-dow">{formatDateParts(date).dow}</span>}
           <input
+            aria-label="Match date"
             type="date"
             value={date}
             max={new Date().toISOString().split("T")[0]}
@@ -326,6 +327,7 @@ export function LogMatch({players,matches:_matches,supabase,leagueId,user,pm,em,
         {!isE && seasons && seasons.length > 0 && (
           <div style={{position:"relative",display:"inline-flex",alignItems:"center",flexShrink:0}}>
             <select
+              aria-label="Season"
               value={seasonId||""}
               onChange={e=>setCurSeason(e.target.value)}
               className="spill"
@@ -390,7 +392,7 @@ export function LogMatch({players,matches:_matches,supabase,leagueId,user,pm,em,
               <div className="tlock-h tlock-ha">{isPairsFormat?"Pair A":"Team A"}</div>
               {tA.filter(Boolean).map(pid=>(
                 <div key={pid} className="tlock-p">
-                  {getAvatar(pid)?<img className="tlock-avi" src={getAvatar(pid)} alt=""/>:<div className="tlock-avi tlock-ph">{(playerName(pid)||"?").charAt(0).toUpperCase()}</div>}
+                  {getAvatar(pid)?<img className="tlock-avi" src={getAvatar(pid)} alt={playerName(pid)}/>:<div className="tlock-avi tlock-ph">{(playerName(pid)||"?").charAt(0).toUpperCase()}</div>}
                   <span className="tlock-nm">{playerName(pid)}</span>
                 </div>
               ))}
@@ -400,7 +402,7 @@ export function LogMatch({players,matches:_matches,supabase,leagueId,user,pm,em,
               <div className="tlock-h tlock-hb">{isPairsFormat?"Pair B":"Team B"}</div>
               {tB.filter(Boolean).map(pid=>(
                 <div key={pid} className="tlock-p">
-                  {getAvatar(pid)?<img className="tlock-avi" src={getAvatar(pid)} alt=""/>:<div className="tlock-avi tlock-ph">{(playerName(pid)||"?").charAt(0).toUpperCase()}</div>}
+                  {getAvatar(pid)?<img className="tlock-avi" src={getAvatar(pid)} alt={playerName(pid)}/>:<div className="tlock-avi tlock-ph">{(playerName(pid)||"?").charAt(0).toUpperCase()}</div>}
                   <span className="tlock-nm">{playerName(pid)}</span>
                 </div>
               ))}
@@ -415,6 +417,7 @@ export function LogMatch({players,matches:_matches,supabase,leagueId,user,pm,em,
               </div>
               <div className="pslot">
                 <select
+                  aria-label="Pair A"
                   className={`psel af${selectedPairA?' fi':''}`}
                   value={selectedPairA}
                   onChange={e=>setSelectedPairA(e.target.value)} disabled={isFromOpenMatch}>
@@ -434,6 +437,7 @@ export function LogMatch({players,matches:_matches,supabase,leagueId,user,pm,em,
               </div>
               <div className="pslot">
                 <select
+                  aria-label="Pair B"
                   className={`psel bf${selectedPairB?' fi':''}`}
                   value={selectedPairB}
                   onChange={e=>setSelectedPairB(e.target.value)} disabled={isFromOpenMatch}>
@@ -456,6 +460,7 @@ export function LogMatch({players,matches:_matches,supabase,leagueId,user,pm,em,
               {tA.map((pid,i)=>(
                 <div key={i} className="pslot">
                   <select
+                    aria-label={`Team A player ${i+1}`}
                     className={`psel af${pid?' fi':''}`}
                     value={pid}
                     onChange={e=>{const t=[...tA];t[i]=e.target.value;setTA(t);}} disabled={isFromOpenMatch}>
@@ -475,6 +480,7 @@ export function LogMatch({players,matches:_matches,supabase,leagueId,user,pm,em,
               {tB.map((pid,i)=>(
                 <div key={i} className="pslot">
                   <select
+                    aria-label={`Team B player ${i+1}`}
                     className={`psel bf${pid?' fi':''}`}
                     value={pid}
                     onChange={e=>{const t=[...tB];t[i]=e.target.value;setTB(t);}} disabled={isFromOpenMatch}>
@@ -642,7 +648,7 @@ export function LogMatch({players,matches:_matches,supabase,leagueId,user,pm,em,
         <div className="mvpiw"><Icon name="star" size={18} color="var(--gold)"/></div>
         <div className="mvpsw">
           <div className="mvplbl">Man of the Match</div>
-          <select className="mvpsel" value={motm} onChange={e=>setMotm(e.target.value)}>
+          <select aria-label="Man of the Match" className="mvpsel" value={motm} onChange={e=>setMotm(e.target.value)}>
             <option value="">— Select MOTM</option>
             {[...tA,...tB].filter(Boolean).map(pid=>(
               <option key={pid} value={pid}>{playerName(pid)}</option>

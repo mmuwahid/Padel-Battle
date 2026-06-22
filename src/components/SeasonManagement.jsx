@@ -322,22 +322,22 @@ export function SeasonManagement({ setSidebarView, goBack, autoCreate, clearAuto
         <div className="sm-detail-body">
           <div className="shf">
             <div className="shlbl"><Icon name="hash" size={12} color="var(--muted)" />Name</div>
-            <input className="shi" type="text" value={editName} onChange={(e) => setEditName(e.target.value)} />
+            <input aria-label="Season name" className="shi" type="text" value={editName} onChange={(e) => setEditName(e.target.value)} />
           </div>
 
           <div className="shf">
             <div className="shlbl"><Icon name="globe" size={12} color="var(--muted)" />Location</div>
-            <input className="shi" type="text" value={editLocation} onChange={(e) => setEditLocation(e.target.value)} placeholder="e.g. Sports Club A" />
+            <input aria-label="Location" className="shi" type="text" value={editLocation} onChange={(e) => setEditLocation(e.target.value)} placeholder="e.g. Sports Club A" />
           </div>
 
           <div className="shf-row">
             <div className="shf">
               <div className="shlbl"><Icon name="calendar" size={12} color="var(--muted)" />Start</div>
-              <input className="shi" type="date" value={editStart} onChange={(e) => setEditStart(e.target.value)} />
+              <input aria-label="Start date" className="shi" type="date" value={editStart} onChange={(e) => setEditStart(e.target.value)} />
             </div>
             <div className="shf">
               <div className="shlbl"><Icon name="calendar" size={12} color="var(--muted)" />End</div>
-              <input className="shi" type="date" value={editEnd} onChange={(e) => setEditEnd(e.target.value)} />
+              <input aria-label="End date" className="shi" type="date" value={editEnd} onChange={(e) => setEditEnd(e.target.value)} />
             </div>
           </div>
 
@@ -388,7 +388,7 @@ export function SeasonManagement({ setSidebarView, goBack, autoCreate, clearAuto
                       <div className="sm-pairavi">{(pB?.name || "?").charAt(0).toUpperCase()}</div>
                       <div className="sm-pairnames">
                         {isEditing ? (
-                          <input className="shi" type="text" value={editPairName} onChange={(e) => setEditPairName(e.target.value)} placeholder={nameFallback} autoFocus />
+                          <input aria-label="Pair name" className="shi" type="text" value={editPairName} onChange={(e) => setEditPairName(e.target.value)} placeholder={nameFallback} autoFocus />
                         ) : (
                           <>
                             <div className="sm-pairnames-line1">{pr.name || nameFallback}</div>
@@ -443,6 +443,7 @@ export function SeasonManagement({ setSidebarView, goBack, autoCreate, clearAuto
             confirmDelete ? (
               <div className="sm-confirmrow danger" style={{flexWrap:"wrap",gap:8}}>
                 <input
+                  aria-label='Type "delete" to confirm season deletion'
                   className="shi"
                   type="text"
                   value={deleteSeasonTyped}
@@ -473,7 +474,7 @@ export function SeasonManagement({ setSidebarView, goBack, autoCreate, clearAuto
               <div className="shbody">
                 <div className="shf">
                   <div className="shlbl"><Icon name="hash" size={12} color="var(--muted)" />Player A</div>
-                  <select className="shsel" value={newPairA} onChange={(e) => setNewPairA(e.target.value)}>
+                  <select aria-label="Player A" className="shsel" value={newPairA} onChange={(e) => setNewPairA(e.target.value)}>
                     <option value="">— Pick player —</option>
                     {(players || []).filter(pl => openRoster.has(pl.id) && pl.id !== newPairB).map(pl => (
                       <option key={pl.id} value={pl.id}>{pl.name}{pl.nickname ? ` (${pl.nickname})` : ""}</option>
@@ -482,7 +483,7 @@ export function SeasonManagement({ setSidebarView, goBack, autoCreate, clearAuto
                 </div>
                 <div className="shf">
                   <div className="shlbl"><Icon name="hash" size={12} color="var(--muted)" />Player B</div>
-                  <select className="shsel" value={newPairB} onChange={(e) => setNewPairB(e.target.value)}>
+                  <select aria-label="Player B" className="shsel" value={newPairB} onChange={(e) => setNewPairB(e.target.value)}>
                     <option value="">— Pick player —</option>
                     {(players || []).filter(pl => openRoster.has(pl.id) && pl.id !== newPairA).map(pl => (
                       <option key={pl.id} value={pl.id}>{pl.name}{pl.nickname ? ` (${pl.nickname})` : ""}</option>
@@ -491,7 +492,7 @@ export function SeasonManagement({ setSidebarView, goBack, autoCreate, clearAuto
                 </div>
                 <div className="shf">
                   <div className="shlbl"><Icon name="trophy" size={12} color="var(--muted)" />Pair Name (optional)</div>
-                  <input className="shi" type="text" value={newPairName} onChange={(e) => setNewPairName(e.target.value)} placeholder='e.g. "Thunder"' />
+                  <input aria-label="Pair name" className="shi" type="text" value={newPairName} onChange={(e) => setNewPairName(e.target.value)} placeholder='e.g. "Thunder"' />
                 </div>
               <div className="inote">
                   <Icon name="info" size={14} color="rgba(74,222,128,.85)" />
@@ -594,25 +595,25 @@ export function SeasonManagement({ setSidebarView, goBack, autoCreate, clearAuto
             <div className="shbody">
               <div className="shf">
                 <div className="shlbl"><Icon name="hash" size={12} color="var(--muted)" />Name</div>
-                <input className="shi" type="text" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder='e.g. "Season 2"' />
+                <input aria-label="Season name" className="shi" type="text" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder='e.g. "Season 2"' />
               </div>
               <div className="shf">
                 <div className="shlbl"><Icon name="globe" size={12} color="var(--muted)" />Location</div>
-                <input className="shi" type="text" value={newLocation} onChange={(e) => setNewLocation(e.target.value)} placeholder="e.g. Sports Club A" />
+                <input aria-label="Location" className="shi" type="text" value={newLocation} onChange={(e) => setNewLocation(e.target.value)} placeholder="e.g. Sports Club A" />
               </div>
               <div className="shf-row">
                 <div className="shf">
                   <div className="shlbl"><Icon name="calendar" size={12} color="var(--muted)" />Start Date</div>
-                  <input className="shi" type="date" value={newStart} onChange={(e) => setNewStart(e.target.value)} />
+                  <input aria-label="Start date" className="shi" type="date" value={newStart} onChange={(e) => setNewStart(e.target.value)} />
                 </div>
                 <div className="shf">
                   <div className="shlbl"><Icon name="calendar" size={12} color="var(--muted)" />End Date</div>
-                  <input className="shi" type="date" value={newEnd} onChange={(e) => setNewEnd(e.target.value)} />
+                  <input aria-label="End date" className="shi" type="date" value={newEnd} onChange={(e) => setNewEnd(e.target.value)} />
                 </div>
               </div>
               <div className="shf">
                 <div className="shlbl"><Icon name="players" size={12} color="var(--muted)" />Clone Roster From</div>
-                <select className="shsel" value={cloneFrom} onChange={(e) => setCloneFrom(e.target.value)}>
+                <select aria-label="Clone roster from" className="shsel" value={cloneFrom} onChange={(e) => setCloneFrom(e.target.value)}>
                   <option value="">— Start fresh (empty roster) —</option>
                   {sortedSeasons.map(s => (
                     <option key={s.id} value={s.id}>{s.name} ({rosters[s.id]?.size || 0} players)</option>

@@ -126,7 +126,7 @@ export function RoundRobin({ players, getName, supabase, leagueId, tournament, s
         <div className="gm-setup">
           <div className="gm-setup-blk">
             <span className="gm-setup-lbl">Tournament Name</span>
-            <input type="text" className="gm-tinput" value={rrTournamentName} onChange={e => setRrTournamentName(e.target.value)} placeholder="Round Robin League" />
+            <input aria-label="Tournament name" type="text" className="gm-tinput" value={rrTournamentName} onChange={e => setRrTournamentName(e.target.value)} placeholder="Round Robin League" />
           </div>
 
           {/* S091 (#127.6): "Format" block removed — the header already says Round Robin. */}
@@ -140,17 +140,17 @@ export function RoundRobin({ players, getName, supabase, leagueId, tournament, s
                 return (
                   <div key={idx} className="gm-tcard">
                     <div className="gm-tcard-h">
-                      <input type="text" className="gm-tname" value={team.name} onChange={e => updateRrTeam(idx, "name", e.target.value)} />
+                      <input aria-label={`Team ${idx + 1} name`} type="text" className="gm-tname" value={team.name} onChange={e => updateRrTeam(idx, "name", e.target.value)} />
                       <button className="gm-trm" disabled={rrTeams.length <= 2} onClick={() => removeRrTeam(idx)} aria-label="Remove team">
                         <Icon name="close" size={14} />
                       </button>
                     </div>
                     <div className="gm-tsels">
-                      <select className="gm-tsel" value={team.p1} onChange={e => updateRrTeam(idx, "p1", e.target.value)}>
+                      <select aria-label={`Team ${idx + 1} player 1`} className="gm-tsel" value={team.p1} onChange={e => updateRrTeam(idx, "p1", e.target.value)}>
                         <option value="">Player 1</option>
                         {players.filter(p => !p1O.includes(p.id)).map(p => <option key={p.id} value={p.id}>{p.nickname || p.name}</option>)}
                       </select>
-                      <select className="gm-tsel" value={team.p2} onChange={e => updateRrTeam(idx, "p2", e.target.value)}>
+                      <select aria-label={`Team ${idx + 1} player 2`} className="gm-tsel" value={team.p2} onChange={e => updateRrTeam(idx, "p2", e.target.value)}>
                         <option value="">Player 2</option>
                         {players.filter(p => !p2O.includes(p.id)).map(p => <option key={p.id} value={p.id}>{p.nickname || p.name}</option>)}
                       </select>
@@ -295,7 +295,7 @@ export function RoundRobin({ players, getName, supabase, leagueId, tournament, s
                       <span className="gm-rr-tname">{m.team_a_name}</span>
                       {tA.map(p => { const pl=(players||[]).find(x=>x.id===p); return (
                         <div key={p} className="gm-tp">
-                          <span className="gm-tp-avi">{pl?.avatar_url ? <img src={pl.avatar_url} alt=""/> : (getName(p)||"?")[0].toUpperCase()}</span>
+                          <span className="gm-tp-avi">{pl?.avatar_url ? <img src={pl.avatar_url} alt={getName(p)}/> : (getName(p)||"?")[0].toUpperCase()}</span>
                           <span className="gm-tp-n">{getName(p)}</span>
                         </div>); })}
                     </div>
@@ -307,7 +307,7 @@ export function RoundRobin({ players, getName, supabase, leagueId, tournament, s
                       <span className="gm-rr-tname">{m.team_b_name}</span>
                       {tB.map(p => { const pl=(players||[]).find(x=>x.id===p); return (
                         <div key={p} className="gm-tp">
-                          <span className="gm-tp-avi">{pl?.avatar_url ? <img src={pl.avatar_url} alt=""/> : (getName(p)||"?")[0].toUpperCase()}</span>
+                          <span className="gm-tp-avi">{pl?.avatar_url ? <img src={pl.avatar_url} alt={getName(p)}/> : (getName(p)||"?")[0].toUpperCase()}</span>
                           <span className="gm-tp-n">{getName(p)}</span>
                         </div>); })}
                     </div>

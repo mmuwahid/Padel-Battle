@@ -270,7 +270,7 @@ export function LeagueManagement({
             <div className="lmnamerow">
               {editingName && isOwner ? (
                 <>
-                  <input className="lmnameinput" type="text" value={draftName} onChange={(e) => setDraftName(e.target.value)} placeholder="League name" autoFocus />
+                  <input aria-label="League name" className="lmnameinput" type="text" value={draftName} onChange={(e) => setDraftName(e.target.value)} placeholder="League name" autoFocus />
                   <button className="gbtn" onClick={saveLeagueName} disabled={savingName}>
                     <Icon name="check" size={13} strokeWidth={2.5} />
                     {savingName ? "..." : "Save"}
@@ -338,6 +338,7 @@ export function LeagueManagement({
                     Permanently delete <strong>{league?.name}</strong> and ALL of its data: members, players, seasons, matches, pair rosters, leaderboards. This cannot be undone.
                   </p>
                   <input
+                    aria-label='Type "delete" to confirm league deletion'
                     className="shi"
                     type="text"
                     value={deleteLeagueTyped}
@@ -446,7 +447,7 @@ export function LeagueManagement({
                 })()}
                 {isRenaming ? (
                   <div className="lm-list-form" onClick={(e) => e.stopPropagation()}>
-                    <input className="shi" type="text" value={renameDraft} onChange={(e) => setRenameDraft(e.target.value)} placeholder="New name" autoFocus />
+                    <input aria-label="New league name" className="shi" type="text" value={renameDraft} onChange={(e) => setRenameDraft(e.target.value)} placeholder="New name" autoFocus />
                     <button className="gbtn" disabled={renaming || !renameDraft.trim()} onClick={() => handleRename(l.id)}>
                       <Icon name="check" size={12} />{renaming ? "..." : "Save"}
                     </button>
@@ -488,7 +489,7 @@ export function LeagueManagement({
               {createErr && <div className="lv-error">{createErr}</div>}
               <div className="shf">
                 <div className="shlbl"><Icon name="hash" size={12} color="var(--muted)" />League name</div>
-                <input className="shi" type="text" value={createName} onChange={(e) => setCreateName(e.target.value)} placeholder='e.g. "Padel Stars"' autoFocus />
+                <input aria-label="League name" className="shi" type="text" value={createName} onChange={(e) => setCreateName(e.target.value)} placeholder='e.g. "Padel Stars"' autoFocus />
               </div>
               <div className="shf">
                 <div className="shlbl"><Icon name="trophy" size={12} color="var(--muted)" />Format</div>

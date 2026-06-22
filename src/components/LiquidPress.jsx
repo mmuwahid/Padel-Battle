@@ -45,5 +45,3 @@ export function LiquidPressDelegate() {
   }, []);
   return null;
 }
-
-export default LiquidPressDelegate;

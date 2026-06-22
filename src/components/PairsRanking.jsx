@@ -10,14 +10,14 @@ function PodCard({ pr, rank, podClass, pAvatar, pInit, pName, pFlag, onPairDrill
       <div className="prk-podh">{rank}</div>
       <div className="prk-podstack">
         <div className="prk-podrow">
-          {pAvatar(pr.player_a_id) ? (<img className="prk-avi prk-avi-img" src={pAvatar(pr.player_a_id)} alt=""/>) : (<div className="prk-avi">{pInit(pr.player_a_id)}</div>)}
+          {pAvatar(pr.player_a_id) ? (<img className="prk-avi prk-avi-img" src={pAvatar(pr.player_a_id)} alt={pName(pr.player_a_id)}/>) : (<div className="prk-avi">{pInit(pr.player_a_id)}</div>)}
           <div className="prk-podpname">
             <span className="prk-podpnamea">{pName(pr.player_a_id)}</span>
             {pFlag(pr.player_a_id) && <span className="prk-podflag">{pFlag(pr.player_a_id)}</span>}
           </div>
         </div>
         <div className="prk-podrow">
-          {pAvatar(pr.player_b_id) ? (<img className="prk-avi prk-avi-img" src={pAvatar(pr.player_b_id)} alt=""/>) : (<div className="prk-avi">{pInit(pr.player_b_id)}</div>)}
+          {pAvatar(pr.player_b_id) ? (<img className="prk-avi prk-avi-img" src={pAvatar(pr.player_b_id)} alt={pName(pr.player_b_id)}/>) : (<div className="prk-avi">{pInit(pr.player_b_id)}</div>)}
           <div className="prk-podpname">
             <span className="prk-podpnamea">{pName(pr.player_b_id)}</span>
             {pFlag(pr.player_b_id) && <span className="prk-podflag">{pFlag(pr.player_b_id)}</span>}
@@ -170,12 +170,12 @@ export function PairsRanking({ pairs, matches, players, getName: _getName, onPai
               <div className="prk-pairstack">
                 {pr.name && <div className="prk-pairname">{pr.name}</div>}
                 <div className="prk-pairrow">
-                  {pAvatar(pr.player_a_id) ? (<img className="prk-avi prk-avi-img" src={pAvatar(pr.player_a_id)} alt=""/>) : (<div className="prk-avi">{pInit(pr.player_a_id)}</div>)}
+                  {pAvatar(pr.player_a_id) ? (<img className="prk-avi prk-avi-img" src={pAvatar(pr.player_a_id)} alt={pName(pr.player_a_id)}/>) : (<div className="prk-avi">{pInit(pr.player_a_id)}</div>)}
                   <span className="prk-pname">{pName(pr.player_a_id)}</span>
                   {pFlag(pr.player_a_id) && <span className="prk-pflag">{pFlag(pr.player_a_id)}</span>}
                 </div>
                 <div className="prk-pairrow">
-                  {pAvatar(pr.player_b_id) ? (<img className="prk-avi prk-avi-img" src={pAvatar(pr.player_b_id)} alt=""/>) : (<div className="prk-avi">{pInit(pr.player_b_id)}</div>)}
+                  {pAvatar(pr.player_b_id) ? (<img className="prk-avi prk-avi-img" src={pAvatar(pr.player_b_id)} alt={pName(pr.player_b_id)}/>) : (<div className="prk-avi">{pInit(pr.player_b_id)}</div>)}
                   <span className="prk-pname">{pName(pr.player_b_id)}</span>
                   {pFlag(pr.player_b_id) && <span className="prk-pflag">{pFlag(pr.player_b_id)}</span>}
                 </div>
@@ -214,8 +214,8 @@ export function PairsRanking({ pairs, matches, players, getName: _getName, onPai
                 <div className="prk-award-l">Most Active Pair</div>
                 <div className="prk-award-row">
                   <div className="prk-award-stack">
-                    {pAvatar(mostActive.player_a_id) ? <img className="prk-avi prk-avi-img" src={pAvatar(mostActive.player_a_id)} alt=""/> : <div className="prk-avi">{pInit(mostActive.player_a_id)}</div>}
-                    {pAvatar(mostActive.player_b_id) ? <img className="prk-avi prk-avi-img" src={pAvatar(mostActive.player_b_id)} alt=""/> : <div className="prk-avi">{pInit(mostActive.player_b_id)}</div>}
+                    {pAvatar(mostActive.player_a_id) ? <img className="prk-avi prk-avi-img" src={pAvatar(mostActive.player_a_id)} alt={pName(mostActive.player_a_id)}/> : <div className="prk-avi">{pInit(mostActive.player_a_id)}</div>}
+                    {pAvatar(mostActive.player_b_id) ? <img className="prk-avi prk-avi-img" src={pAvatar(mostActive.player_b_id)} alt={pName(mostActive.player_b_id)}/> : <div className="prk-avi">{pInit(mostActive.player_b_id)}</div>}
                   </div>
                   <div className="prk-award-meta">
                     <div className="prk-award-name">{pairDisplayName(mostActive)}</div>
@@ -227,7 +227,7 @@ export function PairsRanking({ pairs, matches, players, getName: _getName, onPai
                 <div className="prk-award-card">
                   <div className="prk-award-l">MOTM Leader</div>
                   <div className="prk-award-row">
-                    {pAvatar(motmLeader.pid) ? <img className="prk-avi prk-avi-img" src={pAvatar(motmLeader.pid)} alt=""/> : <div className="prk-avi">{pInit(motmLeader.pid)}</div>}
+                    {pAvatar(motmLeader.pid) ? <img className="prk-avi prk-avi-img" src={pAvatar(motmLeader.pid)} alt={pName(motmLeader.pid)}/> : <div className="prk-avi">{pInit(motmLeader.pid)}</div>}
                     <div className="prk-award-meta">
                       <div className="prk-award-name">{pName(motmLeader.pid)}</div>
                       <div className="prk-award-v">{motmLeader.count} MOTM</div>

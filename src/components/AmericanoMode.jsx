@@ -134,7 +134,7 @@ export function AmericanoMode({ players, getName, supabase, leagueId, tournament
               return (
                 <div key={p.pid} className="gm-stand-row">
                   <span className={`gm-stand-rank ${rankCls}`}>{i + 1}</span>
-                  <span className="gm-stand-avi">{(()=>{const pl=(players||[]).find(x=>x.id===p.pid);return pl?.avatar_url?<img src={pl.avatar_url} alt=""/>:(getName(p.pid)||"?")[0].toUpperCase();})()}</span>
+                  <span className="gm-stand-avi">{(()=>{const pl=(players||[]).find(x=>x.id===p.pid);return pl?.avatar_url?<img src={pl.avatar_url} alt={getName(p.pid)}/>:(getName(p.pid)||"?")[0].toUpperCase();})()}</span>
                   <span className="gm-stand-name">{getName(p.pid)}</span>
                   <span className={`gm-stand-pts ${i === 0 ? "g" : ""}`}>{p.points}</span>
                 </div>
@@ -168,7 +168,7 @@ export function AmericanoMode({ players, getName, supabase, leagueId, tournament
                         <div className={`gm-team l ${sc && sc.a > sc.b ? "win" : ""}`}>
                           {tA.map(p => { const pl=(players||[]).find(x=>x.id===p); return (
                             <div key={p} className="gm-tp">
-                              <span className="gm-tp-avi">{pl?.avatar_url ? <img src={pl.avatar_url} alt=""/> : (getName(p)||"?")[0].toUpperCase()}</span>
+                              <span className="gm-tp-avi">{pl?.avatar_url ? <img src={pl.avatar_url} alt={getName(p)}/> : (getName(p)||"?")[0].toUpperCase()}</span>
                               <span className="gm-tp-n">{getName(p)}</span>
                             </div>); })}
                         </div>
@@ -179,7 +179,7 @@ export function AmericanoMode({ players, getName, supabase, leagueId, tournament
                         <div className={`gm-team r ${sc && sc.b > sc.a ? "win" : ""}`}>
                           {tB.map(p => { const pl=(players||[]).find(x=>x.id===p); return (
                             <div key={p} className="gm-tp">
-                              <span className="gm-tp-avi">{pl?.avatar_url ? <img src={pl.avatar_url} alt=""/> : (getName(p)||"?")[0].toUpperCase()}</span>
+                              <span className="gm-tp-avi">{pl?.avatar_url ? <img src={pl.avatar_url} alt={getName(p)}/> : (getName(p)||"?")[0].toUpperCase()}</span>
                               <span className="gm-tp-n">{getName(p)}</span>
                             </div>); })}
                         </div>
@@ -217,7 +217,7 @@ export function AmericanoMode({ players, getName, supabase, leagueId, tournament
               return (
                 <div key={p.pid} className="gm-stand-row">
                   <span className={`gm-stand-rank ${rankCls}`}>{i + 1}</span>
-                  <span className="gm-stand-avi">{(()=>{const pl=(players||[]).find(x=>x.id===p.pid);return pl?.avatar_url?<img src={pl.avatar_url} alt=""/>:(getName(p.pid)||"?")[0].toUpperCase();})()}</span>
+                  <span className="gm-stand-avi">{(()=>{const pl=(players||[]).find(x=>x.id===p.pid);return pl?.avatar_url?<img src={pl.avatar_url} alt={getName(p.pid)}/>:(getName(p.pid)||"?")[0].toUpperCase();})()}</span>
                   <span className="gm-stand-name">{getName(p.pid)}</span>
                   <span className={`gm-stand-pts ${i === 0 ? "g" : ""}`}>{p.points} pts</span>
                 </div>
@@ -307,13 +307,13 @@ export function AmericanoMode({ players, getName, supabase, leagueId, tournament
       <div className="gm-grid2">
         <div className="gm-fld">
           <span className="gm-fld-lbl">Courts</span>
-          <select className="gm-fld-sel" value={courts} onChange={e => setCourts(+e.target.value)}>
+          <select aria-label="Courts" className="gm-fld-sel" value={courts} onChange={e => setCourts(+e.target.value)}>
             {[1, 2, 3].map(n => <option key={n} value={n}>{n}</option>)}
           </select>
         </div>
         <div className="gm-fld">
           <span className="gm-fld-lbl">Points / Round</span>
-          <select className="gm-fld-sel" value={ptsPerRound} onChange={e => setPPR(+e.target.value)}>
+          <select aria-label="Points per round" className="gm-fld-sel" value={ptsPerRound} onChange={e => setPPR(+e.target.value)}>
             {[16, 20, 24, 32].map(n => <option key={n} value={n}>{n}</option>)}
           </select>
         </div>

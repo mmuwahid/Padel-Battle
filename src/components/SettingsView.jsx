@@ -123,7 +123,7 @@ export function SettingsView({ user, isAdmin, pushSubscribed, subscribeToPush, u
         <div className="stcard">
           <div className="staf">
             <div className="stafL">Email</div>
-            <input className="stafI" value={user.email} readOnly style={{opacity:.6}}/>
+            <input aria-label="Email" className="stafI" value={user.email} readOnly style={{opacity:.6}}/>
           </div>
           <div className="staf">
             <div className="stafL">Linked Accounts</div>

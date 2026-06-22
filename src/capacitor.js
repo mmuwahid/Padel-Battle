@@ -4,8 +4,8 @@
  */
 import { Capacitor } from '@capacitor/core';
 
-export const isNative = Capacitor.isNativePlatform();
-export const platform = Capacitor.getPlatform(); // 'ios' | 'android' | 'web'
+const isNative = Capacitor.isNativePlatform();
+const platform = Capacitor.getPlatform(); // 'ios' | 'android' | 'web'
 
 /** Hide the native splash screen (no-op on web). */
 export async function hideNativeSplash() {

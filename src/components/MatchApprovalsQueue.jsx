@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { win, formatDate, flagEmoji } from '../utils/helpers';
+import { win, formatDate, flagEmoji, findAvatar, findCountry } from '../utils/helpers';
 import { useLeague } from '../LeagueContext';
 import { EditMatchModal } from './EditMatchModal';
 import Icon from './Icon';
@@ -24,8 +24,8 @@ export function MatchApprovalsQueue() {
   const [editingMatch, setEditingMatch] = useState(null);
   const [actionBusy, setActionBusy] = useState(null);
 
-  const getAvatar = (pid) => players.find(pp=>pp.id===pid)?.avatar_url;
-  const getCountry = (pid) => players.find(pp=>pp.id===pid)?.country;
+  const getAvatar = (pid) => findAvatar(players, pid);
+  const getCountry = (pid) => findCountry(players, pid);
 
   // S092 #129: gated on the approve_matches capability (was isAdmin) so an admin
   // whose owner turned this off no longer sees the approvals queue.
@@ -67,7 +67,7 @@ export function MatchApprovalsQueue() {
     const flag = country ? flagEmoji(country) : "";
     return (
       <div key={pid} className="mplyr2">
-        <div className={`mplavi2${isWinSide?'':' los'}`}>{av?<img src={av} alt=""/>:(name[0]||'?').toUpperCase()}</div>
+        <div className={`mplavi2${isWinSide?'':' los'}`}>{av?<img src={av} alt={name}/>:(name[0]||'?').toUpperCase()}</div>
         <div className={`mplnam2 ${isWinSide?'win-side':'los-side'}`}>{name}</div>
         {flag && <span className="mplflag2 flag">{flag}</span>}
       </div>

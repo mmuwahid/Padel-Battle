@@ -147,8 +147,8 @@ export function PlayerManagement({ memberProfiles, setSidebarView, goBack }) {
 
       {showAdd && (
         <div className="plm-addform">
-          <input className="shi" placeholder="Name *" value={newName} onChange={e => setNewName(e.target.value)} />
-          <input className="shi" placeholder="Nickname (optional)" value={newNick} onChange={e => setNewNick(e.target.value)} />
+          <input aria-label="Name" className="shi" placeholder="Name *" value={newName} onChange={e => setNewName(e.target.value)} />
+          <input aria-label="Nickname" className="shi" placeholder="Nickname (optional)" value={newNick} onChange={e => setNewNick(e.target.value)} />
           <button className="shsubmit" onClick={addPlayer} disabled={adding || !newName.trim()}>
             {adding ? "Adding…" : "Add Player"}
           </button>
@@ -157,7 +157,7 @@ export function PlayerManagement({ memberProfiles, setSidebarView, goBack }) {
 
       <div className="plmsrw">
         <div className="plmsri"><Icon name="search" size={15} color="var(--muted)" /></div>
-        <input className="plmsr" placeholder="Search players…" value={search} onChange={e => setSearch(e.target.value)} />
+        <input aria-label="Search players" className="plmsr" placeholder="Search players…" value={search} onChange={e => setSearch(e.target.value)} />
       </div>
 
       <div className="plmlist">
@@ -179,7 +179,7 @@ export function PlayerManagement({ memberProfiles, setSidebarView, goBack }) {
             <div key={p.id} className="plmrow">
               <div className="plmrow-main">
                 <div className="plmavi">
-                  {p.avatar_url ? <img src={p.avatar_url} alt="" /> : <span>{initial}</span>}
+                  {p.avatar_url ? <img src={p.avatar_url} alt={p.name || ""} /> : <span>{initial}</span>}
                   {/* Only flag UNCLAIMED players — claimed = default state, no dot needed */}
                   {!claimed && <div className="plmavi-dot" title="Unclaimed" />}
                 </div>

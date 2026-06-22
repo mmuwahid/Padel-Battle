@@ -6,6 +6,7 @@ import { useLeague } from "../LeagueContext";
 import { CountrySelect } from "./CountrySelect";
 import { AvatarCropModal } from "./AvatarCropModal";
 import { GRADE_ORDER, GRADE_META, gradeColor } from "../utils/grade";
+import { useFocusTrap } from "../hooks/useFocusTrap";
 
 // S050: COUNTRIES moved to ./CountrySelect (full UN list, sorted by name,
 // Israel excluded). EditPlayerModal renders <CountrySelect/> instead of a
@@ -14,6 +15,7 @@ import { GRADE_ORDER, GRADE_META, gradeColor } from "../utils/grade";
 
 export function EditPlayerModal({ player, onClose, onSaved }) {
   const { supabase, showToast, loadLeagueData } = useLeague();
+  const trapRef = useFocusTrap(true, onClose);
 
   const [name, setName] = useState(player.name || "");
   const [nickname, setNickname] = useState(player.nickname || "");
@@ -116,7 +118,7 @@ export function EditPlayerModal({ player, onClose, onSaved }) {
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 200, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: BG, borderTopLeftRadius: 24, borderTopRightRadius: 24, width: "100%", maxWidth: 480, maxHeight: "92vh", overflowY: "auto", padding: "20px 16px calc(24px + env(safe-area-inset-bottom, 0px))", border: `1px solid ${BD}`, borderBottom: "none" }}>
+      <div ref={trapRef} role="dialog" aria-modal="true" aria-label="Edit Player" tabIndex={-1} onClick={e => e.stopPropagation()} style={{ background: BG, borderTopLeftRadius: 24, borderTopRightRadius: 24, width: "100%", maxWidth: 480, maxHeight: "92vh", overflowY: "auto", padding: "20px 16px calc(24px + env(safe-area-inset-bottom, 0px))", border: `1px solid ${BD}`, borderBottom: "none" }}>
         {/* Drag handle */}
         <div style={{ width: 40, height: 4, background: BD, borderRadius: 2, margin: "0 auto 16px" }} />
 
@@ -126,11 +128,11 @@ export function EditPlayerModal({ player, onClose, onSaved }) {
         {/* Photo */}
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 18 }}>
           <div style={{ position: "relative", width: 96, height: 96, borderRadius: "50%", overflow: "hidden", background: `linear-gradient(135deg, ${A}25, ${A}08)`, border: `2px solid ${A}50`, display: "flex", alignItems: "center", justifyContent: "center", color: A, fontSize: 36, fontWeight: 800 }}>
-            {avatarUrl ? <img src={avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (name[0] || "?").toUpperCase()}
+            {avatarUrl ? <img src={avatarUrl} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (name[0] || "?").toUpperCase()}
             {uploading && <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: TX }}>...</div>}
           </div>
           {/* S067: dropped capture="environment" — that attr forced iOS to open the rear camera and skip the gallery. Without it, iOS shows the standard sheet (Photo Library / Take Photo / Choose File). */}
-          <input ref={fileRef} type="file" accept="image/*" onChange={e => { pickPhoto(e.target.files?.[0]); e.target.value = ""; }} style={{ display: "none" }} />
+          <input aria-label="Upload photo" ref={fileRef} type="file" accept="image/*" onChange={e => { pickPhoto(e.target.files?.[0]); e.target.value = ""; }} style={{ display: "none" }} />
           <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
             <button onClick={() => fileRef.current?.click()} disabled={uploading} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", background: `${A}15`, border: `1px solid ${A}`, borderRadius: 8, color: A, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font)", opacity: uploading ? 0.5 : 1 }}><Icon name="camera" size={14} color={A} />{avatarUrl ? "Edit Photo" : "Upload Photo"}</button>
             {avatarUrl && <button onClick={removePhoto} disabled={uploading} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", background: "transparent", border: `1px solid ${DG}`, borderRadius: 8, color: DG, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font)", opacity: uploading ? 0.5 : 1 }}>Delete</button>}
@@ -139,11 +141,11 @@ export function EditPlayerModal({ player, onClose, onSaved }) {
 
         {/* Name */}
         <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: MT, marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>Name *</label>
-        <input value={name} onChange={e => setName(e.target.value)} style={{ ...inp, marginBottom: 12 }} placeholder="Full name" />
+        <input aria-label="Name" value={name} onChange={e => setName(e.target.value)} style={{ ...inp, marginBottom: 12 }} placeholder="Full name" />
 
         {/* Nickname */}
         <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: MT, marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>Nickname</label>
-        <input value={nickname} onChange={e => setNickname(e.target.value)} style={{ ...inp, marginBottom: 12 }} placeholder="Optional" />
+        <input aria-label="Nickname" value={nickname} onChange={e => setNickname(e.target.value)} style={{ ...inp, marginBottom: 12 }} placeholder="Optional" />
 
         {/* Country */}
         <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: MT, marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>Country {country && <span className="flag" style={{ fontSize: 14, marginLeft: 4 }}>{flagEmoji(country)}</span>}</label>

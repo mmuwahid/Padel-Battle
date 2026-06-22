@@ -163,7 +163,7 @@ export function OnboardingScreen({ user, handlers, onComplete, showToast }) {
             {/* Display Name */}
             <div className="fgrp">
               <div className="fl2"><Icon name="user" size={12}/>Display Name<span className="req">*</span></div>
-              <input className="fi2" placeholder="How you appear on the leaderboard" value={name} onChange={e=>setName(e.target.value)} maxLength={40}/>
+              <input aria-label="Display name" className="fi2" placeholder="How you appear on the leaderboard" value={name} onChange={e=>setName(e.target.value)} maxLength={40}/>
               {attempted && name.trim().length<2 && <div className="ferr">Min 2 characters required</div>}
             </div>
 
@@ -177,7 +177,7 @@ export function OnboardingScreen({ user, handlers, onComplete, showToast }) {
             {/* DOB */}
             <div className="fgrp">
               <div className="fl2"><Icon name="calendar" size={12}/>Date of Birth<span className="req">*</span></div>
-              <input className="fi2" type="date" value={dob} max={today} onChange={e=>setDob(e.target.value)} style={{colorScheme:"dark"}}/>
+              <input aria-label="Date of birth" className="fi2" type="date" value={dob} max={today} onChange={e=>setDob(e.target.value)} style={{colorScheme:"dark"}}/>
               {attempted && !dob && <div className="ferr">Date of birth is required</div>}
             </div>
 
@@ -244,7 +244,7 @@ export function OnboardingScreen({ user, handlers, onComplete, showToast }) {
             <div className="ocard">
               <div className="ocard-lbl"><Icon name="hash" size={11}/> Join with invite code</div>
               <div className="lrow">
-                <input className="linput" placeholder="e.g. PADEL-7X2K" value={code} onChange={e=>{setCode(e.target.value); if(e.target.value) setLgName("");}}/>
+                <input aria-label="Invite code" className="linput" placeholder="e.g. PADEL-7X2K" value={code} onChange={e=>{setCode(e.target.value); if(e.target.value) setLgName("");}}/>
                 <button className="lacbtn" disabled={!code.trim()||busy} onClick={handleJoin}>
                   {busy && busyAction==='join' ? "…" : "Join"}
                 </button>
@@ -254,7 +254,7 @@ export function OnboardingScreen({ user, handlers, onComplete, showToast }) {
             <div className="ocard">
               <div className="ocard-lbl"><Icon name="plus" size={11}/> Create a new league</div>
               <div className="lrow">
-                <input className="linput" placeholder="League name" value={lgName} onChange={e=>{setLgName(e.target.value); if(e.target.value) setCode("");}}/>
+                <input aria-label="League name" className="linput" placeholder="League name" value={lgName} onChange={e=>{setLgName(e.target.value); if(e.target.value) setCode("");}}/>
                 <button className="lacbtn" disabled={!lgName.trim()||busy} onClick={handleCreate}>
                   {busy && busyAction==='create' ? "…" : "Create"}
                 </button>

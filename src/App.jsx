@@ -331,9 +331,9 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
       .on("postgres_changes",{event:"*",schema:"public",table:"tournaments",filter:`league_id=eq.${leagueId}`},()=>debouncedReload())
       .on("postgres_changes",{event:"*",schema:"public",table:"challenges",filter:`league_id=eq.${leagueId}`},()=>debouncedReload())
       .on("postgres_changes",{event:"*",schema:"public",table:"notifications",filter:`user_id=eq.${user.id}`},()=>{
-        supabase.from("notifications").select("id",{count:"exact",head:true}).eq("league_id",leagueId).eq("user_id",user.id).eq("read",false).then(({count})=>setUnreadNotifCount(count||0));
+        supabase.from("notifications").select("id",{count:"exact",head:true}).eq("league_id",leagueId).eq("user_id",user.id).eq("read",false).then(({count})=>setUnreadNotifCount(count||0)).catch(()=>{});
       // S068: refresh pending join-request count alongside notifications
-      supabase.from("join_requests").select("id",{count:"exact",head:true}).eq("league_id",leagueId).eq("status","pending").then(({count})=>setPendingJoinCount(count||0));
+      supabase.from("join_requests").select("id",{count:"exact",head:true}).eq("league_id",leagueId).eq("status","pending").then(({count})=>setPendingJoinCount(count||0)).catch(()=>{});
       })
       .subscribe();
 
@@ -426,7 +426,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
         const map={};
         data.forEach(r => { map[r.league_id] = { players: r.player_count, matches: r.match_count, seasons: r.season_count, is_playing: r.is_playing }; });
         setLeagueStats(map);
-      });
+      }).catch(()=>{});
       const rostersMap={};
       (seasonPlayersData||[]).forEach(r=>{
         if(!rostersMap[r.season_id]) rostersMap[r.season_id]=new Set();
@@ -434,15 +434,15 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
       });
       setSeasonRosters(rostersMap);
       // Auto-cancel stale open matches whose scheduled time has passed
-      supabase.rpc("expire_stale_open_matches",{p_league_id:leagueId}).then(()=>{});
+      supabase.rpc("expire_stale_open_matches",{p_league_id:leagueId}).then(()=>{}).catch(()=>{});
 
       // Fetch unread notification count
-      supabase.from("notifications").select("id",{count:"exact",head:true}).eq("league_id",leagueId).eq("user_id",user.id).eq("read",false).then(({count})=>setUnreadNotifCount(count||0));
+      supabase.from("notifications").select("id",{count:"exact",head:true}).eq("league_id",leagueId).eq("user_id",user.id).eq("read",false).then(({count})=>setUnreadNotifCount(count||0)).catch(()=>{});
       // S068: refresh pending join-request count alongside notifications
-      supabase.from("join_requests").select("id",{count:"exact",head:true}).eq("league_id",leagueId).eq("status","pending").then(({count})=>setPendingJoinCount(count||0));
+      supabase.from("join_requests").select("id",{count:"exact",head:true}).eq("league_id",leagueId).eq("status","pending").then(({count})=>setPendingJoinCount(count||0)).catch(()=>{});
 
       // Auto-expire stale challenges (48h) — lightweight, runs on each load
-      supabase.rpc("expire_stale_challenges").then(()=>{});
+      supabase.rpc("expire_stale_challenges").then(()=>{}).catch(()=>{});
 
       const claimed = (playersData||[]).find(p => p.user_id === user.id);
       setClaimedPlayer(claimed || null);
@@ -928,7 +928,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
             if (sidebarOpen) { setSidebarOpen(false); }
             else { openSidebar(); }
           }} title="Profile & Settings" aria-label="Profile & Settings">
-            {avatarUrl ? <img src={avatarUrl} alt=""/> : (user.user_metadata?.display_name||user.email||"U")[0].toUpperCase()}
+            {avatarUrl ? <img src={avatarUrl} alt={user.user_metadata?.display_name||user.email||"User"}/> : (user.user_metadata?.display_name||user.email||"U")[0].toUpperCase()}
           </button>
         </div>
       </header>
@@ -1017,7 +1017,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
             )}
             {seasons.length>0 && (()=>{ const _sa=seasons.find(s=>s.id===selectedSeason)?.active; return (
               <div style={{position:"relative",display:"inline-flex",alignItems:"center",flexShrink:0}}>
-                <select className="spill" value={selectedSeason||""} onChange={e=>setSelectedSeason(e.target.value)}
+                <select aria-label="Filter by season" className="spill" value={selectedSeason||""} onChange={e=>setSelectedSeason(e.target.value)}
                   style={{appearance:"none",WebkitAppearance:"none",paddingRight:26,backgroundImage:"none",color:_sa?"var(--accent)":"var(--muted)",fontWeight:_sa?700:400}}>
                   {/* S089 #126: label is just the season name (no '(active)'/dot) —
                       active is conveyed by accent color; inactive seasons render
@@ -1050,7 +1050,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
               const pl = players.find(p=>p.id===pid);
               return (
                 <div style={{width:size,height:size,borderRadius:"50%",overflow:"hidden",background:`linear-gradient(135deg,${A}25,${A}08)`,border:`1.5px solid ${A}30`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*0.4,fontWeight:800,color:A,flexShrink:0}}>
-                  {pl?.avatar_url ? <img src={pl.avatar_url} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/> : (pl?.name?.[0]||"?").toUpperCase()}
+                  {pl?.avatar_url ? <img src={pl.avatar_url} alt={pl?.name||""} style={{width:"100%",height:"100%",objectFit:"cover"}}/> : (pl?.name?.[0]||"?").toUpperCase()}
                 </div>
               );
             };
@@ -1238,7 +1238,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
                     <div className="lbply">
                       <div className="lbavi">
                         {player?.avatar_url
-                          ? <img src={player.avatar_url} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                          ? <img src={player.avatar_url} alt={p.name||""} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
                           : (p.name[0]||"?").toUpperCase()}
                       </div>
                       <div className="lbpinfo">

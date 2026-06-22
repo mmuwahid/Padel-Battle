@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from "react";
 import Cropper from "react-easy-crop";
 import Icon from "./Icon";
+import { useFocusTrap } from "../hooks/useFocusTrap";
 
 // S069: Avatar crop/zoom modal. User picks a file, this modal opens with the
 // image preview, lets them pan + zoom inside a circular 1:1 frame, then on
@@ -56,6 +57,7 @@ export function AvatarCropModal({ file, onCancel, onCropped }) {
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   const [working, setWorking] = useState(false);
+  const trapRef = useFocusTrap(true, onCancel);
 
   useEffect(() => {
     let cancelled = false;
@@ -83,7 +85,7 @@ export function AvatarCropModal({ file, onCancel, onCropped }) {
 
   return (
     <div className="acm-overlay" onClick={onCancel}>
-      <div className="acm-sheet" onClick={(e) => e.stopPropagation()}>
+      <div ref={trapRef} role="dialog" aria-modal="true" aria-label="Adjust Photo" tabIndex={-1} className="acm-sheet" onClick={(e) => e.stopPropagation()}>
         <div className="acm-handle" />
         <h2 className="acm-title">Adjust Photo</h2>
         <div className="acm-stage">
@@ -135,5 +137,3 @@ export function AvatarCropModal({ file, onCancel, onCropped }) {
     </div>
   );
 }
-
-export default AvatarCropModal;
