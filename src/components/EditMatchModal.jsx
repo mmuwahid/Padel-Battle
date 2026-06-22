@@ -79,7 +79,7 @@ export function EditMatchModal({ match, onClose, onSaved }) {
       onSaved && onSaved();
       onClose();
     } catch (err) {
-      console.error("update_pending_match failed", err);
+      if (import.meta.env.DEV) console.error("update_pending_match failed", err);
       showToast(err.message || "Failed to save", "error");
     } finally {
       setSaving(false);

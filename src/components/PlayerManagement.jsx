@@ -94,7 +94,7 @@ export function PlayerManagement({ memberProfiles, setSidebarView, goBack }) {
           .delete()
           .eq("league_id", leagueId)
           .eq("user_id", claimedUserId);
-        if (lmErr) console.warn("[PlayerManagement] league_members cleanup failed:", lmErr.message);
+        if (lmErr && import.meta.env.DEV) console.warn("[PlayerManagement] league_members cleanup failed:", lmErr.message);
       }
 
       showToast(claimedUserId ? "Player deleted + user removed from league" : "Player deleted");

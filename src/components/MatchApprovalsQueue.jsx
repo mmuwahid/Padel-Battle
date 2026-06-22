@@ -39,7 +39,7 @@ export function MatchApprovalsQueue() {
       showToast("Match approved");
       await loadLeagueData();
     } catch (err) {
-      console.error("approve_match failed", err);
+      if (import.meta.env.DEV) console.error("approve_match failed", err);
       showToast(err.message || "Failed to approve", "error");
     }
     setActionBusy(null);
@@ -53,7 +53,7 @@ export function MatchApprovalsQueue() {
       showToast("Match rejected");
       await loadLeagueData();
     } catch (err) {
-      console.error("reject_match failed", err);
+      if (import.meta.env.DEV) console.error("reject_match failed", err);
       showToast(err.message || "Failed to reject", "error");
     }
     setActionBusy(null);
