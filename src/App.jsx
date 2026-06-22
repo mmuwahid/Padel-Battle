@@ -28,6 +28,7 @@ import { LeagueContext } from './LeagueContext';
 import { PLATFORM_ADMIN_ID } from './components/PlatformAdmin';
 import { hideNativeSplash, configureStatusBar, registerBackButton, isNative } from './capacitor';
 import { usePushNotifications } from './hooks/usePushNotifications';
+import { usePwaInstall } from './hooks/usePwaInstall';
 import { AuthGate } from './components/AuthGate';
 import { LeagueGate } from './components/LeagueGate';
 import { LeaguesView } from './components/LeaguesView';
@@ -303,10 +304,8 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
     subscribeToPush, unsubscribeFromPush, toggleNotification,
     sendPushNotification, testPushNotification,
   } = usePushNotifications({ supabase, user, leagueId, showToast });
-  // PWA install prompt
-  const [installPrompt,setInstallPrompt]=useState(null);
-  useEffect(()=>{const h=(e)=>{e.preventDefault();setInstallPrompt(e);};window.addEventListener("beforeinstallprompt",h);return ()=>window.removeEventListener("beforeinstallprompt",h);},[]);
-  const handleInstall=async()=>{if(!installPrompt)return;installPrompt.prompt();const r=await installPrompt.userChoice;if(r.outcome==="accepted")setInstallPrompt(null);};
+  // PWA install prompt (Issue #2 extraction)
+  const { installPrompt, handleInstall } = usePwaInstall();
 
   // Preload lazy chunks on first mount to eliminate loading flash on first tab switch
   useEffect(()=>{
