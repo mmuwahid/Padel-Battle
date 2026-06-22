@@ -11,21 +11,10 @@ import { LiquidPressDelegate } from './components/LiquidPress';
 import { FD } from './components/FormDots';
 import { Sidebar } from './components/Sidebar';
 import { ProfileView } from './components/ProfileView';
-import { AdminDashboard } from './components/AdminDashboard';
-import { PlayerManagement } from './components/PlayerManagement';
-import { ApprovalQueueScreen } from './components/ApprovalQueueScreen';
-import { SeasonManagement } from './components/SeasonManagement';
 import { PairsRanking } from './components/PairsRanking';
-import { LeagueManagement } from './components/LeagueManagement';
-import { PermissionsScreen } from './components/PermissionsScreen';
-import { PlatformAdmin } from './components/PlatformAdmin';
-import { SettingsView } from './components/SettingsView';
-import { RulesView } from './components/RulesView';
-import { PrivacyView, TermsView } from './components/LegalView';
-import { NotificationCenter } from './components/NotificationCenter';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { LeagueContext } from './LeagueContext';
-import { PLATFORM_ADMIN_ID } from './components/PlatformAdmin';
+import { PLATFORM_ADMIN_ID } from './constants';
 import { hideNativeSplash, configureStatusBar, registerBackButton } from './capacitor';
 import { usePushNotifications } from './hooks/usePushNotifications';
 import { usePwaInstall } from './hooks/usePwaInstall';
@@ -42,6 +31,18 @@ import { ScheduleView } from './components/ScheduleView';
 import { MatchHistory } from './components/MatchHistory';
 const CombosView = lazy(() => import('./components/CombosView').then(m => ({default: m.CombosView})));
 const GameMode = lazy(() => import('./components/GameMode').then(m => ({default: m.GameMode})));
+const AdminDashboard = lazy(() => import('./components/AdminDashboard').then(m => ({default: m.AdminDashboard})));
+const PlayerManagement = lazy(() => import('./components/PlayerManagement').then(m => ({default: m.PlayerManagement})));
+const SeasonManagement = lazy(() => import('./components/SeasonManagement').then(m => ({default: m.SeasonManagement})));
+const ApprovalQueueScreen = lazy(() => import('./components/ApprovalQueueScreen').then(m => ({default: m.ApprovalQueueScreen})));
+const LeagueManagement = lazy(() => import('./components/LeagueManagement').then(m => ({default: m.LeagueManagement})));
+const PermissionsScreen = lazy(() => import('./components/PermissionsScreen').then(m => ({default: m.PermissionsScreen})));
+const PlatformAdmin = lazy(() => import('./components/PlatformAdmin').then(m => ({default: m.PlatformAdmin})));
+const SettingsView = lazy(() => import('./components/SettingsView').then(m => ({default: m.SettingsView})));
+const RulesView = lazy(() => import('./components/RulesView').then(m => ({default: m.RulesView})));
+const NotificationCenter = lazy(() => import('./components/NotificationCenter').then(m => ({default: m.NotificationCenter})));
+const PrivacyView = lazy(() => import('./components/LegalView').then(m => ({default: m.PrivacyView})));
+const TermsView = lazy(() => import('./components/LegalView').then(m => ({default: m.TermsView})));
 
 
 // Lazy loading fallback
@@ -955,34 +956,34 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
             <ProfileView user={user} avatarUrl={avatarUrl} avatarUploading={avatarUploading} uploadAvatar={uploadAvatar} removeAvatar={removeAvatar} claimedPlayer={claimedPlayer} ps={ps} elo={elo} matches={approvedMatches} players={players} isAdmin={isAdmin} getName={getName} getStreak={getStreak} setSidebarView={setSidebarView} navigateSidebar={navigateSidebar} goBack={goBackSidebar} setTab={setTab} setSidebarOpen={setSidebarOpen}/>
           )}
           {sidebarView==="admin" && (
-            <AdminDashboard memberProfiles={memberProfiles} setSidebarView={setSidebarView} navigateSidebar={navigateSidebar} goBack={goBackSidebar} setTab={setTab} setSidebarOpen={setSidebarOpen}/>
+            <ErrorBoundary><Suspense fallback={<LazyFallback/>}><AdminDashboard memberProfiles={memberProfiles} setSidebarView={setSidebarView} navigateSidebar={navigateSidebar} goBack={goBackSidebar} setTab={setTab} setSidebarOpen={setSidebarOpen}/></Suspense></ErrorBoundary>
           )}
           {sidebarView==="approvalQueue" && (
-            <ApprovalQueueScreen setSidebarView={setSidebarView} goBack={goBackSidebar}/>
+            <ErrorBoundary><Suspense fallback={<LazyFallback/>}><ApprovalQueueScreen setSidebarView={setSidebarView} goBack={goBackSidebar}/></Suspense></ErrorBoundary>
           )}
           {sidebarView==="playerManagement" && (
-            <PlayerManagement memberProfiles={memberProfiles} setSidebarView={setSidebarView} goBack={goBackSidebar}/>
+            <ErrorBoundary><Suspense fallback={<LazyFallback/>}><PlayerManagement memberProfiles={memberProfiles} setSidebarView={setSidebarView} goBack={goBackSidebar}/></Suspense></ErrorBoundary>
           )}
           {sidebarView==="seasonManagement" && (
-            <SeasonManagement setSidebarView={setSidebarView} goBack={goBackSidebar} autoCreate={smAutoCreate} clearAutoCreate={()=>setSmAutoCreate(false)}/>
+            <ErrorBoundary><Suspense fallback={<LazyFallback/>}><SeasonManagement setSidebarView={setSidebarView} goBack={goBackSidebar} autoCreate={smAutoCreate} clearAutoCreate={()=>setSmAutoCreate(false)}/></Suspense></ErrorBoundary>
           )}
           {sidebarView==="leagueManagement" && (
-            <LeagueManagement setSidebarView={setSidebarView} navigateSidebar={navigateSidebar} goBack={goBackSidebar} leagues={leagues||[]} leagueHandlers={leagueHandlers} leagueStats={leagueStats} detailLeagueId={lmDetailLeagueId} setDetailLeagueId={setLmDetailLeagueId} detailFromPlatform={lmDetailFromPlatform} setDetailFromPlatform={setLmDetailFromPlatform}/>
+            <ErrorBoundary><Suspense fallback={<LazyFallback/>}><LeagueManagement setSidebarView={setSidebarView} navigateSidebar={navigateSidebar} goBack={goBackSidebar} leagues={leagues||[]} leagueHandlers={leagueHandlers} leagueStats={leagueStats} detailLeagueId={lmDetailLeagueId} setDetailLeagueId={setLmDetailLeagueId} detailFromPlatform={lmDetailFromPlatform} setDetailFromPlatform={setLmDetailFromPlatform}/></Suspense></ErrorBoundary>
           )}
           {sidebarView==="leaguePermissions" && (
-            <PermissionsScreen setSidebarView={setSidebarView} goBack={goBackSidebar}/>
+            <ErrorBoundary><Suspense fallback={<LazyFallback/>}><PermissionsScreen setSidebarView={setSidebarView} goBack={goBackSidebar}/></Suspense></ErrorBoundary>
           )}
           {sidebarView==="settings" && (
-            <SettingsView user={user} claimedPlayer={claimedPlayer} isAdmin={isAdmin} pushSubscribed={pushSubscribed} subscribeToPush={subscribeToPush} unsubscribeFromPush={unsubscribeFromPush} notifNewMatch={notifNewMatch} notifRankingChange={notifRankingChange} notifNewMembers={notifNewMembers} notifChallenges={notifChallenges} toggleNotification={toggleNotification} onSwitchLeague={onSwitchLeague} setSidebarView={setSidebarView} navigateSidebar={navigateSidebar} goBack={goBackSidebar} showToast={showToast} loadLeagueData={loadLeagueData} testPushNotification={testPushNotification}/>
+            <ErrorBoundary><Suspense fallback={<LazyFallback/>}><SettingsView user={user} claimedPlayer={claimedPlayer} isAdmin={isAdmin} pushSubscribed={pushSubscribed} subscribeToPush={subscribeToPush} unsubscribeFromPush={unsubscribeFromPush} notifNewMatch={notifNewMatch} notifRankingChange={notifRankingChange} notifNewMembers={notifNewMembers} notifChallenges={notifChallenges} toggleNotification={toggleNotification} onSwitchLeague={onSwitchLeague} setSidebarView={setSidebarView} navigateSidebar={navigateSidebar} goBack={goBackSidebar} showToast={showToast} loadLeagueData={loadLeagueData} testPushNotification={testPushNotification}/></Suspense></ErrorBoundary>
           )}
           {sidebarView==="platform" && (
-            <PlatformAdmin onClose={goBackSidebar} showToast={showToast} onOpenLeague={(id)=>{ if(leagueHandlers?.switchLeague) leagueHandlers.switchLeague(id); setLmDetailLeagueId(id); setLmDetailFromPlatform(true); navigateSidebar("leagueManagement"); }}/>
+            <ErrorBoundary><Suspense fallback={<LazyFallback/>}><PlatformAdmin onClose={goBackSidebar} showToast={showToast} onOpenLeague={(id)=>{ if(leagueHandlers?.switchLeague) leagueHandlers.switchLeague(id); setLmDetailLeagueId(id); setLmDetailFromPlatform(true); navigateSidebar("leagueManagement"); }}/></Suspense></ErrorBoundary>
           )}
           {sidebarView==="notifications" && (
-            <NotificationCenter
+            <ErrorBoundary><Suspense fallback={<LazyFallback/>}><NotificationCenter
               onClose={()=>{closeNotifications();loadLeagueData();}}
               onNavigate={handleNotifNavigate}
-            />
+            /></Suspense></ErrorBoundary>
           )}
           {sidebarView==="leagues" && (
             <LeaguesView
@@ -994,9 +995,9 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
               showToast={showToast}
             />
           )}
-          {sidebarView==="rules" && <RulesView setSidebarView={setSidebarView} goBack={goBackSidebar}/>}
-          {sidebarView==="privacy" && <PrivacyView goBack={goBackSidebar}/>}
-          {sidebarView==="terms" && <TermsView goBack={goBackSidebar}/>}
+          {sidebarView==="rules" && <ErrorBoundary><Suspense fallback={<LazyFallback/>}><RulesView setSidebarView={setSidebarView} goBack={goBackSidebar}/></Suspense></ErrorBoundary>}
+          {sidebarView==="privacy" && <ErrorBoundary><Suspense fallback={<LazyFallback/>}><PrivacyView goBack={goBackSidebar}/></Suspense></ErrorBoundary>}
+          {sidebarView==="terms" && <ErrorBoundary><Suspense fallback={<LazyFallback/>}><TermsView goBack={goBackSidebar}/></Suspense></ErrorBoundary>}
         </div>
       )}
 

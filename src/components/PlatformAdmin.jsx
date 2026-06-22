@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import Icon from "./Icon";
 import { supabase } from "../supabase";
 
-export const PLATFORM_ADMIN_ID = "8362be01-8e73-49c1-90c8-065fc6a09159";
+import { PLATFORM_ADMIN_ID } from "../constants";
+export { PLATFORM_ADMIN_ID };
 
 // S067 Phase 12 PR 3: spec-faithful Platform Admin.
 // Class names match docs/PadelHub_Complete_v2.jsx lines 2081-2132 verbatim:
