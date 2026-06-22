@@ -12,6 +12,7 @@ const TOGGLES = [
   { key: "approve_matches", title: "Approve & edit matches",   desc: "Approve, edit, and reject submitted match results." },
   { key: "edit_roster",     title: "Edit season roster",       desc: "Add or remove players from a season." },
   { key: "edit_profiles",   title: "Edit player profiles",     desc: "Edit other players' names, photos, and details." },
+  { key: "manage_seasons", title: "Manage seasons",            desc: "Create, edit, activate, and delete seasons." },
 ];
 
 function Toggle({ on, disabled, onChange }) {

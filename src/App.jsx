@@ -1083,7 +1083,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
   // S092 #129: admin capability permissions. Owner (and platform admin via isOwner)
   // can always do everything; a plain admin can do a capability only when its toggle
   // is on. Defaults all-true so behavior is unchanged until an owner restricts.
-  const DEFAULT_PERMS = { invite_players:true, approve_matches:true, edit_roster:true, edit_profiles:true };
+  const DEFAULT_PERMS = { invite_players:true, approve_matches:true, edit_roster:true, edit_profiles:true, manage_seasons:true };
   const adminPermissions = { ...DEFAULT_PERMS, ...(league?.admin_permissions || {}) };
   const canDo = (key) => isOwner || (isAdmin && adminPermissions[key] !== false);
 
@@ -1097,7 +1097,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
 
   return (
     <LeagueContext.Provider value={leagueCtx}>
-    <div style={{background:BG,minHeight:"100vh",paddingBottom:"calc(82px + env(safe-area-inset-bottom, 0px))",fontFamily: "var(--font)",color:TX}}>
+    <div style={{background:BG,minHeight:"100vh",paddingBottom:"calc(78px + env(safe-area-inset-bottom, 0px))",fontFamily: "var(--font)",color:TX}}>
       {/* S070 Issue #80: pull-to-refresh now uses the full-screen brand splash
           (same .lscreen design as cold-start) instead of a small top spinner.
           User flagged that PTR should "see the same screen" as cold-start. */}

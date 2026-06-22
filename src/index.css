@@ -1,10 +1,10 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
-  /* Bg #080808 (= var(--bg)) matches .hdr / .bnav / .lbg surfaces post-Phase-2.
+  /* Bg #0a0a0f = measured content-wrapper color (S092 #130). Must match .hdr / .bnav / splash.
      iOS rubber-band overscroll at top/bottom edges now reveals the same dark
      color as the floating header / nav / login backdrop — no visible seam.
      Lessons #18 / #40 / #44 all preserved. */
-  background: #080808;
+  background: #0a0a0f;
   font-family: 'Syne', sans-serif;
   padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -26,7 +26,7 @@ body {
 
 :root {
   /* Surfaces */
-  --bg: #080808;
+  --bg: #0a0a0f;
   --surface: #111111;
   --surface-2: #1a1a1a;
   --surface-3: #222222;
@@ -192,7 +192,7 @@ body {
    dropped backdrop-filter. NavIcons.jsx (S057, frozen) renders inside .nicon. */
 .bnav {
   position: fixed;
-  bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(2px + env(safe-area-inset-bottom, 0px));
   left: 14px;
   right: 14px;
   /* S092 #130: nav pill bg matched to the main content wrapper (#0a0a0f, measured
@@ -365,7 +365,7 @@ body {
   inset: 0;
   background:
     radial-gradient(ellipse 80% 50% at 50% 0%, rgba(74, 222, 128, 0.10), transparent 60%),
-    #0d0d14;
+    #0a0a0f;
   pointer-events: none;
 }
 .lhero {

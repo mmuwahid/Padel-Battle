@@ -225,7 +225,6 @@ export function LeagueManagement({
 
           {isAdmin && (
             <div>
-              <div className="slbl">Seasons</div>
               <button className="crow" onClick={() => goTo("seasonManagement")}>
                 <div className="cricon"><Icon name="calendar" size={16} color="var(--accent)" /></div>
                 <div className="crbody">
@@ -243,7 +242,6 @@ export function LeagueManagement({
 
           {isAdmin && (
             <div>
-              <div className="slbl">Players</div>
               <button className="crow" onClick={() => goTo("playerManagement")}>
                 <div className="cricon"><Icon name="players" size={16} color="var(--accent)" /></div>
                 <div className="crbody">
@@ -257,7 +255,6 @@ export function LeagueManagement({
 
           {isAdmin && (
             <div>
-              <div className="slbl">Permissions</div>
               <button className="crow" onClick={() => goTo("leaguePermissions")}>
                 <div className="cricon"><Icon name="shield" size={16} color="var(--accent)" /></div>
                 <div className="crbody">
@@ -270,7 +267,6 @@ export function LeagueManagement({
           )}
 
           <div>
-            <div className="slbl">League Name</div>
             <div className="lmnamerow">
               {editingName && isOwner ? (
                 <>
@@ -295,7 +291,6 @@ export function LeagueManagement({
           </div>
 
           <div>
-            <div className="slbl">Invite Code</div>
             <div className="invrow">
               <div className="invcb">
                 <div className="invcv">{league?.invite_code}</div>
@@ -314,10 +309,10 @@ export function LeagueManagement({
                 )}
               </div>
               <div style={{display:"flex",gap:8}}>
-                <button className="pbtn" style={{padding:"9px 11px"}} onClick={copyLink} title="Copy invite code" aria-label="Copy invite code">
+                <button style={{padding:"9px 11px",borderRadius:"var(--r-md)",background:"var(--surface)",border:"1px solid var(--border)",cursor:"pointer",color:"var(--muted)",display:"flex",alignItems:"center"}} onClick={copyLink} title="Copy invite code" aria-label="Copy invite code">
                   {copied ? <Icon name="check" size={16} strokeWidth={2.5} /> : <Icon name="copy" size={16} />}
                 </button>
-                <button className="pbtn" style={{padding:"9px 11px"}} onClick={shareInvite} title="Share invite" aria-label="Share invite">
+                <button style={{padding:"9px 11px",borderRadius:"var(--r-md)",background:"var(--surface)",border:"1px solid var(--border)",cursor:"pointer",color:"var(--muted)",display:"flex",alignItems:"center"}} onClick={shareInvite} title="Share invite" aria-label="Share invite">
                   <Icon name="share" size={16} />
                 </button>
               </div>
