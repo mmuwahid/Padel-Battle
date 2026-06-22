@@ -9,6 +9,7 @@
 // Usage: mount <LiquidPressDelegate/> once near the root, then add `lp`
 // to any className you want to receive the effect.
 import { useEffect } from "react";
+import { triggerHaptic } from "../capacitor";
 
 export function LiquidPressDelegate() {
   useEffect(() => {
@@ -24,6 +25,8 @@ export function LiquidPressDelegate() {
       el.style.setProperty("--lp-x", x + "%");
       el.style.setProperty("--lp-y", y + "%");
       el.classList.remove("pressing");
+      // Native-only light haptic on press (no-op on web). Fire-and-forget.
+      triggerHaptic("light");
       // Force reflow so the radial keyframe restarts cleanly on rapid taps.
       // eslint-disable-next-line no-unused-expressions
       void el.offsetWidth;

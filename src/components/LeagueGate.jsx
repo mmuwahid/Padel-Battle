@@ -374,7 +374,7 @@ export function LeagueGate({ user, children }) {
         console.error(msg);
         try { window.alert(msg); } catch { /* noop */ }
       } else {
-        console.log("[onboarding]", msg);
+        if (import.meta.env.DEV) console.log("[onboarding]", msg);
       }
     };
     const onSignOut = async () => { await supabase.auth.signOut(); };

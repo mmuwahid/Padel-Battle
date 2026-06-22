@@ -80,15 +80,15 @@ export function CombosView({combos,players,matches,pm,getName}){
               <div style={{flex:1}}>
                 <div style={{fontSize:16,fontWeight:800,color:TX}}>{getName(c.players[0])} <span style={{color:MT,fontWeight:400}}>x</span> {getName(c.players[1])}</div>
                 <div style={{display:"flex",gap:12,marginTop:6,flexWrap:"wrap"}}>
-                  <span style={{fontSize:13,color:A,fontWeight:700,fontFamily:"'JetBrains Mono'"}}>{c.wins}W</span>
-                  <span style={{fontSize:13,color:DG,fontWeight:700,fontFamily:"'JetBrains Mono'"}}>{c.losses}L</span>
+                  <span style={{fontSize:13,color:A,fontWeight:700,fontFamily:"'DM Mono'"}}>{c.wins}W</span>
+                  <span style={{fontSize:13,color:DG,fontWeight:700,fontFamily:"'DM Mono'"}}>{c.losses}L</span>
                   <span style={{fontSize:13,color:MT}}>{c.games} MP</span>
-                  <span style={{fontSize:13,color:gdColor,fontWeight:700,fontFamily:"'JetBrains Mono'"}} title="Games differential">{gd>0?"+":""}{gd} GD</span>
+                  <span style={{fontSize:13,color:gdColor,fontWeight:700,fontFamily:"'DM Mono'"}} title="Games differential">{gd>0?"+":""}{gd} GD</span>
                 </div>
               </div>
               <div style={{textAlign:"center"}}>
                 <div style={{width:60,height:60,borderRadius:"50%",border:`3px solid ${colors[i]}`,display:"flex",alignItems:"center",justifyContent:"center",background:`${colors[i]}10`}}>
-                  <span style={{fontSize:20,fontWeight:900,color:colors[i],fontFamily:"'JetBrains Mono'"}}>{pct.toFixed(0)}%</span>
+                  <span style={{fontSize:20,fontWeight:900,color:colors[i],fontFamily:"'DM Mono'"}}>{pct.toFixed(0)}%</span>
                 </div>
               </div>
             </div>
@@ -109,15 +109,15 @@ export function CombosView({combos,players,matches,pm,getName}){
                 <div style={{flex:1}}>
                   <div style={{fontSize:16,fontWeight:800,color:TX}}>{getName(c.players[0])} <span style={{color:MT,fontWeight:400}}>x</span> {getName(c.players[1])}</div>
                   <div style={{display:"flex",gap:12,marginTop:6,flexWrap:"wrap"}}>
-                    <span style={{fontSize:13,color:A,fontWeight:700,fontFamily:"'JetBrains Mono'"}}>{c.wins}W</span>
-                    <span style={{fontSize:13,color:DG,fontWeight:700,fontFamily:"'JetBrains Mono'"}}>{c.losses}L</span>
+                    <span style={{fontSize:13,color:A,fontWeight:700,fontFamily:"'DM Mono'"}}>{c.wins}W</span>
+                    <span style={{fontSize:13,color:DG,fontWeight:700,fontFamily:"'DM Mono'"}}>{c.losses}L</span>
                     <span style={{fontSize:13,color:MT}}>{c.games} MP</span>
-                    <span style={{fontSize:13,color:gdColor,fontWeight:700,fontFamily:"'JetBrains Mono'"}} title="Games differential">{gd>0?"+":""}{gd} GD</span>
+                    <span style={{fontSize:13,color:gdColor,fontWeight:700,fontFamily:"'DM Mono'"}} title="Games differential">{gd>0?"+":""}{gd} GD</span>
                   </div>
                 </div>
                 <div style={{textAlign:"center"}}>
                   <div style={{width:60,height:60,borderRadius:"50%",border:`3px solid ${DG}`,display:"flex",alignItems:"center",justifyContent:"center",background:`${DG}10`}}>
-                    <span style={{fontSize:20,fontWeight:900,color:DG,fontFamily:"'JetBrains Mono'"}}>{pct.toFixed(0)}%</span>
+                    <span style={{fontSize:20,fontWeight:900,color:DG,fontFamily:"'DM Mono'"}}>{pct.toFixed(0)}%</span>
                   </div>
                 </div>
               </div>
@@ -151,17 +151,17 @@ export function CombosView({combos,players,matches,pm,getName}){
                   {(partners.length===1||best.pct===0)&&<div style={{fontSize:10,color:MT,fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>{partners.length===1?"Only Partner":"Partner"}</div>}
                   <Icon name="users" size={20} color="var(--muted)"/>
                   <div style={{fontSize:15,fontWeight:700,marginTop:4}}>{getName(best.pid)}</div>
-                  <div style={{fontSize:22,fontWeight:900,color:A,fontFamily:"'JetBrains Mono'",marginTop:4}}>{best.pct.toFixed(0)}%</div>
+                  <div style={{fontSize:22,fontWeight:900,color:A,fontFamily:"'DM Mono'",marginTop:4}}>{best.pct.toFixed(0)}%</div>
                   <div style={{fontSize:11,color:MT}}>{best.w}W {best.l}L · {best.games} MP</div>
-                  <div style={{fontSize:12,fontWeight:700,fontFamily:"'JetBrains Mono'",marginTop:2,color:(best.gamesDiff||0)>0?A:(best.gamesDiff||0)<0?DG:MT}} title="Games differential">{(best.gamesDiff||0)>0?"+":""}{best.gamesDiff||0} GD</div>
+                  <div style={{fontSize:12,fontWeight:700,fontFamily:"'DM Mono'",marginTop:2,color:(best.gamesDiff||0)>0?A:(best.gamesDiff||0)<0?DG:MT}} title="Games differential">{(best.gamesDiff||0)>0?"+":""}{best.gamesDiff||0} GD</div>
                 </div>
                 {worst&&worst.pid!==best.pid&&worst.pct<best.pct&&<div style={{background:CD,borderRadius:12,border:`1px solid ${DG}30`,padding:14,textAlign:"center"}}>
                   <div style={{fontSize:10,color:DG,fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>Worst Partner</div>
                   <div style={{fontSize:20}}>💔</div>
                   <div style={{fontSize:15,fontWeight:700,marginTop:4}}>{getName(worst.pid)}</div>
-                  <div style={{fontSize:22,fontWeight:900,color:DG,fontFamily:"'JetBrains Mono'",marginTop:4}}>{worst.pct.toFixed(0)}%</div>
+                  <div style={{fontSize:22,fontWeight:900,color:DG,fontFamily:"'DM Mono'",marginTop:4}}>{worst.pct.toFixed(0)}%</div>
                   <div style={{fontSize:11,color:MT}}>{worst.w}W {worst.l}L · {worst.games} MP</div>
-                  <div style={{fontSize:12,fontWeight:700,fontFamily:"'JetBrains Mono'",marginTop:2,color:(worst.gamesDiff||0)>0?A:(worst.gamesDiff||0)<0?DG:MT}} title="Games differential">{(worst.gamesDiff||0)>0?"+":""}{worst.gamesDiff||0} GD</div>
+                  <div style={{fontSize:12,fontWeight:700,fontFamily:"'DM Mono'",marginTop:2,color:(worst.gamesDiff||0)>0?A:(worst.gamesDiff||0)<0?DG:MT}} title="Games differential">{(worst.gamesDiff||0)>0?"+":""}{worst.gamesDiff||0} GD</div>
                 </div>}
               </div>
               {partners.map((p,i)=>{
@@ -172,8 +172,8 @@ export function CombosView({combos,players,matches,pm,getName}){
                     <span style={{fontSize:13,fontWeight:600}}>{getName(p.pid)}</span>
                     <div style={{display:"flex",gap:8,alignItems:"center"}}>
                       <span style={{fontSize:11,color:MT}}>{p.games} MP</span>
-                      <span style={{fontSize:11,fontWeight:700,fontFamily:"'JetBrains Mono'",color:gd>0?A:gd<0?DG:MT,minWidth:36,textAlign:"right"}} title="Games differential">{gd>0?"+":""}{gd}</span>
-                      <span style={{fontSize:14,fontWeight:800,color:pctColor(p.pct,p.games),fontFamily:"'JetBrains Mono'",width:42,textAlign:"right"}}>{p.pct.toFixed(0)}%</span>
+                      <span style={{fontSize:11,fontWeight:700,fontFamily:"'DM Mono'",color:gd>0?A:gd<0?DG:MT,minWidth:36,textAlign:"right"}} title="Games differential">{gd>0?"+":""}{gd}</span>
+                      <span style={{fontSize:14,fontWeight:800,color:pctColor(p.pct,p.games),fontFamily:"'DM Mono'",width:42,textAlign:"right"}}>{p.pct.toFixed(0)}%</span>
                     </div>
                   </div>
                   <div style={{height:6,background:BD,borderRadius:3,overflow:"hidden"}}>
@@ -210,7 +210,7 @@ export function CombosView({combos,players,matches,pm,getName}){
                   const bg=games===0?`${BD}40`:pct>=60?`${A}25`:pct>=40?`${BL}20`:`${DG}25`;
                   const tc=games===0?MT:pct>=60?A:pct>=40?TX:DG;
                   return (<div key={q.id} style={{background:bg,borderRadius:4,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:4,minHeight:40}}>
-                    {games>0?<><span style={{fontSize:12,fontWeight:800,color:tc,fontFamily:"'JetBrains Mono'"}}>{pct.toFixed(0)}%</span><span style={{fontSize:7,color:MT}}>{games} MP</span></>:<span style={{fontSize:9,color:MT}}>-</span>}
+                    {games>0?<><span style={{fontSize:12,fontWeight:800,color:tc,fontFamily:"'DM Mono'"}}>{pct.toFixed(0)}%</span><span style={{fontSize:7,color:MT}}>{games} MP</span></>:<span style={{fontSize:9,color:MT}}>-</span>}
                   </div>);
                 })}
               </React.Fragment>

@@ -213,16 +213,16 @@ export function RoundRobin({ players, getName, supabase, leagueId, tournament, s
               </tr></thead>
               <tbody>{standings.map((t,i) => (
                 <tr key={t.name}>
-                  <td style={{ background:CD, padding:"8px 6px", fontSize:i<3?15:12, fontWeight:700, fontFamily:"JetBrains Mono", color:i===0?GD:i===1?SV:i===2?BZ:MT, borderRadius:"8px 0 0 8px", textAlign:"center" }}>{rankBadge(i)}</td>
+                  <td style={{ background:CD, padding:"8px 6px", fontSize:i<3?15:12, fontWeight:700, fontFamily:"DM Mono", color:i===0?GD:i===1?SV:i===2?BZ:MT, borderRadius:"8px 0 0 8px", textAlign:"center" }}>{rankBadge(i)}</td>
                   <td style={{ background:CD, padding:"8px 6px", textAlign:"left" }}>
                     <TeamPlayers playerIds={t.players} players={players} getName={getName} size={18} fontSize={12} color={i<3?TX:MT} weight={i===0?700:600} />
                   </td>
-                  <td style={{ background:CD, padding:"8px 6px", fontSize:11, fontFamily:"JetBrains Mono", color:MT, textAlign:"center" }}>{t.played}</td>
-                  <td style={{ background:CD, padding:"8px 6px", fontSize:11, fontFamily:"JetBrains Mono", color:t.wins>0?A:MT, textAlign:"center" }}>{t.wins}</td>
-                  <td style={{ background:CD, padding:"8px 6px", fontSize:11, fontFamily:"JetBrains Mono", color:t.losses>0?DG:MT, textAlign:"center" }}>{t.losses}</td>
-                  <td style={{ background:CD, padding:"8px 6px", fontSize:11, fontFamily:"JetBrains Mono", color:MT, textAlign:"center" }}>{t.draws}</td>
-                  <td style={{ background:CD, padding:"8px 6px", fontSize:12, fontWeight:700, fontFamily:"JetBrains Mono", color:i===0?GD:TX, textAlign:"center" }}>{t.pts}</td>
-                  <td style={{ background:CD, padding:"8px 6px", fontSize:11, fontFamily:"JetBrains Mono", color:MT, textAlign:"center", borderRadius:"0 8px 8px 0" }}>{t.pf-t.pa>0?"+"+(t.pf-t.pa):t.pf-t.pa}</td>
+                  <td style={{ background:CD, padding:"8px 6px", fontSize:11, fontFamily:"DM Mono", color:MT, textAlign:"center" }}>{t.played}</td>
+                  <td style={{ background:CD, padding:"8px 6px", fontSize:11, fontFamily:"DM Mono", color:t.wins>0?A:MT, textAlign:"center" }}>{t.wins}</td>
+                  <td style={{ background:CD, padding:"8px 6px", fontSize:11, fontFamily:"DM Mono", color:t.losses>0?DG:MT, textAlign:"center" }}>{t.losses}</td>
+                  <td style={{ background:CD, padding:"8px 6px", fontSize:11, fontFamily:"DM Mono", color:MT, textAlign:"center" }}>{t.draws}</td>
+                  <td style={{ background:CD, padding:"8px 6px", fontSize:12, fontWeight:700, fontFamily:"DM Mono", color:i===0?GD:TX, textAlign:"center" }}>{t.pts}</td>
+                  <td style={{ background:CD, padding:"8px 6px", fontSize:11, fontFamily:"DM Mono", color:MT, textAlign:"center", borderRadius:"0 8px 8px 0" }}>{t.pf-t.pa>0?"+"+(t.pf-t.pa):t.pf-t.pa}</td>
                 </tr>
               ))}</tbody>
             </table>
@@ -261,12 +261,12 @@ export function RoundRobin({ players, getName, supabase, leagueId, tournament, s
             <tbody>{standings.map((t,i) => (
               <tr key={t.name} style={{ borderBottom: i<standings.length-1?"1px solid "+BD+"40":"none" }}>
                 <td style={{ padding:"8px 6px", fontSize:12, fontWeight:600, color: i===0?GD:TX }}>{i+1}. {t.name}</td>
-                <td style={{ padding:"8px 6px", fontSize:11, fontFamily:"JetBrains Mono", color:MT, textAlign:"center" }}>{t.played}</td>
-                <td style={{ padding:"8px 6px", fontSize:11, fontFamily:"JetBrains Mono", color:t.wins>0?A:MT, textAlign:"center" }}>{t.wins}</td>
-                <td style={{ padding:"8px 6px", fontSize:11, fontFamily:"JetBrains Mono", color:t.losses>0?DG:MT, textAlign:"center" }}>{t.losses}</td>
-                <td style={{ padding:"8px 6px", fontSize:11, fontFamily:"JetBrains Mono", color:MT, textAlign:"center" }}>{t.draws}</td>
-                <td style={{ padding:"8px 6px", fontSize:12, fontWeight:700, fontFamily:"JetBrains Mono", color:i===0?GD:TX, textAlign:"center" }}>{t.pts}</td>
-                <td style={{ padding:"8px 6px", fontSize:11, fontFamily:"JetBrains Mono", color:MT, textAlign:"center" }}>{t.pf-t.pa>0?"+"+(t.pf-t.pa):t.pf-t.pa}</td>
+                <td style={{ padding:"8px 6px", fontSize:11, fontFamily:"DM Mono", color:MT, textAlign:"center" }}>{t.played}</td>
+                <td style={{ padding:"8px 6px", fontSize:11, fontFamily:"DM Mono", color:t.wins>0?A:MT, textAlign:"center" }}>{t.wins}</td>
+                <td style={{ padding:"8px 6px", fontSize:11, fontFamily:"DM Mono", color:t.losses>0?DG:MT, textAlign:"center" }}>{t.losses}</td>
+                <td style={{ padding:"8px 6px", fontSize:11, fontFamily:"DM Mono", color:MT, textAlign:"center" }}>{t.draws}</td>
+                <td style={{ padding:"8px 6px", fontSize:12, fontWeight:700, fontFamily:"DM Mono", color:i===0?GD:TX, textAlign:"center" }}>{t.pts}</td>
+                <td style={{ padding:"8px 6px", fontSize:11, fontFamily:"DM Mono", color:MT, textAlign:"center" }}>{t.pf-t.pa>0?"+"+(t.pf-t.pa):t.pf-t.pa}</td>
               </tr>
             ))}</tbody>
           </table>
