@@ -27,6 +27,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { LeagueContext } from './LeagueContext';
 import { VAPID_PUBLIC_KEY } from './vapidPublicKey';
 import { PLATFORM_ADMIN_ID } from './components/PlatformAdmin';
+import { hideNativeSplash, configureStatusBar, registerBackButton, isNative } from './capacitor';
 
 // Convert VAPID public key from base64 URL to Uint8Array (required by pushManager.subscribe)
 function urlBase64ToUint8Array(base64String) {
@@ -143,6 +144,20 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
       return prev.slice(0, -1);
     });
   }, []);
+
+  // Capacitor native platform setup (no-op on web). Placed AFTER goBackSidebar
+  // is declared so referencing it in the deps array isn't in the temporal dead
+  // zone — otherwise the deps array (evaluated during render) throws a
+  // ReferenceError and crashes AppContent before mount.
+  useEffect(() => {
+    configureStatusBar();
+    const cleanup = registerBackButton(({ canGoBack }) => {
+      if (sidebarView) goBackSidebar();
+      else if (selectedPlayer) setSelectedPlayer(null);
+      else if (selectedPair) setSelectedPair(null);
+    });
+    return () => { if (typeof cleanup === "function") cleanup(); };
+  }, [sidebarView, selectedPlayer, selectedPair, goBackSidebar]);
   // S088 Issue #109: closing the notification center must return to the
   // underlying tab/sub-view it was opened over — NEVER force the drawer open.
   // goBackSidebar reopens the drawer when it pops a null history entry (its
@@ -1031,6 +1046,8 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
     if (!loading) {
       const s = document.getElementById('splash');
       if (s) s.style.display = 'none';
+      // Hide native Capacitor splash (no-op on web)
+      hideNativeSplash();
     }
   }, [loading]);
   if (loading) return null;
