@@ -125,17 +125,6 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
     try { window.scrollTo({ top: 0, left: 0, behavior: "auto" }); } catch {}
   }, [sidebarView]);
 
-  // Capacitor native platform setup (no-op on web)
-  useEffect(() => {
-    configureStatusBar();
-    const cleanup = registerBackButton(({ canGoBack }) => {
-      if (sidebarView) goBackSidebar();
-      else if (selectedPlayer) setSelectedPlayer(null);
-      else if (selectedPair) setSelectedPair(null);
-    });
-    return () => { if (typeof cleanup === "function") cleanup(); };
-  }, [sidebarView, selectedPlayer, selectedPair, goBackSidebar]);
-
   const goBackSidebar = useCallback(() => {
     // S089 Issue #122: backing out of a sidebar view (profile, settings, admin,
     // etc.) returns to the underlying CONTENT tab the user was on — it must NEVER
@@ -155,6 +144,20 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
       return prev.slice(0, -1);
     });
   }, []);
+
+  // Capacitor native platform setup (no-op on web). Placed AFTER goBackSidebar
+  // is declared so referencing it in the deps array isn't in the temporal dead
+  // zone — otherwise the deps array (evaluated during render) throws a
+  // ReferenceError and crashes AppContent before mount.
+  useEffect(() => {
+    configureStatusBar();
+    const cleanup = registerBackButton(({ canGoBack }) => {
+      if (sidebarView) goBackSidebar();
+      else if (selectedPlayer) setSelectedPlayer(null);
+      else if (selectedPair) setSelectedPair(null);
+    });
+    return () => { if (typeof cleanup === "function") cleanup(); };
+  }, [sidebarView, selectedPlayer, selectedPair, goBackSidebar]);
   // S088 Issue #109: closing the notification center must return to the
   // underlying tab/sub-view it was opened over — NEVER force the drawer open.
   // goBackSidebar reopens the drawer when it pops a null history entry (its
