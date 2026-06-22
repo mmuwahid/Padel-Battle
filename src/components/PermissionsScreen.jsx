@@ -85,7 +85,7 @@ export function PermissionsScreen({ goBack, setSidebarView }) {
   return (
     <div className="lm-screen">
       <div className="back-btn-row">
-        <button className="back-btn" onClick={back}>
+        <button className="back-btn" aria-label="Back" onClick={back}>
           <Icon name="chevron-left" size={18} color="currentColor" />
         </button>
       </div>

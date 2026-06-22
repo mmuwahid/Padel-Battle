@@ -1,6 +1,7 @@
 import React from "react";
 import { supabase } from '../supabase';
 import Icon from './Icon';
+import { pressable } from '../utils/a11y';
 
 // S066 Phase 12: spec-faithful restyle. Slide-in right drawer (.ssheet) with
 // .sbprof header (clickable to open My Profile), .sbsec sections containing
@@ -38,7 +39,7 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, navigateS
         </button>
 
         {/* User profile header — click opens My Profile (Issue #21) */}
-        <div className="sbprof" onClick={()=>go("profile")}>
+        <div className="sbprof" {...pressable(()=>go("profile"))}>
           <div className="sbav">
             {avatarUrl
               ? <img src={avatarUrl} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
@@ -57,7 +58,7 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, navigateS
         <div className="sbsec">
           <div className="sbsl">League</div>
           {league ? (
-            <div className="sbitem" onClick={()=>go("leagueManagement")}>
+            <div className="sbitem" {...pressable(()=>go("leagueManagement"))}>
               <div className="sbico"><Icon name="league" size={16}/></div>
               <div className="sbibd">
                 <div className="sbit">{league.name}</div>
@@ -73,7 +74,7 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, navigateS
               <span className="sb-chev"><Icon name="chevron" size={16} color="currentColor"/></span>
             </div>
           ) : (
-            <div className="sbitem" onClick={()=>go("leagueManagement")}>
+            <div className="sbitem" {...pressable(()=>go("leagueManagement"))}>
               <div className="sbico"><Icon name="league" size={16}/></div>
               <div className="sbibd">
                 <div className="sbit">Join or create</div>
@@ -83,7 +84,7 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, navigateS
             </div>
           )}
           {league && isAdmin && (
-            <div className="sbitem" onClick={handleInvite}>
+            <div className="sbitem" {...pressable(handleInvite)}>
               <div className="sbico"><Icon name="user-plus" size={16}/></div>
               <div className="sbibd">
                 <div className="sbit">Invite Players</div>
@@ -98,28 +99,28 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, navigateS
         {/* App section */}
         <div className="sbsec">
           <div className="sbsl">App</div>
-          <div className="sbitem" onClick={()=>go("rules")}>
+          <div className="sbitem" {...pressable(()=>go("rules"))}>
             <div className="sbico"><Icon name="book" size={16}/></div>
             <div className="sbibd">
               <div className="sbit">Official Rules</div>
             </div>
             <span className="sb-chev"><Icon name="chevron" size={16} color="currentColor"/></span>
           </div>
-          <div className="sbitem" onClick={()=>go("privacy")}>
+          <div className="sbitem" {...pressable(()=>go("privacy"))}>
             <div className="sbico"><Icon name="shield" size={16}/></div>
             <div className="sbibd">
               <div className="sbit">Privacy Policy</div>
             </div>
             <span className="sb-chev"><Icon name="chevron" size={16} color="currentColor"/></span>
           </div>
-          <div className="sbitem" onClick={()=>go("terms")}>
+          <div className="sbitem" {...pressable(()=>go("terms"))}>
             <div className="sbico"><Icon name="book" size={16}/></div>
             <div className="sbibd">
               <div className="sbit">Terms of Service</div>
             </div>
             <span className="sb-chev"><Icon name="chevron" size={16} color="currentColor"/></span>
           </div>
-          <div className="sbitem" onClick={()=>go("settings")}>
+          <div className="sbitem" {...pressable(()=>go("settings"))}>
             <div className="sbico"><Icon name="settings" size={16}/></div>
             <div className="sbibd">
               <div className="sbit">Settings</div>
@@ -127,7 +128,7 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, navigateS
             <span className="sb-chev"><Icon name="chevron" size={16} color="currentColor"/></span>
           </div>
           {installPrompt ? (
-            <div className="sbitem" onClick={handleInstall}>
+            <div className="sbitem" {...pressable(handleInstall)}>
               <div className="sbico"><Icon name="share" size={16}/></div>
               <div className="sbibd">
                 <div className="sbit" style={{color:"var(--accent)"}}>Install App</div>

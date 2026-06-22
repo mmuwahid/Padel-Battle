@@ -29,7 +29,7 @@ export function PrivacyView({ goBack }) {
   return (
     <div className="rtb">
       <div className="back-btn-row">
-        <button className="back-btn" onClick={goBack}>
+        <button className="back-btn" aria-label="Back" onClick={goBack}>
           <Icon name="chevron-left" size={18} color="currentColor" />
         </button>
       </div>
@@ -193,7 +193,7 @@ export function TermsView({ goBack }) {
   return (
     <div className="rtb">
       <div className="back-btn-row">
-        <button className="back-btn" onClick={goBack}>
+        <button className="back-btn" aria-label="Back" onClick={goBack}>
           <Icon name="chevron-left" size={18} color="currentColor" />
         </button>
       </div>

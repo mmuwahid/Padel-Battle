@@ -137,7 +137,7 @@ export function PairStats({ pair, pairs, matches, players, getName, season, onBa
   return (
     <div className="pstat-screen" style={{ paddingBottom: "calc(80px + env(safe-area-inset-bottom, 0px))" }}>
       <div className="back-btn-row">
-        <button className="back-btn" onClick={onBack}>
+        <button className="back-btn" aria-label="Back" onClick={onBack}>
           <Icon name="chevron-left" size={18} color="currentColor" />
         </button>
       </div>

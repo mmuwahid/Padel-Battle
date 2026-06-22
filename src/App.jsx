@@ -3,6 +3,7 @@ import { supabase } from './supabase';
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, BL, PU, TL, TR } from './theme';
 import { formatTeam, win, formatDate, setTotals, flagEmoji } from './utils/helpers';
 import { calcElo } from './utils/elo';
+import { pressable } from './utils/a11y';
 import { RULES, ARGUED } from './data/rules';
 import { CourtIcon, PadelLogo, PadelLogoSmall, PadelHubMark, PadelHubMarkHeader } from './components/icons';
 import { NavIcon } from './components/NavIcons';
@@ -1170,7 +1171,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
           {seasonLb.length>=3&&(
             <div className="pod-wrap">
               {/* 2nd place */}
-              <div className="pod p2" onClick={()=>{setDrillInOrigin(tab);setSelectedPlayer(seasonLb[1].id);setTab("stats");}}>
+              <div className="pod p2" {...pressable(()=>{setDrillInOrigin(tab);setSelectedPlayer(seasonLb[1].id);setTab("stats");})}>
                 <div className="pmedal">🥈</div>
                 <div className="pname">{seasonLb[1].nickname||seasonLb[1].name}</div>
                 <div className="prec">
@@ -1181,7 +1182,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
                 <div className="pelo">{Math.round(seasonElo[seasonLb[1].id]||1500)} ELO</div>
               </div>
               {/* 1st place */}
-              <div className="pod p1" onClick={()=>{setDrillInOrigin(tab);setSelectedPlayer(seasonLb[0].id);setTab("stats");}}>
+              <div className="pod p1" {...pressable(()=>{setDrillInOrigin(tab);setSelectedPlayer(seasonLb[0].id);setTab("stats");})}>
                 <div className="pmedal">🥇</div>
                 <div className="pname">{seasonLb[0].nickname||seasonLb[0].name}</div>
                 <div className="prec">
@@ -1192,7 +1193,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
                 <div className="pelo">{Math.round(seasonElo[seasonLb[0].id]||1500)} ELO</div>
               </div>
               {/* 3rd place */}
-              <div className="pod p3" onClick={()=>{setDrillInOrigin(tab);setSelectedPlayer(seasonLb[2].id);setTab("stats");}}>
+              <div className="pod p3" {...pressable(()=>{setDrillInOrigin(tab);setSelectedPlayer(seasonLb[2].id);setTab("stats");})}>
                 <div className="pmedal">🥉</div>
                 <div className="pname">{seasonLb[2].nickname||seasonLb[2].name}</div>
                 <div className="prec">

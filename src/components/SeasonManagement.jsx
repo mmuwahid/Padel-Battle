@@ -305,7 +305,7 @@ export function SeasonManagement({ setSidebarView, goBack, autoCreate, clearAuto
     return (
       <div className="sm-screen">
         <div className="back-btn-row">
-          <button className="back-btn" onClick={closeEdit}>
+          <button className="back-btn" aria-label="Back" onClick={closeEdit}>
             <Icon name="chevron-left" size={18} color="currentColor" />
           </button>
         </div>
@@ -468,7 +468,7 @@ export function SeasonManagement({ setSidebarView, goBack, autoCreate, clearAuto
               <div className="shdl" />
               <div className="shhdr">
                 <div className="shtitle">Add Pair</div>
-                <button className="shclose" onClick={() => setShowCreatePair(false)}><Icon name="close" size={14} /></button>
+                <button className="shclose" aria-label="Close" onClick={() => setShowCreatePair(false)}><Icon name="close" size={14} /></button>
               </div>
               <div className="shbody">
                 <div className="shf">
@@ -513,7 +513,7 @@ export function SeasonManagement({ setSidebarView, goBack, autoCreate, clearAuto
   return (
     <div className="sm-screen">
       <div className="back-btn-row">
-        <button className="back-btn" onClick={() => goBack ? goBack() : setSidebarView("admin")}>
+        <button className="back-btn" aria-label="Back" onClick={() => goBack ? goBack() : setSidebarView("admin")}>
           <Icon name="chevron-left" size={18} color="currentColor" />
         </button>
       </div>

@@ -923,14 +923,14 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                   </div>
                   {editMode ? (
                     <div className="padmin" onClick={e=>e.stopPropagation()}>
-                      <button title="Edit" onClick={()=>startEdit(p)}><Icon name="edit" size={14}/></button>
+                      <button title="Edit" aria-label="Edit player" onClick={()=>startEdit(p)}><Icon name="edit" size={14}/></button>
                       {isAdmin && (confirmDel===p.id ? (
                         <div className="yn">
                           <button className="y" onClick={()=>{deletePlayer(p.id);setConfirmDel(null);}}>Yes</button>
                           <button className="n" onClick={()=>setConfirmDel(null)}>No</button>
                         </div>
                       ) : (
-                        <button title="Delete" onClick={()=>setConfirmDel(p.id)}><Icon name="trash" size={14} color="var(--danger)"/></button>
+                        <button title="Delete" aria-label="Delete player" onClick={()=>setConfirmDel(p.id)}><Icon name="trash" size={14} color="var(--danger)"/></button>
                       ))}
                     </div>
                   ) : (

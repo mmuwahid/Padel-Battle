@@ -117,7 +117,7 @@ export function ApprovalQueueScreen({ setSidebarView, goBack }) {
     return (
       <div className="ad-screen">
         <div className="back-btn-row">
-          <button className="back-btn" onClick={() => goBack ? goBack() : setSidebarView("admin")}>
+          <button className="back-btn" aria-label="Back" onClick={() => goBack ? goBack() : setSidebarView("admin")}>
             <Icon name="chevron-left" size={18} color="currentColor"/>
           </button>
         </div>
@@ -132,7 +132,7 @@ export function ApprovalQueueScreen({ setSidebarView, goBack }) {
   return (
     <div className="ad-screen aq-screen">
       <div className="back-btn-row">
-        <button className="back-btn" onClick={() => goBack ? goBack() : setSidebarView("admin")}>
+        <button className="back-btn" aria-label="Back" onClick={() => goBack ? goBack() : setSidebarView("admin")}>
           <Icon name="chevron-left" size={18} color="currentColor"/>
         </button>
       </div>

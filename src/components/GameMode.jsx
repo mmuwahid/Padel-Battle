@@ -5,6 +5,7 @@ import { SingleElimination } from './SingleElimination';
 import { DoubleElimination } from './DoubleElimination';
 import { RoundRobin } from './RoundRobin';
 import Icon from './Icon';
+import { pressable } from '../utils/a11y';
 
 // Format rules — split per tab (Casual = Americano/Mexicano, Competitive = RR/SE/DE).
 const CASUAL_FORMAT_RULES = [
@@ -56,7 +57,7 @@ const COMPETITIVE_FORMAT_RULES = [
 function FormatRuleCard({ rule }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className={`rcard${open ? " open" : ""}`} onClick={() => setOpen(v => !v)}>
+    <div className={`rcard${open ? " open" : ""}`} aria-expanded={open} {...pressable(() => setOpen(v => !v))}>
       <div className="rchd">
         <div className="rcico">
           <Icon name={rule.icon} size={16} color="var(--accent)" />
@@ -173,7 +174,7 @@ export function GameMode({ tournament, setTournament, sel }) {
       {topTab === "competitive" && (
         <>
           <div className="gm-body">
-            <div className="gm-card" onClick={() => setScreen("se-setup")} role="button" tabIndex={0}>
+            <div className="gm-card" {...pressable(() => setScreen("se-setup"))}>
               <div className="gm-card-hd">
                 <div className="gm-card-ico"><Icon name="trophy" size={20} /></div>
                 <div className="gm-card-tw">
@@ -185,7 +186,7 @@ export function GameMode({ tournament, setTournament, sel }) {
               <p className="gm-card-sub">Lose once, you're out. Classic knockout bracket — high stakes, fast resolution. Best for 4–16 teams.</p>
             </div>
 
-            <div className="gm-card" onClick={() => setScreen("de-setup")} role="button" tabIndex={0}>
+            <div className="gm-card" {...pressable(() => setScreen("de-setup"))}>
               <div className="gm-card-hd">
                 <div className="gm-card-ico"><Icon name="refresh" size={20} /></div>
                 <div className="gm-card-tw">
@@ -197,7 +198,7 @@ export function GameMode({ tournament, setTournament, sel }) {
               <p className="gm-card-sub">Winners and losers brackets. One loss sends you to the losers bracket. Two losses and you're out.</p>
             </div>
 
-            <div className="gm-card" onClick={() => setScreen("rr-setup")} role="button" tabIndex={0}>
+            <div className="gm-card" {...pressable(() => setScreen("rr-setup"))}>
               <div className="gm-card-hd">
                 <div className="gm-card-ico"><Icon name="grid" size={20} /></div>
                 <div className="gm-card-tw">
