@@ -5,7 +5,7 @@ import { ConfirmButton } from './ConfirmModal';
 import { ScoreStepper } from './ScoreStepper';
 import Icon from './Icon';
 
-export function AmericanoMode({ players, getName, supabase, leagueId, tournament, setTournament, sel, endTournament, resetTournament, deleteTournament, showToast, casualStep = "mode", setCasualStep = () => {} }) {
+export function AmericanoMode({ players, getName, supabase, leagueId, tournament, setTournament, sel: _sel, endTournament, resetTournament, deleteTournament, showToast, casualStep = "mode", setCasualStep = () => {} }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   // ── State ──
   const [selPlayers, setSelP] = useState([]);

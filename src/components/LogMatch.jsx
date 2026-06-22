@@ -9,7 +9,7 @@ import Icon from './Icon';
 // + Phase 9's new .modebar/.modebtn/.sccard/.cstep/.csbtn/.csval/.livebi/.acbtn/.mvpcard/.savebtn etc.
 // Behavior preserved: 2/3 set toggle, Manual entry, LIVE scoring engine, FT-09 approval flow,
 // FT-09b FIP validation, dead-rubber auto-truncate, post-save broadcast push.
-export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goBack,sel,lbl,getName,seasonId,seasons,setCurSeason,onSave,showToast,sendPushNotification,prefilledOpenMatch,onPrefilledHandled,pairs,roster}){
+export function LogMatch({players,matches:_matches,supabase,leagueId,user,pm,em,setEm,goBack,sel:_sel,lbl:_lbl,getName,seasonId,seasons,setCurSeason,onSave,showToast,sendPushNotification,prefilledOpenMatch,onPrefilledHandled,pairs,roster}){
   const isE=!!em;
   const [tA,setTA]=useState(["",""]);
   const [tB,setTB]=useState(["",""]);
@@ -50,6 +50,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
     } else {
       setTA(["",""]);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- seasonPairs is derived from context and only used for lookup; adding it would cause infinite re-sync loops
   }, [selectedPairA, isPairsFormat]);
   useEffect(() => {
     if (!isPairsFormat) return;
@@ -59,6 +60,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
     } else {
       setTB(["",""]);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- seasonPairs is derived from context and only used for lookup; adding it would cause infinite re-sync loops
   }, [selectedPairB, isPairsFormat]);
   // When editing an existing match in a pairs season, pre-select the pairs
   useEffect(() => {
@@ -71,6 +73,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
     const pB = findPair(em.team_b || []);
     if (pA) setSelectedPairA(pA.id);
     if (pB) setSelectedPairB(pB.id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- seasonPairs is derived from context and only used for lookup; adding it would cause infinite re-sync loops
   }, [em, isPairsFormat]);
   // S075 FT-16: hold the open_match id so we can attach it to the insert payload.
   const [openMatchId,setOpenMatchId]=useState(null);
@@ -108,7 +111,7 @@ export function LogMatch({players,matches,supabase,leagueId,user,pm,em,setEm,goB
   },[em]);
 
   const {ptA,ptB,gA,gB,isDeuce,inTiebreak}=getLiveDisplay(liveState);
-  const {sA,sB,completedSets,matchOver,history:liveHistory}=liveState;
+  const {sA,sB,completedSets:_completedSets,matchOver,history:liveHistory}=liveState;
 
   const teamName=(ids)=>{
     const names=ids.filter(Boolean).map(id=>getName?getName(id):id);

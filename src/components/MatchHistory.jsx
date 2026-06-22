@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { win, formatDate, formatDateParts, flagEmoji } from '../utils/helpers';
+import { win, formatDateParts, flagEmoji } from '../utils/helpers';
 import { useLeague } from '../LeagueContext';
 import { MatchApprovalsQueue } from './MatchApprovalsQueue';
 import Icon from './Icon';
@@ -30,7 +30,7 @@ function pointsCount(sets){
   return sets.reduce((acc,s)=>{ acc[0]+=(s[0]||0); acc[1]+=(s[1]||0); return acc; },[0,0]);
 }
 
-export function MatchHistory({onEdit,shareMatch,sel,onMatchDeleted,scrollToMatchId,onScrolled}){
+export function MatchHistory({onEdit,shareMatch,sel:_sel,onMatchDeleted,scrollToMatchId,onScrolled}){
   const { supabase, user, players, approvedMatches, pendingMatches, incompleteMatches, isAdmin, canDo, getName, showToast, seasons, selectedSeason, setSelectedSeason } = useLeague();
   const seasonFilter = (m) => !selectedSeason || m.season_id === selectedSeason;
   const matches = approvedMatches.filter(seasonFilter);
@@ -87,6 +87,7 @@ export function MatchHistory({onEdit,shareMatch,sel,onMatchDeleted,scrollToMatch
       setReactions(grouped);setMyReactions(mine);
     });
     return ()=>{ cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- user?.id is sufficient; the full user object is only used for an identity check (user.id) inside .then()
   },[matchIdsKey,supabase,user?.id]);
 
   // S066: outside-click closes the picker popover

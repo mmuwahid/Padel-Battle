@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import Icon from "./Icon";
 import { supabase } from "../supabase";
 
-export const PLATFORM_ADMIN_ID = "8362be01-8e73-49c1-90c8-065fc6a09159";
+import { PLATFORM_ADMIN_ID } from "../constants";
+export { PLATFORM_ADMIN_ID };
 
 // S067 Phase 12 PR 3: spec-faithful Platform Admin.
 // Class names match docs/PadelHub_Complete_v2.jsx lines 2081-2132 verbatim:
@@ -32,7 +33,7 @@ export function PlatformAdmin({ onClose, showToast, onOpenLeague }) {
   const [renaming, setRenaming] = useState(false);
   // S068: edit-unlock — trash button is hidden until user taps the edit pencil.
   // Prevents accidental tap on dangerous delete actions.
-  const [unlockedLeagueId, setUnlockedLeagueId] = useState(null);
+  const [_unlockedLeagueId, _setUnlockedLeagueId] = useState(null);
   const [unlockedUserId, setUnlockedUserId] = useState(null);
 
   useEffect(() => { loadData(); }, []);
@@ -75,7 +76,7 @@ export function PlatformAdmin({ onClose, showToast, onOpenLeague }) {
 
   // S068: simplified destructive-confirm — type "DELETE" instead of the full
   // league name / user email. User direction: easier + still requires intent.
-  const handleDeleteLeague = async (leagueId, leagueName) => {
+  const handleDeleteLeague = async (leagueId, _leagueName) => {
     if (deleteConfirm !== leagueId) { setDeleteConfirm(leagueId); setDeleteTyped(""); return; }
     if (deleteTyped.trim().toUpperCase() !== "DELETE") { if (showToast) showToast('Type DELETE in capitals to confirm', "error"); return; }
     try {
@@ -89,7 +90,7 @@ export function PlatformAdmin({ onClose, showToast, onOpenLeague }) {
     }
   };
 
-  const handleDeleteUser = async (userId, userEmail) => {
+  const handleDeleteUser = async (userId, _userEmail) => {
     if (deleteUserConfirm !== userId) { setDeleteUserConfirm(userId); setDeleteUserTyped(""); return; }
     if (deleteUserTyped.trim().toUpperCase() !== "DELETE") { if (showToast) showToast('Type DELETE in capitals to confirm', "error"); return; }
     try {

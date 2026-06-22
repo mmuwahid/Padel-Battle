@@ -9,7 +9,7 @@ import Icon from './Icon';
 const TEAM_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const getTeamLabel = (idx) => TEAM_LETTERS[idx] ? `Team ${TEAM_LETTERS[idx]}` : `Team ${idx + 1}`;
 
-export function SingleElimination({ players, getName, supabase, leagueId, tournament, setTournament, sel, endTournament, resetTournament, deleteTournament, setScreen, showToast }) {
+export function SingleElimination({ players, getName, supabase, leagueId, tournament, setTournament, sel: _sel, endTournament, resetTournament, deleteTournament, setScreen, showToast }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   // Lets the user open the bracket from the completed-results screen (was a no-op
   // because the `complete` early-return ignored screen state).

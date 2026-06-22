@@ -51,6 +51,7 @@ const TONE_COLOR = {
 // Returns null when the notification has no actionable target (e.g. role_change,
 // rejected match, generic members announcement). Caller should ignore null returns
 // and just mark-read without navigating.
+// eslint-disable-next-line react-refresh/only-export-components -- routing helper co-located with NotificationCenter component
 export function notificationTarget(n) {
   if (!n) return null;
   const d = n.data || {};

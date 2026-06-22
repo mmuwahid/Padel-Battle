@@ -15,7 +15,7 @@ import Icon from './Icon';
 // Highlights use .hlrow/.hlcard/.hll/.hlv/.hlu
 // Deeper sections (ELO history, achievements, recent matches) preserved with
 // minor token cleanup but still render below the spec header.
-export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, removeAvatar, claimedPlayer, ps, elo, matches, players, isAdmin, getName, getStreak, setSidebarView, navigateSidebar, goBack, setTab, setSidebarOpen }) {
+export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, removeAvatar, claimedPlayer, ps, elo, matches, players, isAdmin, getName, getStreak, setSidebarView, navigateSidebar: _navigateSidebar, goBack, setTab, setSidebarOpen }) {
   const [editingMyProfile, setEditingMyProfile] = useState(false);
   const [showGrade, setShowGrade] = useState(false);
   const [showLightbox, setShowLightbox] = useState(false);

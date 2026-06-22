@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback, Suspense, lazy } from "react";
 import { supabase } from './supabase';
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, BL, PU, TL, TR } from './theme';
-import { formatTeam, win, formatDate, setTotals, flagEmoji, decodeImageFile } from './utils/helpers';
+import { formatTeam, win, formatDate, setTotals, flagEmoji } from './utils/helpers';
 import { calcElo } from './utils/elo';
 import { RULES, ARGUED } from './data/rules';
 import { CourtIcon, PadelLogo, PadelLogoSmall, PadelHubMark, PadelHubMarkHeader } from './components/icons';
@@ -11,22 +11,11 @@ import { LiquidPressDelegate } from './components/LiquidPress';
 import { FD } from './components/FormDots';
 import { Sidebar } from './components/Sidebar';
 import { ProfileView } from './components/ProfileView';
-import { AdminDashboard } from './components/AdminDashboard';
-import { PlayerManagement } from './components/PlayerManagement';
-import { ApprovalQueueScreen } from './components/ApprovalQueueScreen';
-import { SeasonManagement } from './components/SeasonManagement';
 import { PairsRanking } from './components/PairsRanking';
-import { LeagueManagement } from './components/LeagueManagement';
-import { PermissionsScreen } from './components/PermissionsScreen';
-import { PlatformAdmin } from './components/PlatformAdmin';
-import { SettingsView } from './components/SettingsView';
-import { RulesView } from './components/RulesView';
-import { PrivacyView, TermsView } from './components/LegalView';
-import { NotificationCenter } from './components/NotificationCenter';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { LeagueContext } from './LeagueContext';
-import { PLATFORM_ADMIN_ID } from './components/PlatformAdmin';
-import { hideNativeSplash, configureStatusBar, registerBackButton, isNative } from './capacitor';
+import { PLATFORM_ADMIN_ID } from './constants';
+import { hideNativeSplash, configureStatusBar, registerBackButton } from './capacitor';
 import { usePushNotifications } from './hooks/usePushNotifications';
 import { usePwaInstall } from './hooks/usePwaInstall';
 import { useAvatar } from './hooks/useAvatar';
@@ -42,6 +31,18 @@ import { ScheduleView } from './components/ScheduleView';
 import { MatchHistory } from './components/MatchHistory';
 const CombosView = lazy(() => import('./components/CombosView').then(m => ({default: m.CombosView})));
 const GameMode = lazy(() => import('./components/GameMode').then(m => ({default: m.GameMode})));
+const AdminDashboard = lazy(() => import('./components/AdminDashboard').then(m => ({default: m.AdminDashboard})));
+const PlayerManagement = lazy(() => import('./components/PlayerManagement').then(m => ({default: m.PlayerManagement})));
+const SeasonManagement = lazy(() => import('./components/SeasonManagement').then(m => ({default: m.SeasonManagement})));
+const ApprovalQueueScreen = lazy(() => import('./components/ApprovalQueueScreen').then(m => ({default: m.ApprovalQueueScreen})));
+const LeagueManagement = lazy(() => import('./components/LeagueManagement').then(m => ({default: m.LeagueManagement})));
+const PermissionsScreen = lazy(() => import('./components/PermissionsScreen').then(m => ({default: m.PermissionsScreen})));
+const PlatformAdmin = lazy(() => import('./components/PlatformAdmin').then(m => ({default: m.PlatformAdmin})));
+const SettingsView = lazy(() => import('./components/SettingsView').then(m => ({default: m.SettingsView})));
+const RulesView = lazy(() => import('./components/RulesView').then(m => ({default: m.RulesView})));
+const NotificationCenter = lazy(() => import('./components/NotificationCenter').then(m => ({default: m.NotificationCenter})));
+const PrivacyView = lazy(() => import('./components/LegalView').then(m => ({default: m.PrivacyView})));
+const TermsView = lazy(() => import('./components/LegalView').then(m => ({default: m.TermsView})));
 
 
 // Lazy loading fallback
@@ -95,7 +96,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
   // can incrementally back-out one level at a time. Each navigateSidebar push the
   // CURRENT view onto the stack; goBackSidebar pops it. Empty stack + back == reopen
   // the drawer (since the user originally entered from the drawer).
-  const [sidebarHistory,setSidebarHistory]=useState([]);
+  const [_sidebarHistory,setSidebarHistory]=useState([]);
   // S077 r13: lifted from LeagueManagement so the detail-mode survives unmount
   // when navigating to PlayerManagement / SeasonManagement (back button returns
   // to the same league detail instead of falling back to the leagues list).
@@ -114,7 +115,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
   // (League Management, Platform Admin, Season Management, etc.) always open at
   // the top of the page instead of inheriting the previous screen's scroll.
   useEffect(() => {
-    try { window.scrollTo({ top: 0, left: 0, behavior: "auto" }); } catch {}
+    try { window.scrollTo({ top: 0, left: 0, behavior: "auto" }); } catch { /* scroll-to-top non-critical */ }
   }, [sidebarView]);
 
   const goBackSidebar = useCallback(() => {
@@ -143,7 +144,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
   // ReferenceError and crashes AppContent before mount.
   useEffect(() => {
     configureStatusBar();
-    const cleanup = registerBackButton(({ canGoBack }) => {
+    const cleanup = registerBackButton(({ canGoBack: _canGoBack }) => {
       if (sidebarView) goBackSidebar();
       else if (selectedPlayer) setSelectedPlayer(null);
       else if (selectedPair) setSelectedPair(null);
@@ -219,7 +220,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
 
   const [unreadNotifCount,setUnreadNotifCount]=useState(0);
   // S068 Issue #46: pending join-request count for Matches-tab banner + AdminDashboard card
-  const [pendingJoinCount,setPendingJoinCount]=useState(0);
+  const [_pendingJoinCount,setPendingJoinCount]=useState(0);
   // Admin Management state
   const [leagueMembers,setLeagueMembers]=useState([]);
   const [memberProfiles,setMemberProfiles]=useState({});
@@ -286,6 +287,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
       window.history.pushState({tab,sidebarView,sidebarOpen},"");
       prevTab.current=tab;prevView.current=sidebarView;
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- sidebarOpen is read for pushState snapshot only; adding it would reset scroll on sidebar toggle
   },[tab,sidebarView]);
   useEffect(()=>{
     const onPop=(e)=>{
@@ -335,6 +337,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
       .subscribe();
 
     return () => { if(reloadTimerRef.current) clearTimeout(reloadTimerRef.current); supabase.removeChannel(channel); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- S087: debouncedReload is memoized (stable) and loadLeagueData is accessed via loadLeagueDataRef to avoid stale closure; deps are intentionally [leagueId, user.id] only
   },[leagueId,user.id]);
 
   const loadLeagueData = async () => {
@@ -502,7 +505,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
     () => approvedMatches.filter(m => !m.season_id || !pairFormatSeasonIds.has(m.season_id)),
     [approvedMatches, pairFormatSeasonIds]
   );
-  const pairsMatches = useMemo(
+  const _pairsMatches = useMemo(
     () => approvedMatches.filter(m => m.season_id && pairFormatSeasonIds.has(m.season_id)),
     [approvedMatches, pairFormatSeasonIds]
   );
@@ -533,7 +536,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
 
     // Champion + Runner-Up (most wins, min 1 match played)
     const ranked = Object.entries(pStats)
-      .filter(([_, s]) => s.games > 0)
+      .filter(([_id, s]) => s.games > 0)
       .sort((a, b) => b[1].wins - a[1].wins || b[1].games - a[1].games);
     if (ranked.length > 0) awards.champion = { playerId: ranked[0][0], wins: ranked[0][1].wins };
     if (ranked.length > 1) awards.runnerUp = { playerId: ranked[1][0], wins: ranked[1][1].wins };
@@ -553,7 +556,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
       if (win(m.sets) === 'A') pairs[keyA].wins++;
       else pairs[keyB].wins++;
     });
-    const validPairs = Object.entries(pairs).filter(([_, p]) => p.total >= 3);
+    const validPairs = Object.entries(pairs).filter(([_key, p]) => p.total >= 3);
     if (validPairs.length > 0) {
       const best = validPairs.reduce((a, b) => (b[1].wins / b[1].total) > (a[1].wins / a[1].total) ? b : a);
       const [p1, p2] = best[0].split('|');
@@ -702,7 +705,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
   const elo = useMemo(()=>calcElo(players,individualMatches),[players,individualMatches]);
 
   // Leaderboard — Ranked by Total Wins > Win Rate > ELO > Games Played
-  const lb = useMemo(()=>{
+  const _lb = useMemo(()=>{
     return [...ps].filter(p=>p.games>0).sort((a,b)=>{
       if(b.wins!==a.wins)return b.wins-a.wins;
       const wrA=Math.round(a.winRate*1000), wrB=Math.round(b.winRate*1000);
@@ -953,34 +956,34 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
             <ProfileView user={user} avatarUrl={avatarUrl} avatarUploading={avatarUploading} uploadAvatar={uploadAvatar} removeAvatar={removeAvatar} claimedPlayer={claimedPlayer} ps={ps} elo={elo} matches={approvedMatches} players={players} isAdmin={isAdmin} getName={getName} getStreak={getStreak} setSidebarView={setSidebarView} navigateSidebar={navigateSidebar} goBack={goBackSidebar} setTab={setTab} setSidebarOpen={setSidebarOpen}/>
           )}
           {sidebarView==="admin" && (
-            <AdminDashboard memberProfiles={memberProfiles} setSidebarView={setSidebarView} navigateSidebar={navigateSidebar} goBack={goBackSidebar} setTab={setTab} setSidebarOpen={setSidebarOpen}/>
+            <ErrorBoundary><Suspense fallback={<LazyFallback/>}><AdminDashboard memberProfiles={memberProfiles} setSidebarView={setSidebarView} navigateSidebar={navigateSidebar} goBack={goBackSidebar} setTab={setTab} setSidebarOpen={setSidebarOpen}/></Suspense></ErrorBoundary>
           )}
           {sidebarView==="approvalQueue" && (
-            <ApprovalQueueScreen setSidebarView={setSidebarView} goBack={goBackSidebar}/>
+            <ErrorBoundary><Suspense fallback={<LazyFallback/>}><ApprovalQueueScreen setSidebarView={setSidebarView} goBack={goBackSidebar}/></Suspense></ErrorBoundary>
           )}
           {sidebarView==="playerManagement" && (
-            <PlayerManagement memberProfiles={memberProfiles} setSidebarView={setSidebarView} goBack={goBackSidebar}/>
+            <ErrorBoundary><Suspense fallback={<LazyFallback/>}><PlayerManagement memberProfiles={memberProfiles} setSidebarView={setSidebarView} goBack={goBackSidebar}/></Suspense></ErrorBoundary>
           )}
           {sidebarView==="seasonManagement" && (
-            <SeasonManagement setSidebarView={setSidebarView} goBack={goBackSidebar} autoCreate={smAutoCreate} clearAutoCreate={()=>setSmAutoCreate(false)}/>
+            <ErrorBoundary><Suspense fallback={<LazyFallback/>}><SeasonManagement setSidebarView={setSidebarView} goBack={goBackSidebar} autoCreate={smAutoCreate} clearAutoCreate={()=>setSmAutoCreate(false)}/></Suspense></ErrorBoundary>
           )}
           {sidebarView==="leagueManagement" && (
-            <LeagueManagement setSidebarView={setSidebarView} navigateSidebar={navigateSidebar} goBack={goBackSidebar} leagues={leagues||[]} leagueHandlers={leagueHandlers} leagueStats={leagueStats} detailLeagueId={lmDetailLeagueId} setDetailLeagueId={setLmDetailLeagueId} detailFromPlatform={lmDetailFromPlatform} setDetailFromPlatform={setLmDetailFromPlatform}/>
+            <ErrorBoundary><Suspense fallback={<LazyFallback/>}><LeagueManagement setSidebarView={setSidebarView} navigateSidebar={navigateSidebar} goBack={goBackSidebar} leagues={leagues||[]} leagueHandlers={leagueHandlers} leagueStats={leagueStats} detailLeagueId={lmDetailLeagueId} setDetailLeagueId={setLmDetailLeagueId} detailFromPlatform={lmDetailFromPlatform} setDetailFromPlatform={setLmDetailFromPlatform}/></Suspense></ErrorBoundary>
           )}
           {sidebarView==="leaguePermissions" && (
-            <PermissionsScreen setSidebarView={setSidebarView} goBack={goBackSidebar}/>
+            <ErrorBoundary><Suspense fallback={<LazyFallback/>}><PermissionsScreen setSidebarView={setSidebarView} goBack={goBackSidebar}/></Suspense></ErrorBoundary>
           )}
           {sidebarView==="settings" && (
-            <SettingsView user={user} claimedPlayer={claimedPlayer} isAdmin={isAdmin} pushSubscribed={pushSubscribed} subscribeToPush={subscribeToPush} unsubscribeFromPush={unsubscribeFromPush} notifNewMatch={notifNewMatch} notifRankingChange={notifRankingChange} notifNewMembers={notifNewMembers} notifChallenges={notifChallenges} toggleNotification={toggleNotification} onSwitchLeague={onSwitchLeague} setSidebarView={setSidebarView} navigateSidebar={navigateSidebar} goBack={goBackSidebar} showToast={showToast} loadLeagueData={loadLeagueData} testPushNotification={testPushNotification}/>
+            <ErrorBoundary><Suspense fallback={<LazyFallback/>}><SettingsView user={user} claimedPlayer={claimedPlayer} isAdmin={isAdmin} pushSubscribed={pushSubscribed} subscribeToPush={subscribeToPush} unsubscribeFromPush={unsubscribeFromPush} notifNewMatch={notifNewMatch} notifRankingChange={notifRankingChange} notifNewMembers={notifNewMembers} notifChallenges={notifChallenges} toggleNotification={toggleNotification} onSwitchLeague={onSwitchLeague} setSidebarView={setSidebarView} navigateSidebar={navigateSidebar} goBack={goBackSidebar} showToast={showToast} loadLeagueData={loadLeagueData} testPushNotification={testPushNotification}/></Suspense></ErrorBoundary>
           )}
           {sidebarView==="platform" && (
-            <PlatformAdmin onClose={goBackSidebar} showToast={showToast} onOpenLeague={(id)=>{ if(leagueHandlers?.switchLeague) leagueHandlers.switchLeague(id); setLmDetailLeagueId(id); setLmDetailFromPlatform(true); navigateSidebar("leagueManagement"); }}/>
+            <ErrorBoundary><Suspense fallback={<LazyFallback/>}><PlatformAdmin onClose={goBackSidebar} showToast={showToast} onOpenLeague={(id)=>{ if(leagueHandlers?.switchLeague) leagueHandlers.switchLeague(id); setLmDetailLeagueId(id); setLmDetailFromPlatform(true); navigateSidebar("leagueManagement"); }}/></Suspense></ErrorBoundary>
           )}
           {sidebarView==="notifications" && (
-            <NotificationCenter
+            <ErrorBoundary><Suspense fallback={<LazyFallback/>}><NotificationCenter
               onClose={()=>{closeNotifications();loadLeagueData();}}
               onNavigate={handleNotifNavigate}
-            />
+            /></Suspense></ErrorBoundary>
           )}
           {sidebarView==="leagues" && (
             <LeaguesView
@@ -992,9 +995,9 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
               showToast={showToast}
             />
           )}
-          {sidebarView==="rules" && <RulesView setSidebarView={setSidebarView} goBack={goBackSidebar}/>}
-          {sidebarView==="privacy" && <PrivacyView goBack={goBackSidebar}/>}
-          {sidebarView==="terms" && <TermsView goBack={goBackSidebar}/>}
+          {sidebarView==="rules" && <ErrorBoundary><Suspense fallback={<LazyFallback/>}><RulesView setSidebarView={setSidebarView} goBack={goBackSidebar}/></Suspense></ErrorBoundary>}
+          {sidebarView==="privacy" && <ErrorBoundary><Suspense fallback={<LazyFallback/>}><PrivacyView goBack={goBackSidebar}/></Suspense></ErrorBoundary>}
+          {sidebarView==="terms" && <ErrorBoundary><Suspense fallback={<LazyFallback/>}><TermsView goBack={goBackSidebar}/></Suspense></ErrorBoundary>}
         </div>
       )}
 
@@ -1234,7 +1237,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
               {seasonLb.map((p,idx)=>{
                 const player = players.find(pp=>pp.id===p.id);
                 const flag = player?.country ? flagEmoji(player.country) : "";
-                const ctry = player?.country || "";
+                const _ctry = player?.country || "";
                 const eff = (p.winRate*100).toFixed(0);
                 const cw = getSeasonStreak(p.id);
                 const form = getSeasonForm(p.id);

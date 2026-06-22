@@ -9,7 +9,7 @@ import Icon from './Icon';
 const TEAM_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const getTeamLabel = (idx) => TEAM_LETTERS[idx] ? `Team ${TEAM_LETTERS[idx]}` : `Team ${idx + 1}`;
 
-export function DoubleElimination({ players, getName, supabase, leagueId, tournament, setTournament, sel, endTournament, resetTournament, deleteTournament, setScreen, showToast }) {
+export function DoubleElimination({ players, getName, supabase, leagueId, tournament, setTournament, sel: _sel, endTournament, resetTournament, deleteTournament, setScreen, showToast }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   // Controlled score-entry drafts keyed `w-/l-${ri}-${mi}` and `gf` (S084: replaced getElementById inputs).
   const [draftScores, setDraftScores] = useState({});

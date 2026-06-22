@@ -42,7 +42,7 @@ function Toggle({ on, disabled, onChange }) {
 }
 
 export function PermissionsScreen({ goBack, setSidebarView }) {
-  const { supabase, league, leagueId, isOwner, leagueMembers, memberProfiles, adminPermissions, showToast, loadLeagueData, user } = useLeague();
+  const { supabase, league, leagueId, isOwner, leagueMembers, memberProfiles, adminPermissions, showToast, loadLeagueData } = useLeague();
   const back = goBack || (() => setSidebarView && setSidebarView("leagueManagement"));
 
   const [perms, setPerms] = useState(adminPermissions);

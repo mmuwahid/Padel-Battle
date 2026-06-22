@@ -5,6 +5,7 @@ import { CD2, MT } from "../theme";
 // rankBadge: 🏆/🥈/🥉 for top three, plain number otherwise.
 // TeamPlayers: avatar + name chips for a team's players (matches the avatar
 // treatment used across the rest of the app — players[].avatar_url).
+// eslint-disable-next-line react-refresh/only-export-components -- shared helpers + component co-located; imported by 3 tournament screens
 export const rankBadge = (i) =>
   i === 0 ? "\uD83E\uDD47" : i === 1 ? "\uD83E\uDD48" : i === 2 ? "\uD83E\uDD49" : String(i + 1);
 

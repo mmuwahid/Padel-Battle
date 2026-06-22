@@ -11,6 +11,7 @@ import { flagEmoji } from "../utils/helpers";
 // **Israel intentionally excluded per project decision.**
 //
 // Must stay in sync with ISO3_TO_ISO2 in helpers.js (flag emoji rendering).
+// eslint-disable-next-line react-refresh/only-export-components -- COUNTRIES constant co-located with CountrySelect component; moving would create import churn
 export const COUNTRIES = [
   { iso3: "AFG", name: "Afghanistan" },
   { iso3: "ALB", name: "Albania" },

@@ -1,7 +1,7 @@
 import React from "react";
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, PU } from '../theme';
 
-export function BracketSVG({ bracket, getName, scores, onSaveScore }) {
+export function BracketSVG({ bracket, getName, scores, onSaveScore: _onSaveScore }) {
   const rounds = bracket || [];
   if (!rounds.length) return null;
 

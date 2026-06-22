@@ -13,7 +13,7 @@ import { GRADE_ORDER, GRADE_META, gradeColor } from "../utils/grade";
 // utils/helpers.js.
 
 export function EditPlayerModal({ player, onClose, onSaved }) {
-  const { supabase, user, showToast, loadLeagueData } = useLeague();
+  const { supabase, showToast, loadLeagueData } = useLeague();
 
   const [name, setName] = useState(player.name || "");
   const [nickname, setNickname] = useState(player.nickname || "");
@@ -53,7 +53,6 @@ export function EditPlayerModal({ player, onClose, onSaved }) {
         const { error } = await supabase.storage.from("avatars").upload(path, blob, { upsert: true, contentType: "image/jpeg" });
         if (!error) { upErr = null; break; }
         upErr = error;
-        // eslint-disable-next-line no-console
         console.warn(`[EditPlayerModal] upload attempt ${attempt + 1} failed:`, error?.message || error);
         if (attempt === 0) await new Promise(r => setTimeout(r, 250));
       }

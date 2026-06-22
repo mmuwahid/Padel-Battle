@@ -15,7 +15,7 @@ export function useAvatar({ supabase, user, claimedPlayer, loadLeagueData, showT
       const { data } = await supabase.from("profiles").select("avatar_url").eq("id", user.id).single();
       if (data?.avatar_url) setAvatarUrl(data.avatar_url);
     })();
-  }, [user.id]);
+  }, [user.id, supabase]);
 
   // S069: avatar pick now opens AvatarCropModal first; the modal returns a
   // pre-cropped 200x200 JPEG blob to uploadCroppedAvatar(). The legacy

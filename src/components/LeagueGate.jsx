@@ -114,7 +114,6 @@ export function LeagueGate({ user, children }) {
       setJoinRequest(shaped);
       return shaped;
     } catch (err) {
-      // eslint-disable-next-line no-console
       console.warn("[LeagueGate] loadJoinRequest failed (non-fatal):", err);
       setJoinRequest(null);
       return null;
@@ -161,12 +160,12 @@ export function LeagueGate({ user, children }) {
         // and never throws, but the cover here is defense-in-depth.
         if (userLeagues.length === 0) await loadJoinRequest();
       } catch (err) {
-        // eslint-disable-next-line no-console
         console.error("[LeagueGate] cold-start failed:", err);
       } finally {
         setLoading(false);
       }
     })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- tryAutoJoin is an inline async fn (unstable identity); effect is guarded by initRef and runs once on mount
   }, [loadUserLeagues, loadJoinRequest, resolveSelectedLeague]);
 
   // S068: poll join_request every 8s while on the Pending screen so the user sees

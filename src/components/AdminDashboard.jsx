@@ -23,6 +23,7 @@ export function AdminDashboard({ setSidebarView, navigateSidebar, goBack, setTab
   // S068 Issue #46: pending join-request count for the new Approval Queue card.
   const [pendingJoinCount, setPendingJoinCount] = useState(0);
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- early-return guard resets count to default; valid pattern for conditional data fetch
     if (!leagueId || !isAdmin) { setPendingJoinCount(0); return; }
     let cancelled = false;
     supabase
