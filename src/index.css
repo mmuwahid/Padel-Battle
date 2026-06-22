@@ -191,23 +191,37 @@ body {
    nav. Bumped to fully opaque #12121a (= var(--surface-2) / CD card bg) +
    dropped backdrop-filter. NavIcons.jsx (S057, frozen) renders inside .nicon. */
 .bnav {
-  /* S093 #130 definitive: nav anchored to screen bottom. The nav bg extends
-     through the safe-area zone so no body background ever peeks through.
-     Top corners rounded, bottom flat (modern bar style). */
+  /* S093 #130 v2: nav anchored to screen bottom (edge-to-edge bg = no color
+     strip on iPhone). The green pill border is drawn by ::after so the visual
+     floating-pill look is preserved without any gap below. */
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
   background: #0a0a0f;
-  border-top: 1px solid rgba(74, 222, 128, 0.25);
+  border: none;
   border-radius: 0;
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   align-items: center;
-  padding: 8px 14px calc(8px + env(safe-area-inset-bottom, 0px));
+  padding: 6px 14px calc(6px + env(safe-area-inset-bottom, 0px));
   z-index: 100;
   box-shadow: none;
   overflow: visible;
+}
+/* Green pill border overlay — purely visual, no layout impact. Sits above
+   safe-area padding so the pill wraps only the icon row. */
+.bnav::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 10px;
+  right: 10px;
+  bottom: env(safe-area-inset-bottom, 0px);
+  border: 1px solid rgba(74, 222, 128, 0.25);
+  border-radius: 28px;
+  pointer-events: none;
+  z-index: -1;
 }
 .ntab {
   position: relative;
