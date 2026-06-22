@@ -27,6 +27,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { LeagueContext } from './LeagueContext';
 import { VAPID_PUBLIC_KEY } from './vapidPublicKey';
 import { PLATFORM_ADMIN_ID } from './components/PlatformAdmin';
+import { hideNativeSplash, configureStatusBar, registerBackButton, isNative } from './capacitor';
 
 // Convert VAPID public key from base64 URL to Uint8Array (required by pushManager.subscribe)
 function urlBase64ToUint8Array(base64String) {
@@ -123,6 +124,17 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
   useEffect(() => {
     try { window.scrollTo({ top: 0, left: 0, behavior: "auto" }); } catch {}
   }, [sidebarView]);
+
+  // Capacitor native platform setup (no-op on web)
+  useEffect(() => {
+    configureStatusBar();
+    const cleanup = registerBackButton(({ canGoBack }) => {
+      if (sidebarView) goBackSidebar();
+      else if (selectedPlayer) setSelectedPlayer(null);
+      else if (selectedPair) setSelectedPair(null);
+    });
+    return () => { if (typeof cleanup === "function") cleanup(); };
+  }, [sidebarView, selectedPlayer, selectedPair, goBackSidebar]);
 
   const goBackSidebar = useCallback(() => {
     // S089 Issue #122: backing out of a sidebar view (profile, settings, admin,
@@ -1031,6 +1043,8 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
     if (!loading) {
       const s = document.getElementById('splash');
       if (s) s.style.display = 'none';
+      // Hide native Capacitor splash (no-op on web)
+      hideNativeSplash();
     }
   }, [loading]);
   if (loading) return null;
