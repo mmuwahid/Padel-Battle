@@ -44,6 +44,7 @@ const RulesView = lazy(() => import('./components/RulesView').then(m => ({defaul
 const NotificationCenter = lazy(() => import('./components/NotificationCenter').then(m => ({default: m.NotificationCenter})));
 const PrivacyView = lazy(() => import('./components/LegalView').then(m => ({default: m.PrivacyView})));
 const TermsView = lazy(() => import('./components/LegalView').then(m => ({default: m.TermsView})));
+const MembershipView = lazy(() => import('./components/MembershipView').then(m => ({default: m.MembershipView})));
 
 
 // Lazy loading fallback
@@ -1071,6 +1072,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
           {sidebarView==="rules" && <ErrorBoundary><Suspense fallback={<LazyFallback/>}><RulesView setSidebarView={setSidebarView} goBack={goBackSidebar}/></Suspense></ErrorBoundary>}
           {sidebarView==="privacy" && <ErrorBoundary><Suspense fallback={<LazyFallback/>}><PrivacyView goBack={goBackSidebar}/></Suspense></ErrorBoundary>}
           {sidebarView==="terms" && <ErrorBoundary><Suspense fallback={<LazyFallback/>}><TermsView goBack={goBackSidebar}/></Suspense></ErrorBoundary>}
+          {sidebarView==="membership" && <ErrorBoundary><Suspense fallback={<LazyFallback/>}><MembershipView goBack={goBackSidebar} showToast={showToast}/></Suspense></ErrorBoundary>}
         </div>
       )}
 
