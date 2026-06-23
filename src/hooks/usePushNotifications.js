@@ -89,6 +89,30 @@ export function usePushNotifications({ supabase, user, leagueId, showToast }) {
     }
   };
 
+  // S099 (#137): default-on push for installed PWA users. When the app runs as an
+  // installed PWA AND notification permission has ALREADY been granted, ensure the
+  // user has a live push subscription (prefs default to on in localStorage above),
+  // so installed users receive pushes without manually flipping the Settings toggle.
+  // We deliberately do NOT auto-prompt for permission here — that stays a user
+  // action (the Settings toggle calls subscribeToPush, which requests permission).
+  useEffect(() => {
+    if (!leagueId || !user?.id) return;
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+    const standalone = window.matchMedia?.("(display-mode: standalone)")?.matches
+      || navigator.standalone === true;
+    if (!standalone) return;
+    (async () => {
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        const existing = await reg.pushManager.getSubscription();
+        if (existing) { setPushSubscribed(true); return; }
+        await subscribeToPush();
+      } catch (_e) { /* best-effort auto-subscribe */ }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- subscribeToPush is stable for our purposes; re-run only when league/user changes
+  }, [leagueId, user?.id]);
+
   // Unsubscribe from Web Push and remove from Supabase
   const unsubscribeFromPush = async () => {
     try {
@@ -156,7 +180,11 @@ export function usePushNotifications({ supabase, user, leagueId, showToast }) {
     }
   };
 
-  // Fix D S038: send a self-targeted test push for diagnostics
+  // Fix D S038: send a self-targeted test push for diagnostics.
+  // S099: push-notify now only inserts the bell row; the AFTER INSERT trigger
+  // on notifications fires the actual Web Push asynchronously (pg_net), so we
+  // can no longer read a synchronous delivered/total count here. We just insert
+  // the test row and tell the user to expect the push shortly.
   const testPushNotification = async () => {
     if (!pushSubscribed) {
       showToast("Enable push notifications first", "error");
@@ -178,10 +206,7 @@ export function usePushNotifications({ supabase, user, leagueId, showToast }) {
         return;
       }
       if (import.meta.env.DEV) console.log("[test-push] response:", data);
-      const sent = data?.sent || 0, total = data?.total || 0;
-      if (sent > 0) showToast(`Test sent (${sent}/${total}) — check your home screen`);
-      else if (total === 0) showToast("No subscriptions found — re-subscribe?", "error");
-      else showToast(`Test failed: 0/${total} delivered`, "error");
+      showToast("Test sent — check your home screen in a moment");
     } catch (err) {
       if (import.meta.env.DEV) console.warn("[test-push] threw:", err);
       showToast("Test push threw: " + (err.message || "unknown"), "error");

@@ -1,167 +1,12 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// ===== Base64URL Utilities =====
-
-function b64urlEncode(buf: ArrayBuffer | Uint8Array): string {
-  const bytes = buf instanceof Uint8Array ? buf : new Uint8Array(buf);
-  let bin = "";
-  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
-  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-}
-
-function b64urlDecode(str: string): Uint8Array {
-  const pad = "=".repeat((4 - (str.length % 4)) % 4);
-  const b64 = (str + pad).replace(/-/g, "+").replace(/_/g, "/");
-  const bin = atob(b64);
-  const arr = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-  return arr;
-}
-
-// ===== VAPID JWT Signing (ES256 via Web Crypto) =====
-
-async function signVapidJwt(
-  endpoint: string,
-  privateKeyB64: string,
-  publicKeyB64: string,
-  subject: string
-): Promise<string> {
-  const audience = new URL(endpoint).origin;
-  const now = Math.floor(Date.now() / 1000);
-
-  const header = b64urlEncode(new TextEncoder().encode(
-    JSON.stringify({ alg: "ES256", typ: "JWT" })
-  ));
-  const payload = b64urlEncode(new TextEncoder().encode(
-    JSON.stringify({ aud: audience, exp: now + 43200, sub: subject })
-  ));
-  const unsigned = `${header}.${payload}`;
-
-  // Build JWK from raw VAPID keys
-  // Public key = 65 bytes: 0x04 || x(32) || y(32)
-  const pubBytes = b64urlDecode(publicKeyB64);
-  const x = b64urlEncode(pubBytes.slice(1, 33));
-  const y = b64urlEncode(pubBytes.slice(33, 65));
-
-  const signingKey = await crypto.subtle.importKey(
-    "jwk",
-    { kty: "EC", crv: "P-256", d: privateKeyB64, x, y },
-    { name: "ECDSA", namedCurve: "P-256" },
-    false,
-    ["sign"]
-  );
-
-  const sig = await crypto.subtle.sign(
-    { name: "ECDSA", hash: "SHA-256" },
-    signingKey,
-    new TextEncoder().encode(unsigned)
-  );
-
-  return `${unsigned}.${b64urlEncode(sig)}`;
-}
-
-// ===== RFC 8291 Payload Encryption (aes128gcm) =====
-
-async function encryptPushPayload(
-  plaintext: Uint8Array,
-  subscriberPubKeyB64: string,  // p256dh from PushSubscription
-  subscriberAuthB64: string     // auth from PushSubscription
-): Promise<Uint8Array> {
-  const uaPublic = b64urlDecode(subscriberPubKeyB64); // 65 bytes
-  const authSecret = b64urlDecode(subscriberAuthB64);  // 16 bytes
-
-  // 1. Ephemeral ECDH key pair
-  const localKP = await crypto.subtle.generateKey(
-    { name: "ECDH", namedCurve: "P-256" },
-    true,
-    ["deriveBits"]
-  );
-
-  // 2. Import subscriber public key for ECDH
-  const uaKey = await crypto.subtle.importKey(
-    "raw", uaPublic,
-    { name: "ECDH", namedCurve: "P-256" },
-    false, []
-  );
-
-  // 3. ECDH shared secret (32 bytes)
-  const ecdhSecret = await crypto.subtle.deriveBits(
-    { name: "ECDH", public: uaKey },
-    localKP.privateKey,
-    256
-  );
-
-  // 4. Export ephemeral public key (65 bytes, uncompressed)
-  const asPublicRaw = new Uint8Array(
-    await crypto.subtle.exportKey("raw", localKP.publicKey)
-  );
-
-  // 5. key_info = "WebPush: info\0" || ua_public(65) || as_public(65)
-  const infoTag = new TextEncoder().encode("WebPush: info\0");
-  const keyInfo = new Uint8Array(infoTag.length + 65 + 65);
-  keyInfo.set(infoTag);
-  keyInfo.set(uaPublic, infoTag.length);
-  keyInfo.set(asPublicRaw, infoTag.length + 65);
-
-  // 6. IKM = HKDF(salt=authSecret, ikm=ecdhSecret, info=keyInfo, L=32)
-  const ecdhKey = await crypto.subtle.importKey(
-    "raw", ecdhSecret, "HKDF", false, ["deriveBits"]
-  );
-  const ikm = await crypto.subtle.deriveBits(
-    { name: "HKDF", hash: "SHA-256", salt: authSecret, info: keyInfo },
-    ecdhKey, 256
-  );
-
-  // 7. Random 16-byte salt for content encryption
-  const salt = crypto.getRandomValues(new Uint8Array(16));
-
-  // 8. Derive CEK (16 bytes) and nonce (12 bytes)
-  const ikmKey = await crypto.subtle.importKey(
-    "raw", ikm, "HKDF", false, ["deriveBits"]
-  );
-  const cekInfo = new TextEncoder().encode("Content-Encoding: aes128gcm\0");
-  const nonceInfo = new TextEncoder().encode("Content-Encoding: nonce\0");
-
-  const cek = await crypto.subtle.deriveBits(
-    { name: "HKDF", hash: "SHA-256", salt, info: cekInfo },
-    ikmKey, 128
-  );
-  const nonce = await crypto.subtle.deriveBits(
-    { name: "HKDF", hash: "SHA-256", salt, info: nonceInfo },
-    ikmKey, 96
-  );
-
-  // 9. Pad plaintext: content || 0x02 (single-record delimiter)
-  const padded = new Uint8Array(plaintext.length + 1);
-  padded.set(plaintext);
-  padded[plaintext.length] = 2;
-
-  // 10. AES-128-GCM encrypt
-  const aesKey = await crypto.subtle.importKey(
-    "raw", cek, { name: "AES-GCM" }, false, ["encrypt"]
-  );
-  const ciphertext = new Uint8Array(
-    await crypto.subtle.encrypt(
-      { name: "AES-GCM", iv: new Uint8Array(nonce) },
-      aesKey, padded
-    )
-  );
-
-  // 11. Build aes128gcm binary body
-  // Header: salt(16) || rs(4, uint32 BE) || idlen(1) || keyid(65)
-  const headerLen = 16 + 4 + 1 + 65; // 86 bytes
-  const body = new Uint8Array(headerLen + ciphertext.length);
-  body.set(salt, 0);
-  new DataView(body.buffer).setUint32(16, 4096, false); // record size
-  body[20] = 65; // idlen = uncompressed P-256 key length
-  body.set(asPublicRaw, 21);
-  body.set(ciphertext, headerLen);
-
-  return body;
-}
-
 // ===== Main Handler =====
+// S099: push-notify is now BELL-INSERT ONLY. Web Push delivery (VAPID signing +
+// RFC 8291 aes128gcm encryption) was moved to the push-on-notify edge fn, fired
+// by the AFTER INSERT trigger on public.notifications — so every bell row pushes
+// uniformly regardless of source. The crypto helpers that used to live here were
+// removed with that refactor.
 
 // M-3: Simple in-memory rate limiter (per-user, per-minute)
 const rateLimitMap = new Map<string, { count: number; reset: number }>();
@@ -260,15 +105,15 @@ serve(async (req) => {
       : type === "open_match" ? "notif_challenges"
       : null;
 
-    // Fetch push subscriptions via SECURITY DEFINER RPC (bypasses RLS)
-    const { data: subscriptions, error: fetchError } = await supabaseUser
+    // Fetch push subscriptions via SECURITY DEFINER RPC (bypasses RLS).
+    // S099: push is now sent by the AFTER INSERT trigger on `notifications`
+    // (push-on-notify edge fn), so push-notify is bell-insert ONLY. We still
+    // read subscriptions to apply each user's type-preference to the bell rows.
+    // NO early-return on empty subscriptions anymore — bell rows must insert
+    // even when nobody has push enabled (fixes "match never hit the center").
+    const { data: subsRaw } = await supabaseUser
       .rpc("get_league_push_subs", { p_league_id: league_id });
-    if (fetchError) throw fetchError;
-    if (!subscriptions || subscriptions.length === 0) {
-      return new Response(JSON.stringify({ sent: 0, message: "No subscriptions found" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const subscriptions = subsRaw || [];
 
     // Filter by target users (if provided), exclude sender, and notification preference
     let filtered = validTargetIds
@@ -281,24 +126,6 @@ serve(async (req) => {
       ? filtered.filter((s: any) => s[typeFilter] === true)
       : filtered;
 
-    // VAPID keys from Supabase secrets
-    const vapidPrivateKey = Deno.env.get("VAPID_PRIVATE_KEY") ?? "";
-    const vapidPublicKey = Deno.env.get("VAPID_PUBLIC_KEY") ?? "";
-    const vapidSubject = Deno.env.get("VAPID_SUBJECT") ?? "mailto:m.muwahid@gmail.com";
-
-    // Deep link: challenges → schedule tab, matches → history tab, others → home
-    const pushUrl = type === "challenge" ? "/#schedule"
-      : type === "open_match" ? "/#schedule"
-      : type === "match" ? "/#history"
-      : "/";
-    const payloadJson = JSON.stringify({
-      title: title || "PadelHub",
-      body,
-      url: pushUrl,
-      tag: `padelhub-${type || "general"}`,
-    });
-    const payloadBytes = new TextEncoder().encode(payloadJson);
-
     // Insert in-app notifications — must respect user's notification preferences
     // (Bug #1 fix S038: previously ignored prefs and spammed bell for all members)
     // Use 'filtered' which has type-preference applied; fall back to membership for users without subscriptions.
@@ -309,8 +136,11 @@ serve(async (req) => {
       // Users who have NOT subscribed to push at all → still get in-app bell unless they're the sender
       // (we can't read their pref without a subscription row; default to allow)
       const subscribedAnyIds = new Set(subscriptions.map((s: any) => s.user_id));
+      // S099 decision #3: for match results, the logger SHOULD see their own
+      // match in the bell center (they're normally excluded as the sender).
+      // All other types keep excluding the sender from their own bell row.
       const candidatePool = (validTargetIds || memberIds)
-        .filter((uid: string) => uid !== exclude_user_id);
+        .filter((uid: string) => type === "match" ? true : uid !== exclude_user_id);
       const notifUserIds = candidatePool.filter((uid: string) =>
         // Allow if (subscribed AND pref-enabled) OR (not subscribed at all → no pref recorded yet)
         subscribedAllowedIds.has(uid) || !subscribedAnyIds.has(uid)
@@ -330,65 +160,12 @@ serve(async (req) => {
       console.error("In-app notification insert error:", notifErr);
     }
 
-    // L-4: Parallel push sends via Promise.allSettled
-    const staleEndpoints: string[] = [];
-
-    const sendOne = async (sub: any) => {
-      const jwt = await signVapidJwt(
-        sub.endpoint, vapidPrivateKey, vapidPublicKey, vapidSubject
-      );
-      const encrypted = await encryptPushPayload(
-        payloadBytes, sub.p256dh, sub.auth
-      );
-      const response = await fetch(sub.endpoint, {
-        method: "POST",
-        headers: {
-          "Authorization": `vapid t=${jwt}, k=${vapidPublicKey}`,
-          "Content-Encoding": "aes128gcm",
-          "Content-Type": "application/octet-stream",
-          "TTL": "86400",
-        },
-        body: encrypted,
-      });
-      return { sub, status: response.status, response };
-    };
-
-    const results = await Promise.allSettled(filtered.map((sub: any) => sendOne(sub)));
-    let sent = 0;
-    let failed = 0;
-    for (const r of results) {
-      if (r.status === "fulfilled") {
-        const { sub, status } = r.value;
-        if (status === 200 || status === 201) {
-          sent++;
-        } else if (status === 404 || status === 410) {
-          staleEndpoints.push(sub.endpoint);
-          failed++;
-        } else {
-          const errText = await r.value.response.text();
-          console.error(`Push failed ${sub.endpoint}: ${status} ${errText}`);
-          failed++;
-        }
-      } else {
-        console.error("Push error:", r.reason);
-        failed++;
-      }
-    }
-
-    // Clean up expired subscriptions via SECURITY DEFINER RPC
-    // Bug #3 fix S038: pass Postgres array, not JSON string. PostgREST converts JS arrays directly.
-    if (staleEndpoints.length > 0) {
-      try {
-        const { error: cleanupErr } = await supabaseUser
-          .rpc("delete_stale_push_endpoints", { p_endpoints: staleEndpoints });
-        if (cleanupErr) console.error("Stale endpoint cleanup error:", cleanupErr);
-      } catch (cleanupCatch) {
-        console.error("Stale endpoint cleanup threw:", cleanupCatch);
-      }
-    }
-
+    // S099: Web Push delivery is handled centrally by the AFTER INSERT trigger
+    // on public.notifications (push-on-notify edge fn). push-notify no longer
+    // sends push itself — this avoids double-push and makes EVERY bell row
+    // (including those created by RPCs, cron, and triggers) push uniformly.
     return new Response(
-      JSON.stringify({ sent, failed, cleaned: staleEndpoints.length, total: filtered.length }),
+      JSON.stringify({ ok: true, bell_inserted: true }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {

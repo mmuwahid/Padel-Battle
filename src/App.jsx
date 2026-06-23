@@ -240,6 +240,16 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
   }, []);
 
   const [unreadNotifCount,setUnreadNotifCount]=useState(0);
+  // S099 (#137): keep the OS home-screen app-icon badge in sync with the unread
+  // count while the app is open. Push updates the badge in the background (sw.js);
+  // this effect covers the foreground case — notably clearing it to 0 when the
+  // user reads/clears notifications. setAppBadge exists only on installed PWAs
+  // (iOS 16.4+); guard + swallow errors elsewhere.
+  useEffect(()=>{
+    if(typeof navigator==="undefined"||!("setAppBadge" in navigator))return;
+    if(unreadNotifCount>0)navigator.setAppBadge(unreadNotifCount).catch(()=>{});
+    else navigator.clearAppBadge?.().catch(()=>{});
+  },[unreadNotifCount]);
   // S068 Issue #46: pending join-request count for Matches-tab banner + AdminDashboard card
   const [_pendingJoinCount,setPendingJoinCount]=useState(0);
   // Admin Management state
@@ -391,7 +401,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
       ] = await Promise.all([
         supabase.from("leagues").select("id,name,invite_code,created_by,admin_permissions").eq("id",leagueId).single(),
         supabase.from("league_members").select("id,role").eq("league_id",leagueId).eq("user_id",user.id).single(),
-        supabase.from("league_members").select("id,user_id,role,profiles(id,email,display_name,avatar_url)").eq("league_id",leagueId),
+        supabase.from("league_members").select("id,user_id,role,status,profiles(id,email,display_name,avatar_url)").eq("league_id",leagueId),
         supabase.from("players").select("id,name,nickname,user_id,created_by,created_at,avatar_url,country,playing_position,gender,date_of_birth,handedness,grade,grade_source,self_assessment").eq("league_id",leagueId).order("name"),
         supabase.from("matches").select("id,team_a,team_b,sets,motm,date,season_id,league_id,status,logged_by,created_at,open_match_id").eq("league_id",leagueId).order("date",{ascending:false}).limit(500),
         supabase.from("seasons").select("id,name,active,start_date,end_date,location,format,ruleset").eq("league_id",leagueId).order("start_date"),

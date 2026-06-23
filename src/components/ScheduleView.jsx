@@ -97,23 +97,9 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
       });
       if(error)throw error;
       showToast("Match opened — waiting for 3 more players");
-      // S074 FT-16: in-app bell rows inserted by create_open_match RPC server-side
-      // (single source of truth — Lesson #54). S075 FT-16: web push fires here with
-      // skip_in_app=true so the Edge Function does not duplicate bell rows.
-      // S091 (#127.1): scope the push to the active season's roster so it matches the
-      // roster-scoped bell rows. null target (no season) => Edge Function broadcasts
-      // to the whole league, mirroring the RPC's NULL-season fallback.
-      if(sendPushNotification){
-        const dateStr=formatDate(date);
-        let targetUids=null;
-        if(seasonId){
-          const roster=seasonRosters?.[seasonId];
-          targetUids=(roster&&roster.size>0)
-            ?[...roster].map(pid=>players.find(p=>p.id===pid)?.user_id).filter(Boolean)
-            :[]; // season set but empty roster => notify nobody (matches the RPC)
-        }
-        sendPushNotification("open_match","New open match",`${getName(claimedPlayer)} opened a match on ${dateStr} — claim a spot.`,targetUids,null,{skip_in_app:true});
-      }
+      // S074 FT-16: bell rows inserted by create_open_match RPC server-side
+      // (single source of truth — Lesson #54). S099: web push is now fired by the
+      // AFTER INSERT trigger on those bell rows — no client push call needed.
       setShowForm(false);setStep(1);setMatchType("private");
       setNotes("");setLocation("");
       if(onUpdate)onUpdate();
@@ -130,15 +116,7 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
       if(data?.status==="locked"){
         showToast("Match locked in — teams shuffled!");
         // S074 FT-16: bell rows inserted by join_open_match RPC (single source).
-        // S075 FT-16: web push to all 4 participants with skip_in_app=true.
-        if(sendPushNotification && data?.team_a && data?.team_b){
-          const allUids=[...(data.team_a||[]),...(data.team_b||[])]
-            .map(pid=>players.find(p=>p.id===pid)?.user_id)
-            .filter(Boolean);
-          if(allUids.length){
-            sendPushNotification("open_match","Match locked in!","All 4 players in — teams shuffled. Tap to view.",null,allUids,{skip_in_app:true});
-          }
-        }
+        // S099: web push fired by the AFTER INSERT trigger on those bell rows.
       } else {
         showToast(`Spot claimed (${data?.count||"?"}/4)`);
       }
@@ -163,14 +141,7 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
       if(error)throw error;
       showToast("Match cancelled");
       // S074 FT-16: bell rows inserted by cancel_open_match RPC (single source).
-      // S075 FT-16: web push to all previously signed-up players, skip_in_app=true.
-      if(sendPushNotification){
-        const signups=(openMatchPlayers||[]).filter(p=>p.open_match_id===omId);
-        const uids=signups.map(s=>players.find(p=>p.id===s.player_id)?.user_id).filter(Boolean);
-        if(uids.length){
-          sendPushNotification("open_match","Open match cancelled","Tap to see other open matches.",null,uids,{skip_in_app:true});
-        }
-      }
+      // S099: web push fired by the AFTER INSERT trigger on those bell rows.
       if(onUpdate)onUpdate();
     }catch(err){showToast(err.message||"Failed to cancel","error");}
     finally{setOmBusy(false);}

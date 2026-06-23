@@ -213,7 +213,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
     // Phase 6a Q3=A: role badge — owner (gold) > admin (accent) > none.
     // player.user_id maps to league_members.user_id when player is claimed.
     const isPlayerOwner = !!(player.user_id && league?.created_by && player.user_id === league.created_by);
-    const isPlayerAdmin = !!(player.user_id && (leagueMembers||[]).some(m => m.user_id === player.user_id && m.role === 'admin'));
+    const isPlayerAdmin = !!(player.user_id && (leagueMembers||[]).some(m => m.user_id === player.user_id && m.role === 'admin' && m.status !== 'left'));
     const roleLabel = isPlayerOwner ? 'OWNER' : isPlayerAdmin ? 'ADMIN' : null;
     const positionLabel = player.playing_position === 'left' ? 'Left Side' : player.playing_position === 'right' ? 'Right Side' : null;
     return (

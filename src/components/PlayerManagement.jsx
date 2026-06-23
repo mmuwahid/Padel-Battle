@@ -46,6 +46,14 @@ export function PlayerManagement({ memberProfiles, setSidebarView, goBack }) {
     (leagueMembers || []).forEach(lm => { m[lm.user_id] = lm.role || "member"; });
     return m;
   }, [leagueMembers]);
+  // S099 (#138): membership status per user. A claimed player whose membership
+  // is 'left' kept all their history but is no longer an active member — show a
+  // "Left league" marker on their roster row.
+  const statusByUserId = useMemo(() => {
+    const m = {};
+    (leagueMembers || []).forEach(lm => { m[lm.user_id] = lm.status || "active"; });
+    return m;
+  }, [leagueMembers]);
 
   const sQ = search.trim().toLowerCase();
   const filtered = (players || []).filter(p => {
@@ -172,7 +180,8 @@ export function PlayerManagement({ memberProfiles, setSidebarView, goBack }) {
           const role = claimed ? (roleByUserId[p.user_id] || "member") : null;
           const playerIsAdmin = isLeagueOwner || role === "admin";
           const memberId = claimed ? memberIdByUserId[p.user_id] : null;
-          const showRoleControls = isOwner && claimed && !isLeagueOwner && memberId;
+          const hasLeft = claimed && statusByUserId[p.user_id] === "left";
+          const showRoleControls = isOwner && claimed && !isLeagueOwner && memberId && !hasLeft;
           const initial = (p.nickname || p.name || "?")[0].toUpperCase();
 
           return (
@@ -188,8 +197,9 @@ export function PlayerManagement({ memberProfiles, setSidebarView, goBack }) {
                   <div className="plmn-row">
                     <span className="plmn">{p.nickname || p.name}</span>
                     {isLeagueOwner && <span className="plmrole gold">★ Owner</span>}
-                    {!isLeagueOwner && playerIsAdmin && <span className="plmrole gold">⚡ Admin</span>}
+                    {!isLeagueOwner && playerIsAdmin && !hasLeft && <span className="plmrole gold">⚡ Admin</span>}
                     {isMe && <span className="plmrole accent">You</span>}
+                    {hasLeft && <span className="plmrole" style={{color:"var(--danger)",borderColor:"rgba(248,113,113,.4)",background:"rgba(248,113,113,.10)"}}>Left league</span>}
                   </div>
                   <div className="plmm">
                     {p.country && flagEmoji(p.country) && (

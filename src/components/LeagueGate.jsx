@@ -49,11 +49,18 @@ export function LeagueGate({ user, children }) {
     } catch { /* localStorage may be unavailable in private mode */ }
   }, []);
 
-  const loadUserLeagues = useCallback(async () => {
+  // opts.allowEmpty: commit an empty result even when we had leagues before.
+  // Used after an INTENTIONAL delete/leave where an empty list is the truth and
+  // the stale-while-revalidate guard would otherwise resurrect a ghost league.
+  const loadUserLeagues = useCallback(async (opts = {}) => {
     const { data, error } = await supabase
       .from("league_members")
       .select("league_id, role, leagues(id, name, invite_code, created_by, format, description)")
-      .eq("user_id", user.id);
+      .eq("user_id", user.id)
+      // S099 (#138): only ACTIVE memberships. A user who left a league (status
+      // 'left') keeps their historical player/match data but no longer sees the
+      // league in their switcher or nav until a re-join is approved.
+      .eq("status", "active");
     if (error) {
       setLoading(false);
       // S077 r11: keep stale leagues on error — don't clobber to [] which
@@ -66,9 +73,10 @@ export function LeagueGate({ user, children }) {
     // S077 r11: stale-while-revalidate. If this fetch returned empty BUT we
     // previously had leagues for this user, keep the cached list. A transient
     // read-replica lag or stale JWT shouldn't route the user away. Only set
-    // empty when we know for sure (initial cold-start where loading is true).
+    // empty when we know for sure (initial cold-start, or an intentional
+    // delete/leave that passes allowEmpty — S099 #137).
     setLeagues(prev => {
-      if (userLeagues.length === 0 && prev.length > 0) return prev;
+      if (!opts.allowEmpty && userLeagues.length === 0 && prev.length > 0) return prev;
       return userLeagues;
     });
     return userLeagues;
@@ -303,8 +311,11 @@ export function LeagueGate({ user, children }) {
     const found = rpcData?.[0] || null;
     if (findErr || !found) throw new Error("Invalid invite code");
     const leagueId = found.id;
+    // S099 (#138): only an ACTIVE membership counts as "already a member". A
+    // user who previously left (status 'left') must go back through approval,
+    // which re-activates their old membership/player on accept.
     const { data: existing } = await supabase
-      .from("league_members").select("id").eq("league_id", leagueId).eq("user_id", user.id).single();
+      .from("league_members").select("id").eq("league_id", leagueId).eq("user_id", user.id).eq("status", "active").maybeSingle();
     if (existing) {
       // Already a member — just open it.
       await loadUserLeagues();
@@ -330,13 +341,31 @@ export function LeagueGate({ user, children }) {
     // via FK ON DELETE CASCADE inside a single transaction.
     const { error } = await supabase.rpc("delete_league", { p_league_id: leagueId });
     if (error) throw error;
+    // S099 (#137): prune the deleted league from local state IMMEDIATELY so it
+    // disappears from the League Management list and switcher without waiting on
+    // the refetch — fixes the "deleted league lingers until you press Back" bug.
+    setLeagues(prev => prev.filter(l => l.id !== leagueId));
+    // Reconcile from the server with allowEmpty so a last-league delete commits
+    // the empty list (routes to onboarding) instead of being held back by the
+    // stale-while-revalidate guard.
+    const remaining = await loadUserLeagues({ allowEmpty: true });
     if (selectedLeagueId === leagueId) {
-      const remaining = await loadUserLeagues();
       setSelectedLeagueId(remaining[0]?.id || null);
-    } else {
-      // Fire-and-forget the membership refresh so the caller doesn't block
-      // on the network round-trip.
-      loadUserLeagues();
+    }
+  }, [selectedLeagueId, loadUserLeagues, setSelectedLeagueId]);
+
+  // S099 (#138): leave_league soft-deletes the caller's membership (status
+  // 'left') — their player row, match history, and leaderboard standings stay
+  // intact. The owner is blocked DB-side (must delete the league instead).
+  // Mirrors deleteLeague's optimistic prune + allowEmpty reconcile so the league
+  // vanishes from the switcher/nav immediately.
+  const leaveLeague = useCallback(async (leagueId) => {
+    const { error } = await supabase.rpc("leave_league", { p_league_id: leagueId });
+    if (error) throw error;
+    setLeagues(prev => prev.filter(l => l.id !== leagueId));
+    const remaining = await loadUserLeagues({ allowEmpty: true });
+    if (selectedLeagueId === leagueId) {
+      setSelectedLeagueId(remaining[0]?.id || null);
     }
   }, [selectedLeagueId, loadUserLeagues, setSelectedLeagueId]);
 
@@ -362,6 +391,7 @@ export function LeagueGate({ user, children }) {
     joinLeague,
     renameLeague,
     deleteLeague,
+    leaveLeague,
   };
 
   // S066 Phase 11 + S068 Issue #46: brand-new user with 0 leagues → either run

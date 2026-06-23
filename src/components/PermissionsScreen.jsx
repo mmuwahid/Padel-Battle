@@ -70,7 +70,8 @@ export function PermissionsScreen({ goBack, setSidebarView }) {
   // Build the admins roster: owner first, then role==='admin' members.
   const ownerId = league?.created_by;
   const admins = (leagueMembers || [])
-    .filter((m) => m.user_id === ownerId || m.role === "admin")
+    // S099 (#138): a member who left the league no longer counts as an admin.
+    .filter((m) => m.status !== "left" && (m.user_id === ownerId || m.role === "admin"))
     .map((m) => {
       const prof = m.profiles || memberProfiles?.[m.user_id] || {};
       return {

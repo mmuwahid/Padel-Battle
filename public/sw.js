@@ -1,4 +1,4 @@
-const CACHE_NAME = 'padelhub-v238';
+const CACHE_NAME = 'padelhub-v239';
 // Separate, long-lived cache for avatar/storage images so a CACHE_NAME bump
 // (which wipes the app-shell cache on every deploy) does NOT evict already-
 // downloaded avatars. This is what keeps avatars instant across deploys (#131).
@@ -120,7 +120,12 @@ self.addEventListener('push', (event) => {
   } catch (e) {
     if (event.data) data.body = event.data.text();
   }
-  event.waitUntil(
+  // S099 (#137): set the OS app-icon badge from the unread count carried in the
+  // push payload (`data.badge`, a number). This is the home-screen app-icon
+  // count — distinct from the `badge:` notification option below, which is only
+  // the monochrome tray glyph. setAppBadge is available in the SW global on
+  // installed PWAs (iOS 16.4+); guard + swallow errors where unsupported.
+  const ops = [
     self.registration.showNotification(data.title, {
       body: data.body,
       icon: '/icons/icon-192.png',
@@ -129,8 +134,12 @@ self.addEventListener('push', (event) => {
       vibrate: [200, 100, 200],
       tag: data.tag || 'padelhub-default',
       renotify: true,
-    })
-  );
+    }),
+  ];
+  if (typeof data.badge === 'number' && self.navigator && 'setAppBadge' in self.navigator) {
+    ops.push(self.navigator.setAppBadge(data.badge).catch(() => {}));
+  }
+  event.waitUntil(Promise.all(ops));
 });
 
 // Notification click — open app or focus existing tab

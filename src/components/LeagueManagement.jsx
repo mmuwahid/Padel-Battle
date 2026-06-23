@@ -71,6 +71,10 @@ export function LeagueManagement({
   const [deleteLeagueTyped, setDeleteLeagueTyped] = useState("");
   const [deletingLeague, setDeletingLeague] = useState(false);
 
+  // S099 (#138): Leave-league confirmation (non-owner members only).
+  const [showLeaveLeague, setShowLeaveLeague] = useState(false);
+  const [leavingLeague, setLeavingLeague] = useState(false);
+
   // Once the active leagueId matches the league the user wanted to view,
   // clear the switching spinner.
   useEffect(() => {
@@ -368,6 +372,50 @@ export function LeagueManagement({
                       disabled={deletingLeague || deleteLeagueTyped.trim().toLowerCase() !== "delete"}
                       style={{flex:1,padding:"12px 0",borderRadius:"var(--r-md)",background:"var(--danger)",border:"none",color:"#fff",fontFamily:"var(--font)",fontSize:13,fontWeight:800,cursor:deletingLeague?"not-allowed":"pointer",letterSpacing:".04em",opacity:(deletingLeague || deleteLeagueTyped.trim().toLowerCase() !== "delete")?.6:1}}
                     >{deletingLeague ? "Deleting…" : "Yes, Delete"}</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* S099 (#138): Leave League — non-owners only (the owner is blocked
+              DB-side and uses Delete League instead). Soft-delete: the player's
+              match history, leaderboard standings, and profile are preserved;
+              their membership is marked inactive and they leave the roster.
+              Placed at the very end of the detail view, under League Permissions. */}
+          {!isOwner && (
+            <div style={{marginTop:24}}>
+              {!showLeaveLeague ? (
+                <button
+                  onClick={() => setShowLeaveLeague(true)}
+                  style={{width:"100%",padding:14,borderRadius:"var(--r-md)",background:"rgba(248,113,113,.08)",border:"1px solid rgba(248,113,113,.32)",fontFamily:"var(--font)",fontSize:14,fontWeight:700,color:"var(--danger)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}
+                >
+                  <Icon name="arrow-right" size={16} color="var(--danger)"/>Leave League
+                </button>
+              ) : (
+                <div style={{padding:16,background:"rgba(248,113,113,.08)",border:"1px solid rgba(248,113,113,.32)",borderRadius:"var(--r-lg)"}}>
+                  <div style={{fontFamily:"var(--mono)",fontSize:11,fontWeight:800,letterSpacing:".12em",color:"var(--danger)",textTransform:"uppercase",marginBottom:10}}>Leave League</div>
+                  <p style={{fontSize:12,color:"var(--danger)",opacity:.9,marginBottom:14,lineHeight:1.5,fontFamily:"var(--font)"}}>
+                    Leave <strong>{league?.name}</strong>? You'll lose access and disappear from the roster. Your match history, leaderboard standings, and player profile stay intact — if you re-join later and an admin approves, your old record is restored.
+                  </p>
+                  <div style={{display:"flex",gap:8}}>
+                    <button onClick={() => setShowLeaveLeague(false)} disabled={leavingLeague} className="shcancel" style={{flex:1,padding:"12px 0",fontSize:13}}>Cancel</button>
+                    <button
+                      onClick={async () => {
+                        setLeavingLeague(true);
+                        try {
+                          await leagueHandlers.leaveLeague(leagueId);
+                          showToast("You left the league");
+                          setDetailLeagueId(null);
+                          setShowLeaveLeague(false);
+                        } catch (err) {
+                          showToast(err.message || "Failed to leave league", "error");
+                        }
+                        setLeavingLeague(false);
+                      }}
+                      disabled={leavingLeague}
+                      style={{flex:1,padding:"12px 0",borderRadius:"var(--r-md)",background:"var(--danger)",border:"none",color:"#fff",fontFamily:"var(--font)",fontSize:13,fontWeight:800,cursor:leavingLeague?"not-allowed":"pointer",letterSpacing:".04em",opacity:leavingLeague?.6:1}}
+                    >{leavingLeague ? "Leaving…" : "Yes, Leave"}</button>
                   </div>
                 </div>
               )}
