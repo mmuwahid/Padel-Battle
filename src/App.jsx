@@ -23,28 +23,47 @@ import { useAvatar } from './hooks/useAvatar';
 import { AuthGate } from './components/AuthGate';
 import { LeagueGate } from './components/LeagueGate';
 import { LeaguesView } from './components/LeaguesView';
-const AvatarCropModal = lazy(() => import('./components/AvatarCropModal').then(m => ({default: m.AvatarCropModal})));
-const LogMatch = lazy(() => import('./components/LogMatch').then(m => ({default: m.LogMatch})));
-const PlayerStats = lazy(() => import('./components/PlayerStats').then(m => ({default: m.PlayerStats})));
-const PairsList = lazy(() => import('./components/PairsList').then(m => ({default: m.PairsList})));
-const PairStats = lazy(() => import('./components/PairStats').then(m => ({default: m.PairStats})));
-const ScheduleView = lazy(() => import('./components/ScheduleView').then(m => ({default: m.ScheduleView})));
-const MatchHistory = lazy(() => import('./components/MatchHistory').then(m => ({default: m.MatchHistory})));
-const CombosView = lazy(() => import('./components/CombosView').then(m => ({default: m.CombosView})));
-const GameMode = lazy(() => import('./components/GameMode').then(m => ({default: m.GameMode})));
-const AdminDashboard = lazy(() => import('./components/AdminDashboard').then(m => ({default: m.AdminDashboard})));
-const PlayerManagement = lazy(() => import('./components/PlayerManagement').then(m => ({default: m.PlayerManagement})));
-const SeasonManagement = lazy(() => import('./components/SeasonManagement').then(m => ({default: m.SeasonManagement})));
-const ApprovalQueueScreen = lazy(() => import('./components/ApprovalQueueScreen').then(m => ({default: m.ApprovalQueueScreen})));
-const LeagueManagement = lazy(() => import('./components/LeagueManagement').then(m => ({default: m.LeagueManagement})));
-const PermissionsScreen = lazy(() => import('./components/PermissionsScreen').then(m => ({default: m.PermissionsScreen})));
-const PlatformAdmin = lazy(() => import('./components/PlatformAdmin').then(m => ({default: m.PlatformAdmin})));
-const SettingsView = lazy(() => import('./components/SettingsView').then(m => ({default: m.SettingsView})));
-const RulesView = lazy(() => import('./components/RulesView').then(m => ({default: m.RulesView})));
-const NotificationCenter = lazy(() => import('./components/NotificationCenter').then(m => ({default: m.NotificationCenter})));
-const PrivacyView = lazy(() => import('./components/LegalView').then(m => ({default: m.PrivacyView})));
-const TermsView = lazy(() => import('./components/LegalView').then(m => ({default: m.TermsView})));
-const MembershipView = lazy(() => import('./components/MembershipView').then(m => ({default: m.MembershipView})));
+// Stale-chunk recovery: after a deploy, a user's in-memory bundle can reference an
+// old chunk hash that the new deploy removed, so a lazy import() 404s and the screen
+// dies with an un-retryable error (React.lazy permanently caches the rejected promise).
+// On a chunk-load failure we force ONE full reload to fetch the fresh index + valid
+// hashes; a sessionStorage guard prevents reload loops if the chunk is genuinely gone.
+function lazyWithReload(factory) {
+  return lazy(() =>
+    factory()
+      .then((m) => { sessionStorage.removeItem('chunk-reload'); return m; })
+      .catch((err) => {
+        if (!sessionStorage.getItem('chunk-reload')) {
+          sessionStorage.setItem('chunk-reload', '1');
+          window.location.reload();
+          return new Promise(() => {}); // keep Suspense pending through the reload
+        }
+        throw err; // already reloaded once — surface the real error
+      })
+  );
+}
+const AvatarCropModal = lazyWithReload(() => import('./components/AvatarCropModal').then(m => ({default: m.AvatarCropModal})));
+const LogMatch = lazyWithReload(() => import('./components/LogMatch').then(m => ({default: m.LogMatch})));
+const PlayerStats = lazyWithReload(() => import('./components/PlayerStats').then(m => ({default: m.PlayerStats})));
+const PairsList = lazyWithReload(() => import('./components/PairsList').then(m => ({default: m.PairsList})));
+const PairStats = lazyWithReload(() => import('./components/PairStats').then(m => ({default: m.PairStats})));
+const ScheduleView = lazyWithReload(() => import('./components/ScheduleView').then(m => ({default: m.ScheduleView})));
+const MatchHistory = lazyWithReload(() => import('./components/MatchHistory').then(m => ({default: m.MatchHistory})));
+const CombosView = lazyWithReload(() => import('./components/CombosView').then(m => ({default: m.CombosView})));
+const GameMode = lazyWithReload(() => import('./components/GameMode').then(m => ({default: m.GameMode})));
+const AdminDashboard = lazyWithReload(() => import('./components/AdminDashboard').then(m => ({default: m.AdminDashboard})));
+const PlayerManagement = lazyWithReload(() => import('./components/PlayerManagement').then(m => ({default: m.PlayerManagement})));
+const SeasonManagement = lazyWithReload(() => import('./components/SeasonManagement').then(m => ({default: m.SeasonManagement})));
+const ApprovalQueueScreen = lazyWithReload(() => import('./components/ApprovalQueueScreen').then(m => ({default: m.ApprovalQueueScreen})));
+const LeagueManagement = lazyWithReload(() => import('./components/LeagueManagement').then(m => ({default: m.LeagueManagement})));
+const PermissionsScreen = lazyWithReload(() => import('./components/PermissionsScreen').then(m => ({default: m.PermissionsScreen})));
+const PlatformAdmin = lazyWithReload(() => import('./components/PlatformAdmin').then(m => ({default: m.PlatformAdmin})));
+const SettingsView = lazyWithReload(() => import('./components/SettingsView').then(m => ({default: m.SettingsView})));
+const RulesView = lazyWithReload(() => import('./components/RulesView').then(m => ({default: m.RulesView})));
+const NotificationCenter = lazyWithReload(() => import('./components/NotificationCenter').then(m => ({default: m.NotificationCenter})));
+const PrivacyView = lazyWithReload(() => import('./components/LegalView').then(m => ({default: m.PrivacyView})));
+const TermsView = lazyWithReload(() => import('./components/LegalView').then(m => ({default: m.TermsView})));
+const MembershipView = lazyWithReload(() => import('./components/MembershipView').then(m => ({default: m.MembershipView})));
 
 
 // Lazy loading fallback
