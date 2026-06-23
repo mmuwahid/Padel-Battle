@@ -121,6 +121,11 @@ export function SettingsView({ user, isAdmin, pushSubscribed, subscribeToPush, u
       <div>
         <div className="slbl">Account</div>
         <div className="stcard">
+          <div className="saar" {...pressable(()=>navTo("membership"))}>
+            <div className="stico"><Icon name="crown" size={16}/></div>
+            <div className="stbod"><div className="sttitle">Membership</div><div className="stsub">Free plan · Upgrade to Pro</div></div>
+            <Icon name="chevron" size={16} color="#5a5a6a"/>
+          </div>
           <div className="staf">
             <div className="stafL">Email</div>
             <input aria-label="Email" className="stafI" value={user.email} readOnly style={{opacity:.6}}/>
