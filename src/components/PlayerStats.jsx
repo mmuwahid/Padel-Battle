@@ -200,8 +200,10 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
         else if(w==="A"){runs[pid].curL++;runs[pid].curW=0;if(runs[pid].curL>runs[pid].maxL)runs[pid].maxL=runs[pid].curL;}
       });
     });
-    const longestWinStreaks=Object.entries(runs).filter(([,r])=>r.maxW>0).map(([pid,r])=>({pid,n:r.maxW})).sort((a,b)=>b.n-a.n).slice(0,5);
-    const longestLossStreaks=Object.entries(runs).filter(([,r])=>r.maxL>0).map(([pid,r])=>({pid,n:r.maxL})).sort((a,b)=>b.n-a.n).slice(0,5);
+    // #148: a streak only counts once it reaches 2 consecutive results — a single
+    // win/loss is not a "streak". Filter to maxW/maxL >= 2.
+    const longestWinStreaks=Object.entries(runs).filter(([,r])=>r.maxW>=2).map(([pid,r])=>({pid,n:r.maxW})).sort((a,b)=>b.n-a.n).slice(0,5);
+    const longestLossStreaks=Object.entries(runs).filter(([,r])=>r.maxL>=2).map(([pid,r])=>({pid,n:r.maxL})).sort((a,b)=>b.n-a.n).slice(0,5);
     return {totalMatches,totalSets,mostActive,topWinRate,closeMatches,topMotm,monthlyArr,wr,partnerships,bestPartnership,worstPartnership,h2hAll,matchups:matchups.slice(0,5),longestWinStreaks,longestLossStreaks};
   },[matches,players]);
 
@@ -429,7 +431,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                       <span className="lrow-name">{getName(x.pid)}</span>
                     </div>
                     <div className="lrow-r">
-                      <span className="lrow-wl">{x.w}W-{x.l}L</span>
+                      <span className="lrow-wl"><span style={{color:x.w>0?A:MT}}>{x.w}W</span><span style={{color:MT}}>-</span><span style={{color:x.l>0?DG:MT}}>{x.l}L</span></span>
                       <span className={`lrow-pct${x.pct>=60?"":x.pct>=40?" mid":" lo"}`}>{x.pct.toFixed(0)}%</span>
                     </div>
                   </div>
@@ -481,7 +483,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                   pushing the layout. GD remains visible on the Partnership
                   Ranking sort tiebreaker (under the hood). */}
               {analyticsData.bestPartnership&&<div className="pair-card">
-                <div className="pair-title">Best Pairs</div>
+                <div className="pair-title" style={{color:GD}}>Best Pairs</div>
                 <div className="pair-row">
                   <div className="pair-side">
                     <div className="pair-avi">{getAvatar(analyticsData.bestPartnership.a)?<img src={getAvatar(analyticsData.bestPartnership.a)} alt={getName(analyticsData.bestPartnership.a)}/>:getName(analyticsData.bestPartnership.a)[0]}</div>
@@ -489,7 +491,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                   </div>
                   <div className="pair-rec">
                     <span className="pair-wl"><span style={{color:analyticsData.bestPartnership.w>0?A:MT}}>{analyticsData.bestPartnership.w}W</span><span style={{color:MT}}>-</span><span style={{color:analyticsData.bestPartnership.l>0?DG:MT}}>{analyticsData.bestPartnership.l}L</span></span>
-                    <span className="pair-pct">{Math.round(analyticsData.bestPartnership.w/(analyticsData.bestPartnership.w+analyticsData.bestPartnership.l)*100)}%</span>
+                    <span className="pair-pct" style={{color:Math.round(analyticsData.bestPartnership.w/(analyticsData.bestPartnership.w+analyticsData.bestPartnership.l)*100)>=50?A:DG}}>{Math.round(analyticsData.bestPartnership.w/(analyticsData.bestPartnership.w+analyticsData.bestPartnership.l)*100)}%</span>
                   </div>
                   <div className="pair-side rt">
                     <div className="pair-pname tr">{getName(analyticsData.bestPartnership.b)}</div>
@@ -498,7 +500,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                 </div>
               </div>}
               <div className="pair-card">
-                <div className="pair-title">Worst Pairs</div>
+                <div className="pair-title" style={{color:DG}}>Worst Pairs</div>
                 {analyticsData.worstPartnership ? (
                   <div className="pair-row">
                     <div className="pair-side">
@@ -507,7 +509,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                     </div>
                     <div className="pair-rec dg">
                       <span className="pair-wl"><span style={{color:analyticsData.worstPartnership.w>0?A:MT}}>{analyticsData.worstPartnership.w}W</span><span style={{color:MT}}>-</span><span style={{color:analyticsData.worstPartnership.l>0?DG:MT}}>{analyticsData.worstPartnership.l}L</span></span>
-                      <span className="pair-pct">{Math.round(analyticsData.worstPartnership.w/(analyticsData.worstPartnership.w+analyticsData.worstPartnership.l)*100)}%</span>
+                      <span className="pair-pct" style={{color:Math.round(analyticsData.worstPartnership.w/(analyticsData.worstPartnership.w+analyticsData.worstPartnership.l)*100)>=50?A:DG}}>{Math.round(analyticsData.worstPartnership.w/(analyticsData.worstPartnership.w+analyticsData.worstPartnership.l)*100)}%</span>
                     </div>
                     <div className="pair-side rt">
                       <div className="pair-pname tr">{getName(analyticsData.worstPartnership.b)}</div>

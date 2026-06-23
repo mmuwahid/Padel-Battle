@@ -22,7 +22,6 @@ import { usePwaInstall } from './hooks/usePwaInstall';
 import { useAvatar } from './hooks/useAvatar';
 import { AuthGate } from './components/AuthGate';
 import { LeagueGate } from './components/LeagueGate';
-import { LeaguesView } from './components/LeaguesView';
 // Stale-chunk recovery: after a deploy, a user's in-memory bundle can reference an
 // old chunk hash that the new deploy removed, so a lazy import() 404s and the screen
 // dies with an un-retryable error (React.lazy permanently caches the rejected promise).
@@ -194,7 +193,10 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
   // S063: "Switch League" / "Back to Leagues" now open the in-app Leagues
   // sub-view in the sidebar instead of nulling out the leagueId. Replaces
   // the old LeagueGate full-screen picker.
-  const onSwitchLeague = () => navigateSidebar("leagues");
+  // #149: "Switch League" now routes to League Management (the single home for
+  // all league operations: switch via card-tap, create, join, rename, delete,
+  // invite, leave). The old standalone LeaguesView duplicate was removed.
+  const onSwitchLeague = () => navigateSidebar("leagueManagement");
 
   // S070 Issue #79: route a NotificationCenter click to its destination tab/screen.
   // Declared after sidebarHistory state so the setter is in TDZ-safe scope.
@@ -1087,16 +1089,6 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
               onClose={()=>{closeNotifications();loadLeagueData();}}
               onNavigate={handleNotifNavigate}
             /></Suspense></ErrorBoundary>
-          )}
-          {sidebarView==="leagues" && (
-            <LeaguesView
-              user={user}
-              leagues={leagues || []}
-              leagueId={leagueId}
-              handlers={leagueHandlers}
-              onClose={goBackSidebar}
-              showToast={showToast}
-            />
           )}
           {sidebarView==="rules" && <ErrorBoundary><Suspense fallback={<LazyFallback/>}><RulesView setSidebarView={setSidebarView} goBack={goBackSidebar}/></Suspense></ErrorBoundary>}
           {sidebarView==="privacy" && <ErrorBoundary><Suspense fallback={<LazyFallback/>}><PrivacyView goBack={goBackSidebar}/></Suspense></ErrorBoundary>}

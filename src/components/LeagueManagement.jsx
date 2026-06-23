@@ -61,6 +61,13 @@ export function LeagueManagement({
   const [creating, setCreating] = useState(false);
   const [createErr, setCreateErr] = useState("");
 
+  // #149: Join-by-invite-code bsheet — folded in from the removed LeaguesView so
+  // League Management is the single home for joining as well as creating.
+  const [showJoin, setShowJoin] = useState(false);
+  const [joinCode, setJoinCode] = useState("");
+  const [joining, setJoining] = useState(false);
+  const [joinErr, setJoinErr] = useState("");
+
   // Rename-league modal (from list mode)
   const [renameId, setRenameId] = useState(null);
   const [renameDraft, setRenameDraft] = useState("");
@@ -188,6 +195,26 @@ export function LeagueManagement({
       setCreateErr(err.message || "Failed to create league");
     }
     setCreating(false);
+  };
+
+  const handleJoin = async () => {
+    const code = joinCode.trim();
+    if (!code) { setJoinErr("Invite code required"); return; }
+    setJoining(true);
+    setJoinErr("");
+    try {
+      const res = await leagueHandlers.joinLeague(code);
+      if (res?.kind === "requested") {
+        showToast(`Request sent to "${res.league?.name}". Waiting for admin approval.`);
+      } else {
+        showToast(`Opened "${res.league?.name || "league"}".`);
+      }
+      setShowJoin(false);
+      setJoinCode("");
+    } catch (err) {
+      setJoinErr(err.message || "Failed to join league");
+    }
+    setJoining(false);
   };
 
   const handleRename = async (lid) => {
@@ -507,10 +534,13 @@ export function LeagueManagement({
           })}
         </div>
 
-        {/* Create new league (bottom) */}
-        <div>
+        {/* Create / join new league (bottom) */}
+        <div style={{display:"flex",flexDirection:"column",gap:10}}>
           <button className="pbtn pbtn-block" onClick={() => { setShowCreate(true); setCreateName(""); setCreateFormat("singles"); setCreateErr(""); }}>
             <Icon name="plus" size={16} strokeWidth={2.5} />Create new league
+          </button>
+          <button className="gbtn" style={{justifyContent:"center"}} onClick={() => { setShowJoin(true); setJoinCode(""); setJoinErr(""); }}>
+            <Icon name="hash" size={14} strokeWidth={2.5} />Join with invite code
           </button>
         </div>
       </div>
@@ -560,6 +590,36 @@ export function LeagueManagement({
             <div className="shact">
               <button className="shcancel" onClick={() => setShowCreate(false)} disabled={creating}>Cancel</button>
               <button className="shsubmit" onClick={handleCreate} disabled={creating || !createName.trim()}>{creating ? "..." : "Create League"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* #149: Join-with-invite-code bottom-sheet (folded in from LeaguesView). */}
+      {showJoin && (
+        <div className="overlay" onClick={() => !joining && setShowJoin(false)}>
+          <div className="bsheet" onClick={(e) => e.stopPropagation()}>
+            <div className="shdl" />
+            <div className="shhdr">
+              <div className="shtitle">Join a League</div>
+              <button className="shclose" onClick={() => setShowJoin(false)}>
+                <Icon name="close" size={14} />
+              </button>
+            </div>
+            <div className="shbody">
+              {joinErr && <div className="lv-error">{joinErr}</div>}
+              <div className="shf">
+                <div className="shlbl"><Icon name="hash" size={12} color="var(--muted)" />Invite code</div>
+                <input aria-label="Invite code" className="shi" type="text" value={joinCode} onChange={(e) => setJoinCode(e.target.value)} placeholder="8-character code" autoFocus />
+              </div>
+              <div className="inote">
+                <Icon name="info" size={14} color="rgba(74,222,128,.85)" />
+                <div className="inotet">Joining sends a request to the league admin for approval.</div>
+              </div>
+            </div>
+            <div className="shact">
+              <button className="shcancel" onClick={() => setShowJoin(false)} disabled={joining}>Cancel</button>
+              <button className="shsubmit" onClick={handleJoin} disabled={joining || !joinCode.trim()}>{joining ? "..." : "Join League"}</button>
             </div>
           </div>
         </div>
