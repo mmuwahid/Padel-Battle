@@ -734,6 +734,92 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
     });
   }, [players, selectedSeasonMatches, seasonElo, seasonRosters, selectedSeason]);
 
+  // #141: WhatsApp-shareable season-finale statistics report. Reuses the
+  // on-screen season ranking (seasonLb -> EFF% = match win-rate) + season
+  // awards (best pair, win streak), and adds loss-streak + worst-pair.
+  const buildSeasonReport = (seasonId) => {
+    const season = seasons.find(s => s.id === seasonId);
+    if (!season) return "";
+    const seasonMatches = approvedMatches.filter(m => m.season_id === seasonId);
+    if (seasonMatches.length === 0) return "";
+    const awards = calculateSeasonAwards(seasonId);
+    const top3 = seasonLb.slice(0, 3);
+
+    // Compact season date range + month span (e.g. "1 Apr - 23 Jun 2026 . 3 months")
+    let dateLine = "";
+    if (season.start_date) {
+      const startD = new Date(season.start_date);
+      const endD = new Date(season.end_date || new Date().toISOString().slice(0, 10));
+      const part = (dt) => ({ day: dt.getDate(), mon: dt.toLocaleString("en-GB", { month: "short" }), yr: dt.getFullYear() });
+      const a = part(startD), b = part(endD);
+      const startStr = a.yr === b.yr ? `${a.day} ${a.mon}` : `${a.day} ${a.mon} ${a.yr}`;
+      const endStr = `${b.day} ${b.mon} ${b.yr}`;
+      const months = Math.max(1, Math.round((endD - startD) / (1000 * 60 * 60 * 24 * 30.44)));
+      dateLine = `\u{1F4C5} ${startStr} \u2013 ${endStr} \u00B7 ${months} month${months > 1 ? "s" : ""}`;
+    }
+
+    // Most consecutive losses (mirror of the win-streak award)
+    let lossStreak = { playerId: null, value: 0 };
+    players.forEach(p => {
+      const pM = seasonMatches.filter(m => m.team_a.includes(p.id) || m.team_b.includes(p.id));
+      if (pM.length === 0) return;
+      let cur = 0, maxL = 0;
+      [...pM].sort((x, y) => new Date(x.date) - new Date(y.date)).forEach(m => {
+        const pTeam = m.team_a.includes(p.id) ? "A" : "B";
+        if (win(m.sets) !== pTeam) cur++; else cur = 0;
+        maxL = Math.max(maxL, cur);
+      });
+      if (maxL > lossStreak.value) lossStreak = { playerId: p.id, value: maxL };
+    });
+
+    // Worst partnership (min 3 matches together, lowest win rate; needs >= 2
+    // qualifying pairs so it stays distinct from the best pair)
+    const pairs = {};
+    seasonMatches.forEach(m => {
+      const keyA = [m.team_a[0], m.team_a[1]].sort().join("|");
+      const keyB = [m.team_b[0], m.team_b[1]].sort().join("|");
+      if (!pairs[keyA]) pairs[keyA] = { wins: 0, total: 0 };
+      if (!pairs[keyB]) pairs[keyB] = { wins: 0, total: 0 };
+      pairs[keyA].total++; pairs[keyB].total++;
+      if (win(m.sets) === "A") pairs[keyA].wins++; else pairs[keyB].wins++;
+    });
+    const validPairs = Object.entries(pairs).filter(([_k, p]) => p.total >= 3);
+    let worstPair = null;
+    if (validPairs.length >= 2) {
+      const worst = validPairs.reduce((a, b) => (b[1].wins / b[1].total) < (a[1].wins / a[1].total) ? b : a);
+      const [w1, w2] = worst[0].split("|");
+      worstPair = { ids: [w1, w2], wins: worst[1].wins, total: worst[1].total, wr: ((worst[1].wins / worst[1].total) * 100).toFixed(0) };
+    }
+
+    const lines = [];
+    lines.push(`\u{1F3BE} PadelHub \u2014 ${season.name} Report`);
+    if (league?.name) lines.push(`\u{1F3C6} ${league.name}`);
+    if (dateLine) lines.push(dateLine);
+    lines.push(`\u{1F3BE} ${seasonMatches.length} matches played`);
+    lines.push("");
+    lines.push("\u{1F3C5} Final Standings:");
+    const medals = ["\u{1F947}", "\u{1F948}", "\u{1F949}"];
+    top3.forEach((p, i) => {
+      const eff = (p.winRate * 100).toFixed(0);
+      lines.push(`${medals[i]} ${p.nickname || p.name} \u2014 ${p.wins}W-${p.losses}L \u00B7 ${eff}%`);
+    });
+    lines.push("");
+    if (awards.longestStreak) lines.push(`\u{1F525} Most consecutive wins: ${getName(awards.longestStreak.playerId)} (${awards.longestStreak.value} in a row)`);
+    if (lossStreak.playerId && lossStreak.value >= 2) lines.push(`\u2744\uFE0F Most consecutive losses: ${getName(lossStreak.playerId)} (${lossStreak.value} in a row)`);
+    if (awards.topPair || worstPair) lines.push("");
+    if (awards.topPair) lines.push(`\u{1F451} Best partnership: ${getName(awards.topPair.playerIds[0])} / ${getName(awards.topPair.playerIds[1])} \u2014 ${awards.topPair.winRate}% WR (${awards.topPair.wins}W-${awards.topPair.total - awards.topPair.wins}L)`);
+    if (worstPair) lines.push(`\u{1F494} Worst partnership: ${getName(worstPair.ids[0])} / ${getName(worstPair.ids[1])} \u2014 ${worstPair.wr}% WR (${worstPair.wins}W-${worstPair.total - worstPair.wins}L)`);
+
+    return lines.join("\n");
+  };
+
+  const shareSeasonReport = (seasonId) => {
+    const text = buildSeasonReport(seasonId);
+    if (!text) return;
+    if (navigator.share) navigator.share({ title: "PadelHub Season Report", text }).catch(() => {});
+    else { navigator.clipboard.writeText(text); showToast("Season report copied!"); }
+  };
+
   // Combos (most common team-ups). Issue #96: gamesDiff = signed sum of (myGames - oppGames) across all sets.
   const combos = useMemo(()=>{
     const combo={};
@@ -1148,6 +1234,9 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
                       </div>
                     )}
                   </div>
+                  <button onClick={()=>shareSeasonReport(selectedSeason)} className="lp" style={{marginTop:4,width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:"12px 14px",borderRadius:12,border:`1px solid ${A}40`,background:`linear-gradient(135deg,${A}22,${A}0a)`,color:A,fontWeight:800,fontSize:14,cursor:"pointer"}}>
+                    <Icon name="share" size={15} color={A} strokeWidth={2.2}/>Share Season Report
+                  </button>
                 </div>
               </div>
             );
