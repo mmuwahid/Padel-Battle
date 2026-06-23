@@ -1,14 +1,93 @@
 # Active Work
 
-## NEXT SESSION (S093) — START HERE
-**Last session:** S092 (2026-06-21, deep ~5h) — **11 commits (`9592382`→`e841f2e`), SW v213→v219, 2 DB migrations.** Executed 6 new issues + Apple App-Store setup + built #129 v1. **CLOSED #128** (footer approved-only count, drop season suffix, +duration/start stats); **#131** avatar load (SW was bypassing `supabase.co` → Storage avatars never cached; added cache-first `/storage/v1/object/public/` in persistent `padelhub-img-v1`); **#130** surface unify — 5 iterations + live `elementFromPoint` measurement found real content bg = **#0a0a0f** (not `--bg`/body), set hdr+nav+body+chrome to it AND **removed the nav pill `box-shadow`** (the actual "different color" the user saw); **#121** login + **Sign in with Apple wired end-to-end & verified** (resend button kept). **Apple setup (guided):** App ID `com.mohammedmuwahid.padelhub`, Services ID `.signin`, Key `NTSQJCBXXH`, secret JWT via `scripts/gen-apple-secret.cjs` (**EXPIRES 2026-12-18**), Supabase provider enabled+verified; user has a Mac. **#129 League Permissions v1 BUILT** (combined screen·4 toggles·admins-only·gaps fixed): `leagues.admin_permissions` jsonb (all-true default = non-breaking), `admin_has_permission()`, owner-only `set_league_permissions()`, re-gated 6 RPCs + player-edit RLS, 3 gaps fixed, new `PermissionsScreen.jsx`. **OPEN:** #129 (v2 tracker), #124 (native). Live SW v219, main `e841f2e`.
+## NEXT SESSION (S101) — START HERE
+**Last session:** S100 (2026-06-23) — **4 commits (`5c7b469` #150, `353793c` #151, `4eb6784` #150 card redesign, `fe14dab` #150/#151 polish), SW v240→v243, 0 DB migrations.** #150 reusable `RecentMatches` on the player drill-down + own profile (redesigned card: day/date header above names, result on the right, WIN/LOSS pill unchanged; Recent above Head-to-Head; 0 W/L muted). #151 unified onboarding — Welcome step, invite-link new users routed through welcome+profile BEFORE the join request, `isProfileComplete` + blocking `CompleteProfileScreen` gate (**FORCE-ALL**: 14/16 users incomplete). Google Play Console account created + $25 paid. Closed #150/#151. Main `fe14dab`, prod READY.
+**Prior session:** S099 — centralized push + OS badge, Leave League soft-delete, analytics polish, duplicate league-screen consolidation (`f30b45a`, v240).
 
-### 🎯 S093 PRIORITY — user wants to finish all app-polish features before store launch
-1. **Owner smoke-test #129 toggles** from `m.muwahid@gmail.com` (admins see read-only). Then decide **#129 v2**: full ~10-capability matrix, per-season overrides, member-grantable perms, UI-gate player-edit controls (DB already enforces).
-2. **Device-confirm S092 fixes** on a real cold PWA open (SW v219): #130 fully-uniform #0a0a0f + no nav shadow; #131 instant avatars.
-3. **Lead with whatever polish item the user raises** (their stated priority before launch).
-4. **Apple/Capacitor wrap** — App ID + Sign in with Apple DONE/verified; user has a Mac. Next: Capacitor scaffold, App Store Connect record, native push, Face ID (#124), Universal Links (#6). **⚠️ regenerate Apple secret before 2026-12-18.**
-5. (When ready) replace logo Option A placeholder with the designer's final mark — one-file swap in `icons.jsx` + re-run 3 PNGs (sharp).
+### 🎯 S101 PRIORITY — verify force-complete + Google Play + native
+1. **Owner smoke-test the existing-user force-complete flow** — ~14 of 16 users hit `CompleteProfileScreen` on next open (pre-filled; mostly DOB + court position). Fresh-signup welcome + invite-link onboarding already owner-confirmed in S100.
+2. **Google Play launch** (account created + paid, `support.padelhub@gmail.com`, dev ID `7573132350565793581`): finish identity verification → device-access check (Play Console mobile app) → create app record → Capacitor Android build → signed AAB → store listing (privacy/terms live) → internal testing track. See memory `reference_google_play_console`.
+3. **Device smoke-test S099 ships (SW v240→v243):** push fires every time + OS badge; stale-chunk auto-reload; Leave League soft-delete + re-join; analytics streak/colors; Switch League → League Management.
+4. **Native device smoke-test** of the iOS + Android Capacitor shells (haptics, hardware back, splash/status bar) — user has a Mac.
+5. **Decide #129 v2**: full ~10-capability matrix, per-season overrides, member-grantable perms.
+6. **Set up padelhub.app email addresses** (support@, privacy@, legal@) — placeholders in legal pages.
+7. **Wire tier-limit enforcement** (Free 1 league / 1 season / 5 player invites; Pro unlimited) + RevenueCat at the wrap / store launch — copy only, flagged in `MembershipView.jsx`.
+8. (When ready) replace logo Option A placeholder with the designer's final mark — one-file swap in `icons.jsx` + re-run 3 PNGs (sharp).
+9. (Cleanup) Stale `.claude/launch.json` configs (`clone-dev`, `padel-dev-cleanup`, `mockup-static`) still point at the old `/tmp` path; `hardening-dev` + new `clone-dev-user` fixed in S100.
+10. (Optional) Test infra from #137 (#1 unit, #2 E2E, #3 Storybook, #4 TS migration) — deferred, lower priority than launch.
+**⚠️ Regenerate Apple client-secret before 2026-12-18** (`scripts/gen-apple-secret.cjs`).
+
+### S100 outcomes (this session — archived)
+- [x] **#150 recent matches on player drill-down** (`5c7b469`, v241) — reusable `RecentMatches.jsx` (last-5) after Head-to-Head + reused on own profile.
+- [x] **#150 card redesign** (`4eb6784`, v242) — taller card; day/date as a header line above names; set-score result on the far right; WIN/LOSS pill unchanged.
+- [x] **#150 ordering + H2H polish** (`fe14dab`, v243) — Recent Matches above Head-to-Head; a 0 W/L count muted.
+- [x] **#151 unified onboarding** (`353793c`, v241) — Welcome step; invite-link new users routed through welcome+profile before the join request (`pendingInvite`/`needs_onboarding` in LeagueGate, invite mode in OnboardingScreen); `isProfileComplete` helper + blocking `CompleteProfileScreen` gate in App.jsx; **force-all** scope (production 14/16 claimed players incomplete).
+- [x] **#151 polish** (`fe14dab`) — dropped the redundant "Welcome" eyebrow.
+- [x] security-reviewer clean (UX-only gate; RLS is the boundary); 3 HIGH code-review fixes (save safety-net, `canSave` enum parity, `pendingInvite` clear).
+- [x] Google Play Console account created + $25 paid → memory `reference_google_play_console`.
+- [x] Fixed stale `.claude/launch.json` dev-server paths (`hardening-dev` + new `clone-dev-user` → `C:/Users/User/dev/Padel-Battle`).
+- [x] Closed #150 + #151 on GitHub; all 4 commits pushed to main (`fe14dab`); prod READY on SW v243.
+
+### S099 outcomes (this session — archived)
+- [x] **#146 sidebar focus line + grade label** (`da321c1`, v237) — `.ssheet:focus{outline:none}` kills the blue vertical line on the focus-trapped drawer; sidebar grade pill reads "Grade: C".
+- [x] **#147 stale-chunk auto-reload** (`0ace8cc`, v238) — `lazyWithReload` forces ONE full reload (sessionStorage-guarded, no loop) when a not-yet-cached lazy `import()` 404s after a deploy (React.lazy caches the rejected promise so ErrorBoundary retry can't recover).
+- [x] **#137 centralized Web Push + OS badge** (`15113db`, v239) — AFTER INSERT trigger on `notifications` → `pg_net` → new `push-on-notify` edge fn pushes EVERY bell row uniformly; `push-notify` stripped to bell-insert only; client `skip_in_app` push calls removed; match bell rows now include the logger; `navigator.setAppBadge()` from unread count (App effect + SW push reads `data.badge`, iOS 16.4+ PWA, guarded); installed-PWA auto-subscribe when permission already granted.
+- [x] **#138 Leave League soft-delete** (`15113db`, v239) — migration `s100_leave_league_soft_delete` adds `league_members.status` ('active'|'left'); `leave_league` SECURITY DEFINER blocks owner, marks `left`, drops push subs; re-join via `approve_join_request` reuses the players row + re-activates (history/stats/leaderboard preserved); `admin_has_permission`/`get_league_member_ids` + client consumers all filter `status='active'`; Leave UI in LeagueManagement (non-owners), "Left league" pill in PlayerManagement, left members excluded from admins roster + isPlayerAdmin.
+- [x] **#148 analytics polish** (`f30b45a`, v240) — streak tables require 2+ consecutive (`maxW/maxL>=2`, empty tables vanish via existing `.length>0` gate); Highest Win Rates W green/L red (dash muted); Best Pairs title gold, Worst Pairs title red, each pair win% green≥50% else red.
+- [x] **#149 consolidate league screens** (`f30b45a`, v240) — deleted dead `LeaguesView`; Settings "Switch League" now routes to `leagueManagement`; folded Join-by-invite-code bottom-sheet into LeagueManagement so consolidation was lossless.
+- [x] All 4 commits pushed to main (`f30b45a`); prod `dpl_6ThDUpuHYkh5PeVsvBsFZG3Egd8q` READY; #148 + #149 closed on GitHub.
+- [DEFERRED] User smoke-test of all S099 ships (rolls to S100 #1).
+
+### S098 outcomes (last session — archived)
+- [x] **Bug fix: `sync_player_identity` grade-retake crash** (`1f6437d`, v236) — swapped `.catch(h)`→`.then(undefined,h)` + dropped blocking `await` in `GradeAssessmentModal.jsx`, `EditMyProfile.jsx`, `EditPlayerModal.jsx`. Root cause: `PostgrestBuilder` is PromiseLike (no `.catch`/`.finally`) → `.catch()` threw a synchronous `TypeError` (introduced by S096 #140 C8). Data was persisting; the throw just blocked `onClose`/refresh.
+- [x] **Sidebar flag + grade pill** (`1f6437d`, v236) — profile header shows `claimedPlayer` country flag (`flagEmoji`) + grade pill (`gradeColor`, only when self-assessed) instead of email; App.jsx passes new `claimedPlayer` prop to `<Sidebar>`.
+- [x] PR #145 squash-merged + branch deleted; main `1f6437d`; prod `dpl_9CFFi7L...` READY.
+
+### S097 outcomes (this session — archived)
+- [x] **#141 Share Season Report** (`cc1a399`, v233) — WhatsApp-shareable ended-season text summary (standings + EFF% + streaks + best/worst pairs), `navigator.share`+clipboard fallback.
+- [x] **#143 Membership screen** (`a0152f5`, v234) — `MembershipView.jsx` sidebar sub-view, crown nav row in SettingsView Account card, lazy route in App.jsx, approved `mockups/membership-screen-mockup.html`. Display-only.
+- [x] **#144 Membership polish** (`cd7e506`, v235) — green Active pill; Monthly/Annual real `<button>`s (`plan` useState, default annual) + selected highlight + `.memplan:active` press CSS; "Player invites" row (Free 5 / Pro ∞) + Free-card copy; in-code wiring note.
+- [DEFERRED] Tier-limit enforcement (display-only until RevenueCat / store launch).
+
+### S096 outcomes (this session — archived) — #137 deep-audit COMPLETE
+- [x] **PR #136 quick wins** (`648ba0e`, v229) — npm audit 0 vulns, 8 mockups removed, dead `_lb`, eslint ignore android/ios, .env config.
+- [x] **PR #138 lazy batch2** (`806ac55`, v230) — React.lazy 5 components, index chunk 76→49 KB gzip (-36%), 18 console DEV-gated.
+- [x] **PR #139 a11y A1/A3/A5** (`693a659`, v231) — `src/utils/a11y.js` `pressable()` on interactive divs + aria-labels (incl. 16 back buttons).
+- [x] **PR #140 a11y batch2 + cleanup** (`d6034a3`, v232) — A2 form labels, A4 `useFocusTrap` hook, A6 avatar alt (no timing change), C5 knip 0 unused exports, C6 `findAvatar`/`findCountry`, C8 `.catch()` on genuine fire-and-forget (5 audit-flagged sites already protected), C9 React.memo Icon.
+- [x] All 4 PRs squash-merged + deleted branches; main `d6034a3`; prod `dpl_FXL5...` READY.
+- [DEFERRED] #137 test infra (#1-4) — lower priority than store launch.
+
+### S094 Deep Audit — STATUS
+**Original report:** 14 findings, overall grade B. 4 medium-priority items implemented in S095 (PR #135):
+- [x] **#5 ESLint sweep** — 80→0 warnings. 28 files: removed unused imports, prefixed unused params with `_`, removed stale `eslint-disable` directives. `eslint.config.js` updated with `argsIgnorePattern: '^_'` + `destructuredArrayIgnorePattern: '^_'`.
+- [x] **#9 Hooks warnings** — 18→0. 12 files: added safe deps (supabase — singleton), suppressed intentional omissions with documented reasons (stale-closure refs, mount-only effects, unstable callback identity). `PodCard` extracted from inline render to standalone component (react-refresh warning).
+- [x] **#8 Lazy-load** — 12 sidebar/admin components converted to `React.lazy()` + `Suspense` + `ErrorBoundary` wrappers. `PLATFORM_ADMIN_ID` extracted to `src/constants.js` (eagerly available while component lazy-loads).
+- [x] **#10 Parallel bootstrap** — verified ALREADY DONE (`Promise.all` in `loadLeagueData`). No changes needed.
+- [REMAINING] #1 unit tests (low priority), #2 E2E tests, #3 Storybook, #4 TypeScript migration, #6 bundle analysis, #7 accessibility audit, #11-14 various low-priority items — all deferred.
+
+### S095 outcomes (this session — archived)
+- [x] **PR #134 — #2 refactor slices 2+3** — `usePwaInstall` (zero deps, self-contained) + `useAvatar` (upload/crop/remove/player write-through). App.jsx 1627→1566 lines. TDZ trap avoided by placing `useAvatar` call after `loadLeagueData` decl.
+- [x] **PR #135 — S094 audit sweep** — 4 commits: ESLint 80→0 (28 files), hooks warnings 18→0 (12 files), lazy-load 12 components, SW v227→v228. New `src/constants.js`.
+- [x] Both PRs squash-merged to main. Main now `cb8f31c`. Vercel auto-deploy from main.
+- [DEFERRED] Notification center extraction (#2 refactor) — high entanglement with loadLeagueData + realtime subscription; low ROI.
+- [DEFERRED] Native device smoke-test (needs Mac).
+
+### S094 outcomes (archived)
+- [x] **#132 Capacitor scaffold** — iOS + Android native shells, `capacitor.config.ts`, `src/capacitor.js` no-op bridge, `resources/` icon+splash. SW v224→v225.
+- [x] **#133 pre-launch hardening** — Syne+DM Mono consolidation (44 refs/6 components, dropped JetBrains+Outfit), `@import`→`<link>`, prefers-reduced-motion a11y, leagueCtx dupe-`user`-key fix, DEV-gate console.log. SW v225→v226.
+- [x] **TDZ crash FIX** — relocated Capacitor back-button effect below `goBackSidebar` decl; cherry-picked onto #132 base so main stayed shippable (dup commit `e42faf2`/`d249f3c`).
+- [x] **#6 haptics** — `triggerHaptic()` in `src/capacitor.js` + light impact from LiquidPress press delegate.
+- [x] **#2 refactor slice 1** — push subsystem → `src/hooks/usePushNotifications.js` (~197 lines); App.jsx 1798→1627. Verified live.
+- [x] **Merged #132→main (`0fcf3af`), retargeted+merged #133→main (`3b25e6a`)**; Vercel prod `dpl_97kXcwLUQttW6wzWHi9LF72Mg7Eh` READY; verified SW v226 live.
+
+### S093 outcomes (this session — archived)
+- [x] #130 definitive bg fix — flush-bottom nav + pedestal color + `::after` pill border (3rd attempt — SOLVED) — CLOSED
+- [x] Privacy Policy + Terms of Service — full legal pages (public/privacy.html + public/terms.html)
+- [x] vercel.json cleanUrls for extensionless URLs (/privacy, /terms)
+- [x] In-app sidebar legal views (LegalView.jsx → PrivacyView + TermsView with back-btn)
+- [x] Legal heading colors fixed (h2 green, h3 white)
+- [x] Store launch plan updated — pricing, free tier, branding, existing users, Hello Padel competitor
+- [x] SW v219→v224, 6 commits pushed, Vercel live
 
 ### S092 outcomes (this session — archived)
 - [x] #128 footer stats + approved-only count — CLOSED
