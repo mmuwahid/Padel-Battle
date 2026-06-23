@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { formatTeam, win, formatDate, flagEmoji, getAge } from '../utils/helpers';
+import { flagEmoji, getAge } from '../utils/helpers';
 import { calcElo } from '../utils/elo';
 import { ACHS } from '../data/achievements';
 import { EditMyProfile } from './EditMyProfile';
 import { GradeAssessmentModal } from './GradeAssessmentModal';
 import { AvatarLightbox } from './AvatarLightbox';
+import { RecentMatches } from './RecentMatches';
 import { gradeColor } from '../utils/grade';
 import Icon from './Icon';
 
@@ -255,27 +256,7 @@ export function ProfileView({ user, avatarUrl, avatarUploading, uploadAvatar, re
               <Icon name="search" size={14} color="var(--accent)"/>
               <h3 className="ach-h-tit">Recent Matches</h3>
             </div>
-            <div style={{display:"flex",flexDirection:"column",gap:8}}>
-              {matches.filter(m=>m.team_a.includes(myStat.id)||m.team_b.includes(myStat.id)).sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5).map(m=>{
-                const w=win(m.sets);
-                const pTeam=m.team_a.includes(myStat.id)?"A":"B";
-                const won=w===pTeam;
-                return (
-                  <div key={m.id} style={{padding:"10px 12px",background:"var(--surface)",border:"1px solid var(--border)",borderRadius:"var(--r-md)",display:"flex",alignItems:"center",gap:10}}>
-                    <div style={{fontSize:10,fontWeight:800,color:won?"var(--accent)":"var(--danger)",background:won?"var(--accent-dim)":"rgba(248,113,113,.10)",padding:"4px 9px",borderRadius:"var(--r-sm)",fontFamily:"var(--mono)",letterSpacing:".06em"}}>
-                      {won?"WIN":"LOSS"}
-                    </div>
-                    <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontFamily:"var(--font)",fontSize:12,fontWeight:600,color:"var(--text)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{formatTeam(getName(m.team_a[0]),getName(m.team_a[1]))} vs {formatTeam(getName(m.team_b[0]),getName(m.team_b[1]))}</div>
-                      <div style={{fontFamily:"var(--mono)",fontSize:10,marginTop:2,display:"flex",gap:6}}>
-                        {m.sets.map((s,i)=>{const pWon=pTeam==="A"?s[0]>s[1]:s[1]>s[0];return <span key={i} style={{color:pWon?"var(--accent)":"var(--danger)"}}>{s[0]}-{s[1]}</span>;})}
-                      </div>
-                    </div>
-                    <div style={{fontFamily:"var(--mono)",fontSize:9,color:"#9090a4"}}>{formatDate(m.date)}</div>
-                  </div>
-                );
-              })}
-            </div>
+            <RecentMatches playerId={myStat.id} matches={matches} getName={getName}/>
             <button onClick={()=>{setSidebarView(null);setSidebarOpen(false);setTab("history");}} style={{width:"100%",marginTop:12,padding:"10px",background:"transparent",border:"1px solid var(--border)",borderRadius:"var(--r-md)",color:"var(--accent)",fontFamily:"var(--font)",fontSize:12,fontWeight:700,cursor:"pointer"}}>View All Matches</button>
           </div>
         </>

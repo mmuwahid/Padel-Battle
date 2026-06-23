@@ -4,6 +4,7 @@ import { ACHS } from '../data/achievements';
 import { FD } from './FormDots';
 import Icon from './Icon';
 import { AvatarLightbox } from './AvatarLightbox';
+import { RecentMatches } from './RecentMatches';
 import { win, formatDate, setTotals, flagEmoji, getAge, findAvatar } from '../utils/helpers';
 import { gradeColor } from '../utils/grade';
 
@@ -346,7 +347,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
         </div>
 
         {/* Head to Head (preserved data, restyled rows) */}
-        <section className="dpro-sec" style={{paddingBottom:24}}>
+        <section className="dpro-sec">
           <h3 className="dpro-sectitle">Head to Head</h3>
           <div className="dpro-sec-card">
             {h2h.length===0 && <p style={{fontSize:12,color:MT,padding:"4px 0"}}>No matches yet</p>}
@@ -360,6 +361,13 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
               </div>
             );})}
           </div>
+        </section>
+
+        {/* S100 #150: recent match history on another player's drill-down,
+            mirroring the logged-in user's own profile. */}
+        <section className="dpro-sec" style={{paddingBottom:24}}>
+          <h3 className="dpro-sectitle">Recent Matches</h3>
+          <RecentMatches playerId={sp} matches={matches} getName={getName}/>
         </section>
         {showLightbox && player.avatar_url && (
           <AvatarLightbox src={player.avatar_url} alt={player.name} onClose={()=>setShowLightbox(false)}/>
