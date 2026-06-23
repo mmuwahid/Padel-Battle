@@ -22,8 +22,12 @@ import Icon from './Icon';
 //
 // Player creation is skipped for join-via-code because RLS on players insert
 // requires admin role; joined users start as members. Creator gets full insert.
-export function OnboardingScreen({ user, handlers, onComplete, showToast }) {
-  const [step, setStep] = useState(1);
+export function OnboardingScreen({ user, handlers, onComplete, showToast, inviteLeague = null }) {
+  // S100 #151: step 0 = Welcome intro (new), 1 = profile, 2 = league choice.
+  // inviteLeague set → the user arrived via an invite link: after the profile
+  // step we submit a join request straight to that league (no league-choice
+  // step), so invited users get the SAME welcome + profile flow as everyone.
+  const [step, setStep] = useState(0);
   const [name, setName] = useState(user?.user_metadata?.display_name || user?.email?.split("@")[0] || "");
   const [country, setCountry] = useState("");
   const [dob, setDob] = useState("");
@@ -85,6 +89,36 @@ export function OnboardingScreen({ user, handlers, onComplete, showToast }) {
     setBusy(false); setBusyAction(null);
   };
 
+  // S100 #151: invite-link path — submit a new_profile join request to the
+  // pre-resolved league using the profile captured in step 1 (mirrors handleJoin
+  // but skips the invite-code lookup since LeagueGate already resolved it).
+  const handleInviteJoin = async () => {
+    if (!inviteLeague?.id || busy) return;
+    setAttempt(true);
+    if (!canStep1) return;
+    setBusy(true); setBusyAction('join');
+    try {
+      const { error: rqErr } = await supabase.rpc("create_join_request", {
+        p_league_id: inviteLeague.id,
+        p_type: "new_profile",
+        p_player_id: null,
+        p_display_name: name.trim(),
+        p_country: country || null,
+        p_dob: dob || null,
+        p_gender: gender || null,
+        p_position: side || null,
+        p_handedness: handedness || null,
+      });
+      if (rqErr) throw rqErr;
+      if (showToast) showToast(`Request sent to ${inviteLeague.name}. Waiting for admin approval.`);
+      if (onComplete) onComplete();
+    } catch (err) {
+      if (import.meta.env.DEV) console.error("[OnboardingScreen] invite join failed:", err);
+      if (showToast) showToast(err.message || "Failed to submit request", "error");
+    }
+    setBusy(false); setBusyAction(null);
+  };
+
   const handleCreate = async () => {
     if (!lgName.trim() || busy) return;
     setBusy(true); setBusyAction('create');
@@ -133,7 +167,7 @@ export function OnboardingScreen({ user, handlers, onComplete, showToast }) {
       <div className="obody">
         {/* S082: back button now matches the app-wide top-left chevron convention
             (.back-btn-row / .back-btn) instead of the old top-right .bbtn pill. */}
-        {step > 1 && (
+        {step >= 1 && (
           <div className="back-btn-row">
             <button className="back-btn" onClick={()=>setStep(step-1)} aria-label="Back">
               <Icon name="chevron-left" size={18} color="currentColor"/>
@@ -141,15 +175,47 @@ export function OnboardingScreen({ user, handlers, onComplete, showToast }) {
           </div>
         )}
 
-        <div className="pdots">
-          {[1,2].map(n=><div key={n} className={`dot ${step===n?"on":step>n?"dn":""}`}/>)}
-        </div>
+        {step >= 1 && (
+          <div className="pdots">
+            {(inviteLeague ? [1] : [1,2]).map(n=><div key={n} className={`dot ${step===n?"on":step>n?"dn":""}`}/>)}
+          </div>
+        )}
+
+        {step === 0 && (
+          <>
+            <div className="oey">Welcome</div>
+            <div className="oth1">Welcome to <span style={{color:"var(--accent)"}}>PadelHub</span></div>
+            <div className="osub">Your home for padel — track every match, climb the leaderboard, and run leagues, seasons and tournaments with your crew.</div>
+
+            <div style={{display:"flex",flexDirection:"column",gap:12,margin:"22px 0 8px"}}>
+              {[
+                {i:"trophy",    t:"Leagues & seasons",  d:"Create or join a league and compete across seasons."},
+                {i:"bar-chart", t:"Live leaderboards",   d:"Every match updates your ranking, stats and form."},
+                {i:"users",     t:"Play your way",       d:"Singles, pairs, Americano, Mexicano and tournaments."},
+              ].map(f=>(
+                <div key={f.i} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",background:"var(--surface)",border:"1px solid var(--border)",borderRadius:"var(--r-md)"}}>
+                  <div style={{width:34,height:34,borderRadius:"50%",background:"var(--accent-dim)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                    <Icon name={f.i} size={16} color="var(--accent)"/>
+                  </div>
+                  <div style={{minWidth:0}}>
+                    <div style={{fontFamily:"var(--font)",fontSize:13,fontWeight:700,color:"var(--text)"}}>{f.t}</div>
+                    <div style={{fontFamily:"var(--mono)",fontSize:10,color:"#9090a4",marginTop:2}}>{f.d}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button className="octa" onClick={()=>setStep(1)}>
+              Get Started <Icon name="arrow-right" size={16} color="#000" strokeWidth={2}/>
+            </button>
+          </>
+        )}
 
         {step === 1 && (
           <>
-            <div className="oey">Step 1 of 2</div>
+            <div className="oey">{inviteLeague ? `Joining ${inviteLeague.name}` : "Step 1 of 2"}</div>
             <div className="oth1">Your profile</div>
-            <div className="osub">All fields are required before you can join.</div>
+            <div className="osub">{inviteLeague ? "Set up your profile to request to join." : "All fields are required before you can join."}</div>
 
             {/* Photo placeholder (visual only — actual upload deferred per Phase 11 Q3) */}
             <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8,marginBottom:18}}>
@@ -229,8 +295,15 @@ export function OnboardingScreen({ user, handlers, onComplete, showToast }) {
               {attempted && !side && <div className="ferr">Court position is required</div>}
             </div>
 
-            <button className={`octa${canStep1?'':' off'}`} onClick={()=>{setAttempt(true); if(canStep1) setStep(2);}}>
-              Continue <Icon name="arrow-right" size={16} color={canStep1?"#000":"#9090a4"} strokeWidth={2}/>
+            <button className={`octa${canStep1?'':' off'}`} disabled={busy} onClick={()=>{
+              setAttempt(true);
+              if(!canStep1) return;
+              if(inviteLeague) handleInviteJoin();
+              else setStep(2);
+            }}>
+              {inviteLeague
+                ? (busy && busyAction==='join' ? "Sending…" : <>Request to Join <Icon name="arrow-right" size={16} color={canStep1?"#000":"#9090a4"} strokeWidth={2}/></>)
+                : <>Continue <Icon name="arrow-right" size={16} color={canStep1?"#000":"#9090a4"} strokeWidth={2}/></>}
             </button>
           </>
         )}

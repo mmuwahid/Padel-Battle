@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback, Suspense, lazy } from "react";
 import { supabase } from './supabase';
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, BL, PU, TL, TR } from './theme';
-import { formatTeam, win, formatDate, setTotals, flagEmoji } from './utils/helpers';
+import { formatTeam, win, formatDate, setTotals, flagEmoji, isProfileComplete } from './utils/helpers';
 import { calcElo } from './utils/elo';
 import { pressable } from './utils/a11y';
 import { RULES, ARGUED } from './data/rules';
@@ -12,6 +12,7 @@ import { LiquidPressDelegate } from './components/LiquidPress';
 import { FD } from './components/FormDots';
 import { Sidebar } from './components/Sidebar';
 import { ProfileView } from './components/ProfileView';
+import { CompleteProfileScreen } from './components/CompleteProfileScreen';
 import { PairsRanking } from './components/PairsRanking';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { LeagueContext } from './LeagueContext';
@@ -968,6 +969,22 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
           </button>
         </div>
       </div>
+    );
+  }
+
+  // S100 #151: backstop — a claimed player whose profile is missing mandatory
+  // fields (e.g. an invited user approved with a name-only snapshot) is blocked
+  // from the leaderboard until they finish their profile. Platform Admin (no
+  // player row in foreign leagues) is exempt, same as the gate above.
+  if (claimedPlayer && !isProfileComplete(claimedPlayer) && user?.id !== PLATFORM_ADMIN_ID) {
+    return (
+      <CompleteProfileScreen
+        player={claimedPlayer}
+        supabase={supabase}
+        onDone={loadLeagueData}
+        showToast={showToast}
+        onSignOut={async ()=>{ await supabase.auth.signOut(); }}
+      />
     );
   }
 

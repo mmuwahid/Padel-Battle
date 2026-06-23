@@ -10,6 +10,21 @@ export function formatDate(d){const dt=new Date(d);const dow=dt.toLocaleString("
 export function formatDateParts(d){const dt=new Date(d);const dow=dt.toLocaleString("en-GB",{weekday:"short"}).toUpperCase();const dd=String(dt.getDate()).padStart(2,"0");const mmm=dt.toLocaleString("en-GB",{month:"short"});const yyyy=dt.getFullYear();return {dow,date:`${dd} ${mmm} ${yyyy}`};}
 export function setTotals(sets){return sets.reduce(([a,b],[x,y])=>[a+x,b+y],[0,0]);}
 
+// S100 #151: a player profile counts as "complete" only when every mandatory
+// onboarding field is set — the same set OnboardingScreen.canStep1 and
+// EditMyProfile.canSave require (name, country, DOB, gender, court position,
+// handedness). Used to gate leaderboard access so invited users can't slip in
+// with a name-only profile. NB: grade/avatar/nickname are intentionally optional.
+export function isProfileComplete(p){
+  if(!p)return false;
+  return (p.name||"").trim().length>=2
+    && !!p.country
+    && !!p.date_of_birth
+    && (p.gender==="male"||p.gender==="female")
+    && (p.playing_position==="left"||p.playing_position==="right"||p.playing_position==="any")
+    && (p.handedness==="left"||p.handedness==="right");
+}
+
 // C6: single source for the per-component avatar/country lookups that were
 // duplicated verbatim in LogMatch, MatchApprovalsQueue, MatchHistory and
 // PlayerStats. Pure synchronous lookups — identical behaviour to the inline

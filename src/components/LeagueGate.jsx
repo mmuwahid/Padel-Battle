@@ -37,6 +37,10 @@ export function LeagueGate({ user, children }) {
   // can see PendingApprovalScreen / RejectedScreen instead of restarting Onboarding.
   const [joinRequest, setJoinRequest] = useState(null); // { ...latest non-superseded request, league: {name,...} }
   const [retrying, setRetrying] = useState(false); // user tapped Try Again on RejectedScreen → show Onboarding
+  // S100 #151: a brand-new (0-league) user who opened an invite link. We defer
+  // the join request until AFTER they complete welcome + profile in Onboarding,
+  // so the request carries real profile data instead of a name-only snapshot.
+  const [pendingInvite, setPendingInvite] = useState(null); // { id, name } | null
   const initRef = useRef(false);
 
   // Wrapper around setSelectedLeagueId that persists to localStorage.
@@ -148,6 +152,18 @@ export function LeagueGate({ user, children }) {
             userLeagues = await loadUserLeagues();
             setSelectedLeagueIdRaw(res.leagueId);
             try { localStorage.setItem(LAST_LEAGUE_LS_KEY, res.leagueId); } catch { /* noop */ }
+            return;
+          }
+          // S100 #151: brand-new user (0 leagues) who opened an invite link.
+          // tryAutoJoin did NOT submit a request — defer it. Stash the resolved
+          // league so the 0-league branch renders Onboarding in invite mode;
+          // the join request is submitted from OnboardingScreen WITH their
+          // profile. loadJoinRequest first so a returning user who already has a
+          // pending request still sees PendingApprovalScreen (it takes priority).
+          if (res?.kind === "needs_onboarding") {
+            setPendingInvite({ id: res.leagueId, name: res.leagueName });
+            await loadJoinRequest();
+            resolveSelectedLeague(userLeagues);
             return;
           }
           // S108 Issue #108: a pending approval request was created. Existing
@@ -262,6 +278,13 @@ export function LeagueGate({ user, children }) {
       if (findErr || !found) return null;
       const already = currentLeagues.find(l => l.id === found.id);
       if (already) return { kind: "member", leagueId: found.id };
+      // S100 #151: a brand-new user (no leagues yet) must complete welcome +
+      // profile BEFORE the join request is created, so it carries real profile
+      // data. Defer to OnboardingScreen (invite mode). Existing multi-league
+      // users have already onboarded, so keep the instant auto-join below.
+      if (currentLeagues.length === 0) {
+        return { kind: "needs_onboarding", leagueId: found.id, leagueName: found.name };
+      }
       const { error } = await submitJoinRequest(found.id);
       // "Already a member" race (e.g. approved between fetch and submit).
       if (error && /already a member/i.test(error.message || "")) {
@@ -435,7 +458,8 @@ export function LeagueGate({ user, children }) {
         user={user}
         handlers={handlers}
         showToast={showToast}
-        onComplete={async () => { await refreshLeagues(); setRetrying(false); }}
+        inviteLeague={pendingInvite}
+        onComplete={async () => { await refreshLeagues(); setRetrying(false); setPendingInvite(null); }}
       /></Suspense>
     );
   }
