@@ -183,7 +183,6 @@ export function OnboardingScreen({ user, handlers, onComplete, showToast, invite
 
         {step === 0 && (
           <>
-            <div className="oey">Welcome</div>
             <div className="oth1">Welcome to <span style={{color:"var(--accent)"}}>PadelHub</span></div>
             <div className="osub">Your home for padel — track every match, climb the leaderboard, and run leagues, seasons and tournaments with your crew.</div>
 

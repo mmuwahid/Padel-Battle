@@ -346,8 +346,16 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
           </div>
         </div>
 
-        {/* Head to Head (preserved data, restyled rows) */}
+        {/* S100 #150: recent match history on another player's drill-down,
+            mirroring the logged-in user's own profile. Kept ABOVE Head to Head. */}
         <section className="dpro-sec">
+          <h3 className="dpro-sectitle">Recent Matches</h3>
+          <RecentMatches playerId={sp} matches={matches} getName={getName}/>
+        </section>
+
+        {/* Head to Head (preserved data, restyled rows) — kept LAST, after Recent
+            Matches. S100: a 0 W/L count is muted instead of green/red. */}
+        <section className="dpro-sec" style={{paddingBottom:24}}>
           <h3 className="dpro-sectitle">Head to Head</h3>
           <div className="dpro-sec-card">
             {h2h.length===0 && <p style={{fontSize:12,color:MT,padding:"4px 0"}}>No matches yet</p>}
@@ -355,19 +363,12 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
               <div key={r.pid} className="dpro-h2h-row">
                 <span className="dpro-h2h-name">{opp?.nickname||opp?.name||"?"}</span>
                 <div className="dpro-h2h-rec">
-                  <span className="dpro-h2h-w">{r.w}W</span>
-                  <span className="dpro-h2h-l">{r.l}L</span>
+                  <span className="dpro-h2h-w" style={r.w===0?{color:MT}:undefined}>{r.w}W</span>
+                  <span className="dpro-h2h-l" style={r.l===0?{color:MT}:undefined}>{r.l}L</span>
                 </div>
               </div>
             );})}
           </div>
-        </section>
-
-        {/* S100 #150: recent match history on another player's drill-down,
-            mirroring the logged-in user's own profile. */}
-        <section className="dpro-sec" style={{paddingBottom:24}}>
-          <h3 className="dpro-sectitle">Recent Matches</h3>
-          <RecentMatches playerId={sp} matches={matches} getName={getName}/>
         </section>
         {showLightbox && player.avatar_url && (
           <AvatarLightbox src={player.avatar_url} alt={player.name} onClose={()=>setShowLightbox(false)}/>
