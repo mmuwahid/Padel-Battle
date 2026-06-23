@@ -3,11 +3,13 @@ import { supabase } from '../supabase';
 import Icon from './Icon';
 import { pressable } from '../utils/a11y';
 import { useFocusTrap } from '../hooks/useFocusTrap';
+import { flagEmoji } from '../utils/helpers';
+import { gradeColor } from '../utils/grade';
 
 // S066 Phase 12: spec-faithful restyle. Slide-in right drawer (.ssheet) with
 // .sbprof header (clickable to open My Profile), .sbsec sections containing
 // .sbitem rows, .sbdiv divider, .sbfoot with .signout. Spec lines 2174-2196.
-export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, navigateSidebar, user, avatarUrl, league, isAdmin, onSwitchLeague: _onSwitchLeague, showToast, installPrompt, handleInstall, playerCount, activeSeasonName }) {
+export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, navigateSidebar, user, claimedPlayer, avatarUrl, league, isAdmin, onSwitchLeague: _onSwitchLeague, showToast, installPrompt, handleInstall, playerCount, activeSeasonName }) {
   // S068: drawer entry clicks must push history so the drill-down can incrementally
   // back out to the drawer. navigateSidebar handles drawer-close + history push.
   const go = navigateSidebar || ((v)=>{ setSidebarView(v); setSidebarOpen(false); });
@@ -49,7 +51,19 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, navigateS
           </div>
           <div style={{flex:1,minWidth:0}}>
             <div className="sbn">{userName}</div>
-            <div className="sbe" style={{whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{user.email}</div>
+            {/* Issue: replaced email with country flag + grade pill (when self-assessed) */}
+            <div style={{display:"flex",alignItems:"center",gap:8,marginTop:3}}>
+              {claimedPlayer?.country && (
+                <span style={{display:"inline-flex",alignItems:"center",gap:4,fontSize:12,color:"#9090a4"}}>
+                  <span className="flag">{flagEmoji(claimedPlayer.country)}</span>{claimedPlayer.country}
+                </span>
+              )}
+              {claimedPlayer?.grade && (
+                <span style={{fontFamily:"var(--mono)",fontSize:10,fontWeight:800,padding:"2px 7px",borderRadius:"var(--r-full)",color:gradeColor(claimedPlayer.grade),border:`1px solid ${gradeColor(claimedPlayer.grade)}`,background:`${gradeColor(claimedPlayer.grade)}1a`}}>
+                  {claimedPlayer.grade}
+                </span>
+              )}
+            </div>
           </div>
           <div style={{color:"#5a5a6a",marginLeft:"auto",display:"flex"}}>
             <Icon name="chevron" size={16}/>

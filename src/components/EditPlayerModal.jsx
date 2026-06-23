@@ -105,7 +105,7 @@ export function EditPlayerModal({ player, onClose, onSaved }) {
         .eq("id", player.id);
       if (error) throw error;
       // Issue #110: propagate identity to the player's other leagues (grade override stays local).
-      await supabase.rpc("sync_player_identity",{p_player_id:player.id}).catch(e => { if (import.meta.env.DEV) console.warn("[EditPlayerModal] identity sync:",e); });
+      supabase.rpc("sync_player_identity",{p_player_id:player.id}).then(undefined, e => { if (import.meta.env.DEV) console.warn("[EditPlayerModal] identity sync:",e); });
       showToast("Player updated");
       loadLeagueData(); // C1: background refresh, UI unblocks immediately
       if (onSaved) onSaved();
