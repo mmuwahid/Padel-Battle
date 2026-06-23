@@ -50,7 +50,7 @@ export function GradeAssessmentModal({ player, onClose, onSaved }) {
         .eq("id", player.id);
       if (error) throw error;
       // Issue #110: a self grade propagates to my other leagues (skips admin overrides).
-      await supabase.rpc("sync_player_identity",{p_player_id:player.id}).catch(e => { if (import.meta.env.DEV) console.warn("[GradeAssessment] grade sync:",e); });
+      supabase.rpc("sync_player_identity",{p_player_id:player.id}).then(undefined, e => { if (import.meta.env.DEV) console.warn("[GradeAssessment] grade sync:",e); });
       showToast(`Grade saved — ${result.grade}`);
       onClose();
       if (onSaved) onSaved();
