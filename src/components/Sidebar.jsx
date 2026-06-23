@@ -60,7 +60,7 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, setSidebarView, navigateS
               )}
               {claimedPlayer?.grade && (
                 <span style={{fontFamily:"var(--mono)",fontSize:10,fontWeight:800,padding:"2px 7px",borderRadius:"var(--r-full)",color:gradeColor(claimedPlayer.grade),border:`1px solid ${gradeColor(claimedPlayer.grade)}`,background:`${gradeColor(claimedPlayer.grade)}1a`}}>
-                  {claimedPlayer.grade}
+                  Grade: {claimedPlayer.grade}
                 </span>
               )}
             </div>

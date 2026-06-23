@@ -1604,6 +1604,10 @@ body {
 
 /* Sidebar drawer */
 .ssheet{position:absolute;top:0;right:0;bottom:0;width:82%;max-width:360px;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;animation:si 280ms var(--ease-spring) both;overflow:auto;padding-top:env(safe-area-inset-top, 0px);}
+/* The focus-trap programmatically focuses this container (tabIndex -1); since the
+   drawer is flush to the right edge the default focus ring shows as a blue line on
+   the left edge. Suppress it — the interactive buttons inside keep their own rings. */
+.ssheet:focus,.ssheet:focus-visible{outline:none;}
 @keyframes si{from{transform:translateX(100%);}to{transform:translateX(0);}}
 .shdl{width:36px;height:4px;border-radius:var(--r-full);background:#5a5a6a;margin:12px auto 0;flex-shrink:0;}
 
