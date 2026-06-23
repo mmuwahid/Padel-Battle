@@ -2974,3 +2974,7 @@ input.linput[type="date"]::-webkit-calendar-picker-indicator {
     scroll-behavior: auto !important;
   }
 }
+
+/* Membership screen — Monthly/Annual billing-period selector press feedback */
+.memplan{transition:transform 100ms,border-color 150ms,background 150ms;}
+.memplan:active{transform:scale(.97);}
