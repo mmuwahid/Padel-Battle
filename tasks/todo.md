@@ -1,21 +1,29 @@
 # Active Work
 
-## NEXT SESSION (S101) — START HERE
-**Last session:** S100 (2026-06-23) — **4 commits (`5c7b469` #150, `353793c` #151, `4eb6784` #150 card redesign, `fe14dab` #150/#151 polish), SW v240→v243, 0 DB migrations.** #150 reusable `RecentMatches` on the player drill-down + own profile (redesigned card: day/date header above names, result on the right, WIN/LOSS pill unchanged; Recent above Head-to-Head; 0 W/L muted). #151 unified onboarding — Welcome step, invite-link new users routed through welcome+profile BEFORE the join request, `isProfileComplete` + blocking `CompleteProfileScreen` gate (**FORCE-ALL**: 14/16 users incomplete). Google Play Console account created + $25 paid. Closed #150/#151. Main `fe14dab`, prod READY.
-**Prior session:** S099 — centralized push + OS badge, Leave League soft-delete, analytics polish, duplicate league-screen consolidation (`f30b45a`, v240).
+## NEXT SESSION (S102) — START HERE
+**Last session:** S101 (2026-06-30) — **2 commits (`9a3952a` #152+#153, `368a2d9` #153 follow-up), SW v243→v245, 1 DB migration (`s101_auto_add_approved_to_active_season`).** #152 `approve_join_request` now auto-adds the approved player to the active season roster (guarded by `EXISTS` so it only appends to seasons that already have an explicit roster — empty roster = all-players, must stay empty). #153 schedule-card polish: (.1) reworded the cryptic "2014" confirmation line (raw `\u2014` in JSX text → wrapped `{"\u2014"}`), (.2) date restyled mono/muted/11px, (.3) per-player RSVP coloring (accepted green / waiting gold + clock icon / declined red); follow-up moved time+duration to a row below the date and made date+time white. Owner smoke-tested S100 force-complete flow + S099 ships — both fine. Closed #152/#153. Main `368a2d9`, prod READY.
+**Prior session:** S100 — `RecentMatches` drill-down, unified onboarding + force-all completeness gate, Google Play account created (`fe14dab`, v243).
 
-### 🎯 S101 PRIORITY — verify force-complete + Google Play + native
-1. **Owner smoke-test the existing-user force-complete flow** — ~14 of 16 users hit `CompleteProfileScreen` on next open (pre-filled; mostly DOB + court position). Fresh-signup welcome + invite-link onboarding already owner-confirmed in S100.
-2. **Google Play launch** (account created + paid, `support.padelhub@gmail.com`, dev ID `7573132350565793581`): finish identity verification → device-access check (Play Console mobile app) → create app record → Capacitor Android build → signed AAB → store listing (privacy/terms live) → internal testing track. See memory `reference_google_play_console`.
-3. **Device smoke-test S099 ships (SW v240→v243):** push fires every time + OS badge; stale-chunk auto-reload; Leave League soft-delete + re-join; analytics streak/colors; Switch League → League Management.
-4. **Native device smoke-test** of the iOS + Android Capacitor shells (haptics, hardware back, splash/status bar) — user has a Mac.
-5. **Decide #129 v2**: full ~10-capability matrix, per-season overrides, member-grantable perms.
-6. **Set up padelhub.app email addresses** (support@, privacy@, legal@) — placeholders in legal pages.
-7. **Wire tier-limit enforcement** (Free 1 league / 1 season / 5 player invites; Pro unlimited) + RevenueCat at the wrap / store launch — copy only, flagged in `MembershipView.jsx`.
-8. (When ready) replace logo Option A placeholder with the designer's final mark — one-file swap in `icons.jsx` + re-run 3 PNGs (sharp).
-9. (Cleanup) Stale `.claude/launch.json` configs (`clone-dev`, `padel-dev-cleanup`, `mockup-static`) still point at the old `/tmp` path; `hardening-dev` + new `clone-dev-user` fixed in S100.
-10. (Optional) Test infra from #137 (#1 unit, #2 E2E, #3 Storybook, #4 TS migration) — deferred, lower priority than launch.
+### 🎯 S102 PRIORITY — Google Play + native + launch
+1. **Google Play launch** (account created + paid, `support.padelhub@gmail.com`, dev ID `7573132350565793581`): finish identity verification → device-access check (Play Console mobile app) → create app record → Capacitor Android build → signed AAB → store listing (privacy/terms live) → internal testing track. See memory `reference_google_play_console`.
+2. **Native device smoke-test** of the iOS + Android Capacitor shells (haptics, hardware back, splash/status bar) — user has a Mac.
+3. **Decide #129 v2**: full ~10-capability matrix, per-season overrides, member-grantable perms.
+4. **Set up padelhub.app email addresses** (support@, privacy@, legal@) — placeholders in legal pages.
+5. **Wire tier-limit enforcement** (Free 1 league / 1 season / 5 player invites; Pro unlimited) + RevenueCat at the wrap / store launch — copy only, flagged in `MembershipView.jsx`.
+6. (When ready) replace logo Option A placeholder with the designer's final mark — one-file swap in `icons.jsx` + re-run 3 PNGs (sharp).
+7. (Cleanup) Stale `.claude/launch.json` configs (`clone-dev`, `padel-dev-cleanup`, `mockup-static`) still point at the old `/tmp` path; `hardening-dev` + `clone-dev-user` point at `C:/Users/User/...`; `clone-dev-unhoec03` (S101) is the working config for THIS PC.
+8. (Optional) Test infra from #137 (#1 unit, #2 E2E, #3 Storybook, #4 TS migration) — deferred, lower priority than launch.
 **⚠️ Regenerate Apple client-secret before 2026-12-18** (`scripts/gen-apple-secret.cjs`).
+
+### S101 outcomes (this session — archived)
+- [x] **#152 auto-add approved member to active season** (`9a3952a`, v244) — migration `s101_auto_add_approved_to_active_season` adds an `INSERT ... SELECT` into `season_players` inside `approve_join_request`, guarded by `EXISTS (SELECT 1 FROM season_players ...)` so it only appends to seasons with a non-empty roster (empty roster = all-players-included convention, App.jsx:759 — inserting one row would wrongly restrict it). No client change.
+- [x] **#153.1 reworded confirmation line** (`9a3952a`) — "You're confirmed — waiting for the other players to respond." / "You declined this match." Root cause of the user-reported "2014" garble: a raw `\u2014` em-dash escape sat in JSX **text** (not a JS string), so React rendered the literal 6 chars; fixed by wrapping `{"\u2014"}`.
+- [x] **#153.2 date restyle** (`9a3952a`) — `.scard-date` now mono/muted/11px (matches match-history card) instead of large green.
+- [x] **#153.3 RSVP coloring** (`9a3952a`) — per-player name color in `renderTeam`: accepted green (`--accent`), waiting gold (`--gold`) + clock icon, declined red (`--danger`); avatar border tint for accepted/waiting.
+- [x] Owner smoke-tested S100 force-complete flow + S099 device ships — both working fine.
+- [x] **#153 follow-up — time/duration row + white font** (`368a2d9`, v245) — owner re-tested on another league; moved time+duration to their own row below the date (`.scard-when` flex column) and set both date and time to white (`var(--text)`) for readability.
+- [x] Closed #152 + #153 on GitHub; commits pushed to main (`9a3952a`, `368a2d9`); prod READY on SW v245.
+- [x] Added `clone-dev-unhoec03` launch config (port 5184) pointing at this PC's clone `C:/Users/UNHOEC03/dev/Padel-Battle`.
 
 ### S100 outcomes (this session — archived)
 - [x] **#150 recent matches on player drill-down** (`5c7b469`, v241) — reusable `RecentMatches.jsx` (last-5) after Head-to-Head + reused on own profile.
