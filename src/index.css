@@ -1280,10 +1280,10 @@ body {
 .scard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;transition:all 200ms;}
 .scard:hover{border-color:var(--accent-glow);}
 .scard-hd{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--surface-2);border-bottom:1px solid var(--border);gap:8px;}
-.scard-when{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0;}
-/* #153.2: date matches the match-history card (mono, muted, smaller) instead of large green. */
-.scard-date{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.04em;}
-.scard-time{font-family:var(--mono);font-size:11px;color:var(--muted);}
+/* #153.2: stack date then time/duration; all white for readability. */
+.scard-when{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;}
+.scard-date{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);letter-spacing:.04em;}
+.scard-time{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--text);}
 .scard-status{font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:var(--r-full);white-space:nowrap;flex-shrink:0;}
 .scard-status.confirmed{background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent-glow);}
 .scard-status.pending{background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold-glow);}
