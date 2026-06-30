@@ -602,11 +602,13 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
                   );
                   const av = players.find(p=>p.id===pid)?.avatar_url;
                   const r = (ch.responses||{})[pid];
-                  const indicator = isPending && r==='accepted' ? '\u2713' : isPending && r==='declined' ? '\u2717' : isPending && !r ? '\u23F3' : '';
+                  // #153.3: highlight by RSVP — accepted green, waiting gold (+clock icon), declined red.
+                  const rsvp = isConfirmed ? 'accepted' : isPending ? (r==='accepted'?'accepted':r==='declined'?'declined':'waiting') : null;
                   return (
-                    <div key={pid} className="scard-team-pl">
+                    <div key={pid} className={`scard-team-pl${rsvp?` rsvp-${rsvp}`:''}`}>
                       <div className="scard-pavi">{av?<img src={av} alt={getName(pid)}/>:(getName(pid)[0]||'?').toUpperCase()}</div>
-                      <span className="scard-pname">{getName(pid)}{indicator?` ${indicator}`:''}</span>
+                      <span className="scard-pname">{getName(pid)}</span>
+                      {rsvp==='waiting' && <span className="scard-rsvp-ico"><Icon name="clock" size={11} color="var(--gold)"/></span>}
                     </div>
                   );
                 })}
@@ -635,10 +637,10 @@ export function ScheduleView({challenges,players,matches,supabase,leagueId,user,
                     </div>
                   )}
                   {isPending && imIn && myResponse==='accepted' && (
-                    <div style={{fontSize:11,color:'var(--accent)',fontWeight:600,textAlign:'center',marginTop:8}}>{"\u2713"} You accepted \u2014 waiting for others</div>
+                    <div style={{fontSize:11,color:'var(--accent)',fontWeight:600,textAlign:'center',marginTop:8}}>You're confirmed {"\u2014"} waiting for the other players to respond.</div>
                   )}
                   {isPending && imIn && myResponse==='declined' && (
-                    <div style={{fontSize:11,color:'var(--danger)',fontWeight:600,textAlign:'center',marginTop:8}}>{"\u2717"} You declined this match</div>
+                    <div style={{fontSize:11,color:'var(--danger)',fontWeight:600,textAlign:'center',marginTop:8}}>You declined this match.</div>
                   )}
                 </div>
 

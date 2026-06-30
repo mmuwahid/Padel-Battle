@@ -1281,7 +1281,8 @@ body {
 .scard:hover{border-color:var(--accent-glow);}
 .scard-hd{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--surface-2);border-bottom:1px solid var(--border);gap:8px;}
 .scard-when{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0;}
-.scard-date{font-size:14px;font-weight:800;color:var(--accent);}
+/* #153.2: date matches the match-history card (mono, muted, smaller) instead of large green. */
+.scard-date{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.04em;}
 .scard-time{font-family:var(--mono);font-size:11px;color:var(--muted);}
 .scard-status{font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:var(--r-full);white-space:nowrap;flex-shrink:0;}
 .scard-status.confirmed{background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent-glow);}
@@ -1299,6 +1300,13 @@ body {
 .scard-pavi.empty{opacity:.5;}
 .scard-pname{font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
 .scard-pname.empty{color:var(--muted);}
+/* #153.3: RSVP highlight — accepted green, waiting gold (+clock icon), declined red. */
+.scard-team-pl.rsvp-accepted .scard-pname{color:var(--accent);}
+.scard-team-pl.rsvp-waiting .scard-pname{color:var(--gold);}
+.scard-team-pl.rsvp-declined .scard-pname{color:var(--danger);}
+.scard-team-pl.rsvp-accepted .scard-pavi{border-color:var(--accent-glow);}
+.scard-team-pl.rsvp-waiting .scard-pavi{border-color:var(--gold-glow);}
+.scard-rsvp-ico{display:flex;align-items:center;flex-shrink:0;}
 .scard-vs{font-family:var(--mono);font-size:10px;color:var(--muted);font-weight:700;padding:0 6px;}
 .scard-meta{display:flex;gap:10px;padding-top:8px;border-top:1px solid var(--border);font-size:11px;color:var(--muted);flex-wrap:wrap;}
 .scard-meta-item{display:flex;align-items:center;gap:4px;}
