@@ -14,12 +14,12 @@ const platform = Capacitor.getPlatform(); // 'ios' | 'android' | 'web'
 
 // Public RevenueCat SDK keys — safe to ship client-side (same class as the
 // Supabase anon key in supabase.js).
-// TODO(store-launch): replace the shared Test Store key with the real platform
-// keys (appl_… for iOS, goog_… for Android) once the App Store Connect + Play
-// products are connected under the RevenueCat dashboard. See Step 4 in
+// iOS is wired to the real App Store key. TODO(store-launch): replace the
+// Android Test Store key with the real goog_… key once the Play products are
+// connected under the RevenueCat dashboard. See Step 4 in
 // planning/revenuecat-setup.md.
 const API_KEYS = {
-  ios: 'test_AArrvMwTTPacAHxKwRDkUqLsKVE',
+  ios: 'appl_oqPyveTwMACTVTdlHUJoArMAdzN',
   android: 'test_AArrvMwTTPacAHxKwRDkUqLsKVE',
 };
 
