@@ -1,19 +1,32 @@
 # Active Work
 
-## NEXT SESSION (S102) — START HERE
-**Last session:** S101 (2026-06-30) — **2 commits (`9a3952a` #152+#153, `368a2d9` #153 follow-up), SW v243→v245, 1 DB migration (`s101_auto_add_approved_to_active_season`).** #152 `approve_join_request` now auto-adds the approved player to the active season roster (guarded by `EXISTS` so it only appends to seasons that already have an explicit roster — empty roster = all-players, must stay empty). #153 schedule-card polish: (.1) reworded the cryptic "2014" confirmation line (raw `\u2014` in JSX text → wrapped `{"\u2014"}`), (.2) date restyled mono/muted/11px, (.3) per-player RSVP coloring (accepted green / waiting gold + clock icon / declined red); follow-up moved time+duration to a row below the date and made date+time white. Owner smoke-tested S100 force-complete flow + S099 ships — both fine. Closed #152/#153. Main `368a2d9`, prod READY.
-**Prior session:** S100 — `RecentMatches` drill-down, unified onboarding + force-all completeness gate, Google Play account created (`fe14dab`, v243).
+## NEXT SESSION (S103) — START HERE
+**Last session:** S102 (2026-07-03) — **2 commits (`66ee707` Android release signing + push permission, `fbb7040` Play listing + store graphics), no SW change (native-only).** Fixed the blocking Gradle "Invalid file path" error (single backslashes in `local.properties` eaten by Java `.properties` escaping → forward slashes). Generated release keystore `android/padelhub-release.jks` + `keystore.properties` (both gitignored), wired conditional release `signingConfig` into `app/build.gradle`, built signed `app-release.aab` (versionCode 1, v1.0). Native push = **Option B, deferred to v1.1** (WebView has no Web Push API; needs full FCM backend). Firebase project `padelhub-9e340` created, `firebase-tools` v15.22.4 installed + logged in as `support.padelhub@gmail.com` (parked). Prepped `planning/play-store-listing.md`; generated `store-assets/` graphics — **user rejected them, redo S103.** Membership: keep button, wire RevenueCat in a separate session before production. Main `fbb7040`.
+**Prior session:** S101 — #152 auto-add approved player to active season, #153 schedule-card polish (`368a2d9`, v245).
 
-### 🎯 S102 PRIORITY — Google Play + native + launch
-1. **Google Play launch** (account created + paid, `support.padelhub@gmail.com`, dev ID `7573132350565793581`): finish identity verification → device-access check (Play Console mobile app) → create app record → Capacitor Android build → signed AAB → store listing (privacy/terms live) → internal testing track. See memory `reference_google_play_console`.
-2. **Native device smoke-test** of the iOS + Android Capacitor shells (haptics, hardware back, splash/status bar) — user has a Mac.
-3. **Decide #129 v2**: full ~10-capability matrix, per-season overrides, member-grantable perms.
-4. **Set up padelhub.app email addresses** (support@, privacy@, legal@) — placeholders in legal pages.
-5. **Wire tier-limit enforcement** (Free 1 league / 1 season / 5 player invites; Pro unlimited) + RevenueCat at the wrap / store launch — copy only, flagged in `MembershipView.jsx`.
-6. (When ready) replace logo Option A placeholder with the designer's final mark — one-file swap in `icons.jsx` + re-run 3 PNGs (sharp).
-7. (Cleanup) Stale `.claude/launch.json` configs (`clone-dev`, `padel-dev-cleanup`, `mockup-static`) still point at the old `/tmp` path; `hardening-dev` + `clone-dev-user` point at `C:/Users/User/...`; `clone-dev-unhoec03` (S101) is the working config for THIS PC.
-8. (Optional) Test infra from #137 (#1 unit, #2 E2E, #3 Storybook, #4 TS migration) — deferred, lower priority than launch.
+### 🎯 S103 PRIORITY — Play graphics + launch continues
+1. **Redo the Play Store graphics** — user rejected the S102 icon + feature graphic (`store-assets/play-icon-512.png`, `play-feature-1024x500.png`). Get style direction before regenerating.
+2. **Capture 2+ phone screenshots** from emulator/real device (can't be generated from static assets) — ranking, log-match, player profile, pairs, tournament bracket.
+3. **Google Play launch continues** — user finishing Android device verification (blocks app-record creation); once cleared: create app record → upload signed AAB → paste listing (`planning/play-store-listing.md`) → **Closed testing track with 12+ testers (14-day clock)**. See memory `reference_google_play_console`.
+4. **Wire RevenueCat** into the Membership screen (separate session; REQUIRED before the production submission — then declare in-app purchases on listing + data-safety). Keep the button; placeholder is fine for the closed test.
+5. **Native device smoke-test** of the iOS + Android Capacitor shells (haptics, hardware back, splash/status bar) — user has a Mac.
+6. **Decide #129 v2**: full ~10-capability matrix, per-season overrides, member-grantable perms.
+7. **Set up padelhub.app email addresses** (support@, privacy@, legal@) — placeholders in legal pages.
+8. **Wire tier-limit enforcement** (Free 1 league / 1 season / 5 player invites; Pro unlimited) — copy only, flagged in `MembershipView.jsx`.
+9. (Cleanup) Stale `.claude/launch.json` configs (`clone-dev`, `padel-dev-cleanup`, `mockup-static`) still point at the old `/tmp` path; `hardening-dev` + `clone-dev-user` point at `C:/Users/User/...`; `clone-dev-unhoec03` (S101) is the working config for THIS PC.
+10. (Optional) Test infra from #137 (#1 unit, #2 E2E, #3 Storybook, #4 TS migration) — deferred, lower priority than launch.
+**(v1.1) FCM native push** — client `google-services.json` (into `android/app/`) + service-account key as Supabase secret + `@capacitor/push-notifications` native registration + `push-on-notify` FCM fan-out. See memory `project_firebase_fcm.md`.
 **⚠️ Regenerate Apple client-secret before 2026-12-18** (`scripts/gen-apple-secret.cjs`).
+
+### S102 outcomes (this session — archived)
+- [x] **Fixed Gradle build blocker** — `android/local.properties` single-backslash SDK path → forward slashes; assembleDebug + bundleRelease both succeed.
+- [x] **Release keystore + signing** (`66ee707`) — generated `android/padelhub-release.jks` (RSA 2048, alias `padelhub`, both pw `PadelHub2026!`), `keystore.properties`, uncommented keystore ignores in `android/.gitignore`, conditional release `signingConfig` in `app/build.gradle`, `POST_NOTIFICATIONS` permission pre-staged in AndroidManifest.
+- [x] **Built signed AAB** — `app-release.aab` (versionCode 1, versionName 1.0).
+- [x] **Native push decision** — Option B, defer FCM to v1.1; Firebase project `padelhub-9e340` created; `firebase-tools` v15.22.4 installed + logged in as `support.padelhub@gmail.com`; plan in memory `project_firebase_fcm.md`.
+- [x] **Play listing prepped** (`fbb7040`) — `planning/play-store-listing.md` (copy, data-safety, content rating, 12-tester/14-day gate, checklist).
+- [x] **Store graphics generated** (`fbb7040`) — `store-assets/` icon + feature graphic. ⚠️ **User rejected — redo S103.**
+- [x] **Membership decision** — keep button, wire RevenueCat in a separate session before production.
+- [ ] ⚠️ **User to back up `android/padelhub-release.jks` off-machine — IRREPLACEABLE.**
 
 ### S101 outcomes (this session — archived)
 - [x] **#152 auto-add approved member to active season** (`9a3952a`, v244) — migration `s101_auto_add_approved_to_active_season` adds an `INSERT ... SELECT` into `season_players` inside `approve_join_request`, guarded by `EXISTS (SELECT 1 FROM season_players ...)` so it only appends to seasons with a non-empty roster (empty roster = all-players-included convention, App.jsx:759 — inserting one row would wrongly restrict it). No client change.
