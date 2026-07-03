@@ -23,6 +23,7 @@
     "@capacitor/push-notifications": "^8.1.1",
     "@capacitor/splash-screen": "^8.0.1",
     "@capacitor/status-bar": "^8.0.2",
+    "@revenuecat/purchases-capacitor": "^13.2.1",
     "@supabase/supabase-js": "^2.99.2",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
