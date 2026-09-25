@@ -1023,6 +1023,14 @@ body {
    the pill 36px from screen edge while cards sat at 18px.) */
 .an-body > .seg-4{margin:0;}
 
+/* #160 (S105): season scope row for the Analytics view. Analytics previously had
+   no season control and silently aggregated every season; this row is the toggle.
+   Mirrors the .rbar season-pill treatment so both halves of the Players screen
+   read as one control language. */
+.an-scope{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.an-scope-l{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--muted);}
+
 /* 2-col stat tiles (League view summary, Insights summary). */
 .an-tile-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .an-tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;}

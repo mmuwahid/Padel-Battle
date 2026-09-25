@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { A, BG, CD, CD2, BD, TX, MT, DG, GD, SV, BZ, BL, PU } from '../theme';
 import { ACHS } from '../data/achievements';
 import { FD } from './FormDots';
@@ -7,6 +7,7 @@ import { AvatarLightbox } from './AvatarLightbox';
 import { RecentMatches } from './RecentMatches';
 import { win, formatDate, setTotals, flagEmoji, getAge, findAvatar } from '../utils/helpers';
 import { gradeColor } from '../utils/grade';
+import { calcElo } from '../utils/elo';
 
 // S089 #113g: in the tight Partnership Ranking pair cell a full two-word name
 // ("Hani Taha") overflowed and truncated mid-letter ("Hani T_"). Collapse names
@@ -18,9 +19,13 @@ const shortName = (full) => {
   return `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.`;
 };
 
-export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matches,supabase,leagueId,isAdmin,getName,sel:_sel,onPlayersChange,showToast,claimedPlayer,leagueMembers,league,seasonId,seasons,seasonRosters}){
+// #159/#160 (S105): every stat on this screen is scoped to the season picked in
+// the header dropdown. The all-time `ps`/`elo`/`getForm`/`getStreak` props are
+// intentionally NOT consumed any more — they are kept in the signature (prefixed
+// `_`) so a stray reference fails the build instead of silently reading all-time
+// numbers. Scoped equivalents are derived below from `scopedMatches`.
+export function PlayerStats({players,ps:_ps,pm,getStreak:_getStreak,getForm:_getForm,elo:_elo,sp,setSp,matches,supabase,leagueId,isAdmin,getName,sel:_sel,onPlayersChange,showToast,claimedPlayer,leagueMembers,league,seasonId,seasons,seasonRosters}){
   const player=sp?pm[sp]:null;
-  const stats=sp?ps[sp]:null;
   const [subTab,setSubTab]=useState("roster"); // roster | analytics
   const [q,setQ]=useState(""); // Phase 5 search
   const [genderFilter,setGenderFilter]=useState("all"); // S066 Phase 8: "all" | "male" | "female"
@@ -41,10 +46,73 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
   // B1/B2: Players grid scoped to a season's roster, defaulting to the active season.
   const [rosterSeason,setRosterSeason]=useState(()=>(seasons||[]).find(s=>s.active)?.id||seasonId||"all");
 
+  // #159: follow the league-wide season selection so drilling in from the Ranking
+  // tab doesn't open a profile scoped to a different season than the row tapped.
+  // The local dropdown still overrides freely — this only fires when the global
+  // `seasonId` itself changes.
+  useEffect(()=>{ if(seasonId) setRosterSeason(seasonId); },[seasonId]);
+
+  // #159/#160: the single source of truth for every stat rendered on this screen.
+  // "all" = career across all individual-format seasons (App passes individual
+  // matches only, so pairs-season matches never leak in — Issue #92).
+  const scopedMatches=useMemo(()=>
+    rosterSeason==="all"?matches:matches.filter(m=>m.season_id===rosterSeason)
+  ,[matches,rosterSeason]);
+
+  // Season-scoped per-player stat objects. Mirrors the shape App.jsx builds for
+  // `ps` (achievements in data/achievements.js read wins/streak/motm/comebacks/
+  // games/gamesWon/gamesLost), but computed from `scopedMatches`.
+  const scopedPs=useMemo(()=>{
+    const out={};
+    players.forEach(p=>{
+      const pM=scopedMatches.filter(m=>m.team_a.includes(p.id)||m.team_b.includes(p.id));
+      const wins=pM.filter(m=>win(m.sets)===(m.team_a.includes(p.id)?"A":"B")).length;
+      const losses=pM.length-wins;
+      const streak=[...pM].sort((a,b)=>new Date(b.date)-new Date(a.date))
+        .map(m=>win(m.sets)===(m.team_a.includes(p.id)?"A":"B")?"W":"L");
+      let comebacks=0;
+      pM.forEach(m=>{
+        if(!m.sets||!m.sets.length)return;
+        const isTeamA=m.team_a.includes(p.id);
+        const [s1a,s1b]=m.sets[0];
+        const lostSet1=isTeamA?s1a<s1b:s1b<s1a;
+        if(lostSet1&&win(m.sets)===(isTeamA?"A":"B"))comebacks++;
+      });
+      let motm=0;
+      scopedMatches.forEach(m=>{if(m.motm===p.id)motm++;});
+      out[p.id]={...p,wins,losses,winRate:pM.length>0?wins/pM.length:0,games:pM.length,
+        gamesWon:wins,gamesLost:losses,streak,comebacks,motm};
+    });
+    return out;
+  },[players,scopedMatches]);
+
+  const scopedElo=useMemo(()=>calcElo(players,scopedMatches),[players,scopedMatches]);
+
+  // Human label for whatever scope is active — used by the analytics header and
+  // the H2H record line so no surface claims "all-time" while showing a single
+  // season's numbers.
+  const scopeSeasonObj=(seasons||[]).find(s=>s.id===rosterSeason);
+  const scopeLabel=rosterSeason==="all"?"All-time":(scopeSeasonObj?.name||"Season");
+
+  const playerMatches=(pid)=>scopedMatches
+    .filter(m=>m.team_a.includes(pid)||m.team_b.includes(pid))
+    .sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const scopedForm=(pid)=>playerMatches(pid).slice(0,5)
+    .map(m=>win(m.sets)===(m.team_a.includes(pid)?"A":"B")?"W":"L");
+  const scopedStreak=(pid)=>{
+    let n=0;
+    for(const m of playerMatches(pid)){
+      if(win(m.sets)===(m.team_a.includes(pid)?"A":"B"))n++; else break;
+    }
+    return n;
+  };
+
+  const stats=sp?scopedPs[sp]:null;
+
   const h2h=useMemo(()=>{
     if(!sp)return[];
     const r={};
-    matches.forEach(m=>{
+    scopedMatches.forEach(m=>{
       const w=win(m.sets);
       const my=m.team_a.includes(sp)?"A":m.team_b.includes(sp)?"B":null;
       if(!my)return;
@@ -56,7 +124,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
       });
     });
     return Object.entries(r).map(([pid,x])=>({pid,...x,games:x.w+x.l})).sort((a,b)=>b.games-a.games);
-  },[sp,matches]);
+  },[sp,scopedMatches]);
 
   const inp={background:CD2,color:TX,border:`1px solid ${BD}`,borderRadius:10,padding:"10px 12px",fontSize:14,width:"100%",outline:"none",fontWeight:400};
 
@@ -117,28 +185,28 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
 
   // FT-04: Analytics computed data (moved above early return to respect Rules of Hooks)
   const analyticsData=useMemo(()=>{
-    if(matches.length===0)return null;
-    const totalMatches=matches.length;
-    const totalSets=matches.reduce((t,m)=>t+m.sets.length,0);
+    if(scopedMatches.length===0)return null;
+    const totalMatches=scopedMatches.length;
+    const totalSets=scopedMatches.reduce((t,m)=>t+m.sets.length,0);
     const wr={};players.forEach(p=>{wr[p.id]={w:0,l:0,gw:0,gl:0};});
-    matches.forEach(m=>{const w=win(m.sets);const [gA,gB]=setTotals(m.sets);
+    scopedMatches.forEach(m=>{const w=win(m.sets);const [gA,gB]=setTotals(m.sets);
       m.team_a.forEach(pid=>{if(wr[pid]){if(w==="A")wr[pid].w++;else wr[pid].l++;wr[pid].gw+=gA;wr[pid].gl+=gB;}});
       m.team_b.forEach(pid=>{if(wr[pid]){if(w==="B")wr[pid].w++;else wr[pid].l++;wr[pid].gw+=gB;wr[pid].gl+=gA;}});
     });
     const activity={};players.forEach(p=>{activity[p.id]=0;});
-    matches.forEach(m=>{[...m.team_a,...m.team_b].forEach(pid=>{if(activity[pid]!==undefined)activity[pid]++;});});
+    scopedMatches.forEach(m=>{[...m.team_a,...m.team_b].forEach(pid=>{if(activity[pid]!==undefined)activity[pid]++;});});
     const mostActive=Object.entries(activity).filter(([,g])=>g>0).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([pid,games])=>({pid,games}));
     const topWinRate=Object.entries(wr).filter(([,x])=>x.w+x.l>=3).map(([pid,x])=>({pid,pct:x.w/(x.w+x.l)*100,w:x.w,l:x.l,games:x.w+x.l})).sort((a,b)=>b.pct-a.pct).slice(0,5);
-    const closeMatches=matches.filter(m=>m.sets.some(s=>Math.abs(s[0]-s[1])<=1&&(s[0]+s[1])>0)).length;
-    const motmCount={};matches.forEach(m=>{if(m.motm){motmCount[m.motm]=(motmCount[m.motm]||0)+1;}});
+    const closeMatches=scopedMatches.filter(m=>m.sets.some(s=>Math.abs(s[0]-s[1])<=1&&(s[0]+s[1])>0)).length;
+    const motmCount={};scopedMatches.forEach(m=>{if(m.motm){motmCount[m.motm]=(motmCount[m.motm]||0)+1;}});
     const topMotm=Object.entries(motmCount).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([pid,count])=>({pid,count}));
-    const monthly={};matches.forEach(m=>{const key=m.date?.substring(0,7);if(key)monthly[key]=(monthly[key]||0)+1;});
+    const monthly={};scopedMatches.forEach(m=>{const key=m.date?.substring(0,7);if(key)monthly[key]=(monthly[key]||0)+1;});
     const monthlyArr=Object.entries(monthly).sort().slice(-6);
     // Issue #96: gamesDiff = signed (myGames - oppGames) summed across all matches and sets.
     // S079 follow-up: also accumulate chronological W/L results per partnership so the
     // Partnership Ranking row can render a Last-5 form strip (matching the player ranking).
     const partnerStats={};
-    const sortedForPartners=[...matches].sort((a,b)=>new Date(a.date)-new Date(b.date));
+    const sortedForPartners=[...scopedMatches].sort((a,b)=>new Date(a.date)-new Date(b.date));
     sortedForPartners.forEach(m=>{const w=win(m.sets);
       const [gA,gB]=setTotals(m.sets);
       [[m.team_a,w==="A",gA-gB],[m.team_b,w==="B",gB-gA]].forEach(([team,won,diff])=>{
@@ -159,9 +227,12 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
     });
     const bestPartnership=partnerships[0]||null;
     const bestKey=bestPartnership?[bestPartnership.a,bestPartnership.b].slice().sort().join('|'):null;
+    // #160 (S105, USER-CONFIRMED): "Worst Pair" now ranks by ABSOLUTE LOSSES, not
+    // by lowest win rate. Reported case: Basel/Jawad (4L) ranked below Basel/Hani
+    // (3L) because both sat at 0% and the old win-rate sort couldn't separate them.
+    // Order: most losses → worst games-diff → most games played.
     const worstSorted=[...partnershipsRaw].filter(p=>[p.a,p.b].slice().sort().join('|')!==bestKey).sort((a,b)=>{
-      const pA=a.w/(a.w+a.l), pB=b.w/(b.w+b.l);
-      if(pA!==pB)return pA-pB;
+      if(b.l!==a.l)return b.l-a.l;
       if((a.gamesDiff||0)!==(b.gamesDiff||0))return (a.gamesDiff||0)-(b.gamesDiff||0);
       return (b.w+b.l)-(a.w+a.l);
     });
@@ -172,7 +243,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
     // had plenty of data. Empty-state branch in the JSX handles "no losses yet".
     const worstPartnership=worstSorted[0]||null;
     const h2hAll={};
-    matches.forEach(m=>{const w=win(m.sets);
+    scopedMatches.forEach(m=>{const w=win(m.sets);
       const process=(myTeam,oppTeam,won)=>{myTeam.forEach(me=>{oppTeam.forEach(opp=>{
         if(!h2hAll[me])h2hAll[me]={};if(!h2hAll[me][opp])h2hAll[me][opp]={w:0,l:0};
         if(won)h2hAll[me][opp].w++;else h2hAll[me][opp].l++;
@@ -188,7 +259,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
     // Phase 6b (S065 Q10): longest winning + losing streaks per player.
     // Walk matches in chronological order; track per-player current run + max run.
     const runs={};players.forEach(p=>{runs[p.id]={curW:0,curL:0,maxW:0,maxL:0};});
-    [...matches].sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(m=>{
+    [...scopedMatches].sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(m=>{
       const w=win(m.sets);
       m.team_a.forEach(pid=>{
         if(!runs[pid])return;
@@ -206,11 +277,11 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
     const longestWinStreaks=Object.entries(runs).filter(([,r])=>r.maxW>=2).map(([pid,r])=>({pid,n:r.maxW})).sort((a,b)=>b.n-a.n).slice(0,5);
     const longestLossStreaks=Object.entries(runs).filter(([,r])=>r.maxL>=2).map(([pid,r])=>({pid,n:r.maxL})).sort((a,b)=>b.n-a.n).slice(0,5);
     return {totalMatches,totalSets,mostActive,topWinRate,closeMatches,topMotm,monthlyArr,wr,partnerships,bestPartnership,worstPartnership,h2hAll,matchups:matchups.slice(0,5),longestWinStreaks,longestLossStreaks};
-  },[matches,players]);
+  },[scopedMatches,players]);
 
   if(sp&&player&&stats){
     const wp=stats.games>0?(stats.wins/stats.games*100):0;
-    const e=elo[sp]||1500;
+    const e=scopedElo[sp]||1500;
     const gd=stats.gamesWon-stats.gamesLost;
     const badges=ACHS.filter(a=>a.ck(stats));
     // Phase 6a Q3=A: role badge — owner (gold) > admin (accent) > none.
@@ -285,7 +356,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
             <div className="dpro-hs"><div className="dpro-hs-v elo">{e}</div><div className="dpro-hs-l">ELO</div></div>
             <div className="dpro-hs"><div className="dpro-hs-v eff">{wp.toFixed(0)}%</div><div className="dpro-hs-l">Effectiveness</div></div>
           </div>
-          <div className="dpro-form"><FD f={getForm(sp)}/></div>
+          <div className="dpro-form"><FD f={scopedForm(sp)}/></div>
         </section>
 
         {/* Win-rate progress bar */}
@@ -306,7 +377,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
 
         {/* Row 2 (Cons. Wins / MOTM / Match Diff) */}
         <div className="dpro-grid" style={{paddingBottom:6}}>
-          <div className="dpro-cell"><div className="dpro-cell-v">{getStreak(sp)}</div><div className="dpro-cell-l">Cons. Wins</div></div>
+          <div className="dpro-cell"><div className="dpro-cell-v">{scopedStreak(sp)}</div><div className="dpro-cell-l">Cons. Wins</div></div>
           <div className="dpro-cell"><div className="dpro-cell-v gold">{stats.motm}</div><div className="dpro-cell-l" style={{display:"inline-flex",alignItems:"center",gap:4,justifyContent:"center"}}><Icon name="star" size={11} color="var(--gold)"/>MOTM</div></div>
           <div className="dpro-cell">
             <div className={`dpro-cell-v ${gd>=0?'diff-pos':'diff-neg'}`}>{gd>0?"+":""}{gd}</div>
@@ -350,7 +421,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
             mirroring the logged-in user's own profile. Kept ABOVE Head to Head. */}
         <section className="dpro-sec">
           <h3 className="dpro-sectitle">Recent Matches</h3>
-          <RecentMatches playerId={sp} matches={matches} getName={getName}/>
+          <RecentMatches playerId={sp} matches={scopedMatches} getName={getName}/>
         </section>
 
         {/* Head to Head (preserved data, restyled rows) — kept LAST, after Recent
@@ -377,6 +448,34 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
     );
   }
 
+  // #160: analytics had NO season control — it always aggregated every season, so
+  // picking Season 2 still rendered Season 1's numbers and pulled in players who
+  // never played that season. Shares `rosterSeason` with the Players grid so both
+  // halves of this screen always agree. Rendered in the empty state too, otherwise
+  // selecting a season with no matches would hide the only way back out.
+  const seasonScopePicker=(seasons||[]).length>0?(
+    <div className="an-scope">
+      <span className="an-scope-l">Season</span>
+      <div style={{position:"relative",display:"inline-flex",alignItems:"center",flexShrink:0}}>
+        <select
+          aria-label="Analytics season"
+          value={rosterSeason}
+          onChange={e=>setRosterSeason(e.target.value)}
+          className="spill"
+          style={{appearance:"none",WebkitAppearance:"none",cursor:"pointer",paddingRight:26,backgroundImage:"none",color:scopeSeasonObj?.active?"var(--accent)":"#9090a4",fontWeight:scopeSeasonObj?.active?700:400}}
+        >
+          {seasons.map(s=>(
+            <option key={s.id} value={s.id} style={{color:s.active?"#fff":"#9090a4"}}>{s.name}</option>
+          ))}
+          <option value="all" style={{color:"#fff"}}>All seasons</option>
+        </select>
+        <span style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%) rotate(90deg)",pointerEvents:"none",display:"flex"}}>
+          <Icon name="chevron" size={12} color={scopeSeasonObj?.active?"var(--accent)":"#9090a4"}/>
+        </span>
+      </div>
+    </div>
+  ):null;
+
   return (
     <div style={{maxWidth:"600px",margin:"0 auto"}}>
       {/* S091 (#127): screen title sits ABOVE the Players/Analytics toggle, matching
@@ -399,6 +498,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
               </button>
             ))}
           </div>
+          {seasonScopePicker}
 
           {/* LEAGUE-WIDE STATS */}
           {analyticsSection==="league"&&<>
@@ -614,14 +714,14 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                 <label className="h2h-sel-l">Player 1</label>
                 <select aria-label="Player 1" className="h2h-sel" value={h2hP1||""} onChange={e=>setH2hP1(e.target.value||null)}>
                   <option value="">Select player</option>
-                  {players.map(p=><option key={p.id} value={p.id}>{(p.nickname||p.name)+(elo?` (${Math.round(elo[p.id]||1500)})`:"")}</option>)}
+                  {players.map(p=><option key={p.id} value={p.id}>{(p.nickname||p.name)+(scopedElo?` (${Math.round(scopedElo[p.id]||1500)})`:"")}</option>)}
                 </select>
               </div>
               <div>
                 <label className="h2h-sel-l">Player 2</label>
                 <select aria-label="Player 2" className="h2h-sel" value={h2hP2||""} onChange={e=>setH2hP2(e.target.value||null)}>
                   <option value="">Select player</option>
-                  {players.filter(p=>p.id!==h2hP1).map(p=><option key={p.id} value={p.id}>{(p.nickname||p.name)+(elo?` (${Math.round(elo[p.id]||1500)})`:"")}</option>)}
+                  {players.filter(p=>p.id!==h2hP1).map(p=><option key={p.id} value={p.id}>{(p.nickname||p.name)+(scopedElo?` (${Math.round(scopedElo[p.id]||1500)})`:"")}</option>)}
                 </select>
               </div>
             </div>
@@ -629,11 +729,11 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
             {h2hP1&&h2hP2?(()=>{
               const p1=players.find(p=>p.id===h2hP1);
               const p2=players.find(p=>p.id===h2hP2);
-              const h2hM=matches.filter(m=>(m.team_a.includes(h2hP1)&&m.team_b.includes(h2hP2))||(m.team_a.includes(h2hP2)&&m.team_b.includes(h2hP1)));
+              const h2hM=scopedMatches.filter(m=>(m.team_a.includes(h2hP1)&&m.team_b.includes(h2hP2))||(m.team_a.includes(h2hP2)&&m.team_b.includes(h2hP1)));
               const p1W=h2hM.filter(m=>{const w=win(m.sets);return (m.team_a.includes(h2hP1)&&w==="A")||(m.team_b.includes(h2hP1)&&w==="B");}).length;
               const p2W=h2hM.length-p1W;
-              const partM=matches.filter(m=>(m.team_a.includes(h2hP1)&&m.team_a.includes(h2hP2))||(m.team_b.includes(h2hP1)&&m.team_b.includes(h2hP2)));
-              const oppM=matches.filter(m=>(m.team_a.includes(h2hP1)&&m.team_b.includes(h2hP2))||(m.team_a.includes(h2hP2)&&m.team_b.includes(h2hP1)));
+              const partM=scopedMatches.filter(m=>(m.team_a.includes(h2hP1)&&m.team_a.includes(h2hP2))||(m.team_b.includes(h2hP1)&&m.team_b.includes(h2hP2)));
+              const oppM=scopedMatches.filter(m=>(m.team_a.includes(h2hP1)&&m.team_b.includes(h2hP2))||(m.team_a.includes(h2hP2)&&m.team_b.includes(h2hP1)));
               const pW=partM.filter(m=>{const w=win(m.sets);return (m.team_a.includes(h2hP1)&&w==="A")||(m.team_b.includes(h2hP1)&&w==="B");}).length;
               const pL=partM.length-pW;
               if(h2hM.length===0 && partM.length===0) return (
@@ -651,7 +751,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
                     <div className="h2h-avi">{p2?.avatar_url?<img src={p2.avatar_url} alt={p2?.name||""}/>:(p2?.name||"?")[0]}</div>
                   </div>
                   <div className="h2h-bar-bg"><div className="h2h-bar-f" style={{width:`${h2hM.length>0?(p1W/h2hM.length)*100:50}%`}}/></div>
-                  <div className="h2h-meta">All-time record · {h2hM.length} matches</div>
+                  <div className="h2h-meta">{scopeLabel} record · {h2hM.length} matches</div>
                 </div>
 
                 <div className="h2h-split">
@@ -764,10 +864,17 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
           </>}
         </div>
       ) : subTab==="analytics" ? (
-        <div style={{textAlign:"center",padding:"40px 20px"}}>
-          <div style={{marginBottom:12,display:"flex",justifyContent:"center"}}><Icon name="bar-chart" size={56} color="var(--muted)" strokeWidth={1.5}/></div>
-          <div style={{fontSize:15,fontWeight:600,color:TX,marginBottom:6}}>No analytics yet</div>
-          <div style={{fontSize:12,color:MT}}>Play some matches to see league analytics.</div>
+        <div className="an-body">
+          {seasonScopePicker}
+          <div style={{textAlign:"center",padding:"40px 20px"}}>
+            <div style={{marginBottom:12,display:"flex",justifyContent:"center"}}><Icon name="bar-chart" size={56} color="var(--muted)" strokeWidth={1.5}/></div>
+            <div style={{fontSize:15,fontWeight:600,color:TX,marginBottom:6}}>No analytics yet</div>
+            <div style={{fontSize:12,color:MT}}>
+              {rosterSeason==="all"
+                ? "Play some matches to see league analytics."
+                : `No matches played in ${scopeLabel} yet — pick another season above.`}
+            </div>
+          </div>
         </div>
       ) : null}
 
@@ -896,7 +1003,7 @@ export function PlayerStats({players,ps,pm,getStreak,getForm,elo,sp,setSp,matche
               </div>
             )}
             {filtered.map(p=>{
-              const stat = ps[p.id];
+              const stat = scopedPs[p.id];
               const wl = stat ? {w:stat.wins||0, l:stat.losses||0} : {w:0,l:0};
               const isMe = claimedPlayer?.id === p.id;
               if(editMode && editPid===p.id) return (

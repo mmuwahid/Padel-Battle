@@ -1519,7 +1519,12 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
         )
       )}
 
-      {/* PLAYERS TAB — individual format (default) */}
+      {/* PLAYERS TAB — individual format (default).
+          #159/#160 (S105): `matches` is individualMatches, NOT approvedMatches —
+          passing every approved match leaked pairs-season matches into individual
+          stats and partnership rankings, which Issue #92 separated everywhere else.
+          PlayerStats scopes these further by its own season picker, so the grid,
+          the drill-in profile and Analytics all report the same season. */}
       {!sidebarView && tab==="stats" && seasons.find(s=>s.id===selectedSeason)?.format!=="pairs" && (
         <ErrorBoundary><Suspense fallback={<LazyFallback/>}><PlayerStats
           players={players}
@@ -1537,7 +1542,7 @@ function AppContent({leagueId,user,leagues,leagueHandlers}){
             // back returns to Ranking instead of Players grid.
             if(id===null && drillInOrigin){ setTab(drillInOrigin); setDrillInOrigin(null); }
           }}
-          matches={approvedMatches}
+          matches={individualMatches}
           supabase={supabase}
           leagueId={leagueId}
           isAdmin={isAdmin}
