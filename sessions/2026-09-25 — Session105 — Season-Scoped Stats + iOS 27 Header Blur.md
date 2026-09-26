@@ -3,7 +3,7 @@
 **Project:** PadelHub
 **Phase:** Pre-store-launch (UI bug fixes from user-filed issues)
 **Duration:** ~4 hours (2026-09-25 evening → 2026-09-26)
-**Commits:** d7b569d, 4fff74a, + docs commit
+**Commits:** d7b569d, 4fff74a (app, both deployed); a722338 + close-out docs commit
 
 ---
 
@@ -36,12 +36,13 @@
   - Negative control: poisoned all-time props (99W99L).
   - Result: **27/27 pass**. The same harness against `main`'s PlayerStats fails 14/14 grid checks (identical numbers for S1 / S2 / All, which is the user's report).
 
-### #158 blurred header (FIX DEPLOYED, awaiting on-device confirmation)
+### #158 blurred header (FIXED, confirmed on device after icon re-add, CLOSED)
 - Header CSS was clean. Ruled out: backdrop-filter (only `.lp.pressing` / `.otop` / `.overlay`), synthetic bold (Syne 800 is loaded), SVG scaling.
 - The issue screenshot showed only the top row blurred while "Leaderboard" directly below was sharp. The user then reported it is sharp while pulled down (pull-to-refresh) and blurs as it bounces back, so the blur depends on screen position.
 - Cause (confirmed by several other PWAs, e.g. MrClit/fin-app#411 on iOS 27 standalone): iOS 26+ draws a Liquid Glass scroll-edge blur (~35pt) OVER page content under the status bar when using `black-translucent` + `viewport-fit=cover`. iOS 27 made it much stronger. It renders above the web view; no CSS or meta can disable it, and an opaque fixed backdrop was tried elsewhere and does nothing.
 - Fix: `apple-mobile-web-app-status-bar-style` `black-translucent` → `default`. The status bar becomes opaque, tinted by the existing `theme-color #0a0a0f`, and the web view is inset below it. `.hdr` `padding-top: max(env(safe-area-inset-top,0px), 6px)` keeps the header in the same place (the user explicitly rejected moving it lower).
 - iOS reads this meta at Add-to-Home-Screen time, so the icon must be deleted and re-added.
+- **User confirmed on device** after deleting + re-adding the PWA: header sharp at rest and after pull-to-refresh → **#158 CLOSED**.
 
 ### Deploys
 - `d7b569d` (#159/#160, SW v246) and `4fff74a` (#158, SW v247). Live confirmed by polling `sw.js` and grepping the live `PlayerStats-BDfVDl7P.js` chunk and `.hdr` rule.
@@ -88,7 +89,7 @@
 - **Render the scope picker in the empty state too**, or selecting an empty season traps the user.
 
 ## Next Actions
-- [ ] **USER:** delete + re-add the PadelHub home-screen icon, confirm #158 → close #158
+- [x] **USER:** deleted + re-added the home-screen icon, confirmed #158 → closed
 - [ ] Existing PWA users keep the blur until they re-add the icon; decide whether to show an in-app hint (the Capacitor native app will supersede the PWA anyway)
 - [ ] Capacitor iOS build: check the status-bar/web-view overlap on the iOS 26/27 SDK, since the same Liquid Glass band may apply natively (#156)
 - [ ] Fix the pre-existing lint error `ScheduleView.jsx:9` (`seasonRosters` unused)
@@ -100,7 +101,10 @@
 ## Commits & Deploy
 - **Commit 1:** `d7b569d` — [Session105] fix(#159,#160): scope Players grid, profile and Analytics to the selected season (SW v246)
 - **Commit 2:** `4fff74a` — [Session105] fix(#158): stop iOS 26/27 Liquid Glass blur washing out the header (SW v247)
+- **Commit 3:** `a722338` — [Session105] docs: log S105
+- **Commit 4:** [Session105] docs: #158 confirmed + closed (close-out)
 - **Live:** https://padel-battle.vercel.app (SW v247)
+- **Issues closed:** #159, #160, #158 (all user-confirmed on device)
 
 ---
 _Session logged: 2026-09-26 | Logged by: Claude | Session105_
