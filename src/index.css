@@ -96,7 +96,11 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 4px 16px;
-  padding-top: calc(env(safe-area-inset-top, 0px) + 0px);
+  /* S105 #158: with the opaque "default" status bar the web view starts BELOW the bar,
+     so the inset reads 0 and the icons would sit tight against the bar. max() keeps a
+     6px gap there while leaving any real inset (Capacitor, older installs) untouched,
+     so the header lands where it was before, not lower. */
+  padding-top: max(env(safe-area-inset-top, 0px), 6px);
   /* S092 #130: header bg matched to the MAIN CONTENT WRAPPER, measured live at
      rgb(10,10,15) = #0a0a0f (the app shell div behind the leaderboard) — NOT the
      body (#0d0d14) nor var(--bg) (#080808). This is what makes the top bar, content,
